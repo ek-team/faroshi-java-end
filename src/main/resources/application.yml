@@ -1,0 +1,85 @@
+# Logger Config
+logging:
+  level:
+    cn.cuptec.avr: debug
+    org.springframework.security: debug
+
+server:
+  port: 10049
+
+spring:
+  application:
+    name: faros
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: ${MYSQL-USER:root}
+      password: ${MYSQL-PWD:Ctm@_2017}
+      url: jdbc:mysql://${MYSQL-HOST:119.37.193.94}:${MYSQL-PORT:3306}/${MYSQL-DB:faros3}?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&allowMultiQueries=true
+  redis:
+    database: 3
+    port: 6379
+    password: Jiuhao@_2017
+    host: ${REDIS-HOST:119.37.193.94}
+    lettuce:
+      pool:
+        # 连接池最大连接数，负值表示没有限制
+        max-active: 8
+        # 连接池最大阻塞事件，负值表示没有限制
+        max-wait: -1ms
+        # 连接池最大空闲连接
+        max-idle: 8
+        # 最小空闲连接
+        min-idle: 0
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*Mapper.xml
+  typeEnumsPackage: cn.cuptec.faros.common.web.enums
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      db-type: mysql
+      id-type: auto
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+file-upload:
+  path: D:\imgs
+
+wx:
+  #公众号
+  mp:
+    appId: wx0ed9d77369636eb3
+    secret: 31afe6666a17a2fbe3dd44ae6d09f7ab
+    token: weixin
+    #小程序
+  ma:
+    app-id: wxad59cd874b45bb96
+    secret: d5bc744d1fd9411e159e369f5ba7199d
+
+cup:
+  sms:
+    accessKeyId: LTAIvHPdRBZFbUHk
+    accessKeySecret: LwjfN1jCj1r7lp1RohspJyOm97wmmE
+    signName: 易网健
+    expireTime: 180
+    loginTemplate: SMS_175581222
+
+sms :
+  accessKeyId: LTAIvHPdRBZFbUHk
+  accessKeySecret: LwjfN1jCj1r7lp1RohspJyOm97wmmE
+  signName: 易网健
+oss :
+  endpoint: oss-cn-hangzhou.aliyuncs.com
+  accessKeyId: LTAI5tB3NzFo7YWq7HLSBFSn
+  accessKeySecret: SRZfJexAWs7QdrSt45aey8Jg6PqWTm
+  bucket: ewj-pharos
+tx:
+  im:
+    sdkAppID: 1400561339
+    accessKeySecret: aa525b5eb4312ec1998d03d657a8b4457199583322d15cfacf337b525f718d53
+    admin: administrator

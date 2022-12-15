@@ -1,0 +1,50 @@
+package cn.cuptec.faros.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * 服务包
+ */
+@Data
+public class ServicePack extends Model<ServicePack> {
+    private static final long serialVersionUID = 1L;
+
+    @TableId(value = "id", type = IdType.AUTO)
+    private Integer id;
+    private String mpQrCode; //公众号二维码 永久
+    private Integer buy; //是否是购买 1-购买
+    private Integer rent;//是否是租用 2-租用
+    private String name;
+    private Integer deptId;
+    private Integer createUserId;
+    private LocalDateTime createTime;
+    private Integer hospitalId;//医院id
+    @TableField(exist = false)
+    private String hospitalName;//医院名称
+    private String productName;//产品名称
+    private Double productPrice;//产品价格
+    private String productPics;//产品图片多个以,号分割
+    @TableField(exist = false)
+    private List<Integer> productSpecs;//产品规格
+    @TableField(exist = false)
+    private List<ProductSpec> productSpec;//产品规格
+    @TableField(exist = false)
+    private List<Integer> saleSpecs;//销售规格
+    @TableField(exist = false)
+    private List<SaleSpec> saleSpec;//销售规格
+    @TableField(exist = false)
+    private List<ServicePackageInfo> servicePackageInfos;//服务信息
+    private Integer showIntroduction;//是否展示服务简介 0-不展示 1-展示
+    private String width;
+    @TableField(exist = false)
+    private List<ServicePackDetail> servicePackDetails;//服务详情
+    private Integer protocolType;//1-勾选即可 2-弹窗阅读至底部
+    private Integer protocolId;
+}
