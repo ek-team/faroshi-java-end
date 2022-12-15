@@ -51,6 +51,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     private DoctorTeamService doctorTeamService;
     @Resource
     private ProductStockService productStockService;
+    @Resource
+    private IntroductionService introductionService;//服务简介
 
     /**
      * 设备二维码绑定服务包
@@ -265,6 +267,14 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             servicePackDetailService.saveBatch(servicePackDetails);
         }
+        //添加服务简介
+        List<Introduction> introductions = servicePack.getIntroductions();
+        if (!CollectionUtils.isEmpty(introductions)) {
+            for (Introduction introduction : introductions) {
+                introduction.setServicePackId(servicePack.getId());
+            }
+            introductionService.saveBatch(introductions);
+        }
         return RestResponse.ok();
     }
 
@@ -323,7 +333,15 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             servicePackDetailService.saveBatch(servicePackDetails);
         }
-
+        //服务简介
+        introductionService.remove(new QueryWrapper<Introduction>().lambda().eq(Introduction::getServicePackId, servicePack.getId()));
+        List<Introduction> introductions = servicePack.getIntroductions();
+        if (!CollectionUtils.isEmpty(introductions)) {
+            for (Introduction introduction : introductions) {
+                introduction.setServicePackId(servicePack.getId());
+            }
+            introductionService.saveBatch(introductions);
+        }
         return RestResponse.ok();
     }
 
@@ -400,6 +418,11 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         List<ServicePackDetail> servicePackDetails = servicePackDetailService.list(new QueryWrapper<ServicePackDetail>()
                 .lambda().eq(ServicePackDetail::getServicePackId, id));
         servicePack.setServicePackDetails(servicePackDetails);
+
+        //查询服务简介
+        List<Introduction> introductions = introductionService.list(new QueryWrapper<Introduction>().lambda()
+                .eq(Introduction::getServicePackId, id));
+        servicePack.setIntroductions(introductions);
         return RestResponse.ok(servicePack);
     }
 

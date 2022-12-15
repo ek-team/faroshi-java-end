@@ -42,6 +42,8 @@ public class ServicePack extends Model<ServicePack> {
     @TableField(exist = false)
     private List<ServicePackageInfo> servicePackageInfos;//服务信息
     private Integer showIntroduction;//是否展示服务简介 0-不展示 1-展示
+    @TableField(exist = false)
+    private List<Introduction> introductions;//服务简介数据
     private String width;
     @TableField(exist = false)
     private List<ServicePackDetail> servicePackDetails;//服务详情
