@@ -25,6 +25,10 @@ public class ServicePack extends Model<ServicePack> {
     private Integer deptId;
     private Integer createUserId;
     private LocalDateTime createTime;
+    private String preSaleMobile;//售前手机号
+    private String preSaleText;//售前提示文本
+    private String afterSaleMobile;//售后手机号
+    private String afterSaleText;//售后提示文本
     private Integer hospitalId;//医院id
     @TableField(exist = false)
     private String hospitalName;//医院名称
