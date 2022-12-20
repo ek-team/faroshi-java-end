@@ -11,11 +11,10 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 public interface FormMapper extends BaseMapper<Form> {
-    @Select("SELECT *" +
-            "FROM form " +
-            "WHERE form.status = 0" +
+    @Select("SELECT * " +
+            " FROM form " +
             "LEFT JOIN dept ON form.dept_id = dept.id " +
-            "${ew.customSqlSegment} ORDER BY form.create_time DESC")
+            "${ew.customSqlSegment} and form.status = 0  ORDER BY form.create_time DESC")
     IPage<Form> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 
 }

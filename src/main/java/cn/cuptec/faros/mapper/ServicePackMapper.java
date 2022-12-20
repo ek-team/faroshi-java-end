@@ -11,9 +11,9 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 public interface ServicePackMapper extends BaseMapper<ServicePack> {
-    @Select("SELECT *" +
-            "FROM service_pack " +
-
+    @Select("SELECT service_pack.*,hospital_info.name as hospitalName" +
+            " FROM service_pack " +
+            "LEFT JOIN hospital_info ON service_pack.hospital_id = hospital_info.id " +
             "LEFT JOIN dept ON service_pack.dept_id = dept.id " +
             "${ew.customSqlSegment} ORDER BY service_pack.create_time DESC")
     IPage<ServicePack> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);

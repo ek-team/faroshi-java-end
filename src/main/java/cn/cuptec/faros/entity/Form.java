@@ -1,5 +1,7 @@
 package cn.cuptec.faros.entity;
 
+import cn.cuptec.faros.common.annotation.Queryable;
+import cn.cuptec.faros.common.enums.QueryLogical;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
@@ -16,6 +18,7 @@ public class Form extends Model<Form> {
 
     @TableId(type = IdType.AUTO)
     private Integer id;
+    @Queryable(queryLogical = QueryLogical.LIKE)
     private String title;
     private LocalDateTime createTime;
     private Integer deptId;

@@ -43,11 +43,7 @@ import java.util.stream.Collectors;
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
 
     @Resource
-    private ServiceTypeService serviceTypeService;
-    @Resource
     private UserServicePackageInfoService userServicePackageInfoService;
-    @Resource
-    private ServicePackService servicePackService;
     @Resource
     private ServicePackageInfoService servicePackageInfoService;
 

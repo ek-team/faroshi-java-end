@@ -1,5 +1,7 @@
 package cn.cuptec.faros.entity;
 
+import cn.cuptec.faros.common.annotation.Queryable;
+import cn.cuptec.faros.common.enums.QueryLogical;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -21,6 +23,7 @@ public class ServicePack extends Model<ServicePack> {
     private String mpQrCode; //公众号二维码 永久
     private Integer buy; //是否是购买 1-购买
     private Integer rent;//是否是租用 2-租用
+    @Queryable(queryLogical = QueryLogical.LIKE)
     private String name;
     private Integer deptId;
     private Integer createUserId;
@@ -29,12 +32,14 @@ public class ServicePack extends Model<ServicePack> {
     private String preSaleText;//售前提示文本
     private String afterSaleMobile;//售后手机号
     private String afterSaleText;//售后提示文本
+    @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer hospitalId;//医院id
     @TableField(exist = false)
     private String hospitalName;//医院名称
     private String productName;//产品名称
     private Double productPrice;//产品价格
-    private String productPics;//产品图片多个以,号分割
+    @TableField(exist = false)
+    private List<ServicePackProductPic> servicePackProductPics;
     @TableField(exist = false)
     private List<Integer> productSpecs;//产品规格
     @TableField(exist = false)

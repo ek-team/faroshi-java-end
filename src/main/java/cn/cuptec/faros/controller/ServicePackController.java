@@ -53,7 +53,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     private ProductStockService productStockService;
     @Resource
     private IntroductionService introductionService;//服务简介
-
+    @Resource
+    private ServicePackProductPicService servicePackProductPicService;
     /**
      * 设备二维码绑定服务包
      */
@@ -227,6 +228,13 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         servicePack.setCreateTime(LocalDateTime.now());
         servicePack.setCreateUserId(byId.getId());
         service.save(servicePack);
+        List<ServicePackProductPic> servicePackProductPics = servicePack.getServicePackProductPics();
+        if(!CollectionUtils.isEmpty(servicePackProductPics)){
+            for (ServicePackProductPic servicePackProductPic : servicePackProductPics) {
+                servicePackProductPic.setServicePackId(servicePack.getId());
+            }
+            servicePackProductPicService.saveBatch(servicePackProductPics);
+        }
         //添加产品规格
         List<Integer> productSpecs = servicePack.getProductSpecs();
         if (!CollectionUtils.isEmpty(productSpecs)) {
@@ -300,6 +308,15 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             servicePackProductSpecService.saveBatch(servicePackProductSpecs);
         }
+        servicePackProductPicService.remove(new QueryWrapper<ServicePackProductPic>().lambda().eq(ServicePackProductPic::getServicePackId, servicePack.getId()));
+
+        List<ServicePackProductPic> servicePackProductPics = servicePack.getServicePackProductPics();
+        if(!CollectionUtils.isEmpty(servicePackProductPics)){
+            for (ServicePackProductPic servicePackProductPic : servicePackProductPics) {
+                servicePackProductPic.setServicePackId(servicePack.getId());
+            }
+            servicePackProductPicService.saveBatch(servicePackProductPics);
+        }
         //添加销售规格
         servicePackSaleSpecService.remove(new QueryWrapper<ServicePackSaleSpec>().lambda().eq(ServicePackSaleSpec::getServicePackId, servicePack.getId()));
 
@@ -351,12 +368,16 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
      * @return
      */
     @GetMapping("/pageScoped")
-    public RestResponse pageScoped() {
+    public RestResponse pageScoped(@RequestParam(value = "startTime",required = false) String startTime, @RequestParam(value = "endTime",required =false) String endTime) {
         Page<ServicePack> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        if (!StringUtils.isEmpty(startTime) && !StringUtils.isEmpty(endTime)) {
+            queryWrapper.le("create_time", endTime);
+            queryWrapper.ge("create_time", startTime);
+        }
+        IPage<ServicePack> servicePackIPage = service.pageScoped(page, queryWrapper);
 
-        IPage<UserOrder> userOrderIPage = service.pageScoped(page, queryWrapper);
-        return RestResponse.ok(userOrderIPage);
+        return RestResponse.ok(servicePackIPage);
     }
 
     /**
@@ -376,7 +397,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             List<ProductSpec> productSpecs = (List<ProductSpec>) productSpecService.listByIds(productSpecIds);
             servicePack.setProductSpec(productSpecs);
         }
-
+        //查询产品图片
+        List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>()
+                .lambda().eq(ServicePackProductPic::getServicePackId, id));
+        servicePack.setServicePackProductPics(list);
         //查询销售规格
         List<ServicePackSaleSpec> servicePackSaleSpecs = servicePackSaleSpecService.list(new QueryWrapper<ServicePackSaleSpec>()
                 .lambda().eq(ServicePackSaleSpec::getServicePackId, id));
@@ -394,7 +418,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             List<Integer> teamIds = new ArrayList<>();
             for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
                 String doctorTeamIds = servicePackageInfo.getDoctorTeamIds();
-                String[] split = doctorTeamIds.split(",");
+                String replace = doctorTeamIds.replace("[", "");
+                String replace1 = replace.replace("]", "");
+                String[] split = replace1.split(",");
                 for (int i = 0; i < split.length; i++) {
                     String n = split[i];
                     teamIds.add(Integer.parseInt(n));
@@ -406,6 +432,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                 List<DoctorTeam> doctorTeamList = servicePackageInfo.getDoctorTeamList();
                 for (DoctorTeam doctorTeam : doctorTeams) {
                     if (doctorTeamIds.contains(doctorTeam.getId() + "")) {
+                        if(CollectionUtils.isEmpty(doctorTeamList)){
+                            doctorTeamList=new ArrayList<>();
+                        }
                         doctorTeamList.add(doctorTeam);
                     }
                 }

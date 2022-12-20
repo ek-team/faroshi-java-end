@@ -95,7 +95,7 @@ public class WxScanService {
 
                     //wxMpTagService.batchTaggings(userRoles, user.getId());
                 }
-                wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适", "点击查看详情", "/pages/orderConfirm/orderConfirm?id=1");
+                wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适", "点击查看详情", "/pages/orderConfirm/orderConfirm?id=1&token=b9780b1b-09e8-4bac-8e4e-217bd1a9837e");
 
             }
 
