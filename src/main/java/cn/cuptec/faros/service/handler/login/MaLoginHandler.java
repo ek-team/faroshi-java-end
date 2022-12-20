@@ -45,8 +45,13 @@ public class MaLoginHandler extends AbstractLoginHandler {
         log.info("小程序登录sessionInfo:{}" + sessionInfo.toString());
         User user = userService.getBaseMapper().getUnionIdIsExist(sessionInfo.getUnionid());
         if (user == null) {
-            log.info("用户信息为空");
-            return null;
+            user = new User();
+            user.setPhone(sessionInfo.getOpenid());
+            user.setMaOpenId(sessionInfo.getOpenid());
+            user.setUnionId(sessionInfo.getUnionid());
+            user.setIsSubscribe(false);
+            user.setLockFlag(CommonConstants.STATUS_NORMAL);
+            userService.save(user);
         }
 
         if (StringUtils.isEmpty(user.getMaOpenId())) {

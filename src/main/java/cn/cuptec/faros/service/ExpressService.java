@@ -58,6 +58,7 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
         return mapExpressTrackVo;
     }
 
+
     private MapExpressTrackVo queryMapTrace(String com, String num, String from, String to){
         MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
         expressParam.setCom(com);

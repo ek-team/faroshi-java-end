@@ -42,10 +42,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/purchase/order")
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
 
-    @Resource
-    private UserServicePackageInfoService userServicePackageInfoService;
-    @Resource
-    private ServicePackageInfoService servicePackageInfoService;
+
 
     /**
      * 获取省的订单数量
@@ -131,23 +128,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setCreateTime(LocalDateTime.now());
         userOrder.setUserId(SecurityUtils.getUser().getId());
         service.save(userOrder);
-        //添加用户自己的服务
-        Integer servicePackId = userOrder.getServicePackId();
 
-        List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
-                .eq(ServicePackageInfo::getServicePackageId, servicePackId));
-        if (!CollectionUtils.isEmpty(servicePackageInfos)) {
-            List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
-            for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
-                UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
-                userServicePackageInfo.setUserId(userOrder.getUserId());
-                userServicePackageInfo.setOrderId(userOrder.getId());
-                userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
-                userServicePackageInfo.setCreateTime(LocalDateTime.now());
-                userServicePackageInfos.add(userServicePackageInfo);
-            }
-            userServicePackageInfoService.saveBatch(userServicePackageInfos);
-        }
 
         return RestResponse.ok("产品下单成功!");
     }

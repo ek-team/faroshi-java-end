@@ -4,12 +4,8 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.pay.PayConfig;
 
 import cn.cuptec.faros.config.security.util.SecurityUtils;
-import cn.cuptec.faros.entity.Dept;
-import cn.cuptec.faros.entity.User;
-import cn.cuptec.faros.entity.UserOrder;
-import cn.cuptec.faros.service.DeptService;
-import cn.cuptec.faros.service.UserOrdertService;
-import cn.cuptec.faros.service.UserService;
+import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyResult;
@@ -23,10 +19,15 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 @Slf4j
 @RestController
@@ -40,6 +41,14 @@ public class WxPayController {
     private UserOrdertService userOrdertService;
     @Resource
     private DeptService deptService;
+    @Resource
+    private UserServicePackageInfoService userServicePackageInfoService;
+    @Resource
+    private ServicePackageInfoService servicePackageInfoService;
+    @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
+    @Resource
+    private ChatUserService chatUserService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -71,7 +80,7 @@ public class WxPayController {
         wxPayConfig.setSubMchId(request.getSubMchId());
         WxPayService wxPayService = PayConfig.getPayService(wxPayConfig);
         try {
-            request.setNotifyUrl("http://pharos.ewj100.com/wxpay/notifyOrder");
+            request.setNotifyUrl("https://pharos3.ewj100.com/wxpay/notifyOrder");
             request.setProductId(request.getOutTradeNo());
 
             return RestResponse.ok(wxPayService.createOrder(request));
@@ -94,10 +103,8 @@ public class WxPayController {
     @PostMapping("/notifyOrder")
     public RestResponse notifyOrder(@RequestBody String xmlData) {
         WxPayOrderNotifyResult rs = WxPayOrderNotifyResult.fromXML(xmlData);
-//		String appId = rs.getAppid();
         String SubMchId = rs.getSubMchId();
         WxPayConfig wxPayConfig = new WxPayConfig();
-//		wxPayConfig.setAppId(appId);
         wxPayConfig.setSubMchId(SubMchId);
         WxPayService wxPayService = PayConfig.getPayService(wxPayConfig);
         try {
@@ -105,6 +112,41 @@ public class WxPayController {
 
             log.info("微信支付成回掉-=======" + notifyResult.toString());
             String transactionId = notifyResult.getTransactionId();
+            String outTradeNo = notifyResult.getOutTradeNo();
+            UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda()
+                    .eq(UserOrder::getOrderNo, outTradeNo));
+            userOrder.setTransactionId(transactionId);
+            userOrder.setStatus(2);//已支付 待发货
+
+            //为用户匹配医生
+            Integer doctorTeamId = userOrder.getDoctorTeamId();
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                Random rand = new Random();//随机选择团队里的医生
+                DoctorTeamPeople doctorTeamPeople = doctorTeamPeopleList.get(rand.nextInt(doctorTeamPeopleList.size()));
+                chatUserService.saveOrUpdateChatUser(doctorTeamPeople.getUserId(), userOrder.getUserId(), "");
+                userOrder.setDoctorId(doctorTeamPeople.getUserId());
+
+            }
+            userOrdertService.updateById(userOrder);
+            //添加用户自己的服务
+            Integer servicePackId = userOrder.getServicePackId();
+
+            List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
+                    .eq(ServicePackageInfo::getServicePackageId, servicePackId));
+            if (!CollectionUtils.isEmpty(servicePackageInfos)) {
+                List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
+                for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
+                    UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
+                    userServicePackageInfo.setUserId(userOrder.getUserId());
+                    userServicePackageInfo.setOrderId(userOrder.getId());
+                    userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
+                    userServicePackageInfo.setCreateTime(LocalDateTime.now());
+                    userServicePackageInfos.add(userServicePackageInfo);
+                }
+                userServicePackageInfoService.saveBatch(userServicePackageInfos);
+            }
             return RestResponse.ok(notifyResult);
         } catch (WxPayException e) {
             e.printStackTrace();
@@ -129,7 +171,7 @@ public class WxPayController {
         WxPayConfig wxPayConfig = new WxPayConfig();
         wxPayConfig.setAppId(request.getAppid());
         wxPayConfig.setSubMchId(request.getSubMchId());
-        request.setNotifyUrl("http://pharos.ewj100.com/wxpay/notifyRefunds");
+        request.setNotifyUrl("https://pharos3.ewj100.com/wxpay/notifyRefunds");
         WxPayService wxPayService = PayConfig.getPayService(wxPayConfig);
         try {
             return RestResponse.ok(wxPayService.refund(request));

@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
     private UserService userService;
     @Resource
     private ChatMsgService chatMsgService;
+
     public IPage<ChatUserVO> pageChatUsers(SocketFrameTextMessage param) {
         List<ChatUserVO> chatUserVos = new ArrayList<>();
 
@@ -87,5 +89,45 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             result.setRecords(chatUserVos);
         }
         return result;
+    }
+
+    /**
+     * 添加关系好友
+     */
+    public void saveOrUpdateChatUser(Integer fromUserId, Integer targetUid, String msg) {
+        ChatUser fromUserChat = new ChatUser();
+        fromUserChat.setUid(fromUserId);
+        fromUserChat.setTargetUid(targetUid);
+        fromUserChat.setLastChatTime(new Date());
+        fromUserChat.setLastMsg(msg);
+
+        ChatUser toUserChat = new ChatUser();
+        toUserChat.setUid(targetUid);
+        toUserChat.setTargetUid(fromUserId);
+        toUserChat.setLastChatTime(new Date());
+        toUserChat.setLastMsg(msg);
+        List<ChatUser> chatUsers = new ArrayList<>();
+        chatUsers.add(fromUserChat);
+        chatUsers.add(toUserChat);
+
+        chatUsers.forEach(chatUser -> {
+            ChatUser one = baseMapper.selectOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, chatUser.getTargetUid()).eq(ChatUser::getUid, chatUser.getUid()));
+            if (one != null) {
+                update(Wrappers.<ChatUser>lambdaUpdate()
+                        .eq(ChatUser::getUid, chatUser.getUid())
+                        .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
+                        .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
+                        .set(ChatUser::getLastMsg, msg));
+
+
+            } else {
+
+                chatUser.setIsClosed(0);
+                chatUser.setLastChatTime(new Date());
+                chatUser.setClearTime(LocalDateTime.now().minusDays(1));
+                chatUser.setLastMsg(msg);
+                save(chatUser);
+            }
+        });
     }
 }

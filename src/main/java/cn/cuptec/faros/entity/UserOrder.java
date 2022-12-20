@@ -25,6 +25,8 @@ public class UserOrder {
     private Integer patientUserId;//就诊人id
     //服务包id
     private Integer servicePackId;
+    private String transactionId;
+    private Integer doctorId;//支付成功随机选择的医生id
     private Integer formId;//表单id
     private Integer doctorTeamId;//服务团队id
     private Integer saleSpecId;//销售规格id

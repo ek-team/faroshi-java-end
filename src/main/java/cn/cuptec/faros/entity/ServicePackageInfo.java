@@ -21,7 +21,9 @@ public class ServicePackageInfo extends Model<ServicePackageInfo> {
     private String name;
     private Integer type;//服务类型 1-图文咨询 2-电话咨询 3-康复指导
     private Integer count;//服务次数
-    private String doctorTeamIds;//医生团队id
+    private String doctorTeamId;//医生团队id
+    @TableField(exist = false)
+    private List<Integer> doctorTeamIds;//医生团队id
     @TableField(exist = false)
     private List<DoctorTeam> doctorTeamList;
     private Integer formId;//表单id

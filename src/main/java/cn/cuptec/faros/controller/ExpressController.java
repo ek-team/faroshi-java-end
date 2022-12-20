@@ -50,13 +50,18 @@ public class ExpressController extends AbstractBaseController<ExpressService, Ex
     public RestResponse listAll(){
         return RestResponse.ok(service.list());
     }
+    /**
+     * 获取用户订单物流轨迹信息
+     * @param id 订单id
+     * @return
+     */
 
     @GetMapping("/user/orderMapTrace")
     public RestResponse getMyExpressInformation(@RequestParam int id){
         MapExpressTrackVo vo = service.getUserOrderMapTrace(id);
         return RestResponse.ok(vo);
     }
-
+    //获取用户回收单物流信息
     @GetMapping("/user/retrieveExpressData")
     public RestResponse getRetrieveOrderExpressData(@RequestParam int id){
         return RestResponse.ok(service.queryRetrieveOrderExpressInfo(id));

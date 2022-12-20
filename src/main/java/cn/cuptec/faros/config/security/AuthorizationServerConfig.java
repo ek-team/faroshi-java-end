@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -20,10 +21,7 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.token.DefaultAuthenticationKeyGenerator;
-import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
-import org.springframework.security.oauth2.provider.token.TokenEnhancer;
-import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
 import javax.sql.DataSource;
@@ -42,7 +40,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	private final CustomUserDetailsService customUserDetailsService;
 	private final AuthenticationManager authenticationManagerBean;
 	private final RedisConnectionFactory redisConnectionFactory;
-
+	private PasswordEncoder passwordEncoder;
     /**
      * 客户端信息配置
      * @param clients
@@ -50,10 +48,22 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Override
 	@SneakyThrows
 	public void configure(ClientDetailsServiceConfigurer clients) {
-		CustomClientDetailsService clientDetailsService = new CustomClientDetailsService(dataSource);
-		clientDetailsService.setSelectClientDetailsSql(SecurityConstants.DEFAULT_SELECT_STATEMENT);
-		clientDetailsService.setFindClientDetailsSql(SecurityConstants.DEFAULT_FIND_STATEMENT);
-		clients.withClientDetails(clientDetailsService);
+		clients.inMemory()
+				.withClient("test")
+				.secret(this.passwordEncoder.encode("test"))
+				// 为了测试，所以开启所有的方式，实际业务根据需要选择
+				.authorizedGrantTypes("authorization_code", "password", "client_credentials", "implicit", "refresh_token")
+				.accessTokenValiditySeconds(15552000)
+				.refreshTokenValiditySeconds(864000)
+				.scopes("select")
+				// false跳转到授权页面，在授权码模式中会使用到
+				.autoApprove(false)
+				// 验证回调地址
+				.redirectUris("http://www.baidu.com");
+//		CustomClientDetailsService clientDetailsService = new CustomClientDetailsService(dataSource);
+//		clientDetailsService.setSelectClientDetailsSql(SecurityConstants.DEFAULT_SELECT_STATEMENT);
+//		clientDetailsService.setFindClientDetailsSql(SecurityConstants.DEFAULT_FIND_STATEMENT);
+//		clients.withClientDetails(clientDetailsService);
 	}
 
 	@Override

@@ -111,7 +111,6 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
      * @return
      */
     private void saveOrUpdateChatUser(User fromUser, SocketFrameTextMessage origionMessage, ChatMsg chatMsg) {
-        //判断是小程序端发送消息
         ChatUser fromUserChat = new ChatUser();
         fromUserChat.setUid(fromUser.getId());
         fromUserChat.setTargetUid(origionMessage.getTargetUid());

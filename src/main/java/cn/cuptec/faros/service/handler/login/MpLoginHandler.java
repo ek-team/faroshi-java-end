@@ -54,7 +54,7 @@ public class MpLoginHandler extends AbstractLoginHandler {
         WxMpUser wxMpUser = wxMpService.oauth2getUserInfo(accessToken, null);
         log.info("wxMpUser={}", JSON.toJSONString(wxMpUser));
         if (wxMpUser != null) {
-            User user = userService.getBaseMapper().getMpOpenIdIsExist(wxMpUser.getOpenId());
+            User user = userService.getBaseMapper().getUnionIdIsExist(wxMpUser.getUnionId());
             if (user == null) {
                 user = new User();
                 user.setPhone(wxMpUser.getOpenId());
