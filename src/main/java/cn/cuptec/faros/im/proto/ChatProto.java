@@ -22,11 +22,7 @@ public class ChatProto {
     public static final String MESSAGE_PIC = "MESSAGE_PIC";
     public static final String MESSAGE_TEXT = "MESSAGE_TEXT";
     public static final String MESSAGE_FILE = "MESSAGE_FILE";
-    public static final String INQUIRY="INQUIRY";//问诊单
-    public static final String PRESCRIPTION_INFO="PRESCRIPTION_INFO";//处方单
-    //产品介绍的消息类型
-    public static final String MESSAGE_PRODUCT_INFO = "MESSAGE_PRODUCT_INFO";
-    public static final String MESSAGE_NEWRECIPE = "MESSAGE_NEWRECIPE";
+
     public static final String RESPONSE_MESSAGE = "RESPONSE_MESSAGE";
 
 
@@ -40,10 +36,7 @@ public class ChatProto {
 
     //音频消息
     public static final String VIDEO = "VIDEO";
-    //红包
-    public static final String RED_ENVELOPE = "RED_ENVELOPE";
-    //文章
-    public static final String ARTICLE = "ARTICLE";
+
     //转发消息
     public static final String FORWARD = "FORWARD";
     //音频已读
