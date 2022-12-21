@@ -3,6 +3,7 @@ package cn.cuptec.faros.im;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.ChatMsg;
+import cn.cuptec.faros.entity.ChatUser;
 import cn.cuptec.faros.im.bean.ChatUserVO;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.im.core.UserChannelManager;
@@ -41,19 +42,12 @@ public class ChatUserController {
             iPage.setRecords(records);
             return RestResponse.ok(iPage);
         }
-        //设置聊天用户在线状态
-        records.forEach(chatUserVO -> {
-            UserChannelManager.userChannelMap.forEach((ch, socketUser) -> {
-                if (socketUser.isAuth() && socketUser.getUserInfo().getId().equals(chatUserVO.getTargetUid())) {
-                    chatUserVO.setOnline(1);
 
-                }
-            });
-        });
         iPage.setRecords(records);
         //返回请求结果
         return RestResponse.ok(iPage);
     }
+
     /**
      * 获取用户未读数量
      */
@@ -65,7 +59,11 @@ public class ChatUserController {
                         Wrappers.<ChatMsg>lambdaQuery()
                                 .eq(ChatMsg::getToUid, SecurityUtils.getUser().getId())
                                 .eq(ChatMsg::getReadStatus, 0));
-
-        return RestResponse.ok(count);
+        // 是否有新消息
+        int count1 =
+                chatMsgService.count(
+                        Wrappers.<ChatMsg>lambdaQuery()
+                                .notLike(ChatMsg::getReadUserIds, SecurityUtils.getUser().getId()));
+        return RestResponse.ok(count + count1);
     }
 }

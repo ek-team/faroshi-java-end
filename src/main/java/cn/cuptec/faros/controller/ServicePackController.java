@@ -277,6 +277,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
                         }
                     }
+                    servicePackageInfo.setDoctorTeamId(doctorTeamId);
                 }
             }
             servicePackageInfoService.saveBatch(servicePackageInfos);
@@ -362,6 +363,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
                         }
                     }
+                    servicePackageInfo.setDoctorTeamId(doctorTeamId);
                 }
 
             }

@@ -19,14 +19,15 @@ public class RetrieveOrder {
 
     @TableId
     private Integer id;
-
     private String deliveryName;//发货人姓名
     private String deliveryPhone;//发货人手机号
     private String deliveryAddress;//发货人地址
     private String orderId;
     private String naLiOrderId;
     private String orderNo;
-
+    //服务包id
+    private Integer servicePackId;
+    private Integer saleSpecId;//销售规格id
     //设备是否能开机
     private Boolean isCanOpen;
 
@@ -57,7 +58,7 @@ public class RetrieveOrder {
     //发货时间
     private Date deliveryTime;
 
-    //收到或的事件
+    //收到或的时间
     private Date receieveTime;
 
     //快递公司编码
@@ -76,8 +77,7 @@ public class RetrieveOrder {
 
     //确认收款时间
     private Date confirmRevMoneyTime;
-    // 根据纳里需求新的状态 未收获1 已收货2
-    //状态 0-待邮寄 1-待收货 2-待打款 3-待收款 9-回收完成 4 待确认价格
+    //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
 
@@ -106,6 +106,8 @@ public class RetrieveOrder {
     private String accountBank;
     //用户名
     private String userName;
+    @TableField(exist = false)
+    private String patientUserName;
     //收货人详细地址
     private String receiverDetailAddress;
 
@@ -118,7 +120,10 @@ public class RetrieveOrder {
 
     @TableField(exist = false)
     private String salesmanName;
-
+    @TableField(exist = false)
+    private ServicePack servicePack;//服务包信息
+    @TableField(exist = false)
+    private SaleSpec saleSpec;//销售规格信息
     @TableField(exist = false)
     private String salesmanPhone;
 

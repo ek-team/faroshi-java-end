@@ -147,15 +147,19 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         List<FormSetting> list = formSettingService.list(new QueryWrapper<FormSetting>().lambda().eq(FormSetting::getFormId, id));
         List<Integer> formSettingIds = list.stream().map(FormSetting::getId)
                 .collect(Collectors.toList());
-        List<FormOptions> formOptions = formOptionsService.list(new QueryWrapper<FormOptions>().lambda()
-                .in(FormOptions::getFormSettingId, formSettingIds));
-        if (!CollectionUtils.isEmpty(formOptions)) {
-            Map<Integer, List<FormOptions>> map = formOptions.stream()
-                    .collect(Collectors.groupingBy(FormOptions::getFormSettingId));
-            for (FormSetting formSetting : list) {
-                formSetting.setFormOptionsList(map.get(formSetting.getId()));
+        if(!CollectionUtils.isEmpty(formSettingIds)){
+            List<FormOptions> formOptions = formOptionsService.list(new QueryWrapper<FormOptions>().lambda()
+                    .in(FormOptions::getFormSettingId, formSettingIds));
+            if (!CollectionUtils.isEmpty(formOptions)) {
+                Map<Integer, List<FormOptions>> map = formOptions.stream()
+                        .collect(Collectors.groupingBy(FormOptions::getFormSettingId));
+                for (FormSetting formSetting : list) {
+                    formSetting.setFormOptionsList(map.get(formSetting.getId()));
+                }
             }
         }
+
+
         byId.setFormSettings(list);
         return RestResponse.ok(byId);
     }

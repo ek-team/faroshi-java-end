@@ -13,7 +13,7 @@ public interface FormMapper extends BaseMapper<Form> {
     @Select("SELECT form.* " +
             " FROM form " +
             "LEFT JOIN dept ON form.dept_id = dept.id " +
-            "${ew.customSqlSegment} and form.status = 0  ORDER BY form.create_time DESC")
+            "${ew.customSqlSegment} where form.status = 0  ORDER BY form.create_time DESC")
     IPage<Form> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 
 }

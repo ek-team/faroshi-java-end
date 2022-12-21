@@ -44,64 +44,96 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     private MobileService mobileService;
     @Resource
     private WxMpService wxMpService;
+    @Resource
+    private SaleSpecService saleSpecService;//销售规格
+    @Resource
+    private ServicePackService servicePackService;
+    @Resource
+    private ServicePackProductPicService servicePackProductPicService;
+    @Resource
+    private RetrieveOrderReviewDataService retrieveOrderReviewDataService;//回收单审核信息
 
+    /**
+     * 添加回收单审核设备信息
+     */
+    @PostMapping("/saveRetrieveOrderReviewData")
+    public RestResponse saveRetrieveOrderReviewData(@RequestBody RetrieveOrderReviewData retrieveOrderReviewData) {
+        retrieveOrderReviewData.setCreateTime(LocalDateTime.now());
 
-    @GetMapping("/manage/pageMy")
-    public RestResponse page() {
-        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-        Page<RetrieveOrder> page = getPage();
-        Integer uid = SecurityUtils.getUser().getId();
-        if (uid != 114) {
-            queryWrapper.eq("salesman_id", uid);
-        }
-        IPage page1 = service.pageRetrieveOrder(page, queryWrapper);
-        //查询用户姓名
-        List<RetrieveOrder> records = page1.getRecords();
-        if (!CollectionUtils.isEmpty(records)) {
-            List<Integer> userIds = records.stream().map(RetrieveOrder::getUserId)
-                    .collect(Collectors.toList());
-            List<User> users = (List<User>) userService.listByIds(userIds);
-            Map<Integer, List<User>> userMap = users.stream()
-                    .collect(Collectors.groupingBy(User::getId));
-            Integer[] type1 = {1};
-            for (RetrieveOrder retrieveOrder : records) {
-                retrieveOrder.setPaymentMethod(type1);
-                List<User> users1 = userMap.get(retrieveOrder.getUserId());
-                if (!CollectionUtils.isEmpty(users1)) {
-                    retrieveOrder.setUserName(users1.get(0).getNickname());
-
-                }
-            }
-            List<String> orderIds = records.stream().map(RetrieveOrder::getOrderId)
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(orderIds)) {
-                Collection<UserOrder> userOrders = userOrdertService.listByIds(orderIds);
-                if (CollUtil.isNotEmpty(userOrders)) {
-                    Integer[] type2 = {1, 2};
-                    for (RetrieveOrder retrieveOrder : records) {
-                        for (UserOrder userOrder : userOrders) {
-                            if (userOrder.getId().equals(retrieveOrder.getOrderId())) {
-
-                                break;
-                            }
-                        }
-                    }
-
-                }
-
-            }
-        }
-
-
-        page1.setRecords(records);
-        return RestResponse.ok(page1);
+        return RestResponse.ok(retrieveOrderReviewDataService.save(retrieveOrderReviewData));
     }
 
+    /**
+     * 查询回收单审核信息
+     * @param retrieveOrderId
+     * @return
+     */
+    @GetMapping("/getRetrieveOrderReviewDataById")
+    public RestResponse getRetrieveOrderReviewDataById(@RequestParam("retrieveOrderId") Integer retrieveOrderId) {
+
+        return RestResponse.ok(retrieveOrderReviewDataService.getOne(new QueryWrapper<RetrieveOrderReviewData>().lambda().eq(RetrieveOrderReviewData::getRetrieveOrderId, retrieveOrderId)));
+    }
+
+    /**
+     * 查询部门下的回收单
+     *
+     * @return
+     */
     @GetMapping("/manage/pageScoped")
-    public RestResponse pageScoped() {
+    public RestResponse pageScoped(@RequestParam(value = "servicePackName",required = false) String servicePackName,
+                                   @RequestParam(value = "startTime",required = false) String startTime,
+                                   @RequestParam(value = "endTime",required = false) String endTime,
+                                   @RequestParam(value = "nickname",required = false) String nickname,
+                                   @RequestParam(value = "receiverPhone",required = false) String receiverPhone,
+                                   @RequestParam(value = "orderId",required = false) String orderId) {
         Page<RetrieveOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        if (!StringUtils.isEmpty(servicePackName)) {
+            queryWrapper.eq("service_pack.name", servicePackName);
+        }
+        if (!StringUtils.isEmpty(nickname)) {
+            queryWrapper.eq("patient_user.name", nickname);
+        }
+        if (!StringUtils.isEmpty(orderId)) {
+            queryWrapper.eq("retrieve_order.order_id", orderId);
+        }
+        if (!StringUtils.isEmpty(startTime)) {
+            queryWrapper.le("retrieve_order.create_time", endTime);
+            queryWrapper.ge("retrieve_order.create_time", startTime);
+        }
         IPage pageResult = service.pageScoped(page, queryWrapper);
+        if (CollUtil.isNotEmpty(pageResult.getRecords())) {
+            List<RetrieveOrder> records = pageResult.getRecords();
+            //服务包信息
+            List<Integer> servicePackIds = records.stream().map(RetrieveOrder::getServicePackId)
+                    .collect(Collectors.toList());
+            List<ServicePack> servicePacks = (List<ServicePack>) servicePackService.listByIds(servicePackIds);
+            //查询服务包图片信息
+            if (!org.springframework.util.CollectionUtils.isEmpty(servicePacks)) {
+                List<ServicePackProductPic> servicePackProductPics = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
+                        .in(ServicePackProductPic::getServicePackId, servicePackIds));
+                if (!org.springframework.util.CollectionUtils.isEmpty(servicePackProductPics)) {
+                    Map<Integer, List<ServicePackProductPic>> servicePackProductPicMap = servicePackProductPics.stream()
+                            .collect(Collectors.groupingBy(ServicePackProductPic::getServicePackId));
+                    for (ServicePack servicePack : servicePacks) {
+                        servicePack.setServicePackProductPics(servicePackProductPicMap.get(servicePack.getId()));
+                    }
+                }
+            }
+            Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
+                    .collect(Collectors.toMap(ServicePack::getId, t -> t));
+            //规格信息
+            List<Integer> saleSpecIds = records.stream().map(RetrieveOrder::getSaleSpecId)
+                    .collect(Collectors.toList());
+            List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
+            Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()
+                    .collect(Collectors.toMap(SaleSpec::getId, t -> t));
+            for (RetrieveOrder retrieveOrder : records) {
+                retrieveOrder.setServicePack(servicePackMap.get(retrieveOrder.getServicePackId()));
+                retrieveOrder.setSaleSpec(saleSpecMap.get(retrieveOrder.getSaleSpecId()));
+            }
+        }
+
         return RestResponse.ok(pageResult);
     }
 
@@ -110,6 +142,11 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         return RestResponse.ok(service.countScoped());
     }
 
+    /**
+     * 用户查询自己的回收单
+     *
+     * @return
+     */
     @GetMapping("/user/pageMy")
     public RestResponse listMy() {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
@@ -167,6 +204,17 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             }
         }
 
+        return RestResponse.ok();
+    }
+
+    /**
+     * 用户一键寄回 生成回收单
+     */
+    @PostMapping("/user/saveRetrieveOrder")
+    public RestResponse saveRetrieveOrder(@RequestBody RetrieveOrder retrieveOrder) {
+        retrieveOrder.setUserId(SecurityUtils.getUser().getId());
+        retrieveOrder.setCreateTime(new Date());
+        service.saveRetrieveOrder(retrieveOrder);
         return RestResponse.ok();
     }
 

@@ -12,6 +12,9 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 回收地址
+ */
 @Data
 public class SalesmanRetrieveAddress{
 

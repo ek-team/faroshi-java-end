@@ -158,11 +158,11 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         return baseMapper.pageMyOrder(page, queryWrapper);
     }
 
-//    @Override
-//    public UserOrder getById(Serializable id) {
-//        UserOrder userOrder = baseMapper.getOrderDetail(id);
-//        return userOrder;
-//    }
+    @Override
+    public UserOrder getById(Serializable id) {
+        UserOrder userOrder = baseMapper.getOrderDetail(id);
+        return userOrder;
+    }
 
     public UOrderStatuCountVo countScoped() {
         List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery(), new DataScope());
@@ -180,11 +180,14 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         return vo;
     }
 
-    //业务员查询部门订单
+    //查询部门订单
     public IPage<UserOrder> pageScoped(IPage<UserOrder> page, Wrapper<UserOrder> queryWrapper) {
-        return baseMapper.pageScoped(page, queryWrapper, new DataScope());
+        DataScope dataScop3 = new DataScope();
+        dataScop3.setIsOnly(true);
+        return baseMapper.pageScoped(page, queryWrapper, dataScop3);
     }
-//
+
+    //
 //    //手动修改订单
 //    public void updateOrderManual(UserOrder order) {
 //        Assert.notNull(order.getStatus(), "订单状态不能为空");
@@ -212,54 +215,19 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 //    }
 //
     @Transactional(rollbackFor = Exception.class)
-    public void conformDelivery(int orderid, String productSn, String expressCode, String deliverySn) {
-        UserOrder userOrder = super.getById(orderid);
+    public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber) {
+        UserOrder userOrder = super.getById(orderId);
         Assert.notNull(userOrder, "订单不存在");
 
         Assert.isTrue(userOrder.getStatus() == 2, "订单非待发货状态");
-        ProductStock productStock = productStockService.getOne(Wrappers.<ProductStock>lambdaQuery().eq(ProductStock::getProductSn, productSn));
-        Assert.notNull(productStock, "产品不存在");
-        if (productStock != null) {
-            Assert.isTrue(productStock.getStatus() == 20, "非业务库存产品不可以发货");
-
-            if (StrUtil.isNotBlank(expressCode)) {
-                Express express = expressService.getOne(Wrappers.<Express>lambdaQuery().eq(Express::getExpressCode, expressCode));
-                userOrder.setDeliveryCompanyName(express.getExpressName());
-            }
-
-            Locator locator = locatorService.getById(productStock.getLocatorId());
-
-            productStock.setSalesmanId(userOrder.getSalesmanId());
-            productStockService.updateById(productStock);
-//            userOrder.setDeliveryAddress(locator.getLocatorRegion() + locator.getLocatorDetailAddress());
-//
-//            userOrder.setDeliveryLocatorId(productStock.getLocatorId());
-
-            locator.setProductLockNum(locator.getProductLockNum() - 1);
-            locatorService.updateLocator(locator);
-            productStock.setStatus(21);
-
-
-            LambdaUpdateWrapper<ProductStock> updateWrapper = new UpdateWrapper<ProductStock>().lambda()
-                    .eq(ProductStock::getId, productStock.getId())
-                    .eq(ProductStock::getStatus, 20);
-            boolean update = productStockService.update(productStock, updateWrapper);
-            Assert.isTrue(update, "操作失败,设备状态无法被购买发货");
-        }
-
 
         userOrder.setStatus(3);
-        userOrder.setDeliveryCompanyCode(expressCode);
-        userOrder.setDeliverySn(deliverySn);
-        //userOrder.setDelieveyTime(new Date());
+        userOrder.setDeliveryCompanyCode(deliveryCompanyCode);
+        userOrder.setDeliverySn(deliveryNumber);
+        userOrder.setDeliveryNumber(deliveryNumber);
+        userOrder.setDeliveryTime(new Date());
         super.updateById(userOrder);
 
-
-        //修改仓库锁定数量
     }
-//
-//    public UserOrder newOrderByProductSn(Integer userId, String productSn) {
-//        return super.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getUserId, userId)
-//                .eq(UserOrder::getProductSn, productSn).orderByDesc(UserOrder::getId).last(" limit 1"));
-//    }
+
 }

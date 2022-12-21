@@ -1,9 +1,11 @@
 package cn.cuptec.faros.im.bean;
 
+import cn.cuptec.faros.entity.DoctorTeamPeople;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class ChatUserVO implements Comparable<ChatUserVO> {
@@ -12,7 +14,8 @@ public class ChatUserVO implements Comparable<ChatUserVO> {
      * 用户id
      */
     private Integer targetUid;
-
+    private Integer chatUserId;//群聊id
+    private Integer groupType = 0;//0-单聊 1-群聊
     /**
      * 昵称
      */
@@ -22,7 +25,7 @@ public class ChatUserVO implements Comparable<ChatUserVO> {
      * 头像
      */
     private String avatar;
-
+    private List<DoctorTeamPeople> doctorTeamPeopleList;
     /**
      * 最后通讯时间
      */
@@ -48,11 +51,6 @@ public class ChatUserVO implements Comparable<ChatUserVO> {
      * 是否有新消息
      */
     private int hasNewMsg;
-
-    /**
-     * 未读消息数量
-     */
-    private int noReadCount;
 
     @Override
     public int compareTo(ChatUserVO o) {

@@ -138,12 +138,16 @@ public class UserController extends AbstractBaseController<UserService, User> {
      * @param user
      * @return
      */
+    @PostMapping("/updateById")
+    public RestResponse updateById(@RequestBody @Valid User user) {
+        user.setId(SecurityUtils.getUser().getId());
+        return service.updateById(user) ? RestResponse.ok() : RestResponse.failed();
+    }
     @PutMapping
     public RestResponse update(@RequestBody @Valid User user) {
         user.setId(SecurityUtils.getUser().getId());
         return service.updateById(user) ? RestResponse.ok() : RestResponse.failed();
     }
-
 
     @SysLog("添加用户")
     @PostMapping("/manage/add")

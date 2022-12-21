@@ -1,8 +1,6 @@
 package cn.cuptec.faros.service;
 
-import cn.cuptec.faros.entity.ChatMsg;
-import cn.cuptec.faros.entity.ChatUser;
-import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.ChatUserVO;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.mapper.ChatMsgMapper;
@@ -11,6 +9,7 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -32,6 +31,10 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
     private UserService userService;
     @Resource
     private ChatMsgService chatMsgService;
+    @Resource
+    private DoctorTeamService doctorTeamService;
+    @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
 
     public IPage<ChatUserVO> pageChatUsers(SocketFrameTextMessage param) {
         List<ChatUserVO> chatUserVos = new ArrayList<>();
@@ -49,8 +52,68 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         if (CollectionUtils.isEmpty(chatUsers)) {
             return result;
         }
-        List<Integer> targetUids = chatUsers.stream().map(ChatUser::getTargetUid).collect(Collectors.toList());
-        //1
+        List<Integer> targetUids = new ArrayList<>();
+        List<Integer> teamIds = new ArrayList<>();
+        for (ChatUser chatUser : chatUsers) {
+            if (chatUser.getGroupType() == 0) {
+                targetUids.add(chatUser.getTargetUid());
+            } else {
+                teamIds.add(chatUser.getTeamId());
+            }
+
+        }
+        if (!CollectionUtils.isEmpty(teamIds)) {
+            //处理群聊消息
+            List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+            //查询所有人员头像
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .in(DoctorTeamPeople::getTeamId, teamIds));
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                List<User> users = (List<User>) userService.listByIds(userIds);
+                Map<Integer, User> userMap = users.stream()
+                        .collect(Collectors.toMap(User::getId, t -> t));
+                for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
+                    if (userMap.get(doctorTeamPeople.getUserId()) != null) {
+                        doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+                    }
+
+                }
+                Map<Integer, List<DoctorTeamPeople>> doctorTeamPeopleMap = doctorTeamPeopleList.stream()
+                        .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
+                for (DoctorTeam doctorTeam : doctorTeams) {
+                    doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
+                }
+            }
+            Map<Integer, DoctorTeam> doctorTeamMap = doctorTeams.stream()
+                    .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+            for (ChatUser chatUser : chatUsers) {
+                if (chatUser.getGroupType().equals(1)) {
+                    ChatUserVO chatUserVO = new ChatUserVO();
+                    DoctorTeam doctorTeam = doctorTeamMap.get(chatUser.getTeamId());
+                    List<DoctorTeamPeople> doctorTeamPeopleList1 = doctorTeam.getDoctorTeamPeopleList();
+                    chatUserVO.setDoctorTeamPeopleList(doctorTeamPeopleList1);
+                    chatUserVO.setNickname(doctorTeam.getName());
+                    chatUserVO.setGroupType(1);
+                    chatUserVO.setChatUserId(chatUser.getId());
+                    // 最后聊天时间和内容
+
+                    chatUserVO.setLastChatTime(chatUser.getLastChatTime());
+                    chatUserVO.setLastMsg(chatUser.getLastMsg());
+                    chatUserVos.add(chatUserVO);
+
+                    // 是否有新消息
+                    int count =
+                            chatMsgService.count(
+                                    Wrappers.<ChatMsg>lambdaQuery()
+                                            .eq(ChatMsg::getChatUserId, chatUser.getId())
+                                            .notLike(ChatMsg::getReadUserIds, param.getMyUserId()));
+                    chatUserVO.setHasNewMsg(count);
+                }
+            }
+        }
+
         if (targetUids.size() > 0) {
 
             List<User> users = (List<User>) userService.listByIds(targetUids);
@@ -91,9 +154,9 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     }
             );
 
-            Collections.sort(chatUserVos);
-            result.setRecords(chatUserVos);
         }
+        Collections.sort(chatUserVos);
+        result.setRecords(chatUserVos);
         return result;
     }
 
@@ -141,19 +204,20 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
     /**
      * 添加群聊
      */
-    public void saveGroupChatUser(List<Integer> userIds) {
-        String chatUserId="";
-        for(Integer userId:userIds){
-            if(StringUtils.isEmpty(chatUserId)){
-                chatUserId=userId+"";
-            }else{
-                chatUserId=chatUserId+","+userId;
+    public void saveGroupChatUser(List<Integer> userIds, Integer doctorTeamId) {
+        String chatUserId = "";
+        for (Integer userId : userIds) {
+            if (StringUtils.isEmpty(chatUserId)) {
+                chatUserId = userId + "";
+            } else {
+                chatUserId = chatUserId + "," + userId;
             }
         }
         ChatUser chatUser = new ChatUser();
         chatUser.setUserIds(chatUserId);
         chatUser.setGroupType(1);
         chatUser.setLastChatTime(new Date());
+        chatUser.setTeamId(doctorTeamId);
         save(chatUser);
     }
 }

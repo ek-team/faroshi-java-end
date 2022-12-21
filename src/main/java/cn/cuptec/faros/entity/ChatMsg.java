@@ -16,7 +16,8 @@ public class ChatMsg extends Model<ChatMsg> {
     @TableId(type = IdType.AUTO)
     private String id;
     private Integer chatUserId;//群聊消息id
-    /**
+    private String readUserIds;//已读人用户id
+     /**
      * 消息类型
      * 数据字典MsgType TEXT-文本  IMG-图片
      * AUDIO-音频 ORDER-订单通知  VIDEO-音频 RED_ENVELOPE-红包

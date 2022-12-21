@@ -54,14 +54,18 @@ public class UploadFileController {
     @ApiOperation(value = "上传文件")
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("file") MultipartFile mulFile,
-                             @RequestParam("dir") String dir,
-                             @RequestParam("fileName") String fileName
+                             @RequestParam("dir") String dir
     ) throws Exception {
         File file = FileUtils.multipartFileToFile(mulFile);
-
-        return UploadFileUtils.uploadFile(file, dir, ossProperties, fileName);
+        String originalFilename = mulFile.getOriginalFilename();
+        String[] split = originalFilename.split("\\.");
+        return UploadFileUtils.uploadFile(file, dir, ossProperties,split[0] );
     }
 
+    public static void main(String[] args) {
+        String a="11.jpeg";
+        System.out.println(a.split("\\.")[0]);
+    }
 
     /**
      * 上传设备记录信息
@@ -90,18 +94,14 @@ public class UploadFileController {
         return RestResponse.ok();
     }
 
-    public static void main(String[] args) {
-        System.out.println("12:ere:ff:we".replaceAll(":", ""));
-    }
-
     /**
      * 下载设备记录信息
      */
     @ApiOperation(value = "下载设备记录信息")
     @GetMapping("/downloadProductStockInfo")
     public RestResponse downloadProductStockInfo(
-            @RequestParam(value ="macAdd",required = false) String macAdd,
-            @RequestParam(value = "sourceProductSn",required = false) String sourceProductSn
+            @RequestParam(value = "macAdd", required = false) String macAdd,
+            @RequestParam(value = "sourceProductSn", required = false) String sourceProductSn
     ) throws Exception {
         //查询设备下载信息
         List<MacAddDownloadType> list = new ArrayList<>();

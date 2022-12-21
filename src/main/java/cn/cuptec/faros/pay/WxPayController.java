@@ -118,7 +118,7 @@ public class WxPayController {
                     .eq(UserOrder::getOrderNo, outTradeNo));
             userOrder.setTransactionId(transactionId);
             userOrder.setStatus(2);//已支付 待发货
-
+            userOrder.setPayTime(LocalDateTime.now());
             //为用户创建群聊
             Integer doctorTeamId = userOrder.getDoctorTeamId();
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
@@ -126,7 +126,7 @@ public class WxPayController {
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
-                chatUserService.saveGroupChatUser(userIds);
+                chatUserService.saveGroupChatUser(userIds,doctorTeamId);
 
             }
             userOrdertService.updateById(userOrder);

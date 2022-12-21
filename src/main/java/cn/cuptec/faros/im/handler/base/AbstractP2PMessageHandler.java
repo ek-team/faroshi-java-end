@@ -82,7 +82,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     }
 
                 }
-
+                //更新群聊 聊天时间和 最后聊天内容
+                byId.setLastChatTime(new Date());
+                byId.setLastMsg(origionMessage.getMsg());
+                chatUserService.updateById(byId);
             } else {
                 origionMessage.setMyUserId(fromUser.getId());
                 Channel targetUserChannel = UserChannelManager.getUserChannel(origionMessage.getTargetUid());

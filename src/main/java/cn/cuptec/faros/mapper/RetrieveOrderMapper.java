@@ -20,9 +20,11 @@ public interface RetrieveOrderMapper extends BaseMapper<RetrieveOrder> {
             "${ew.customSqlSegment} ORDER BY retrieve_order.create_time desc")
     IPage<RetrieveOrder> pageRetrieveOrder(IPage<RetrieveOrder> page, @Param(Constants.WRAPPER) Wrapper<RetrieveOrder> queryWrapper);
 
-    @Select("SELECT retrieve_order.*, dept.name as deptName, user.nickname as salesmanName from retrieve_order " +
+    @Select("SELECT retrieve_order.*,patient_user.name as patientUserName, dept.name as deptName from retrieve_order " +
             "LEFT JOIN dept ON retrieve_order.dept_id = dept.id " +
-            "LEFT JOIN user ON retrieve_order.salesman_id = user.id " +
+            "LEFT JOIN user_order ON retrieve_order.order_id = user_order.id " +
+            "LEFT JOIN patient_user ON user_order.patient_user_id = patient_user.id " +
+            "LEFT JOIN service_pack ON user_order.service_pack_id = service_pack.id " +
             "${ew.customSqlSegment} ORDER BY retrieve_order.create_time desc")
     IPage<RetrieveOrder> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 

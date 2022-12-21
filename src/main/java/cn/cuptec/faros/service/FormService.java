@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.Comparator;
@@ -37,12 +38,15 @@ public class FormService extends ServiceImpl<FormMapper, Form> {
         List<FormSetting> formSettingList = formSettingService.list(new QueryWrapper<FormSetting>().lambda().in(FormSetting::getFormId, formIds));
         List<Integer> formSettingIds = formSettingList.stream().map(FormSetting::getId)
                 .collect(Collectors.toList());
-        List<FormOptions> formOptionsList = formOptionsService.list(new QueryWrapper<FormOptions>().lambda().in(FormOptions::getFormSettingId, formSettingIds));
-        Map<Integer, List<FormOptions>> formOptionsMap = formOptionsList.stream()
-                .collect(Collectors.groupingBy(FormOptions::getFormSettingId));
-        for (FormSetting formSetting : formSettingList) {
-            formSetting.setFormOptionsList(formOptionsMap.get(formSetting.getId()));
+        if(!CollectionUtils.isEmpty(formSettingIds)){
+            List<FormOptions> formOptionsList = formOptionsService.list(new QueryWrapper<FormOptions>().lambda().in(FormOptions::getFormSettingId, formSettingIds));
+            Map<Integer, List<FormOptions>> formOptionsMap = formOptionsList.stream()
+                    .collect(Collectors.groupingBy(FormOptions::getFormSettingId));
+            for (FormSetting formSetting : formSettingList) {
+                formSetting.setFormOptionsList(formOptionsMap.get(formSetting.getId()));
+            }
         }
+
         Map<Integer, List<FormSetting>> formSettingMap = formSettingList.stream()
                 .collect(Collectors.groupingBy(FormSetting::getFormId));
         for (Form form : formList) {

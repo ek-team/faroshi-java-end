@@ -34,8 +34,6 @@ import java.util.stream.Collectors;
 public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, RetrieveOrder> {
 
     @Resource
-    private ProductService productService;
-    @Resource
     private ProductStockService productStockService;
     @Resource
     private UserService userService;
@@ -52,123 +50,14 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
 
     @Resource
     private WxMpService wxMpService;
-    ;
 
-    public boolean superSave(RetrieveOrder entity) {
-        return super.save(entity);
-    }
-
-
-    @Override
     @Transactional
-    public boolean save(RetrieveOrder entity) {
-        //判断是否有设备序列号
-        if (!StringUtils.isEmpty(entity.getProductSn())) {
-
-            //校验数据
-            ProductStock productStock = productStockService.getOne(Wrappers.<ProductStock>lambdaQuery().eq(ProductStock::getProductSn, entity.getProductSn()));
-            Assert.isTrue(productStock != null, "设备不存在");
-
-            //检查设备是否是可回收状态: 设备状态为销售期的设备才可以回收
-            Assert.isTrue(productStock.getStatus() == 30, "只有销售期的设备才可以回收");
-
-            //更新设备状态为回收中
-            productStock.setStatus(31);
-            productStockService.update(Wrappers.<ProductStock>lambdaUpdate()
-                    .set(ProductStock::getStatus, 31)
-                    .eq(ProductStock::getId, productStock.getId())
-            );
-
-            Object productObj = productService.getProductDetail(productStock.getProductId(), productStock.getSalesmanId());
-            if (productObj instanceof Product) {
-                Product product = (Product) productObj;
-                //完善回收单信息
-                entity.setProductName(product.getProductName());
-                entity.setProductPic(product.getProductPic());
-                entity.setUserId(SecurityUtils.getUser().getId());
-                entity.setCreateTime(new Date());
-                entity.setSalesmanId(productStock.getSalesmanId());
-                if (productStock.getSalesmanId() != null) {
-                    User salesman = userService.getById(productStock.getSalesmanId());
-                    entity.setDeptId(salesman.getDeptId());
-                } else {
-                    //否则设置为总部
-                    entity.setDeptId(1);
-                }
-                entity.setStatus(0);
-                //回收价格
-                //天数
-                int monthInterval = DateTimeUtil.getMonthDiff(productStock.getLastBindUserTime(), new Date());
-                List<ProductRetrieveRuleItem> productRetrieveRuleItems = product.getProductRetrieveRuleItems();
-                for (int i = 0; i < productRetrieveRuleItems.size(); i++) {
-                    ProductRetrieveRuleItem item = productRetrieveRuleItems.get(i);
-                    if (item.getIsRetrieveable() && monthInterval > item.getMonthBegin().intValue() && monthInterval <= item.getMonthEnd().intValue()) {
-                        entity.setRetrieveAmount(item.getRetrieveAmount());
-                        entity.setActualRetrieveAmount(item.getRetrieveAmount());
-                        break;
-                    } else if (item.getIsRetrieveable() && monthInterval == 0 && item.getMonthBegin().intValue() == 0) {
-                        entity.setRetrieveAmount(item.getRetrieveAmount());
-                        entity.setActualRetrieveAmount(item.getRetrieveAmount());
-                        break;
-                    } else if (!item.getIsRetrieveable() && monthInterval >= item.getMonthBegin().intValue()) {
-                        entity.setRetrieveAmount(item.getRetrieveAmount());
-                        entity.setActualRetrieveAmount(item.getRetrieveAmount());
-                    }
-                }
-            } else if (productObj instanceof CustomProduct) {
-                CustomProduct product = (CustomProduct) productObj;
-                //完善回收单信息
-                entity.setProductName(product.getProductName());
-                entity.setProductPic(product.getProductPic());
-                entity.setUserId(SecurityUtils.getUser().getId());
-                entity.setCreateTime(new Date());
-                entity.setSalesmanId(productStock.getSalesmanId());
-                if (productStock.getSalesmanId() != null) {
-                    User salesman = userService.getById(productStock.getSalesmanId());
-                    entity.setDeptId(salesman.getDeptId());
-                } else {
-                    //否则设置为总部
-                    entity.setDeptId(1);
-                }
-                entity.setStatus(0);
-
-                //回收价格
-                //天数
-                int monthInterval = DateTimeUtil.getMonthDiff(productStock.getLastBindUserTime(), new Date());
-                List<CustomProductRetrieveRuleItem> productRetrieveRuleItems = product.getCustomProductRetrieveRuleItems();
-                for (int i = 0; i < productRetrieveRuleItems.size(); i++) {
-                    CustomProductRetrieveRuleItem item = productRetrieveRuleItems.get(i);
-                    if (item.getIsRetrieveable() && monthInterval > item.getMonthBegin().intValue() && monthInterval <= item.getMonthEnd().intValue()) {
-                        entity.setRetrieveAmount(item.getRetrieveAmount());
-                        entity.setActualRetrieveAmount(item.getRetrieveAmount());
-                        break;
-                    } else if (item.getIsRetrieveable() && monthInterval == 0 && item.getMonthBegin().intValue() == 0) {
-                        entity.setRetrieveAmount(item.getRetrieveAmount());
-                        entity.setActualRetrieveAmount(item.getRetrieveAmount());
-                        break;
-                    } else if (!item.getIsRetrieveable() && monthInterval >= item.getMonthBegin().intValue()) {
-                        entity.setRetrieveAmount(item.getRetrieveAmount());
-                        entity.setActualRetrieveAmount(item.getRetrieveAmount());
-                    }
-                }
-            }
-
-            //设置回收地址、联系人、电话
-            User salesman = userService.getById(productStock.getSalesmanId());
-
-            entity.setReceiverName(salesman.getNickname());
-            entity.setReceiverPhone(salesman.getPhone());
-            entity.setAutomaticCreateTime(new Date());
-            entity.setConfirmRetrieveAmountStatu(true);
-            if (entity.getDeliveryMethod() == 2) {
-                entity.setStatus(1);
-            }
-            super.save(entity);
-        } else {
-            //没有设备序列号
-            super.save(entity);
-        }
-
+    public boolean saveRetrieveOrder(RetrieveOrder entity) {
+        UserOrder userOrder = userOrdertService.getById(entity.getUserId());
+        entity.setDeptId(userOrder.getDeptId());
+        entity.setSaleSpecId(userOrder.getSaleSpecId());
+        entity.setServicePackId(userOrder.getServicePackId());
+        super.save(entity);
 
         return Boolean.TRUE;
     }
@@ -178,7 +67,9 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     }
 
     public IPage pageScoped(IPage page, Wrapper wrapper) {
-        return baseMapper.pageScoped(page, wrapper, new DataScope());
+        DataScope dataScope = new DataScope();
+        dataScope.setIsOnly(true);
+        return baseMapper.pageScoped(page, wrapper, dataScope);
     }
 
     public RetrieveOrderCountVo countScoped() {

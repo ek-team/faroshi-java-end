@@ -17,5 +17,7 @@ public class DoctorTeamPeople extends Model<DoctorTeamPeople> {
     private Integer userId;
     @TableField(exist = false)
     private String userName;
+    @TableField(exist = false)
+    private String avatar;
     private Integer teamId;
 }
