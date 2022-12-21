@@ -27,6 +27,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -56,36 +57,52 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.authRequired())));
                 return;
             }
-            origionMessage.setMyUserId(fromUser.getId());
-            Channel targetUserChannel = UserChannelManager.getUserChannel(origionMessage.getTargetUid());
-
-            boolean pushed = targetUserChannel != null;
             //保存新消息到记录中
-            ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, pushed, new Date());
+            ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             chatMsg.setMsg(origionMessage.getMsg());
 
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
 
+            //判断是否是群聊
+            if (origionMessage.getChatUserId() != null) {
+                //群发消息
+                ChatUser byId = chatUserService.getById(origionMessage.getChatUserId());
+                //推送群聊的消息给所有人
+                String data = byId.getUserIds();
+                List<String> allUserIds = Arrays.asList(data.split(","));
+                for (String userId : allUserIds) {
+                    if (!userId.equals(fromUser.getId())) {
+                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
+                        //2.向目标用户发送新消息提醒
+                        SocketFrameTextMessage targetUserMessage
+                                = SocketFrameTextMessage.newGroupMessageTip(origionMessage.getChatUserId(), JSON.toJSONString(chatMsg));
+                        if (targetUserChannel != null) {
+                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                        }
+                    }
+
+                }
+
+            } else {
+                origionMessage.setMyUserId(fromUser.getId());
+                Channel targetUserChannel = UserChannelManager.getUserChannel(origionMessage.getTargetUid());
+
+                this.saveOrUpdateChatUser(fromUser, origionMessage, chatMsg);
 
 
+                //3.保存或更新用户聊天
+                if (chatMsg.getMsgType().equals(ChatProto.MESSAGE_PIC)) {
+                    chatMsg.setMsg("[图片]");
+                }
+                //2.向目标用户发送新消息提醒
+                SocketFrameTextMessage targetUserMessage
+                        = SocketFrameTextMessage.newMessageTip(fromUser.getId(), fromUser.getNickname(), fromUser.getAvatar(), createTime, origionMessage.getMsgType(), JSON.toJSONString(chatMsg));
 
-
-            this.saveOrUpdateChatUser(fromUser, origionMessage, chatMsg);
-
-
-
-
-            //3.保存或更新用户聊天
-            if (chatMsg.getMsgType().equals(ChatProto.MESSAGE_PIC)) {
-                chatMsg.setMsg("[图片]");
+                if (targetUserChannel != null) {
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                }
             }
-            //2.向目标用户发送新消息提醒
-            SocketFrameTextMessage targetUserMessage
-                    = SocketFrameTextMessage.newMessageTip(fromUser.getId(), fromUser.getNickname(), fromUser.getAvatar(), createTime, origionMessage.getMsgType(), JSON.toJSONString(chatMsg));
 
-            if (targetUserChannel != null) {
-                targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-            }
 
         } catch (Exception e) {
             log.error("消息推送失败", e);
@@ -162,7 +179,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         chatMsg.setUrl(origionMessage.getUrl());
         chatMsg.setVideoDuration(origionMessage.getVideoDuration());
         chatMsg.setStr1(origionMessage.getStr1());
-
+        chatMsg.setChatUserId(origionMessage.getChatUserId());
         chatMsgService.save(chatMsg);
         return chatMsg;
     }

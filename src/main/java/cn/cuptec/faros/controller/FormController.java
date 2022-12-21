@@ -55,11 +55,15 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         List<FormOptions> addFormOptionsList = new ArrayList<>();
         for (FormSetting formSetting : formSettings) {
             List<FormOptions> formOptionsList = formSetting.getFormOptionsList();
-            for (FormOptions formOptions : formOptionsList) {
-                formOptions.setFormId(form.getId());
-                formOptions.setFormSettingId(formSetting.getId());
+            if(!CollectionUtils.isEmpty(formOptionsList)){
+                for (FormOptions formOptions : formOptionsList) {
+                    formOptions.setFormId(form.getId());
+                    formOptions.setFormSettingId(formSetting.getId());
+                }
+                addFormOptionsList.addAll(formOptionsList);
             }
-            addFormOptionsList.addAll(formOptionsList);
+
+
         }
         if (!CollectionUtils.isEmpty(addFormOptionsList)) {
             formOptionsService.saveBatch(addFormOptionsList);

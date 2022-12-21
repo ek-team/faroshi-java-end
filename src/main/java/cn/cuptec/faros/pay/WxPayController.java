@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -118,15 +119,14 @@ public class WxPayController {
             userOrder.setTransactionId(transactionId);
             userOrder.setStatus(2);//已支付 待发货
 
-            //为用户匹配医生
+            //为用户创建群聊
             Integer doctorTeamId = userOrder.getDoctorTeamId();
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
-                Random rand = new Random();//随机选择团队里的医生
-                DoctorTeamPeople doctorTeamPeople = doctorTeamPeopleList.get(rand.nextInt(doctorTeamPeopleList.size()));
-                chatUserService.saveOrUpdateChatUser(doctorTeamPeople.getUserId(), userOrder.getUserId(), "");
-                userOrder.setDoctorId(doctorTeamPeople.getUserId());
+                List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                chatUserService.saveGroupChatUser(userIds);
 
             }
             userOrdertService.updateById(userOrder);

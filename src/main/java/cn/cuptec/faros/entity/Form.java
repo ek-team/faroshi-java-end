@@ -3,6 +3,7 @@ package cn.cuptec.faros.entity;
 import cn.cuptec.faros.common.annotation.Queryable;
 import cn.cuptec.faros.common.enums.QueryLogical;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
@@ -23,6 +24,9 @@ public class Form extends Model<Form> {
     private LocalDateTime createTime;
     private Integer deptId;
     private Integer createUserId;
+    @TableField(exist = false)
     private List<FormSetting> formSettings;
     private Integer status=0;//0-正常 1-作废
+    @TableField(exist = false)
+    private List<FormUserData> formUserDataList;
 }

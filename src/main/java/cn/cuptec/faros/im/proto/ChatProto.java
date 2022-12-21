@@ -32,6 +32,7 @@ public class ChatProto {
 
     //提示类消息
     public static final String TIP_NEWMESSAGE = "TIP_NEWMESSAGE"; //新聊天消息提醒 系统-》用户
+    public static final String TIP_GROUP_NEWMESSAGE = "TIP_GROUP_NEWMESSAGE"; //新聊天消息提醒 系统-》用户
     public static final String TIP_ERROR = "TIP_ERROR"; //错误消息 系统-》用户
     public static final String AUTH_RESULT = "AUTH_RESULT"; //认证结果
     public static final String AUTH_REQUIRED = "AUTH_REQUIRED";

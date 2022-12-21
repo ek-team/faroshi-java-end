@@ -19,7 +19,7 @@ public class SocketFrameTextMessage {
     private String videoDuration;//音频时长
     //备注
     private String remark;
-
+    private Integer chatUserId;//群聊id
     private String str1;
     private String str2;
     //1-医生 2-患者
@@ -123,12 +123,14 @@ public class SocketFrameTextMessage {
         message.fromAvatar = fromAvatar;
         return message;
     }
+
     public static SocketFrameTextMessage responseSetVideoReaded(String msgId) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();
         message.msgType = ChatProto.RESPONSE_VIDEO_READ;
         message.msgId = msgId;
         return message;
     }
+
     public static SocketFrameTextMessage responseSetReaded(Long msgTimeStamp) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();
         message.msgType = ChatProto.RESPONSE_READ;
@@ -136,6 +138,7 @@ public class SocketFrameTextMessage {
         message.msgTimeStamp = msgTimeStamp;
         return message;
     }
+
     public static SocketFrameTextMessage newMessageTip(Integer fromUid, String fromUname, String fromAvatar, Date messageTime, String msgType, String msg) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();
         message.msgType = ChatProto.TIP_NEWMESSAGE;
@@ -145,6 +148,16 @@ public class SocketFrameTextMessage {
         message.msgTimeStamp = messageTime.getTime();
 
 
+        message.msg = msg;
+        return message;
+    }
+
+    //群聊消息
+    public static SocketFrameTextMessage newGroupMessageTip(Integer chatUserId, String msg) {
+        SocketFrameTextMessage message = new SocketFrameTextMessage();
+        message.msgType = ChatProto.TIP_GROUP_NEWMESSAGE;
+        message.chatUserId = chatUserId;
+        message.msgTimeStamp = new Date().getTime();
         message.msg = msg;
         return message;
     }
@@ -213,8 +226,6 @@ public class SocketFrameTextMessage {
         message.data = chatMsg;
         return message;
     }
-
-
 
 
 }

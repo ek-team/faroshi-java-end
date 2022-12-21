@@ -14,7 +14,7 @@ import java.util.Date;
  * 聊天列表(用户和那些人聊过天)
  */
 @Data
-public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser>{
+public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
 
     @TableId(type = IdType.AUTO)
     private Integer id;
@@ -24,7 +24,8 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser>{
     //@TableId(type = IdType.INPUT)
 
     private Integer uid;
-
+    private String userIds;//群聊用户id
+    private Integer groupType = 0;//0-单聊 1-群聊
     /**
      * 聊天对象用户id
      */
@@ -63,6 +64,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser>{
     private String nickname;
     @TableField(exist = false)
     private String avatar;
+
     @Override
     public int compareTo(ChatUser o) {
         return o.lastChatTime.compareTo(this.lastChatTime);//根据时间降序

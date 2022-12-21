@@ -10,8 +10,10 @@ import cn.cuptec.faros.mapper.ChatUserMapper;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -37,8 +39,12 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
 
         IPage page = new Page(param.getPageNum(), param.getPageSize());
 
-
-        IPage result = page(page, Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getUid, param.getMyUserId()).orderByDesc(ChatUser::getLastChatTime));
+        LambdaQueryWrapper<ChatUser> wrapper = Wrappers.<ChatUser>lambdaQuery()
+                .eq(ChatUser::getUid, param.getMyUserId());
+        wrapper.or();
+        wrapper.like(ChatUser::getUserIds, param.getMyUserId());
+        wrapper.orderByDesc(ChatUser::getLastChatTime);
+        IPage result = page(page, wrapper);
         List<ChatUser> chatUsers = result.getRecords();
         if (CollectionUtils.isEmpty(chatUsers)) {
             return result;
@@ -129,5 +135,25 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 save(chatUser);
             }
         });
+    }
+
+
+    /**
+     * 添加群聊
+     */
+    public void saveGroupChatUser(List<Integer> userIds) {
+        String chatUserId="";
+        for(Integer userId:userIds){
+            if(StringUtils.isEmpty(chatUserId)){
+                chatUserId=userId+"";
+            }else{
+                chatUserId=chatUserId+","+userId;
+            }
+        }
+        ChatUser chatUser = new ChatUser();
+        chatUser.setUserIds(chatUserId);
+        chatUser.setGroupType(1);
+        chatUser.setLastChatTime(new Date());
+        save(chatUser);
     }
 }

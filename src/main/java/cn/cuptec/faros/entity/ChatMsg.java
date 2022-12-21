@@ -15,7 +15,7 @@ public class ChatMsg extends Model<ChatMsg> {
 
     @TableId(type = IdType.AUTO)
     private String id;
-
+    private Integer chatUserId;//群聊消息id
     /**
      * 消息类型
      * 数据字典MsgType TEXT-文本  IMG-图片
@@ -72,6 +72,7 @@ public class ChatMsg extends Model<ChatMsg> {
      * 语音是否已读 1-未读 2-已读
      */
     private Integer videoRead = 1;
-
+    @TableField(exist = false)
+    private User user;
 }
 
