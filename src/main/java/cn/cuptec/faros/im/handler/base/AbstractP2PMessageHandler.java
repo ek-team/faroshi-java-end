@@ -9,6 +9,7 @@ import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.ChatMsgService;
 import cn.cuptec.faros.service.ChatUserService;
+import cn.cuptec.faros.service.UniAppPushService;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -39,7 +40,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     private ChatMsgService chatMsgService;
     @Resource
     private ChatUserService chatUserService;
-
+    @Resource
+    private UniAppPushService uniAppPushService;
 
     //医生一分钟未回复自动回复队列
     public static ConcurrentLinkedQueue<SocketFrameTextMessage> replyQueue = new ConcurrentLinkedQueue<>();
@@ -78,6 +80,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                                 = SocketFrameTextMessage.newGroupMessageTip(origionMessage.getChatUserId(), JSON.toJSONString(chatMsg));
                         if (targetUserChannel != null) {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                        } else {
+                            uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
                         }
                     }
 
@@ -97,12 +101,15 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (chatMsg.getMsgType().equals(ChatProto.MESSAGE_PIC)) {
                     chatMsg.setMsg("[图片]");
                 }
-                //2.向目标用户发送新消息提醒
+                //向目标用户发送新消息提醒
                 SocketFrameTextMessage targetUserMessage
                         = SocketFrameTextMessage.newMessageTip(fromUser.getId(), fromUser.getNickname(), fromUser.getAvatar(), createTime, origionMessage.getMsgType(), JSON.toJSONString(chatMsg));
 
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                } else {
+                    uniAppPushService.send("法罗适", origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
+
                 }
             }
 

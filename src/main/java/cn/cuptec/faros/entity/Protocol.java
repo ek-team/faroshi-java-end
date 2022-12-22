@@ -7,7 +7,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 协议
+ * xi协议
  */
 @Data
 public class Protocol {

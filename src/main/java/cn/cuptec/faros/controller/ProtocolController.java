@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 协议服务
+ */
 @RestController
 @RequestMapping("/protocols")
 public class ProtocolController extends AbstractBaseController<ProtocolService, Protocol> {

@@ -26,7 +26,7 @@ public class User extends Model<User> {
     private Integer id;
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String phone;
-
+    private String cid;//APP消息推送 cid
     @JSONField(serialize = false)
     private String password;
 

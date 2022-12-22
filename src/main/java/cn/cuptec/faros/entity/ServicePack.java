@@ -21,17 +21,16 @@ public class ServicePack extends Model<ServicePack> {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private String mpQrCode; //公众号二维码 永久
-    private Integer buy; //是否是购买 1-购买
-    private Integer rent;//是否是租用 2-租用
+    private Integer buyOrRent; //是否是购买 1-购买 2-租用
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String name;
     private Integer deptId;
     private Integer createUserId;
     private LocalDateTime createTime;
     private String preSaleMobile;//售前手机号
-    private String preSaleText;//售前提示文本
+    private String preSaleText;//售前手机号提示文本
     private String afterSaleMobile;//售后手机号
-    private String afterSaleText;//售后提示文本
+    private String afterSaleText;//售后手机号提示文本
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer hospitalId;//医院id
     @TableField(exist = false)
