@@ -208,7 +208,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      * 用户查询自己的订单
      */
     @GetMapping("/user/listMy")
-    public RestResponse passApplyOrder() {
+    public RestResponse listMy() {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         Page<UserOrder> page = getPage();
         queryWrapper.eq("user_id", SecurityUtils.getUser().getId());
