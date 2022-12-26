@@ -112,6 +112,13 @@ public class SocketFrameTextMessage {
         }
         return true;
     }
+    public static SocketFrameTextMessage closeChat(Integer targetUid) {
+        SocketFrameTextMessage message = new SocketFrameTextMessage();
+        message.msgType = ChatProto.RESPONSE_CLOSECHAT;
+        message.targetUid = targetUid;
+        message.time = new Date();
+        return message;
+    }
 
     public static SocketFrameTextMessage message(String messageType, Object data, Integer targerUid, Integer fromUid, String fromUname, String fromAvatar) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();

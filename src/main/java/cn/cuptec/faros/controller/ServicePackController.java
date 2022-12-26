@@ -136,6 +136,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
      */
     @GetMapping("/deleteProductSpec")
     public RestResponse listProductSpec(@RequestParam("id") Integer id) {
+        if (id == null) {
+            return RestResponse.ok();
+        }
         productSpecService.removeById(id);
         productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
                 .eq(ProductSpecDesc::getProductSpecId, id));
@@ -152,6 +155,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         User byId = userService.getById(SecurityUtils.getUser().getId());
         List<ProductSpec> list = productSpecService.list(new QueryWrapper<ProductSpec>().lambda()
                 .eq(ProductSpec::getDeptId, byId.getDeptId()));
+        if (CollectionUtils.isEmpty(list)) {
+            return RestResponse.ok();
+        }
         List<Integer> productSpecIds = list.stream().map(ProductSpec::getId)
                 .collect(Collectors.toList());
         List<ProductSpecDesc> productSpecDescs = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda()
@@ -267,11 +273,11 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
                 servicePackageInfo.setServicePackageId(servicePack.getId());
                 List<Integer> doctorTeamIds = servicePackageInfo.getDoctorTeamIds();
-                if(!CollectionUtils.isEmpty(doctorTeamIds)){
+                if (!CollectionUtils.isEmpty(doctorTeamIds)) {
                     String doctorTeamId = "";
                     for (Integer id : doctorTeamIds) {
                         if (StringUtils.isEmpty(doctorTeamId)) {
-                            doctorTeamId = id+"";
+                            doctorTeamId = id + "";
                         } else {
                             doctorTeamId = doctorTeamId + "," + id;
 
@@ -353,11 +359,11 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
                 servicePackageInfo.setServicePackageId(servicePack.getId());
                 List<Integer> doctorTeamIds = servicePackageInfo.getDoctorTeamIds();
-                if(!CollectionUtils.isEmpty(doctorTeamIds)){
+                if (!CollectionUtils.isEmpty(doctorTeamIds)) {
                     String doctorTeamId = "";
                     for (Integer id : doctorTeamIds) {
                         if (StringUtils.isEmpty(doctorTeamId)) {
-                            doctorTeamId = id+"";
+                            doctorTeamId = id + "";
                         } else {
                             doctorTeamId = doctorTeamId + "," + id;
 
@@ -407,6 +413,41 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         IPage<ServicePack> servicePackIPage = service.pageScoped(page, queryWrapper);
 
         return RestResponse.ok(servicePackIPage);
+    }
+
+    /**
+     * 根据服务包id查询所对应的 医生团队
+     *
+     * @return
+     */
+    @GetMapping("/queryDoctorTeamByServicePackId")
+    public RestResponse queryDoctorTeamByServicePackId(@RequestParam(value = "servicePackId") Integer servicePackId) {
+        //查询服务信息
+        List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>()
+                .lambda().eq(ServicePackageInfo::getServicePackageId, servicePackId));
+        //查询服务的医生团队
+        if (!CollectionUtils.isEmpty(servicePackageInfos)) {
+            List<Integer> teamIds = new ArrayList<>();
+            for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
+                String doctorTeamId = servicePackageInfo.getDoctorTeamId();
+                List<Integer> teamId = new ArrayList<>();
+                if (!StringUtils.isEmpty(doctorTeamId)) {
+                    String[] split = doctorTeamId.split(",");
+                    for (int i = 0; i < split.length; i++) {
+                        String n = split[i];
+                        teamIds.add(Integer.parseInt(n));
+                        teamId.add(Integer.parseInt(n));
+                    }
+                }
+            }
+            if (!CollectionUtils.isEmpty(teamIds)) {
+                List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+                return RestResponse.ok(doctorTeams);
+            }
+
+        }
+
+        return RestResponse.ok(new ArrayList<>());
     }
 
     /**

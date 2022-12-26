@@ -126,7 +126,7 @@ public class WxPayController {
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
-                chatUserService.saveGroupChatUser(userIds,doctorTeamId);
+                chatUserService.saveGroupChatUser(userIds, doctorTeamId);
 
             }
             userOrdertService.updateById(userOrder);

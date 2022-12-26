@@ -7,6 +7,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.pay.WxPayController;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ExcelUtil;
 import cn.cuptec.faros.vo.MapExpressTrackVo;
@@ -56,6 +57,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private ServicePackService servicePackService;
     @Resource
     private ServicePackProductPicService servicePackProductPicService;
+    @Resource
+    private WxPayController wxPayController;
 
     /**
      * 获取省的订单数量
@@ -96,11 +99,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
     //查询部门订单列表,只允许查看
     @GetMapping("/manage/pageScoped")
-    public RestResponse pageScoped(@RequestParam(value = "servicePackName",required = false) String servicePackName,
-                                   @RequestParam(value = "startTime",required = false) String startTime,
-                                   @RequestParam(value = "endTime",required = false) String endTime,
-                                   @RequestParam(value = "nickname",required = false) String nickname,
-                                   @RequestParam(value = "receiverPhone",required = false) String receiverPhone) {
+    public RestResponse pageScoped(@RequestParam(value = "servicePackName", required = false) String servicePackName,
+                                   @RequestParam(value = "startTime", required = false) String startTime,
+                                   @RequestParam(value = "endTime", required = false) String endTime,
+                                   @RequestParam(value = "nickname", required = false) String nickname,
+                                   @RequestParam(value = "receiverPhone", required = false) String receiverPhone) {
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
@@ -181,7 +184,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/user/add")
     public RestResponse addOrder(@RequestBody UserOrder userOrder) {
-        if(userOrder.getOrderType()==null){
+        if (userOrder.getOrderType() == null) {
             userOrder.setOrderType(1);
         }
         ServicePack byId = servicePackService.getById(userOrder.getServicePackId());
@@ -197,8 +200,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setPayment(payment);
         service.save(userOrder);
 
-
-        return RestResponse.ok("产品下单成功!");
+        RestResponse restResponse = wxPayController.unifiedOrder(userOrder.getOrderNo());
+        return RestResponse.ok(restResponse.getData());
     }
 
     /**
