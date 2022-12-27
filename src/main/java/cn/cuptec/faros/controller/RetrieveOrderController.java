@@ -288,21 +288,10 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     }
 
     //业务员确认已收货
-    @PutMapping("/manage/confirmReceived")
-    public RestResponse confirmReceived(@RequestBody ConfirmReceivedParam confirmReceivedParam) {
-        service.confirmReceived(confirmReceivedParam);
-//        RetrieveOrder retrieveOrder = service.getById(id);
-//        //发送公众号消息提醒
-//        User user = userService.getById(retrieveOrder.getUserId());
-//        if (user != null) {
-//            if (!StringUtils.isEmpty(user.getMpOpenId())) {
-//                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-//                LocalDateTime time = LocalDateTime.now();
-//                String localTime = df.format(time);
-//                String url = "http://pharos.ewj100.com/index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
-//                wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "业务员已确认收货", "待打款", url);
-//            }
-//        }
+    @GetMapping("/manage/confirmReceived")
+    public RestResponse confirmReceived(@RequestParam int id) {
+        service.confirmReceived(id);
+
         return RestResponse.ok();
     }
 

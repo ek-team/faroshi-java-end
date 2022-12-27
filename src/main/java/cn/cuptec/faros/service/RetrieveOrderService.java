@@ -113,18 +113,17 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     }
 
     //确认设备已收到
-    public void confirmReceived(ConfirmReceivedParam confirmReceivedParam) {
-        RetrieveOrder retrieveOrder = super.getById(confirmReceivedParam.getId());
+    public void confirmReceived(int id) {
+        RetrieveOrder retrieveOrder = super.getById(id);
         Assert.isTrue(retrieveOrder != null, "回收单不存在");
         Assert.isTrue(retrieveOrder.getStatus().intValue() == 1, "非待收货状态回收单");
         retrieveOrder.setStatus(2);
         retrieveOrder.setReceieveTime(new Date());
-        retrieveOrder.setDeductionAmount(confirmReceivedParam.getDeductionAmount());
-        retrieveOrder.setCoverStatu(confirmReceivedParam.getCoverStatu());
-        if (cn.cuptec.faros.common.utils.StringUtils.isNotEmpty(confirmReceivedParam.getPicUrls())) {
-            List<String> picUrls = confirmReceivedParam.getPicUrls();
-            retrieveOrder.setAlbumPic(new String[picUrls.size()]);
-        }
+//
+//        if (cn.cuptec.faros.common.utils.StringUtils.isNotEmpty(confirmReceivedParam.getPicUrls())) {
+//            List<String> picUrls = confirmReceivedParam.getPicUrls();
+//            retrieveOrder.setAlbumPic(new String[picUrls.size()]);
+//        }
 
         super.updateById(retrieveOrder);
     }

@@ -6,6 +6,7 @@ import cn.cuptec.faros.config.pay.PayConfig;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyResult;
@@ -26,6 +27,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -50,6 +52,10 @@ public class WxPayController {
     private DoctorTeamPeopleService doctorTeamPeopleService;
     @Resource
     private ChatUserService chatUserService;
+    @Resource
+    private RetrieveOrderService retrieveOrderService;
+    @Resource
+    private OrderRefundInfoService orderRefundInfoService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -161,17 +167,41 @@ public class WxPayController {
      * 接口链接：https://api.mch.weixin.qq.com/secapi/pay/refund
      * </pre>
      *
-     * @param request 请求对象
      * @return 退款操作结果 wx pay refund result
      * @throws WxPayException the wx pay exception
      */
     @ApiOperation(value = "申请退款")
-    @PostMapping("/refundOrder")
-    public RestResponse refundOrder(@RequestBody WxPayRefundRequest request) {
-        WxPayConfig wxPayConfig = new WxPayConfig();
-        wxPayConfig.setAppId(request.getAppid());
-        wxPayConfig.setSubMchId(request.getSubMchId());
+    @GetMapping("/refundOrder")
+    public RestResponse refundOrder(@RequestParam("retrieveOrderId") Integer retrieveOrderId, @RequestParam("refundReason") String refundReson, @RequestParam("amount") Double amount) {
+        RetrieveOrder retrieveOrder = retrieveOrderService.getById(retrieveOrderId);
+        UserOrder userOrder = userOrdertService.getById(retrieveOrder.getOrderId());
+        //添加退款记录
+        OrderRefundInfo orderRefunds = new OrderRefundInfo();
+        orderRefunds.setOrderId(retrieveOrder.getOrderId());
+        orderRefunds.setRefundReason(refundReson);
+        orderRefunds.setRefundFee(new BigDecimal(amount).multiply(new BigDecimal(100)));
+        orderRefunds.setCreateId(SecurityUtils.getUser().getId());
+        orderRefunds.setCreateTime(new Date());
+        orderRefunds.setRefundStatus(1);
+        orderRefunds.setRetrieveOrderId(retrieveOrderId);
+        orderRefunds.setOrderRefundNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        orderRefunds.setTransactionId(userOrder.getTransactionId());
+        orderRefundInfoService.save(orderRefunds);
+
+
+        Dept dept = deptService.getById(userOrder.getDeptId());
+
+        WxPayRefundRequest request = new WxPayRefundRequest();
+        request.setSubMchId(dept.getSubMchId());
+        request.setTransactionId(userOrder.getTransactionId());
+        request.setOutRefundNo(orderRefunds.getOrderRefundNo());
+        request.setTotalFee(userOrder.getPayment().multiply(new BigDecimal(100)).intValue());
+        request.setRefundFee(new BigDecimal(amount).multiply(new BigDecimal(100)).intValue());
         request.setNotifyUrl("https://pharos3.ewj100.com/wxpay/notifyRefunds");
+
+        WxPayConfig wxPayConfig = new WxPayConfig();
+        wxPayConfig.setAppId("wxad59cd874b45bb96");
+        wxPayConfig.setSubMchId(request.getSubMchId());
         WxPayService wxPayService = PayConfig.getPayService(wxPayConfig);
         try {
             return RestResponse.ok(wxPayService.refund(request));
@@ -200,8 +230,14 @@ public class WxPayController {
         wxPayConfig.setSubMchId(SubMchId);
         WxPayService wxPayService = PayConfig.getPayService(wxPayConfig);
         try {
+            //需要测试一下
             WxPayRefundNotifyResult notifyResult = wxPayService.parseRefundNotifyResult(xmlData);
             String outTradeNo = notifyResult.getReqInfo().getOutTradeNo();
+            OrderRefundInfo one = orderRefundInfoService.getOne(new QueryWrapper<OrderRefundInfo>().lambda()
+                    .eq(OrderRefundInfo::getOrderRefundNo, outTradeNo));
+            one.setSuccessTime(new Date());
+            one.setRefundStatus(2);
+
             System.out.println(outTradeNo);
             return RestResponse.ok(notifyResult);
         } catch (WxPayException e) {

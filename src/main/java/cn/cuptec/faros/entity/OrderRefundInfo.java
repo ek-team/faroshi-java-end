@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+
 import lombok.Data;
 
 /**
@@ -23,9 +25,7 @@ public class OrderRefundInfo implements Serializable {
      */
     @TableField(value = "create_time")
     private Date createTime;
-
-    @TableField(value = "order_no")
-    private String orderNo;
+    private Integer createId;
     private String orderRefundNo;
 
     @TableField(value = "order_id")
@@ -49,11 +49,7 @@ public class OrderRefundInfo implements Serializable {
     //退款状态  1.等待通知   2.退款成功 3.退款异常 4.退款关闭
     @TableField(value = "refund_status")
     private Integer refundStatus;
-
-
-    private Integer orderPayId;
-
-    private BigDecimal totalFee;
+    private String refundReason;//退款原因
 
     private static final long serialVersionUID = 1L;
 }
