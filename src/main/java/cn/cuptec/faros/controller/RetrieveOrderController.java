@@ -6,6 +6,7 @@ import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -59,7 +60,11 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     @PostMapping("/saveRetrieveOrderReviewData")
     public RestResponse saveRetrieveOrderReviewData(@RequestBody RetrieveOrderReviewData retrieveOrderReviewData) {
         retrieveOrderReviewData.setCreateTime(LocalDateTime.now());
-
+        //修改审核状态
+        RetrieveOrder retrieveOrder=new RetrieveOrder();
+        retrieveOrder.setId(retrieveOrderReviewData.getRetrieveOrderId());
+        retrieveOrder.setStatus(3);
+        service.updateById(retrieveOrder);
         return RestResponse.ok(retrieveOrderReviewDataService.save(retrieveOrderReviewData));
     }
 
@@ -98,6 +103,11 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             queryWrapper.eq("retrieve_order.order_id", orderId);
         }
         if (!StringUtils.isEmpty(startTime)) {
+            if(StringUtils.isEmpty(endTime)){
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                endTime = df.format(now);
+            }
             queryWrapper.le("retrieve_order.create_time", endTime);
             queryWrapper.ge("retrieve_order.create_time", startTime);
         }
@@ -120,6 +130,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                     }
                 }
             }
+
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
             //规格信息
@@ -214,6 +225,8 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     public RestResponse saveRetrieveOrder(@RequestBody RetrieveOrder retrieveOrder) {
         retrieveOrder.setUserId(SecurityUtils.getUser().getId());
         retrieveOrder.setCreateTime(new Date());
+        retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+
         service.saveRetrieveOrder(retrieveOrder);
         return RestResponse.ok();
     }

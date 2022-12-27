@@ -14,7 +14,7 @@ import java.util.List;
 
 public interface UserOrderMapper extends BaseMapper<UserOrder> {
 
-    @Select("SELECT user_order.id,user_order.order_no," +
+    @Select("SELECT user_order.id,user_order.delivery_company_code,user_order.order_no," +
             "address.addressee_name as receiverName,address.addressee_phone as receiverPhone,address.city,address.area,address.province," +
             "address.address as receiverDetailAddress,user_order.user_id," +
             "user_order.dept_id,user_order.salesman_id," +

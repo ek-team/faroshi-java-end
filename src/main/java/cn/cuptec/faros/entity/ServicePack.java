@@ -21,7 +21,8 @@ public class ServicePack extends Model<ServicePack> {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private String mpQrCode; //公众号二维码 永久
-    private Integer buyOrRent; //是否是购买 1-购买 2-租用
+    private Integer buy; //是否是购买 1
+    private Integer rent; //是否是租用 1
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String name;
     private Integer deptId;

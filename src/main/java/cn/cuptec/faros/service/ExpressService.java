@@ -39,10 +39,8 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
      */
     public MapExpressTrackVo getUserOrderMapTrace(int id) {
         UserOrder userOrder = userOrdertService.getById(id);
-        Assert.isTrue(userOrder != null, "未查询到该订单");
-        Assert.isTrue(StringUtils.isNotEmpty(userOrder.getDeliverySn()), "未查询到物流信息");
-        Assert.isTrue(userOrder.getUserId().intValue() == SecurityUtils.getUser().getId().intValue(), "未查询到该订单");
-        MapExpressTrackVo mapExpressTrackVo = queryMapTrace(userOrder.getDeliveryCompanyCode(), userOrder.getDeliverySn(), userOrder.getDeliveryAddress(), userOrder.getReceiverRegion() + userOrder.getReceiverDetailAddress());
+        Assert.isTrue(userOrder != null, "未查询到此订单");
+        MapExpressTrackVo mapExpressTrackVo = queryExpressData(userOrder.getDeliveryCompanyCode(), userOrder.getDeliverySn());
         mapExpressTrackVo.setUserOrder(userOrder);
         return mapExpressTrackVo;
     }

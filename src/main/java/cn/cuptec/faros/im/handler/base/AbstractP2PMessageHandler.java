@@ -10,6 +10,7 @@ import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.ChatMsgService;
 import cn.cuptec.faros.service.ChatUserService;
 import cn.cuptec.faros.service.UniAppPushService;
+import cn.cuptec.faros.service.UserService;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -42,7 +43,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     private ChatUserService chatUserService;
     @Resource
     private UniAppPushService uniAppPushService;
-
+    @Resource
+    private cn.cuptec.faros.service.WxMpService wxMpService;
+    @Resource
+    private UserService userService;
     //医生一分钟未回复自动回复队列
     public static ConcurrentLinkedQueue<SocketFrameTextMessage> replyQueue = new ConcurrentLinkedQueue<>();
 
@@ -82,6 +86,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                         } else {
                             uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
+                            User user = userService.getById(userId);
+                            if (!StringUtils.isEmpty(user.getMpOpenId())) {
+                                LocalDateTime now = LocalDateTime.now();
+                                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                                String time = df.format(now);
+                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/orderConfirm/orderConfirm?id=1&token=b9780b1b-09e8-4bac-8e4e-217bd1a9837e");
+
+                            }
                         }
                     }
 

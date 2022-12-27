@@ -19,6 +19,8 @@ public class RetrieveOrder {
 
     @TableId
     private Integer id;
+    @TableField(exist = false)
+    private String reviewData;//回收单厂家审核信息
     private String deliveryName;//发货人姓名
     private String deliveryPhone;//发货人手机号
     private String deliveryAddress;//发货人地址

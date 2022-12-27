@@ -116,6 +116,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.eq("address.addressee_phone", receiverPhone);
         }
         if (!StringUtils.isEmpty(startTime)) {
+            if(StringUtils.isEmpty(endTime)){
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                endTime = df.format(now);
+            }
             queryWrapper.le("user_order.create_time", endTime);
             queryWrapper.ge("user_order.create_time", startTime);
         }

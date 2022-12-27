@@ -129,7 +129,31 @@ public class WxMpService {
         dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
         sendTemplateMsg(openId, templateId, url, dataList);
     }
+    //医嘱消息提醒
+    public void sendDoctorTip(String openId, String first, String keyword1,
+                              String keyword2, String keyword3, String url) {
+        String templateId = "JS1GcbXs_Tm28-HnzuStvnDTbLxtL71wxdWaZ-wpnd0";
 
+        List<WxMpTemplateData> dataList = new ArrayList<>();
+        WxMpTemplateData wxMpTemplateData = new WxMpTemplateData();
+        wxMpTemplateData.setName("first");
+        wxMpTemplateData.setValue(first);
+        dataList.add(wxMpTemplateData);
+        WxMpTemplateData wxMpTemplateData1 = new WxMpTemplateData();
+        wxMpTemplateData1.setName("keyword1");
+        wxMpTemplateData1.setValue(keyword1);
+        dataList.add(wxMpTemplateData1);
+        WxMpTemplateData wxMpTemplateData2 = new WxMpTemplateData();
+        wxMpTemplateData2.setName("keyword2");
+        wxMpTemplateData2.setValue(keyword2);
+        dataList.add(wxMpTemplateData2);
+        WxMpTemplateData wxMpTemplateData3 = new WxMpTemplateData();
+        wxMpTemplateData3.setName("keyword3");
+        wxMpTemplateData3.setValue(keyword3);
+        dataList.add(wxMpTemplateData3);
+        dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
+        sendTemplateMsg(openId, templateId, url, dataList);
+    }
 
     //注册设备用户模版消息
     public void sendRegisterPlanUser(String openId, String first, String keyword1,
