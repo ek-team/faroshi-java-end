@@ -129,12 +129,15 @@ public class WxPayController {
             Integer doctorTeamId = userOrder.getDoctorTeamId();
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
+            ChatUser chatUser=new ChatUser();
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
-                chatUserService.saveGroupChatUser(userIds, doctorTeamId);
+                 chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId);
+
 
             }
+            userOrder.setChatUserId(chatUser.getId());
             userOrdertService.updateById(userOrder);
             //添加用户自己的服务
             Integer servicePackId = userOrder.getServicePackId();
@@ -147,6 +150,8 @@ public class WxPayController {
                     UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
                     userServicePackageInfo.setUserId(userOrder.getUserId());
                     userServicePackageInfo.setOrderId(userOrder.getId());
+                    userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
+                    userServicePackageInfo.setChatUserId(chatUser.getId());
                     userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
                     userServicePackageInfo.setCreateTime(LocalDateTime.now());
                     userServicePackageInfos.add(userServicePackageInfo);

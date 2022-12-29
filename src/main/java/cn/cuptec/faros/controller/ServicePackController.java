@@ -49,6 +49,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @Resource
     private SaleSpecService saleSpecService;//销售规格
     @Resource
+    private SaleSpecDescService saleSpecDescService;//销售规格子类
+    @Resource
     private DoctorTeamService doctorTeamService;
     @Resource
     private ProductStockService productStockService;
@@ -184,6 +186,13 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         User byId = userService.getById(SecurityUtils.getUser().getId());
         saleSpec.setDeptId(byId.getDeptId());
         saleSpecService.save(saleSpec);
+        List<SaleSpecDesc> saleSpecDescs = saleSpec.getSaleSpecDescs();
+        if (!CollectionUtils.isEmpty(saleSpecDescs)) {
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+                saleSpecDesc.setSaleSpecId(saleSpec.getId());
+            }
+            saleSpecDescService.saveBatch(saleSpecDescs);
+        }
         return RestResponse.ok();
     }
 
@@ -195,6 +204,16 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @PostMapping("/updateSaleSpec")
     public RestResponse updateSaleSpec(@RequestBody SaleSpec saleSpec) {
         saleSpecService.updateById(saleSpec);
+        saleSpecDescService.remove(new QueryWrapper<SaleSpecDesc>().lambda()
+                .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
+        List<SaleSpecDesc> saleSpecDescs = saleSpec.getSaleSpecDescs();
+        if (!CollectionUtils.isEmpty(saleSpecDescs)) {
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+                saleSpecDesc.setSaleSpecId(saleSpec.getId());
+            }
+            saleSpecDescService.saveBatch(saleSpecDescs);
+        }
+
         return RestResponse.ok();
     }
 
@@ -206,6 +225,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @GetMapping("/deleteSaleSpec")
     public RestResponse deleteSaleSpec(@RequestParam("id") Integer id) {
         saleSpecService.removeById(id);
+        saleSpecDescService.remove(new QueryWrapper<SaleSpecDesc>().lambda()
+                .eq(SaleSpecDesc::getSaleSpecId, id));
         return RestResponse.ok();
     }
 
@@ -217,9 +238,23 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @GetMapping("/listSaleSpec")
     public RestResponse listSaleSpec() {
         User byId = userService.getById(SecurityUtils.getUser().getId());
-
-        return RestResponse.ok(saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
-                .eq(SaleSpec::getDeptId, byId.getDeptId())));
+        List<SaleSpec> saleSpecs = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
+                .eq(SaleSpec::getDeptId, byId.getDeptId()));
+        if (CollectionUtils.isEmpty(saleSpecs)) {
+            return RestResponse.ok();
+        }
+        List<Integer> saleSpecIds = saleSpecs.stream().map(SaleSpec::getId)
+                .collect(Collectors.toList());
+        List<SaleSpecDesc> saleSpecDescs = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                .in(SaleSpecDesc::getSaleSpecId, saleSpecIds));
+        if (!CollectionUtils.isEmpty(saleSpecDescs)) {
+            Map<Integer, List<SaleSpecDesc>> map = saleSpecDescs.stream()
+                    .collect(Collectors.groupingBy(SaleSpecDesc::getSaleSpecId));
+            for (SaleSpec saleSpec : saleSpecs) {
+                saleSpec.setSaleSpecDescs(map.get(saleSpec.getId()));
+            }
+        }
+        return RestResponse.ok(saleSpecs);
 
 
     }
@@ -491,6 +526,19 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             List<Integer> saleSpecIds = servicePackSaleSpecs.stream().map(ServicePackSaleSpec::getSaleSpecId)
                     .collect(Collectors.toList());
             List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
+            //销售规格子类查询
+            if (!CollectionUtils.isEmpty(saleSpecs)) {
+                List<SaleSpecDesc> saleSpecDescs = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda().in(SaleSpecDesc::getSaleSpecId, saleSpecIds));
+                if (!CollectionUtils.isEmpty(saleSpecDescs)) {
+                    Map<Integer, List<SaleSpecDesc>> saleSpecDescMap = saleSpecDescs.stream()
+                            .collect(Collectors.groupingBy(SaleSpecDesc::getSaleSpecId));
+
+                    for (SaleSpec saleSpec : saleSpecs) {
+                        saleSpec.setSaleSpecDescs(saleSpecDescMap.get(saleSpec.getId()));
+                    }
+                }
+            }
+
             servicePack.setSaleSpec(saleSpecs);
         }
         //查询服务信息

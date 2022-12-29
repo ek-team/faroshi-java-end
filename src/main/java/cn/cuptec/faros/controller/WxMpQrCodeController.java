@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 微信二维码接口
+ * 微信公众号二维码接口
  */
 @Slf4j
 @RestController
@@ -40,7 +40,7 @@ public class WxMpQrCodeController {
      * @throws WxErrorException
      */
     @GetMapping("/introduceSubscribeQrCode")
-    public RestResponse getProductQrcode(@RequestParam(required = true) int servicePackId) throws WxErrorException {
+    public RestResponse getProductQrcode(@RequestParam("servicePackId") int servicePackId) throws WxErrorException {
         ServicePack byId = servicePackService.getById(servicePackId);
         if (!StringUtils.isEmpty(byId.getMpQrCode())) {
             return RestResponse.ok(byId.getMpQrCode());

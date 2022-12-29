@@ -20,7 +20,11 @@ public class UserServicePackageInfo extends Model<UserServicePackageInfo> {
     private Integer servicePackageInfoId;//服务id
     @TableField(exist = false)
     private ServicePackageInfo servicePackageInfo;
+    @TableField(exist = false)
+    private DoctorTeam doctorTeam;//服务的医生团队
     private Integer useCount = 0;//已使用次数
+    private Integer totalCount = 0;//总服务次数
+    private Integer chatUserId;//聊天组id
     private LocalDateTime createTime;
     private Integer orderId;
     private Integer userId;

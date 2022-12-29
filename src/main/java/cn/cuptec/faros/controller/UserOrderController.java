@@ -46,6 +46,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private SaleSpecService saleSpecService;//销售规格
     @Resource
+    private SaleSpecDescService saleSpecDescService;//销售规格子类
+    @Resource
     private PatientUserService patientUserService;
     @Resource
     private FormUserDataService formUserDataService;
@@ -59,7 +61,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
     private WxPayController wxPayController;
-
+    @Resource
+    private ProductSpecService productSpecService;
     /**
      * 获取省的订单数量
      *
@@ -116,7 +119,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.eq("address.addressee_phone", receiverPhone);
         }
         if (!StringUtils.isEmpty(startTime)) {
-            if(StringUtils.isEmpty(endTime)){
+            if (StringUtils.isEmpty(endTime)) {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 endTime = df.format(now);
@@ -180,6 +183,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         return RestResponse.ok();
     }
 
+    @GetMapping("/manage/countScoped")
+    public RestResponse countScoped() {
+        UOrderStatuCountVo result = service.countScoped();
+        return RestResponse.ok(result);
+    }
 
     /**
      * 购买者申请单的增加
@@ -200,8 +208,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setUserId(SecurityUtils.getUser().getId());
         //计算订单价格
         Integer saleSpecId = userOrder.getSaleSpecId();//销售规格
-        SaleSpec saleSpec = saleSpecService.getById(saleSpecId);
-        BigDecimal payment = new BigDecimal(saleSpec.getRent()).add(new BigDecimal(saleSpec.getDeposit()));
+        SaleSpecDesc saleSpecDesc = saleSpecDescService.getById(saleSpecId);
+        BigDecimal payment = new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit()));
         userOrder.setPayment(payment);
         service.save(userOrder);
 
@@ -218,7 +226,48 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         Page<UserOrder> page = getPage();
         queryWrapper.eq("user_id", SecurityUtils.getUser().getId());
         IPage iPage = service.listMyOrder(page, queryWrapper);
-
+        if (CollUtil.isNotEmpty(iPage.getRecords())) {
+            List<UserOrder> records = iPage.getRecords();
+            //服务包信息
+            List<Integer> servicePackIds = records.stream().map(UserOrder::getServicePackId)
+                    .collect(Collectors.toList());
+            List<ServicePack> servicePacks = (List<ServicePack>) servicePackService.listByIds(servicePackIds);
+            //查询服务包图片信息
+            if (!CollectionUtils.isEmpty(servicePacks)) {
+                List<ServicePackProductPic> servicePackProductPics = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
+                        .in(ServicePackProductPic::getServicePackId, servicePackIds));
+                if (!CollectionUtils.isEmpty(servicePackProductPics)) {
+                    Map<Integer, List<ServicePackProductPic>> servicePackProductPicMap = servicePackProductPics.stream()
+                            .collect(Collectors.groupingBy(ServicePackProductPic::getServicePackId));
+                    for (ServicePack servicePack : servicePacks) {
+                        servicePack.setServicePackProductPics(servicePackProductPicMap.get(servicePack.getId()));
+                    }
+                }
+            }
+            Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
+                    .collect(Collectors.toMap(ServicePack::getId, t -> t));
+            //规格信息
+            List<Integer> saleSpecIds = records.stream().map(UserOrder::getSaleSpecId)
+                    .collect(Collectors.toList());
+            List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
+            Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()
+                    .collect(Collectors.toMap(SaleSpec::getId, t -> t));
+            //产品规格信息
+            //赠送的服务信息
+            List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
+                    .in(ServicePackageInfo::getServicePackageId, servicePackIds));
+            Map<Integer, List<ServicePackageInfo>> servicePackageInfoMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(servicePackageInfos)) {
+                servicePackageInfoMap = servicePackageInfos.stream()
+                        .collect(Collectors.groupingBy(ServicePackageInfo::getServicePackageId));
+            }
+            for (UserOrder userOrder : records) {
+                userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
+                userOrder.setSaleSpec(saleSpecMap.get(userOrder.getSaleSpecId()));
+                List<ServicePackageInfo> servicePackageInfos1 = servicePackageInfoMap.get(userOrder.getServicePackId());
+                userOrder.setServicePackageInfos(servicePackageInfos1);
+            }
+        }
         return RestResponse.ok(iPage);
     }
 
@@ -236,9 +285,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 .eq(UserOrder::getStatus, 2))); //待发货
         myStateCount.setPendingDelivery(service.count(Wrappers.<UserOrder>lambdaQuery()
                 .eq(UserOrder::getUserId, SecurityUtils.getUser().getId())
-                .eq(UserOrder::getStatus, 3)));//待收获
+                .eq(UserOrder::getStatus, 3)));//待收货
+        myStateCount.setUsedCount(service.count(Wrappers.<UserOrder>lambdaQuery()
+                .eq(UserOrder::getUserId, SecurityUtils.getUser().getId())
+                .eq(UserOrder::getStatus, 4)));//使用中
+        myStateCount.setPendingRecycle(service.count(Wrappers.<UserOrder>lambdaQuery()
+                .eq(UserOrder::getUserId, SecurityUtils.getUser().getId())
+                .eq(UserOrder::getStatus, 4)));//待回收
         return RestResponse.ok(myStateCount);
     }
+
 
     /**
      * 用户查询自己的订单详细信息

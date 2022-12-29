@@ -50,7 +50,8 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
     private Date lastChatTime;
 
     private String remark;
-
+    private LocalDateTime serviceStartTime;//服务开始时间
+    private LocalDateTime serviceEndTime;//服务结束时间
     /**
      * 清空聊天记录时间
      */

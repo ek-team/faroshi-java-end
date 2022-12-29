@@ -204,7 +204,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
     /**
      * 添加群聊
      */
-    public void saveGroupChatUser(List<Integer> userIds, Integer doctorTeamId) {
+    public ChatUser saveGroupChatUser(List<Integer> userIds, Integer doctorTeamId) {
         String chatUserId = "";
         for (Integer userId : userIds) {
             if (StringUtils.isEmpty(chatUserId)) {
@@ -219,5 +219,6 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         chatUser.setLastChatTime(new Date());
         chatUser.setTeamId(doctorTeamId);
         save(chatUser);
+        return chatUser;
     }
 }

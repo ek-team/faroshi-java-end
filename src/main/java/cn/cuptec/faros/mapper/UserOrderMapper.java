@@ -14,7 +14,7 @@ import java.util.List;
 
 public interface UserOrderMapper extends BaseMapper<UserOrder> {
 
-    @Select("SELECT user_order.id,user_order.delivery_company_code,user_order.order_no," +
+    @Select("SELECT user_order.id,user_order.doctor_team_id,user_order.delivery_company_code,user_order.order_no," +
             "address.addressee_name as receiverName,address.addressee_phone as receiverPhone,address.city,address.area,address.province," +
             "address.address as receiverDetailAddress,user_order.user_id," +
             "user_order.dept_id,user_order.salesman_id," +
@@ -31,20 +31,15 @@ public interface UserOrderMapper extends BaseMapper<UserOrder> {
     UserOrder getOrderDetail(Serializable id);
 
     @Select("SELECT user_order.id,user_order.order_no," +
-            "user_order.receiver_name,user_order.receiver_phone,user_order.receiver_region," +
-            "user_order.receiver_detail_address,user_order.user_id," +
-            "user_order.dept_id,user_order.salesman_id,user_order.product_id," +
+            "user_order.user_id," +
+            "user_order.dept_id," +
             "user_order.sale_price,user_order.status,user_order.create_time," +
-            "user_order.delivery_sn,user_order.delievey_time," +
-            "user_order.payment," +
-            "user_order.use_name," +
+            "user_order.payment,user_order.sale_spec_id,user_order.product_spec," +
             "user_order.delivery_number," +
             "user_order.service_pack_id," +
-            "user_order.set_meal_name," +
-            "user_order.city," +
-            "user_order.province," +
             "user_order.doctor_id" +
             " FROM user_order " +
+            "LEFT JOIN service_pack ON user_order.service_pack_id = service_pack.id " +
             " ${ew.customSqlSegment} " +
             "ORDER BY user_order.create_time DESC")
     IPage<UserOrder> pageMyOrder(IPage page, @Param(Constants.WRAPPER)Wrapper queryWrapper);

@@ -25,11 +25,14 @@ public class UserOrder {
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String orderNo;
     private Integer patientUserId;//就诊人id
+    private Integer chatUserId;//聊天id
     private String remark;//备注
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer orderType;//订单类型 1-租用 2-购买
     @TableField(exist = false)
     private String patientUserName;//就诊人名称
+    @TableField(exist = false)
+    private List<ServicePackageInfo> servicePackageInfos;//赠送的服务信息
     @TableField(exist = false)
     private PatientUser patientUser;
     @TableField(exist = false)
@@ -40,6 +43,7 @@ public class UserOrder {
     private ServicePack servicePack;//服务包信息
     @TableField(exist = false)
     private SaleSpec saleSpec;//销售规格信息
+
     //服务包id
     private Integer servicePackId;
     private String transactionId;
@@ -47,7 +51,7 @@ public class UserOrder {
     private Integer formId;//表单id
     private Integer doctorTeamId;//服务团队id
     private Integer saleSpecId;//销售规格id
-    private Integer productSpecId;//产品规格id
+    private String productSpec;//选择的产品规格信息 字符串拼接多个
     private Integer addressId;//收货人地址id
     //快递单号
     private String deliveryNumber;

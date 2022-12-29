@@ -15,6 +15,9 @@ public class SaleSpecDesc extends Model<SaleSpecDesc> {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private String name;
-    private String value;
+    private String remark;
+    private Double deposit;//押金
+    private Double rent;//租金
+    private Double recoveryPrice;//回收价
     private Integer saleSpecId;
 }

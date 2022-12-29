@@ -4,19 +4,23 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.ChatMsg;
 import cn.cuptec.faros.entity.ChatUser;
+import cn.cuptec.faros.entity.UserServicePackageInfo;
 import cn.cuptec.faros.im.bean.ChatUserVO;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.service.ChatMsgService;
 import cn.cuptec.faros.service.ChatUserService;
+import cn.cuptec.faros.service.UserServicePackageInfoService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +33,31 @@ public class ChatUserController {
 
     @Resource
     private ChatMsgService chatMsgService;
+    @Resource
+    public RedisTemplate redisTemplate;
+    @Resource
+    private UserServicePackageInfoService userServicePackageInfoService;
+
+    /**
+     * 用户进入聊天 开始计时 使用服务
+     *
+     * @return
+     */
+    @ApiOperation(value = "使用服务")
+    @GetMapping("/useService")
+    public RestResponse useService(@RequestParam("userServiceId") int userServiceId) {
+        UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(userServiceId);
+        userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
+        userServicePackageInfoService.updateById(userServicePackageInfo);
+        //修改聊天框使用时间
+        ChatUser chatUser = new ChatUser();
+        chatUser.setId(userServicePackageInfo.getChatUserId());
+        chatUser.setServiceStartTime(LocalDateTime.now());
+        chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
+        chatUserService.updateById(chatUser);
+        return RestResponse.ok();
+    }
+
 
     @ApiOperation(value = "分页查询聊天列表")
     @PostMapping("/pageChatUsers")
