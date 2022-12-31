@@ -23,6 +23,7 @@ public class Form extends Model<Form> {
     private String title;
     private LocalDateTime createTime;
     private Integer deptId;
+    private Integer createId;//创建人用户id
     private Integer createUserId;
     @TableField(exist = false)
     private List<FormSetting> formSettings;

@@ -66,7 +66,8 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
     private String nickname;
     @TableField(exist = false)
     private String avatar;
-
+    @TableField(exist = false)
+    private int status;//1-有效 2-无效
     @Override
     public int compareTo(ChatUser o) {
         return o.lastChatTime.compareTo(this.lastChatTime);//根据时间降序

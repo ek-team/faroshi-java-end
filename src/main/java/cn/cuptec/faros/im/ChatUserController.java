@@ -39,6 +39,23 @@ public class ChatUserController {
     private UserServicePackageInfoService userServicePackageInfoService;
 
     /**
+     * 查询会话信息 聊天是否有效
+     */
+    @ApiOperation(value = "查询会话信息 聊天是否有效")
+    @GetMapping("/queryChatTime")
+    public RestResponse queryChatTime(@RequestParam("chatUserId") int chatUserId) {
+
+        ChatUser chatUser = chatUserService.getById(chatUserId);
+        if (chatUser.getServiceEndTime().isAfter(LocalDateTime.now())) {
+            chatUser.setStatus(1);
+        } else {
+            chatUser.setStatus(2);
+        }
+        return RestResponse.ok(chatUser);
+    }
+
+
+    /**
      * 用户进入聊天 开始计时 使用服务
      *
      * @return
@@ -49,8 +66,11 @@ public class ChatUserController {
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(userServiceId);
         userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
         userServicePackageInfoService.updateById(userServicePackageInfo);
+        ChatUser chatUser = chatUserService.getById(userServicePackageInfo.getChatUserId());
+        if (chatUser.getServiceStartTime() != null && chatUser.getServiceEndTime().isAfter(LocalDateTime.now())) {
+            return RestResponse.ok();
+        }
         //修改聊天框使用时间
-        ChatUser chatUser = new ChatUser();
         chatUser.setId(userServicePackageInfo.getChatUserId());
         chatUser.setServiceStartTime(LocalDateTime.now());
         chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));

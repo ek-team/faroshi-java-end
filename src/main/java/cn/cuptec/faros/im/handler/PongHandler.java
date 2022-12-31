@@ -22,9 +22,7 @@ public class PongHandler extends AbstractMessageHandler {
 
     public void handle(Channel channel, SocketFrameTextMessage origionMessage) {
         UserChannelManager.updateUserTime(channel);
-
-
-
+        log.info("pong消息");
         channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.pong(1))));
     }
 

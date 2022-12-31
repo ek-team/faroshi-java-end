@@ -53,6 +53,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                 .antMatchers(
                         "/index",
                         "/portal/**",
+                        "/ws/**",
                         "/social/token",
                         "/product/**",
                         "/city",

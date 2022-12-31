@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Data
 public class Upcoming extends Model<Upcoming> {
     @TableId(type = IdType.AUTO)
-    private String id;
+    private Integer id;
 
     private String userId;
 

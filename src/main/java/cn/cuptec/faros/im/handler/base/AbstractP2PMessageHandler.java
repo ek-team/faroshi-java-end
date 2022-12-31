@@ -47,8 +47,6 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private UserService userService;
-    //医生一分钟未回复自动回复队列
-    public static ConcurrentLinkedQueue<SocketFrameTextMessage> replyQueue = new ConcurrentLinkedQueue<>();
 
     @Override
     @Transactional

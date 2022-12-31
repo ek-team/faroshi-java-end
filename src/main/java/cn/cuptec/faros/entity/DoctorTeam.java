@@ -23,6 +23,7 @@ public class DoctorTeam extends Model<DoctorTeam> {
     private String hospitalName;
     private String teamDesc;
     private Integer deptId;
+    private Integer createUserId;
     private LocalDateTime createTime;
     @TableField(exist = false)
     private List<DoctorTeamPeople> doctorTeamPeopleList;

@@ -46,6 +46,39 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 .eq(ChatUser::getUid, param.getMyUserId());
         wrapper.or();
         wrapper.like(ChatUser::getUserIds, param.getMyUserId());
+        if (!StringUtils.isEmpty(param.getSearchName())) {//如果是搜索昵称
+            LambdaQueryWrapper<User> userWrapper = Wrappers.<User>lambdaQuery()
+                    .like(User::getNickname, param.getSearchName());
+            List<User> users = userService.list(userWrapper);
+            //根据团队名称搜索
+            LambdaQueryWrapper<DoctorTeam> teamWrapper = Wrappers.<DoctorTeam>lambdaQuery()
+                    .like(DoctorTeam::getName, param.getSearchName());
+            List<DoctorTeam> doctorTeams = doctorTeamService.list(teamWrapper);
+
+            if (CollectionUtils.isEmpty(users) && CollectionUtils.isEmpty(doctorTeams)) {
+                return new Page<>();
+            }
+            if(!CollectionUtils.isEmpty(users)){
+                List<Integer> userIds = users.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                wrapper.in(ChatUser::getTargetUid, userIds);
+
+                for (Integer userId : userIds) {
+                    wrapper.or();
+                    wrapper.like(ChatUser::getUserIds, userId);
+                }
+            }
+          if(!CollectionUtils.isEmpty(doctorTeams)){
+              //团队搜索条件
+              List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
+                      .collect(Collectors.toList());
+              for (Integer teamId : teamIds) {
+                  wrapper.or();
+                  wrapper.like(ChatUser::getTeamId, teamId);
+              }
+          }
+
+        }
         wrapper.orderByDesc(ChatUser::getLastChatTime);
         IPage result = page(page, wrapper);
         List<ChatUser> chatUsers = result.getRecords();

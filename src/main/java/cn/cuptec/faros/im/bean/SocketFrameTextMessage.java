@@ -34,7 +34,7 @@ public class SocketFrameTextMessage {
      * 消息类型 对应ChatProto
      */
     private String msgType;
-
+    private String searchName;//搜索昵称字段
     /**
      * 返回的数据
      */
@@ -112,6 +112,7 @@ public class SocketFrameTextMessage {
         }
         return true;
     }
+
     public static SocketFrameTextMessage closeChat(Integer targetUid) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();
         message.msgType = ChatProto.RESPONSE_CLOSECHAT;
