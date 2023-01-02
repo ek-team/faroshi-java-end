@@ -47,6 +47,7 @@ public class WxScanService {
         // TODO 此处简单处理场景
         String[] split = wxMessageEventKey.split(";");
         Integer servicePackId = Integer.parseInt(split[0]);
+        String token = split[1];
         log.info("场景值：" + wxMessageEventKey + "=====" + event);
 
         // 获取微信用户基本信息
@@ -59,49 +60,50 @@ public class WxScanService {
             e.printStackTrace();
         }
 
-            if (userWxInfo != null) {
-                //添加关注用户到本地数据库
-                User user = userService.getBaseMapper().getMpOpenIdIsExist(userWxInfo.getOpenId());
+        if (userWxInfo != null) {
+            //添加关注用户到本地数据库
+            User user = userService.getBaseMapper().getMpOpenIdIsExist(userWxInfo.getOpenId());
 
-                if (user == null || !"0".equals(user.getDelFlag())) {
-                    log.info("用户不存在，将新增");
-                    User u = new User();
-                    u.setPhone(userWxInfo.getOpenId());
-                    u.setMpOpenId(userWxInfo.getOpenId());
-                    u.setUnionId(userWxInfo.getUnionId());
-                    u.setNickname(userWxInfo.getNickname());
-                    u.setAvatar(userWxInfo.getHeadImgUrl());
-                    u.setGender(userWxInfo.getSexDesc());
-                    u.setProvince(userWxInfo.getProvince());
-                    u.setCity(userWxInfo.getCity());
-                    u.setLanguage(userWxInfo.getLanguage());
-                    u.setIsSubscribe(true);
-                    if (user == null) userService.save(u);
-                    else {
-                        u.setDelFlag(CommonConstants.STATUS_NORMAL);
-                        u.setLockFlag(CommonConstants.STATUS_NORMAL);
-                        userRoleService.deleteByUserId(user.getId());
-                        u.setId(user.getId());
-                        userService.getBaseMapper().updateUserById(u);
-                    }
+            if (user == null || !"0".equals(user.getDelFlag())) {
+                log.info("用户不存在，将新增");
+                User u = new User();
+                u.setPhone(userWxInfo.getOpenId());
+                u.setMpOpenId(userWxInfo.getOpenId());
+                u.setUnionId(userWxInfo.getUnionId());
+                u.setNickname(userWxInfo.getNickname());
+                u.setAvatar(userWxInfo.getHeadImgUrl());
+                u.setGender(userWxInfo.getSexDesc());
+                u.setProvince(userWxInfo.getProvince());
+                u.setCity(userWxInfo.getCity());
+                u.setLanguage(userWxInfo.getLanguage());
+                u.setIsSubscribe(true);
+                if (user == null) userService.save(u);
+                else {
+                    u.setDelFlag(CommonConstants.STATUS_NORMAL);
+                    u.setLockFlag(CommonConstants.STATUS_NORMAL);
+                    userRoleService.deleteByUserId(user.getId());
+                    u.setId(user.getId());
+                    userService.getBaseMapper().updateUserById(u);
+                }
 
-                } else {
+            } else {
 
-                    user.setIsSubscribe(true);
-                    userService.updateById(user);
-                    //查询该用户的权限
+                user.setIsSubscribe(true);
+                userService.updateById(user);
+                //查询该用户的权限
 //                    List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
 //                            .in(UserRole::getUserId, user.getId()));
 
-                    //wxMpTagService.batchTaggings(userRoles, user.getId());
-                }
-                wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适", "点击查看详情", "/pages/orderConfirm/orderConfirm?id=1&token=b9780b1b-09e8-4bac-8e4e-217bd1a9837e");
-
+                //wxMpTagService.batchTaggings(userRoles, user.getId());
             }
+            wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适",
+                    "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePackId + "token=" + token);
+
+        }
 
         if ("subscribe".equals(event)) {//关注消息
             log.info("关注消息：" + wxMessageEventKey + "=====" + event);
-           // wxMpService.sendSubNotice(userWxInfo.getOpenId(), "扫码成功", byId.getName(), "法罗适", "点击查看详情", "/pages/orderConfirm/orderConfirm?id=1");
+            // wxMpService.sendSubNotice(userWxInfo.getOpenId(), "扫码成功", byId.getName(), "法罗适", "点击查看详情", "/pages/orderConfirm/orderConfirm?id=1");
 
 
         }

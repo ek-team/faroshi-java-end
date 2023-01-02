@@ -3,6 +3,7 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.constrants.CommonConstants;
 import cn.cuptec.faros.common.utils.StringUtils;
+import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.config.wx.WxMpConfiguration;
 import cn.cuptec.faros.entity.ServicePack;
 import cn.cuptec.faros.entity.ServicePackSaleSpec;
@@ -40,20 +41,15 @@ public class WxMpQrCodeController {
      * @throws WxErrorException
      */
     @GetMapping("/introduceSubscribeQrCode")
-    public RestResponse getProductQrcode(@RequestParam("servicePackId") int servicePackId) throws WxErrorException {
-        ServicePack byId = servicePackService.getById(servicePackId);
-        if (!StringUtils.isEmpty(byId.getMpQrCode())) {
-            return RestResponse.ok(byId.getMpQrCode());
-        }
+    public RestResponse getProductQrcode(@RequestParam("servicePackId") int servicePackId,@RequestParam(value = "token",required = false) String token) throws WxErrorException {
+
         StringBuilder sb = new StringBuilder();
         sb.append(servicePackId);
 
         sb.append(CommonConstants.VALUE_SEPARATOR);
-
-        WxMpQrCodeTicket wxMpQrCodeTicket = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodeCreateLastTicket(sb.toString());
+        sb.append(token);
+        WxMpQrCodeTicket wxMpQrCodeTicket = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodeCreateTmpTicket(sb.toString(),259200);
         String qrCodePictureUrl = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodePictureUrl(wxMpQrCodeTicket.getTicket());
-        byId.setMpQrCode(qrCodePictureUrl);
-        servicePackService.updateById(byId);
         return RestResponse.ok(qrCodePictureUrl);
     }
 

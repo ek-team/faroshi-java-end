@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class DoctorTeamService extends ServiceImpl<DoctorTeamMapper, DoctorTeam> {
 
-    public IPage<DoctorTeam> pageScoped(IPage<DoctorTeam> page, Wrapper<DoctorTeam> queryWrapper) {
-        DataScope dataScope = new DataScope();
-        dataScope.setIsOnly(true);
+    public IPage<DoctorTeam> pageScoped(IPage<DoctorTeam> page, Wrapper<DoctorTeam> queryWrapper,DataScope dataScope) {
+
+
         return baseMapper.pageScoped(page, queryWrapper, dataScope);
     }
 }

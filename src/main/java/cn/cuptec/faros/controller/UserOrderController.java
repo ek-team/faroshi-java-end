@@ -1,40 +1,26 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
-import cn.cuptec.faros.common.utils.MapperUtil;
-import cn.cuptec.faros.common.utils.OrderNumberUtil;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.pay.WxPayController;
 import cn.cuptec.faros.service.*;
-import cn.cuptec.faros.util.ExcelUtil;
-import cn.cuptec.faros.vo.MapExpressTrackVo;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.google.common.collect.Lists;
-import me.chanjar.weixin.mp.bean.template.WxMpTemplateData;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.text.DecimalFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -63,6 +49,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private WxPayController wxPayController;
     @Resource
     private ProductSpecService productSpecService;
+
     /**
      * 获取省的订单数量
      *
@@ -149,7 +136,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
             //规格信息
-            List<Integer> saleSpecIds = records.stream().map(UserOrder::getSaleSpecId)
+            List<String> saleSpecIds = records.stream().map(UserOrder::getSaleSpecId)
                     .collect(Collectors.toList());
             List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
             Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()
@@ -207,9 +194,19 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setCreateTime(LocalDateTime.now());
         userOrder.setUserId(SecurityUtils.getUser().getId());
         //计算订单价格
-        Integer saleSpecId = userOrder.getSaleSpecId();//销售规格
-        SaleSpecDesc saleSpecDesc = saleSpecDescService.getById(saleSpecId);
-        BigDecimal payment = new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit()));
+        String[] split = userOrder.getSaleSpecId().split(",");
+        List<String> saleSpecIds = Arrays.asList(split);//销售规格
+        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
+        BigDecimal payment = null;
+        for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+            if (payment == null) {
+                payment = new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit()));
+
+            } else {
+                payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit())));
+            }
+
+        }
         userOrder.setPayment(payment);
         service.save(userOrder);
 
@@ -247,7 +244,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
             //规格信息
-            List<Integer> saleSpecIds = records.stream().map(UserOrder::getSaleSpecId)
+            List<String> saleSpecIds = records.stream().map(UserOrder::getSaleSpecId)
                     .collect(Collectors.toList());
             List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
             Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()

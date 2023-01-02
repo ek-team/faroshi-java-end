@@ -219,7 +219,6 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
         ProductStock productStock = productStockService.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getLiveQrCodeId, qrCodeId));
         //跳转h5中转页面 判断用户是否关注公众号
         Integer servicePackId = productStock.getServicePackId();
-        log.info("获取的服务包id:{}",servicePackId);
         if(servicePackId!=null){
             log.info("获取的服务包id===========:{}",servicePackId);
             String url="https://pharos3.ewj100.com/index.html#/nali/redBean?id="+servicePackId;

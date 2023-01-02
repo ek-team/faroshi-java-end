@@ -53,7 +53,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
 
     @Transactional
     public boolean saveRetrieveOrder(RetrieveOrder entity) {
-        UserOrder userOrder = userOrdertService.getById(entity.getUserId());
+        UserOrder userOrder = userOrdertService.getById(entity.getOrderId());
         entity.setDeptId(userOrder.getDeptId());
         entity.setSaleSpecId(userOrder.getSaleSpecId());
         entity.setServicePackId(userOrder.getServicePackId());

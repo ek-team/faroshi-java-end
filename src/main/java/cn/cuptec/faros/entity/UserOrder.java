@@ -50,7 +50,7 @@ public class UserOrder {
     private Integer doctorId;//支付成功随机选择的医生id
     private Integer formId;//表单id
     private Integer doctorTeamId;//服务团队id
-    private Integer saleSpecId;//销售规格id
+    private String saleSpecId;//销售规格id
     private String productSpec;//选择的产品规格信息 字符串拼接多个
     private Integer addressId;//收货人地址id
     //快递单号

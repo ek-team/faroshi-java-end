@@ -16,7 +16,7 @@ public interface DoctorTeamMapper  extends BaseMapper<DoctorTeam> {
 
             "LEFT JOIN dept ON doctor_team.dept_id = dept.id " +
             "LEFT JOIN hospital_info ON doctor_team.hospital_id = hospital_info.id " +
-            "${ew.customSqlSegment} ORDER BY doctor_team.create_time DESC")
+            "${ew.customSqlSegment}  ORDER BY doctor_team.create_time,doctor_team.status DESC")
     IPage<DoctorTeam> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 
 }

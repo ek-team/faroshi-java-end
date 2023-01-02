@@ -134,7 +134,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
             //规格信息
-            List<Integer> saleSpecIds = records.stream().map(RetrieveOrder::getSaleSpecId)
+            List<String> saleSpecIds = records.stream().map(RetrieveOrder::getSaleSpecId)
                     .collect(Collectors.toList());
             List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
             Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()

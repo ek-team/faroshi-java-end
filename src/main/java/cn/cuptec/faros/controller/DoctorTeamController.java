@@ -1,6 +1,7 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.datascope.DataScope;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
@@ -39,7 +40,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     public RestResponse add(@RequestBody DoctorTeam doctorTeam) {
         User byId = userService.getById(SecurityUtils.getUser().getId());
 
-
+        doctorTeam.setStatus(0);
         doctorTeam.setDeptId(byId.getDeptId());
         doctorTeam.setCreateTime(LocalDateTime.now());
         service.save(doctorTeam);
@@ -94,9 +95,18 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     public RestResponse pageScoped() {
         Page<DoctorTeam> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        User user = userService.getById(SecurityUtils.getUser().getId());
+        DataScope dataScope = new DataScope();
 
-        IPage<UserOrder> userOrderIPage = service.pageScoped(page, queryWrapper);
-        return RestResponse.ok(userOrderIPage);
+        if (user.getDeptId().equals(1)) {
+            dataScope.setIsOnly(false);
+        } else {
+            dataScope.setIsOnly(true);
+            queryWrapper.eq("status", 1);
+        }
+
+        IPage<DoctorTeam> doctorTeamIPage = service.pageScoped(page, queryWrapper, dataScope);
+        return RestResponse.ok(doctorTeamIPage);
     }
 
     /**
@@ -122,6 +132,15 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         return RestResponse.ok(byId);
     }
 
+    /**
+     * 审核医生团队
+     * @return
+     */
+    @PostMapping("/checkDoctorTeam")
+    public RestResponse checkDoctorTeam(@RequestBody DoctorTeam doctorTeam) {
+        service.updateById(doctorTeam);
+        return RestResponse.ok();
+    }
     @Override
     protected Class<DoctorTeam> getEntityClass() {
         return DoctorTeam.class;

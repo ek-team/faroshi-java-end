@@ -105,7 +105,12 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @GetMapping("/info")
     public RestResponse<User> user_me() {
-        return RestResponse.ok(service.selectUserVoById(SecurityUtils.getUser().getId()));
+        User user = service.selectUserVoById(SecurityUtils.getUser().getId());
+        //查询医院信息
+        List<User> users = new ArrayList<>();
+        users.add(user);
+        hospitalInfoService.getHospitalByUser(users);
+        return RestResponse.ok(users.get(0));
     }
 
     /**
@@ -143,6 +148,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         user.setId(SecurityUtils.getUser().getId());
         return service.updateById(user) ? RestResponse.ok() : RestResponse.failed();
     }
+
     @PutMapping
     public RestResponse update(@RequestBody @Valid User user) {
         user.setId(SecurityUtils.getUser().getId());
