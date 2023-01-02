@@ -54,11 +54,12 @@ public class UploadFileController {
     @ApiOperation(value = "上传文件")
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("file") MultipartFile mulFile,
-                             @RequestParam("dir") String dir
+                             @RequestParam(value = "dir",required = false) String dir
     ) throws Exception {
         File file = FileUtils.multipartFileToFile(mulFile);
         String originalFilename = mulFile.getOriginalFilename();
         String[] split = originalFilename.split("\\.");
+        dir="image/";
         return UploadFileUtils.uploadFile(file, dir, ossProperties,split[0] );
     }
 

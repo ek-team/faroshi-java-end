@@ -62,6 +62,10 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
      */
     @PostMapping("/update")
     public RestResponse update(@RequestBody DoctorTeam doctorTeam) {
+        DoctorTeam byId = service.getById(doctorTeam);
+        if (byId.getStatus().equals(2)) {
+            doctorTeam.setStatus(0);
+        }
         service.updateById(doctorTeam);
         doctorTeamPeopleService.remove(new QueryWrapper<DoctorTeamPeople>().lambda().eq(DoctorTeamPeople::getTeamId, doctorTeam.getId()));
         List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeam.getDoctorTeamPeopleList();
@@ -134,6 +138,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
 
     /**
      * 审核医生团队
+     *
      * @return
      */
     @PostMapping("/checkDoctorTeam")
@@ -141,6 +146,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         service.updateById(doctorTeam);
         return RestResponse.ok();
     }
+
     @Override
     protected Class<DoctorTeam> getEntityClass() {
         return DoctorTeam.class;

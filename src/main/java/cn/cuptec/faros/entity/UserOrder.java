@@ -70,7 +70,7 @@ public class UserOrder {
     //收货人详细地址
     private String receiverDetailAddress;
     //期望送货时间
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDateTime deliveryDate;
     //发货地址
     private String deliveryAddress;

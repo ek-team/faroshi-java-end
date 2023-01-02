@@ -72,7 +72,7 @@ public class SalesmanRetrieveAddressController extends AbstractBaseController<Sa
     public RestResponse listByDeptId(@RequestParam("deptId") Integer deptId) {
         QueryWrapper<SalesmanRetrieveAddress> queryWrapper = getQueryWrapper(getEntityClass());
         queryWrapper.eq("salesman_retrieve_address.dept_id", deptId);
-        queryWrapper.eq("salesman_retrieve_address.default_status", 0);
+        queryWrapper.eq("salesman_retrieve_address.default_status", 1);
         List<SalesmanRetrieveAddress> list = service.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             return RestResponse.ok();

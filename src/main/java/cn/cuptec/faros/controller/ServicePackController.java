@@ -53,6 +53,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @Resource
     private DoctorTeamService doctorTeamService;
     @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
+    @Resource
     private ProductStockService productStockService;
     @Resource
     private IntroductionService introductionService;//服务简介
@@ -477,6 +479,22 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             if (!CollectionUtils.isEmpty(teamIds)) {
                 List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+
+                List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda().in(DoctorTeamPeople::getTeamId, teamIds));
+                List<Integer> userIds = list.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                List<User> users = (List<User>) userService.listByIds(userIds);
+                Map<Integer, User> userMap = users.stream()
+                        .collect(Collectors.toMap(User::getId, t -> t));
+                for (DoctorTeamPeople doctorTeamPeople : list) {
+                    doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
+                    doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+                }
+                Map<Integer, List<DoctorTeamPeople>> doctorTeamPeopleMap = list.stream()
+                        .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
+                for (DoctorTeam doctorTeam : doctorTeams) {
+                    doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
+                }
                 return RestResponse.ok(doctorTeams);
             }
 

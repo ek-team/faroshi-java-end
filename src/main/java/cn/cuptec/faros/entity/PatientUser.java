@@ -13,7 +13,7 @@ public class PatientUser {
     private String id;
     private String name;
     private String idCard;
-    private Integer age;
+    private String age;
     private Integer sex; //0-男 1-女
     private String phone;
     private Integer userId;

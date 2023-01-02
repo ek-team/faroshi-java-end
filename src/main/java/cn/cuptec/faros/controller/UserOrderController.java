@@ -177,6 +177,27 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     /**
+     * 计算订单价格
+     */
+    @PostMapping("/calculatePrice")
+    public RestResponse calculatePrice(@RequestBody UserOrder userOrder) {
+        String[] split = userOrder.getSaleSpecId().split(",");
+        List<String> saleSpecIds = Arrays.asList(split);//销售规格
+        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
+        BigDecimal payment = null;
+        for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+            if (payment == null) {
+                payment = new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit()));
+
+            } else {
+                payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit())));
+            }
+
+        }
+        return RestResponse.ok(payment);
+    }
+
+    /**
      * 购买者申请单的增加
      *
      * @param userOrder
