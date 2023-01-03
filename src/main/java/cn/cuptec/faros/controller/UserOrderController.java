@@ -46,9 +46,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
-    private WxPayController wxPayController;
+    private WxPayService wxPayService;
     @Resource
-    private ProductSpecService productSpecService;
+    private AddressService addressService;
 
     /**
      * 获取省的订单数量
@@ -103,7 +103,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.eq("patient_user.name", nickname);
         }
         if (!StringUtils.isEmpty(receiverPhone)) {
-            queryWrapper.eq("address.addressee_phone", receiverPhone);
+            queryWrapper.eq("user_order.receiver_phone", receiverPhone);
         }
         if (!StringUtils.isEmpty(startTime)) {
             if (StringUtils.isEmpty(endTime)) {
@@ -205,6 +205,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/user/add")
     public RestResponse addOrder(@RequestBody UserOrder userOrder) {
+        Integer addressId = userOrder.getAddressId();
+        Address address = addressService.getById(addressId);
+        userOrder.setReceiverName(address.getAddresseeName());
+        userOrder.setReceiverPhone(address.getAddresseePhone());
+        userOrder.setReceiverDetailAddress(address.getAddress());
+        userOrder.setReceiverRegion(address.getArea());
         if (userOrder.getOrderType() == null) {
             userOrder.setOrderType(1);
         }
@@ -214,6 +220,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setStatus(1);
         userOrder.setCreateTime(LocalDateTime.now());
         userOrder.setUserId(SecurityUtils.getUser().getId());
+
         //计算订单价格
         String[] split = userOrder.getSaleSpecId().split(",");
         List<String> saleSpecIds = Arrays.asList(split);//销售规格
@@ -231,8 +238,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setPayment(payment);
         service.save(userOrder);
 
-        RestResponse restResponse = wxPayController.unifiedOrder(userOrder.getOrderNo());
-        return RestResponse.ok(restResponse.getData());
+        RestResponse restResponse = wxPayService.unifiedOrder(userOrder.getOrderNo());
+        return restResponse;
     }
 
     /**

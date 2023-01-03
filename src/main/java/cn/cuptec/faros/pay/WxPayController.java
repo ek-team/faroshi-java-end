@@ -56,7 +56,8 @@ public class WxPayController {
     private RetrieveOrderService retrieveOrderService;
     @Resource
     private OrderRefundInfoService orderRefundInfoService;
-
+    @Resource
+    private cn.cuptec.faros.service.WxPayService  wxPayService;
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -65,39 +66,9 @@ public class WxPayController {
     @ApiOperation(value = "调用统一下单接口")
     @GetMapping("/unifiedOrder")
     public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo) {
-        UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, orderNo));
-        if (!userOrder.getStatus().equals(1)) {
-            return RestResponse.failed("订单已支付");
-        }
-        Dept dept = deptService.getById(userOrder.getDeptId());
-        User user = userService.getById(SecurityUtils.getUser().getId());
-        WxPayUnifiedOrderRequest request = new WxPayUnifiedOrderRequest();
-        request.setSubMchId(dept.getSubMchId());
 
-        String body = "订单支付";
-        request.setBody(body);
-        request.setOutTradeNo(userOrder.getOrderNo());
-        request.setTotalFee(userOrder.getPayment().multiply(new BigDecimal(100)).intValue());
-        request.setTradeType(WxPayConstants.TradeType.JSAPI);
-        request.setSpbillCreateIp("127.0.0.1");
-        request.setSubOpenid(user.getMpOpenId());
-        request.setSubAppId("wxad59cd874b45bb96");
+            return wxPayService.unifiedOrder(orderNo);
 
-        WxPayConfig wxPayConfig = new WxPayConfig();
-        wxPayConfig.setSubMchId(request.getSubMchId());
-        WxPayService wxPayService = PayConfig.getPayService(wxPayConfig);
-        try {
-            request.setNotifyUrl("https://pharos3.ewj100.com/wxpay/notifyOrder");
-            request.setProductId(request.getOutTradeNo());
-
-            return RestResponse.ok(wxPayService.createOrder(request));
-        } catch (WxPayException e) {
-            if ("INVALID_REQUEST".equals(e.getErrCode())) {
-                return RestResponse.failed("订单号重复，请重新下单");
-            }
-            e.printStackTrace();
-            return RestResponse.failed(e.getReturnMsg() + "" + e.getCustomErrorMsg() + "" + e.getErrCodeDes());
-        }
     }
 
     /**

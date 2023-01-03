@@ -154,6 +154,12 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             // 根据获取的用户信息构造ChatUserVO
             Map<Integer, ChatUser> chatUserMap = chatUsers.stream()
                     .collect(Collectors.toMap(ChatUser::getTargetUid, t -> t));
+            List<ChatUser> chatUsersList=new ArrayList<>();
+            for(ChatUser chatUser:chatUsers){
+                if(chatUser.getTargetUid()!=null){
+                    chatUsersList.add(chatUser);
+                }
+            }
             users.forEach(
                     tenantUser -> {
                         ChatUserVO chatUserVO = new ChatUserVO();
@@ -166,7 +172,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
 
                         // 最后聊天时间和内容
                         ChatUser user =
-                                chatUsers.stream()
+                                chatUsersList.stream()
                                         .filter(chatUser -> chatUser.getTargetUid().equals(chatUserVO.getTargetUid()))
                                         .findFirst()
                                         .get();

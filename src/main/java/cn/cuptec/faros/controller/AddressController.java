@@ -66,4 +66,10 @@ public class AddressController {
         return RestResponse.ok();
 
     }
+
+    @GetMapping("/getById")
+    public RestResponse getById(@RequestParam("id") Integer id) {
+        return RestResponse.ok(addressService.getById(id));
+
+    }
 }
