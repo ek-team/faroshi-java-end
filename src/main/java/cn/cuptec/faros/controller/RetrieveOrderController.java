@@ -3,6 +3,7 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
+import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.collection.CollUtil;
@@ -61,7 +62,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     public RestResponse saveRetrieveOrderReviewData(@RequestBody RetrieveOrderReviewData retrieveOrderReviewData) {
         retrieveOrderReviewData.setCreateTime(LocalDateTime.now());
         //修改审核状态
-        RetrieveOrder retrieveOrder=new RetrieveOrder();
+        RetrieveOrder retrieveOrder = new RetrieveOrder();
         retrieveOrder.setId(retrieveOrderReviewData.getRetrieveOrderId());
         retrieveOrder.setStatus(3);
         service.updateById(retrieveOrder);
@@ -70,6 +71,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
 
     /**
      * 查询回收单审核信息
+     *
      * @param retrieveOrderId
      * @return
      */
@@ -85,12 +87,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
      * @return
      */
     @GetMapping("/manage/pageScoped")
-    public RestResponse pageScoped(@RequestParam(value = "servicePackName",required = false) String servicePackName,
-                                   @RequestParam(value = "startTime",required = false) String startTime,
-                                   @RequestParam(value = "endTime",required = false) String endTime,
-                                   @RequestParam(value = "nickname",required = false) String nickname,
-                                   @RequestParam(value = "receiverPhone",required = false) String receiverPhone,
-                                   @RequestParam(value = "orderId",required = false) String orderId) {
+    public RestResponse pageScoped(@RequestParam(value = "servicePackName", required = false) String servicePackName,
+                                   @RequestParam(value = "startTime", required = false) String startTime,
+                                   @RequestParam(value = "endTime", required = false) String endTime,
+                                   @RequestParam(value = "nickname", required = false) String nickname,
+                                   @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
+                                   @RequestParam(value = "orderId", required = false) String orderId) {
         Page<RetrieveOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
@@ -103,7 +105,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             queryWrapper.eq("retrieve_order.order_id", orderId);
         }
         if (!StringUtils.isEmpty(startTime)) {
-            if(StringUtils.isEmpty(endTime)){
+            if (StringUtils.isEmpty(endTime)) {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 endTime = df.format(now);
@@ -164,6 +166,10 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         Page<RetrieveOrder> page = getPage();
         queryWrapper.eq("user_id", SecurityUtils.getUser().getId());
         queryWrapper.orderByDesc("create_time");
+
+
+
+
         return RestResponse.ok(service.page(page, queryWrapper));
     }
 
@@ -226,7 +232,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         retrieveOrder.setUserId(SecurityUtils.getUser().getId());
         retrieveOrder.setCreateTime(new Date());
         retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
-
+        retrieveOrder.setStatus(1);
         service.saveRetrieveOrder(retrieveOrder);
         return RestResponse.ok();
     }
@@ -257,6 +263,31 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         service.updateById(retrieveOrder);
         return RestResponse.ok("延长成功!");
     }
+
+    /**
+     * 用户查询自己的回收单数量
+     */
+    @GetMapping("/listRetrieveOrderMyStateCount")
+    public RestResponse listRetrieveOrderMyStateCount() {
+        MyStateCount myStateCount = new MyStateCount();
+        myStateCount.setPendingPayment(service.count(Wrappers.<RetrieveOrder>lambdaQuery()
+                .eq(RetrieveOrder::getUserId, SecurityUtils.getUser().getId())
+                .eq(RetrieveOrder::getStatus, 1)));//待收货
+        myStateCount.setPendingDelivery(service.count(Wrappers.<RetrieveOrder>lambdaQuery()
+                .eq(RetrieveOrder::getUserId, SecurityUtils.getUser().getId())
+                .eq(RetrieveOrder::getStatus, 2))); //待审核
+        myStateCount.setPendingReward(service.count(Wrappers.<RetrieveOrder>lambdaQuery()
+                .eq(RetrieveOrder::getUserId, SecurityUtils.getUser().getId())
+                .eq(RetrieveOrder::getStatus, 3)));//待大款
+        myStateCount.setUsedCount(service.count(Wrappers.<RetrieveOrder>lambdaQuery()
+                .eq(RetrieveOrder::getUserId, SecurityUtils.getUser().getId())
+                .eq(RetrieveOrder::getStatus, 4)));//待收款
+        myStateCount.setPendingRecycle(service.count(Wrappers.<RetrieveOrder>lambdaQuery()
+                .eq(RetrieveOrder::getUserId, SecurityUtils.getUser().getId())
+                .eq(RetrieveOrder::getStatus, 5)));//回收完成
+        return RestResponse.ok(myStateCount);
+    }
+
 
     //用户确认邮寄
     @PutMapping("/user/confirmDelivery")

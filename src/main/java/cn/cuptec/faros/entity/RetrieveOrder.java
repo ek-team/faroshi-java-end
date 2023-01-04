@@ -30,6 +30,7 @@ public class RetrieveOrder {
     //服务包id
     private Integer servicePackId;
     private String saleSpecId;//销售规格id
+    private String productSpec;//产品规格信息
     //设备是否能开机
     private Boolean isCanOpen;
 

@@ -19,6 +19,7 @@
 	</properties>
 
 	<dependencies>
+
         <!-- https://mvnrepository.com/artifact/com.getui.push/restful-sdk -->
         <dependency>
             <groupId>com.getui.push</groupId>
@@ -85,7 +86,7 @@
         <dependency>
             <groupId>com.github.binarywang</groupId>
             <artifactId>weixin-java-pay</artifactId>
-            <version>4.2.4.B</version>
+            <version>4.4.7.B</version>
         </dependency>
 
         <!--微信公众号依赖-->
@@ -282,7 +283,9 @@
     </dependencies>
 
 	<build>
-		<plugins>
+        <finalName>faros3-0.0.1-SNAPSHOT</finalName>
+
+        <plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

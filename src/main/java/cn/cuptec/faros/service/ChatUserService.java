@@ -58,25 +58,29 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             if (CollectionUtils.isEmpty(users) && CollectionUtils.isEmpty(doctorTeams)) {
                 return new Page<>();
             }
-            if(!CollectionUtils.isEmpty(users)){
+            if (!CollectionUtils.isEmpty(users)) {
                 List<Integer> userIds = users.stream().map(User::getId)
                         .collect(Collectors.toList());
-                wrapper.in(ChatUser::getTargetUid, userIds);
-
+                wrapper.and(wq0 -> wq0.in(ChatUser::getTargetUid, userIds));
                 for (Integer userId : userIds) {
                     wrapper.or();
                     wrapper.like(ChatUser::getUserIds, userId);
                 }
             }
-          if(!CollectionUtils.isEmpty(doctorTeams)){
-              //团队搜索条件
-              List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
-                      .collect(Collectors.toList());
-              for (Integer teamId : teamIds) {
-                  wrapper.or();
-                  wrapper.like(ChatUser::getTeamId, teamId);
-              }
-          }
+            if (!CollectionUtils.isEmpty(doctorTeams)) {
+
+                //团队搜索条件
+                List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
+                        .collect(Collectors.toList());
+                for (int i=0;i<teamIds.size();i++) {
+                    if(i==0){
+                        wrapper.and(wq0 -> wq0.like(ChatUser::getTeamId, teamIds.get(0)));
+
+                    }
+                    wrapper.or();
+                    wrapper.like(ChatUser::getTeamId, teamIds.get(i));
+                }
+            }
 
         }
         wrapper.orderByDesc(ChatUser::getLastChatTime);
@@ -130,6 +134,8 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     chatUserVO.setNickname(doctorTeam.getName());
                     chatUserVO.setGroupType(1);
                     chatUserVO.setChatUserId(chatUser.getId());
+                    chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
+                    chatUserVO.setServiceStartTime(chatUser.getServiceStartTime());
                     // 最后聊天时间和内容
 
                     chatUserVO.setLastChatTime(chatUser.getLastChatTime());
@@ -150,23 +156,24 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         if (targetUids.size() > 0) {
 
             List<User> users = (List<User>) userService.listByIds(targetUids);
-
-            // 根据获取的用户信息构造ChatUserVO
-            Map<Integer, ChatUser> chatUserMap = chatUsers.stream()
-                    .collect(Collectors.toMap(ChatUser::getTargetUid, t -> t));
-            List<ChatUser> chatUsersList=new ArrayList<>();
-            for(ChatUser chatUser:chatUsers){
-                if(chatUser.getTargetUid()!=null){
+            List<ChatUser> chatUsersList = new ArrayList<>();
+            for (ChatUser chatUser : chatUsers) {
+                if (chatUser.getTargetUid() != null) {
                     chatUsersList.add(chatUser);
                 }
             }
+            // 根据获取的用户信息构造ChatUserVO
+            Map<Integer, ChatUser> chatUserMap = chatUsersList.stream()
+                    .collect(Collectors.toMap(ChatUser::getTargetUid, t -> t));
+
             users.forEach(
                     tenantUser -> {
                         ChatUserVO chatUserVO = new ChatUserVO();
                         chatUserVO.setTargetUid(tenantUser.getId());
                         chatUserVO.setAvatar(tenantUser.getAvatar());
                         chatUserVO.setNickname(tenantUser.getNickname());
-
+                        chatUserVO.setServiceEndTime(chatUserMap.get(tenantUser.getId()).getServiceEndTime());
+                        chatUserVO.setServiceStartTime(chatUserMap.get(tenantUser.getId()).getServiceStartTime());
                         chatUserVO.setRemark(chatUserMap.get(tenantUser.getId()).getRemark());
                         chatUserVO.setClearTime(chatUserMap.get(tenantUser.getId()).getClearTime());
 
@@ -243,7 +250,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
     /**
      * 添加群聊
      */
-    public ChatUser saveGroupChatUser(List<Integer> userIds, Integer doctorTeamId) {
+    public ChatUser saveGroupChatUser(List<Integer> userIds, Integer doctorTeamId, Integer patientUserId) {
         String chatUserId = "";
         for (Integer userId : userIds) {
             if (StringUtils.isEmpty(chatUserId)) {
@@ -251,6 +258,14 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             } else {
                 chatUserId = chatUserId + "," + userId;
             }
+        }
+        LambdaQueryWrapper<ChatUser> wrapper = Wrappers.<ChatUser>lambdaQuery()
+                .eq(ChatUser::getTeamId, doctorTeamId);
+        wrapper.or();
+        wrapper.like(ChatUser::getUserIds, patientUserId);
+        List<ChatUser> list = list(wrapper);
+        if (!CollectionUtils.isEmpty(list)) {
+            return list.get(0);
         }
         ChatUser chatUser = new ChatUser();
         chatUser.setUserIds(chatUserId);

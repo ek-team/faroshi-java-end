@@ -49,7 +49,7 @@ public class WxScanService {
         Integer servicePackId = Integer.parseInt(split[0]);
         String token = split[1];
         log.info("场景值：" + wxMessageEventKey + "=====" + event);
-
+        log.info("服务包id：" + servicePackId + "=====" + event);
         // 获取微信用户基本信息
         ServicePack byId = servicePackService.getById(servicePackId);
         WxMpUser userWxInfo = null;
@@ -97,7 +97,7 @@ public class WxScanService {
                 //wxMpTagService.batchTaggings(userRoles, user.getId());
             }
             wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适",
-                    "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePackId + "token=" + token);
+                    "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePackId + "&token=" + token);
 
         }
 

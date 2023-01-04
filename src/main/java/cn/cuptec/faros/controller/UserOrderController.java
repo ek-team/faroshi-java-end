@@ -5,7 +5,6 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
-import cn.cuptec.faros.pay.WxPayController;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
@@ -46,7 +45,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
-    private WxPayService wxPayService;
+    private WxPayFarosService wxPayFarosService;
     @Resource
     private AddressService addressService;
 
@@ -238,7 +237,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setPayment(payment);
         service.save(userOrder);
 
-        RestResponse restResponse = wxPayService.unifiedOrder(userOrder.getOrderNo());
+        RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getOrderNo());
         return restResponse;
     }
 
@@ -308,7 +307,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         myStateCount.setPendingDelivery(service.count(Wrappers.<UserOrder>lambdaQuery()
                 .eq(UserOrder::getUserId, SecurityUtils.getUser().getId())
                 .eq(UserOrder::getStatus, 2))); //待发货
-        myStateCount.setPendingDelivery(service.count(Wrappers.<UserOrder>lambdaQuery()
+        myStateCount.setPendingReward(service.count(Wrappers.<UserOrder>lambdaQuery()
                 .eq(UserOrder::getUserId, SecurityUtils.getUser().getId())
                 .eq(UserOrder::getStatus, 3)));//待收货
         myStateCount.setUsedCount(service.count(Wrappers.<UserOrder>lambdaQuery()

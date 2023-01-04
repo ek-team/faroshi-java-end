@@ -25,6 +25,7 @@ public class SalesmanRetrieveAddress{
     private Integer deptId;
     private Integer defaultStatus; //0默认 1-不默认
     private String phone;
+    private String name;
     @JSONField(serialize = false)
     private String retrieveRegionIds;
 

@@ -11,6 +11,7 @@ import cn.cuptec.faros.mapper.RetrieveOrderMapper;
 import cn.cuptec.faros.vo.RetrieveOrderCountVo;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -24,10 +25,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,12 +36,13 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     @Resource
     private UserService userService;
     @Resource
-    private SalesmanRetrieveAddressService salesmanRetrieveAddressService;
+    private ServicePackService servicePackService;
     @Resource
     private MobileService mobileService;
-
     @Resource
-    private UserRoleService userRoleService;
+    private SaleSpecDescService saleSpecDescService;
+    @Resource
+    private ServicePackProductPicService servicePackProductPicService;
     @Resource
     private UserOrdertService userOrdertService;
 
@@ -54,8 +53,30 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     @Transactional
     public boolean saveRetrieveOrder(RetrieveOrder entity) {
         UserOrder userOrder = userOrdertService.getById(entity.getOrderId());
+        userOrder.setStatus(5);
+        userOrdertService.updateById(userOrder);
+        List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
+                .eq(ServicePackProductPic::getServicePackId, userOrder.getServicePackId()));
+        entity.setProductPic(list.get(0).getImage());
+        String[] split = userOrder.getSaleSpecId().split(",");
+        List<String> saleSpecIds = Arrays.asList(split);//销售规格
+        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
+        BigDecimal retrieveAmount = null;
+        for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+            if (retrieveAmount == null) {
+                retrieveAmount = new BigDecimal(saleSpecDesc.getRecoveryPrice());
+
+            } else {
+                retrieveAmount = retrieveAmount.add(new BigDecimal(saleSpecDesc.getRecoveryPrice()));
+            }
+        }
+        entity.setRetrieveAmount(retrieveAmount);//回收价格
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+
+        entity.setProductName(servicePack.getName());
         entity.setDeptId(userOrder.getDeptId());
         entity.setSaleSpecId(userOrder.getSaleSpecId());
+        entity.setProductSpec(userOrder.getProductSpec());
         entity.setServicePackId(userOrder.getServicePackId());
         super.save(entity);
 

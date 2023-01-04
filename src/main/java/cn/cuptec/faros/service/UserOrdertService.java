@@ -160,7 +160,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 
     @Override
     public UserOrder getById(Serializable id) {
-        UserOrder userOrder = baseMapper.getOrderDetail(id);
+        UserOrder userOrder = baseMapper.selectById(id);
         return userOrder;
     }
 

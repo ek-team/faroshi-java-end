@@ -41,7 +41,8 @@ public class ChatUserVO implements Comparable<ChatUserVO> {
      * 对话是否已关闭
      */
     private int isClosed;
-
+    private LocalDateTime serviceStartTime;//服务开始时间
+    private LocalDateTime serviceEndTime;//服务结束时间
     /**
      * 是否在线
      */

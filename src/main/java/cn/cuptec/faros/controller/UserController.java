@@ -1,11 +1,15 @@
 package cn.cuptec.faros.controller;
 
+import cn.binarywang.wx.miniapp.api.WxMaUserService;
+import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import cn.cuptec.faros.annotation.SysLog;
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.common.constrants.CommonConstants;
 import cn.cuptec.faros.common.constrants.QrCodeConstants;
 import cn.cuptec.faros.common.exception.InnerException;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
+import cn.cuptec.faros.config.wx.WxMaConfiguration;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.ChangeDoctorDTO;
 import cn.cuptec.faros.dto.UserPwdDTO;
@@ -18,6 +22,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
@@ -33,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("user")
 public class UserController extends AbstractBaseController<UserService, User> {
@@ -52,6 +59,41 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private DoctorTeamService doctorTeamService;
     @Resource
     private PatientUserService patientUserService;
+
+    /**
+     * 初始化小程序openid
+     *
+     * @return
+     */
+    @GetMapping("/initMaOpenId")
+    public RestResponse initMaOpenId(@RequestParam("code") String code) {
+        WxMaUserService wxMaUserService = WxMaConfiguration.getWxMaService().getUserService();
+        WxMaJscode2SessionResult sessionInfo = null;
+        try {
+            sessionInfo = wxMaUserService.getSessionInfo(code);
+        } catch (WxErrorException e) {
+            e.printStackTrace();
+        }
+        log.info("小程序登录sessionInfo:{}" + sessionInfo.toString());
+        User user = service.getBaseMapper().getUnionIdIsExist(sessionInfo.getUnionid());
+        if (user == null) {
+            user = new User();
+            user.setPhone(sessionInfo.getOpenid());
+            user.setMaOpenId(sessionInfo.getOpenid());
+            user.setUnionId(sessionInfo.getUnionid());
+            user.setIsSubscribe(false);
+            user.setLockFlag(CommonConstants.STATUS_NORMAL);
+            service.save(user);
+        }
+
+        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isEmpty(user.getMaOpenId())) {
+            //若小程序openId为空，更新
+            user.setMaOpenId(sessionInfo.getOpenid());
+            service.updateById(user);
+        }
+        return RestResponse.ok();
+    }
+
 
     /**
      * 添加用户就诊人

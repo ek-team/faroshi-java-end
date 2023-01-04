@@ -11,9 +11,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyResult;
 import com.github.binarywang.wxpay.bean.request.WxPayRefundRequest;
-import com.github.binarywang.wxpay.bean.request.WxPayUnifiedOrderRequest;
 import com.github.binarywang.wxpay.config.WxPayConfig;
-import com.github.binarywang.wxpay.constant.WxPayConstants;
 import com.github.binarywang.wxpay.exception.WxPayException;
 import com.github.binarywang.wxpay.service.WxPayService;
 import io.swagger.annotations.Api;
@@ -29,7 +27,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -57,7 +54,8 @@ public class WxPayController {
     @Resource
     private OrderRefundInfoService orderRefundInfoService;
     @Resource
-    private cn.cuptec.faros.service.WxPayService  wxPayService;
+    private WxPayFarosService wxPayFarosService;
+
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -67,73 +65,63 @@ public class WxPayController {
     @GetMapping("/unifiedOrder")
     public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo) {
 
-            return wxPayService.unifiedOrder(orderNo);
+        return wxPayFarosService.unifiedOrder(orderNo);
 
     }
 
     /**
      * 处理支付回调数据
      *
-     * @param xmlData
      * @return
      */
     @ApiOperation(value = "处理支付回调数据")
-    @PostMapping("/notifyOrder")
-    public RestResponse notifyOrder(@RequestBody String xmlData) {
-        WxPayOrderNotifyResult rs = WxPayOrderNotifyResult.fromXML(xmlData);
-        String SubMchId = rs.getSubMchId();
-        WxPayConfig wxPayConfig = new WxPayConfig();
-        wxPayConfig.setSubMchId(SubMchId);
-        WxPayService wxPayService = PayConfig.getPayService(wxPayConfig);
-        try {
-            WxPayOrderNotifyResult notifyResult = wxPayService.parseOrderNotifyResult(xmlData);
+    @GetMapping("/notifyOrder")
+    public RestResponse notifyOrder(@RequestParam("outTradeNo") String outTradeNo, @RequestParam("transactionId") String transactionId) {
 
-            log.info("微信支付成回掉-=======" + notifyResult.toString());
-            String transactionId = notifyResult.getTransactionId();
-            String outTradeNo = notifyResult.getOutTradeNo();
-            UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda()
-                    .eq(UserOrder::getOrderNo, outTradeNo));
-            userOrder.setTransactionId(transactionId);
-            userOrder.setStatus(2);//已支付 待发货
-            userOrder.setPayTime(LocalDateTime.now());
-            //为用户创建群聊
-            Integer doctorTeamId = userOrder.getDoctorTeamId();
-            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
-                    .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
-            ChatUser chatUser=new ChatUser();
-            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
-                List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
-                        .collect(Collectors.toList());
-                 chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId);
-
-
-            }
-            userOrder.setChatUserId(chatUser.getId());
-            userOrdertService.updateById(userOrder);
-            //添加用户自己的服务
-            Integer servicePackId = userOrder.getServicePackId();
-
-            List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
-                    .eq(ServicePackageInfo::getServicePackageId, servicePackId));
-            if (!CollectionUtils.isEmpty(servicePackageInfos)) {
-                List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
-                for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
-                    UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
-                    userServicePackageInfo.setUserId(userOrder.getUserId());
-                    userServicePackageInfo.setOrderId(userOrder.getId());
-                    userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
-                    userServicePackageInfo.setChatUserId(chatUser.getId());
-                    userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
-                    userServicePackageInfo.setCreateTime(LocalDateTime.now());
-                    userServicePackageInfos.add(userServicePackageInfo);
-                }
-                userServicePackageInfoService.saveBatch(userServicePackageInfos);
-            }
-            return RestResponse.ok(notifyResult);
-        } catch (WxPayException e) {
-            e.printStackTrace();
-            return RestResponse.failed(e.getErrCodeDes());
+        UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda()
+                .eq(UserOrder::getOrderNo, outTradeNo));
+        if (userOrder.getStatus().equals(2)) {
+            return RestResponse.ok();
         }
+        userOrder.setTransactionId(transactionId);
+        userOrder.setStatus(2);//已支付 待发货
+        userOrder.setPayTime(LocalDateTime.now());
+        //为用户创建群聊
+        Integer doctorTeamId = userOrder.getDoctorTeamId();
+        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
+        ChatUser chatUser = new ChatUser();
+        if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+            List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                    .collect(Collectors.toList());
+            userIds.add(userOrder.getUserId());
+            chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId,userOrder.getUserId());
+
+
+        }
+        userOrder.setChatUserId(chatUser.getId());
+        userOrdertService.updateById(userOrder);
+        //添加用户自己的服务
+        Integer servicePackId = userOrder.getServicePackId();
+
+        List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
+                .eq(ServicePackageInfo::getServicePackageId, servicePackId));
+        if (!CollectionUtils.isEmpty(servicePackageInfos)) {
+            List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
+            for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
+                UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
+                userServicePackageInfo.setUserId(userOrder.getUserId());
+                userServicePackageInfo.setOrderId(userOrder.getId());
+                userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
+                userServicePackageInfo.setChatUserId(chatUser.getId());
+                userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
+                userServicePackageInfo.setCreateTime(LocalDateTime.now());
+                userServicePackageInfos.add(userServicePackageInfo);
+            }
+            userServicePackageInfoService.saveBatch(userServicePackageInfos);
+        }
+        return RestResponse.ok();
+
     }
 
     /**
