@@ -1,5 +1,6 @@
 package cn.cuptec.faros.controller;
 
+import cn.binarywang.wx.miniapp.api.WxMaQrcodeService;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.wx.WxMaConfiguration;
 import cn.cuptec.faros.dto.GetMaUrlLinkResult;
@@ -50,24 +51,20 @@ public class WxMaController {
         return RestResponse.ok();
     }
 
-    public static void main(String[] args) {
-
-        String accessToken = "63_Qa8n07zW7WoEm14Em_1CRVGmY8XGuz0ZomlrtS75rew-GtDcamPQpYkGNRpznR8ScdZCsYLxQLruoxJu6Zt9eXECYFYorpS8S5taP0f1hXL79Kum5ntF1dncsT8HCOdAFAZUG";
-        String url = "https://api.weixin.qq.com/wxa/generate_urllink?access_token=" + accessToken;
-        JSONObject paramMap = new JSONObject();
-        //接口调用凭证
-        //通过 URL Link 进入的小程序页面路径，必须是已经发布的小程序存在的页面，不可携带 query 。path 为空时会跳转小程序主页
-        paramMap.put("path", "pages/bindQrcode/bindQrcode");
-        paramMap.put("query", "a");
-        //生成的 URL Link 类型，到期失效：true，永久有效：false
-        paramMap.put("is_expire", false);
-        //小程序 URL Link 失效类型，失效时间：0，失效间隔天数：1
-        paramMap.put("expire_type", 1);
-        //到期失效的URL Link的失效间隔天数。生成的到期失效URL Link在该间隔时间到达前有效。最长间隔天数为365天。expire_type 为 1 必填
-        paramMap.put("expire_interval", 1);
-        //执行post
-        String result = HttpUtil.post(url, paramMap.toJSONString());
-        System.out.println(result);
+    /**
+     * 生成小程序二维码
+     */
+    @GetMapping("/getMaQrCOde")
+    public RestResponse getMaQrCOde(@RequestParam("servicePackId") Integer servicePackId) {
+            WxMaQrcodeService qrcodeService = WxMaConfiguration.getWxMaService().getQrcodeService();
+        byte[] qrcodeBytes = new byte[0];
+        try {
+            qrcodeBytes = qrcodeService.createQrcodeBytes("/pages/goodsDetail/goodsDetail?id=" + servicePackId , 430);
+        } catch (WxErrorException e) {
+            e.printStackTrace();
+        }
+        return RestResponse.ok(qrcodeBytes);
 
     }
+
 }

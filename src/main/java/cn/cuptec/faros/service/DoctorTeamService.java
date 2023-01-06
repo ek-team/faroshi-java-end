@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DoctorTeamService extends ServiceImpl<DoctorTeamMapper, DoctorTeam> {
 
@@ -19,4 +21,9 @@ public class DoctorTeamService extends ServiceImpl<DoctorTeamMapper, DoctorTeam>
 
         return baseMapper.pageScoped(page, queryWrapper, dataScope);
     }
+
+    public List<DoctorTeam> pageScopedHavePeople(Integer deptId){
+
+       return baseMapper.pageScopedHavePeople(deptId);
+   }
 }

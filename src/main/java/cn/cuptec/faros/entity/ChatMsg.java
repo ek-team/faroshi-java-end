@@ -17,7 +17,7 @@ public class ChatMsg extends Model<ChatMsg> {
     private String id;
     private Integer chatUserId;//群聊消息id
     private String readUserIds;//已读人用户id
-     /**
+    /**
      * 消息类型
      * 数据字典MsgType TEXT-文本  IMG-图片
      * AUDIO-音频 ORDER-订单通知  VIDEO-音频 RED_ENVELOPE-红包
@@ -75,5 +75,9 @@ public class ChatMsg extends Model<ChatMsg> {
     private Integer videoRead = 1;
     @TableField(exist = false)
     private User user;
+    @TableField(exist = false)
+    private PatientOtherOrder patientOtherOrder;//图文咨询
+    @TableField(exist = false)
+    private FollowUpPlanNotice followUpPlanNotice;//随访计划
 }
 

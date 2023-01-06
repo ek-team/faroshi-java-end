@@ -26,7 +26,11 @@ public class UserOrder {
     private String orderNo;
     private Integer patientUserId;//就诊人id
     private Integer chatUserId;//聊天id
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private LocalDateTime operationTime;//手术时间
+    private Integer diseasesId;//病种id
     private String remark;//备注
+    private int rentDay=1;//租用天数
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer orderType;//订单类型 1-租用 2-购买
     @TableField(exist = false)
@@ -61,11 +65,9 @@ public class UserOrder {
     private String receiverPhone;
     //收货人省市区地址
     private String receiverRegion;
-    @TableField(exist = false)
     public String city;//市
-    @TableField(exist = false)
+
     public String area;//区
-    @TableField(exist = false)
     public String province;//省
     //收货人详细地址
     private String receiverDetailAddress;

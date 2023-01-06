@@ -55,7 +55,12 @@ public class WxPayController {
     private OrderRefundInfoService orderRefundInfoService;
     @Resource
     private WxPayFarosService wxPayFarosService;
-
+    @Resource
+    private UserFollowDoctorService userFollowDoctorService;
+    @Resource
+    private PatientOtherOrderService patientOtherOrderService;//患者其它订单
+    @Resource
+    private DoctorPointService doctorPointService;//医生积分
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -70,6 +75,16 @@ public class WxPayController {
     }
 
     /**
+     * 支付图文咨询申请
+     */
+    @GetMapping("/unifiedOtherOrder")
+    public RestResponse unifiedOtherOrder(@RequestParam("orderNo") String orderNo) {
+
+        return wxPayFarosService.unifiedOtherOrder(orderNo);
+
+    }
+
+    /**
      * 处理支付回调数据
      *
      * @return
@@ -80,48 +95,90 @@ public class WxPayController {
 
         UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda()
                 .eq(UserOrder::getOrderNo, outTradeNo));
-        if (userOrder.getStatus().equals(2)) {
-            return RestResponse.ok();
-        }
-        userOrder.setTransactionId(transactionId);
-        userOrder.setStatus(2);//已支付 待发货
-        userOrder.setPayTime(LocalDateTime.now());
-        //为用户创建群聊
-        Integer doctorTeamId = userOrder.getDoctorTeamId();
-        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
-                .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
-        ChatUser chatUser = new ChatUser();
-        if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
-            List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
-                    .collect(Collectors.toList());
-            userIds.add(userOrder.getUserId());
-            chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId,userOrder.getUserId());
+        if (userOrder != null) {
 
 
-        }
-        userOrder.setChatUserId(chatUser.getId());
-        userOrdertService.updateById(userOrder);
-        //添加用户自己的服务
-        Integer servicePackId = userOrder.getServicePackId();
-
-        List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
-                .eq(ServicePackageInfo::getServicePackageId, servicePackId));
-        if (!CollectionUtils.isEmpty(servicePackageInfos)) {
-            List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
-            for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
-                UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
-                userServicePackageInfo.setUserId(userOrder.getUserId());
-                userServicePackageInfo.setOrderId(userOrder.getId());
-                userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
-                userServicePackageInfo.setChatUserId(chatUser.getId());
-                userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
-                userServicePackageInfo.setCreateTime(LocalDateTime.now());
-                userServicePackageInfos.add(userServicePackageInfo);
+            if (userOrder.getStatus().equals(2)) {
+                return RestResponse.ok();
             }
-            userServicePackageInfoService.saveBatch(userServicePackageInfos);
-        }
-        return RestResponse.ok();
+            userOrder.setConfirmPayTime(new Date());
+            userOrder.setTransactionId(transactionId);
+            userOrder.setStatus(2);//已支付 待发货
+            userOrder.setPayTime(LocalDateTime.now());
+            //为用户创建群聊
+            Integer doctorTeamId = userOrder.getDoctorTeamId();
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
+            ChatUser chatUser = new ChatUser();
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                List<UserFollowDoctor> userFollowDoctors = new ArrayList<>();
+                List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                for (Integer doctorId : userIds) {
+                    UserFollowDoctor userDoctorRelation = new UserFollowDoctor();
+                    userDoctorRelation.setDoctorId(doctorId);
+                    userDoctorRelation.setUserId(userOrder.getUserId());
+                    userFollowDoctors.add(userDoctorRelation);
+                }
+                userFollowDoctorService.remove(new QueryWrapper<UserFollowDoctor>().lambda()
+                        .eq(UserFollowDoctor::getUserId, userOrder.getUserId())
+                        .in(UserFollowDoctor::getDoctorId, userIds));
+                //添加医生和患者的好友关系
+                userFollowDoctorService.saveBatch(userFollowDoctors);
+                userIds.add(userOrder.getUserId());
+                chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId());
+            }
 
+
+            userOrder.setChatUserId(chatUser.getId());
+            userOrdertService.updateById(userOrder);
+            //添加用户自己的服务
+            Integer servicePackId = userOrder.getServicePackId();
+
+            List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
+                    .eq(ServicePackageInfo::getServicePackageId, servicePackId));
+            if (!CollectionUtils.isEmpty(servicePackageInfos)) {
+                List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
+                for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
+                    UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
+                    userServicePackageInfo.setUserId(userOrder.getUserId());
+                    userServicePackageInfo.setOrderId(userOrder.getId());
+                    userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
+                    userServicePackageInfo.setChatUserId(chatUser.getId());
+                    userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
+                    userServicePackageInfo.setCreateTime(LocalDateTime.now());
+                    userServicePackageInfo.setExpiredTime(LocalDateTime.now().plusDays(servicePackageInfo.getExpiredDay()));
+                    userServicePackageInfos.add(userServicePackageInfo);
+                }
+                userServicePackageInfoService.saveBatch(userServicePackageInfos);
+            }
+        }
+        //图文咨询订单处理
+        PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
+                .eq(PatientOtherOrder::getOrderNo, outTradeNo));
+        if (patientOtherOrder != null) {
+            if (patientOtherOrder.getStatus().equals(2)) {
+                return RestResponse.ok();
+            }
+            patientOtherOrder.setStatus(2);
+            patientOtherOrderService.updateById(patientOtherOrder);
+            Integer chatUserId = patientOtherOrder.getChatUserId();
+            ChatUser chatUser = chatUserService.getById(chatUserId);
+            chatUser.setServiceStartTime(LocalDateTime.now());
+            chatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
+            chatUserService.updateById(chatUser);
+            DoctorPoint doctorPoint=new DoctorPoint();
+            doctorPoint.setPoint(patientOtherOrder.getAmount());
+            doctorPoint.setDoctorTeamId(patientOtherOrder.getDoctorTeamId());
+            doctorPoint.setDoctorUserId(patientOtherOrder.getDoctorId());
+            doctorPoint.setPointDesc("图文咨询积分");
+            doctorPoint.setWithdrawStatus(1);
+            doctorPoint.setCreateTime(LocalDateTime.now());
+            doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
+            doctorPointService.save(doctorPoint);
+        }
+
+        return RestResponse.ok();
     }
 
     /**

@@ -62,11 +62,15 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 return;
             }
             //保存新消息到记录中
+            if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
+                origionMessage.setMsg("图文咨询");
+            }
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             chatMsg.setMsg(origionMessage.getMsg());
 
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
-
+            User byId1 = userService.getById(chatMsg.getFromUid());
+            chatMsg.setUser(byId1);
             //判断是否是群聊
             if (origionMessage.getChatUserId() != null) {
                 //群发消息
@@ -89,7 +93,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                                 LocalDateTime now = LocalDateTime.now();
                                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                                 String time = df.format(now);
-                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/orderConfirm/orderConfirm?id=1&token=b9780b1b-09e8-4bac-8e4e-217bd1a9837e");
+                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
 
                             }
                         }
@@ -199,6 +203,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         chatMsg.setUrl(origionMessage.getUrl());
         chatMsg.setVideoDuration(origionMessage.getVideoDuration());
         chatMsg.setStr1(origionMessage.getStr1());
+        chatMsg.setStr2(origionMessage.getStr2());
         chatMsg.setChatUserId(origionMessage.getChatUserId());
         chatMsgService.save(chatMsg);
         return chatMsg;

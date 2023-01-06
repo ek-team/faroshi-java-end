@@ -75,7 +75,7 @@ public class RetrieveOrder {
 
     private String deliverySn;
 
-    //打款事件
+    //打款时间
     private Date confirmPostMoneyTime;
 
     //确认收款时间
@@ -129,7 +129,8 @@ public class RetrieveOrder {
     private SaleSpec saleSpec;//销售规格信息
     @TableField(exist = false)
     private String salesmanPhone;
-
+    @TableField(exist = false)
+    private Double payment;//订单的单价
     //设备外观图
     @TableField(exist = false)
     private String[] albumPic;

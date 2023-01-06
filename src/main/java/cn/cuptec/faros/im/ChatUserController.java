@@ -46,6 +46,11 @@ public class ChatUserController {
     public RestResponse queryChatTime(@RequestParam("chatUserId") int chatUserId) {
 
         ChatUser chatUser = chatUserService.getById(chatUserId);
+        if (chatUser.getServiceEndTime() == null) {
+
+            chatUser.setStatus(2);
+            return RestResponse.ok(chatUser);
+        }
         if (chatUser.getServiceEndTime().isAfter(LocalDateTime.now())) {
             chatUser.setStatus(1);
         } else {
@@ -64,12 +69,12 @@ public class ChatUserController {
     @GetMapping("/useService")
     public RestResponse useService(@RequestParam("userServiceId") int userServiceId) {
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(userServiceId);
-        userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
-        userServicePackageInfoService.updateById(userServicePackageInfo);
         ChatUser chatUser = chatUserService.getById(userServicePackageInfo.getChatUserId());
         if (chatUser.getServiceStartTime() != null && chatUser.getServiceEndTime().isAfter(LocalDateTime.now())) {
             return RestResponse.ok();
         }
+        userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
+        userServicePackageInfoService.updateById(userServicePackageInfo);
         //修改聊天框使用时间
         chatUser.setId(userServicePackageInfo.getChatUserId());
         chatUser.setServiceStartTime(LocalDateTime.now());

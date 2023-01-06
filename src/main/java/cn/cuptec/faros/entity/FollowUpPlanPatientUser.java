@@ -3,23 +3,19 @@ package cn.cuptec.faros.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 
 /**
- * 用户和医生的好友关系
+ * 随访计划患者
  */
 @Data
-public class UserFollowDoctor {
+public class FollowUpPlanPatientUser extends Model<FollowUpPlanPatientUser> {
+
     @TableId(type = IdType.AUTO)
     private Integer id;
-
-    private Integer userId;
-    private Integer doctorId;
+    private Integer followUpPlanId;//随访计划id
+    private Integer userId;//患者id
     @TableField(exist = false)
     private User user;
-    @TableField(exist = false)
-    private String nickname;
-    @TableField(exist = false)
-    private String avatar;
-
 }

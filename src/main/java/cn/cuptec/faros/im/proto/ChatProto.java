@@ -44,7 +44,8 @@ public class ChatProto {
     public static final String REQUEST_VIDEO_READ = "REQUEST_VIDEO_READ";
     public static final String RESPONSE_VIDEO_READ = "RESPONSE_VIDEO_READ"; //聊天已读
 
-
+    public static final String FOLLOW_UP_PLAN = "FOLLOW_UP_PLAN"; //随访计划消息类型
+    public static final String PIC_CONSULTATION = "PIC_CONSULTATION"; //图文咨询消息类型
 
 }
 

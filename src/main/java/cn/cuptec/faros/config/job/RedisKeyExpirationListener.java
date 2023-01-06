@@ -1,9 +1,14 @@
 package cn.cuptec.faros.config.job;
 
 import cn.cuptec.faros.config.properties.RedisConfigProperties;
-import cn.cuptec.faros.service.ChatUserService;
-import cn.cuptec.faros.service.UserOrdertService;
+import cn.cuptec.faros.entity.ChatMsg;
+import cn.cuptec.faros.entity.ChatUser;
+import cn.cuptec.faros.entity.FollowUpPlanNotice;
+import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.im.proto.ChatProto;
+import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.bean.template.WxMpTemplateData;
 import org.springframework.data.redis.connection.Message;
@@ -13,9 +18,11 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,19 +38,33 @@ public class RedisKeyExpirationListener implements MessageListener {
     private RedisConfigProperties redisConfigProperties;
     private UserOrdertService userOrdertService;
     private ChatUserService chatUserService;
+    private WxMpService wxMpService;
+    private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
+    private UserService userService;
+    private ChatMsgService chatMsgService;
 
+    private HospitalInfoService hospitalInfoService;
     public static final String URL = "/pages/orderConfirm/orderConfirm?id=";
 
     public RedisKeyExpirationListener(RedisTemplate<String, String> redisTemplate,
                                       RedisConfigProperties redisConfigProperties,
                                       UserOrdertService userOrdertService,
-                                      ChatUserService chatUserService
+                                      ChatUserService chatUserService,
+                                      FollowUpPlanNoticeService followUpPlanNoticeService,
+                                      WxMpService wxMpService,
+                                      UserService userService,
+                                      HospitalInfoService hospitalInfoService,
+                                      ChatMsgService chatMsgService
     ) {
         this.redisTemplate = redisTemplate;
         this.redisConfigProperties = redisConfigProperties;
         this.userOrdertService = userOrdertService;
         this.chatUserService = chatUserService;
-
+        this.followUpPlanNoticeService = followUpPlanNoticeService;
+        this.wxMpService = wxMpService;
+        this.userService = userService;
+        this.hospitalInfoService = hospitalInfoService;
+        this.chatMsgService=chatMsgService;
     }
 
     @Override
@@ -54,11 +75,39 @@ public class RedisKeyExpirationListener implements MessageListener {
         log.info("key过期监听进入//////////////////////////////////////////////" + body);
         //key过期监听
         if (StrUtil.format("__keyevent@{}__:expired", redisConfigProperties.getDatabase()).equals(channel)) {
-            //订单自动取消
-            if (body.contains("mall:order:is_pay_0:")) {
+            if (body.contains("followUpPlanNotice:")) {
                 String[] str = body.split(":");
-                String wxOrderId = str[3];
-                log.info("redis过期监听：：=============" + wxOrderId);
+                String followUpPlanNoticeId = str[1];
+                log.info("redis过期监听：：=============" + followUpPlanNoticeId);
+                FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeService.getById(followUpPlanNoticeId);
+                User patientUser = userService.getById(followUpPlanNotice.getPatientUserId());
+                User doctorUser = userService.getById(followUpPlanNotice.getDoctorId());
+                List<User> users = new ArrayList<>();
+                users.add(doctorUser);
+                hospitalInfoService.getHospitalByUser(users);
+                doctorUser = users.get(0);
+                //发送公众号随访计划提醒
+                wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", doctorUser.getNickname(), doctorUser.getHospitalName(), "/pages/news/news");
+                //生成聊天记录
+                List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
+                        .eq(ChatUser::getUid, patientUser.getId())
+                        .eq(ChatUser::getTargetUid, doctorUser.getId()));
+                if(CollectionUtils.isEmpty(list)){
+                    //创建聊天对象
+                    chatUserService.saveOrUpdateChatUser(doctorUser.getId(),patientUser.getId(),"随访计划提醒");
+                }
+                ChatMsg chatMsg=new ChatMsg();
+                chatMsg.setFromUid(doctorUser.getId());
+                chatMsg.setToUid(patientUser.getId());
+                chatMsg.setMsg("随访计划提醒");
+                chatMsg.setCreateTime(new Date());
+                chatMsg.setMsgType(ChatProto.FOLLOW_UP_PLAN);
+                chatMsg.setStr1(followUpPlanNoticeId);
+                chatMsg.setReadStatus(0);
+                chatMsgService.save(chatMsg);
+
+                //修改发送次数
+
 
             }
 

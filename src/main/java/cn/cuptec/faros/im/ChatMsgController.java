@@ -2,13 +2,10 @@ package cn.cuptec.faros.im;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
-import cn.cuptec.faros.entity.ChatMsg;
-import cn.cuptec.faros.entity.ChatUser;
-import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
-import cn.cuptec.faros.service.ChatMsgService;
-import cn.cuptec.faros.service.ChatUserService;
-import cn.cuptec.faros.service.UserService;
+import cn.cuptec.faros.im.proto.ChatProto;
+import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
@@ -26,9 +23,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -42,6 +37,12 @@ public class ChatMsgController {
     private ChatUserService chatUserService;
     @Resource
     private UserService userService;
+    @Resource
+    private PatientOtherOrderService patientOtherOrderService;
+    @Resource
+    private FollowUpPlanNoticeService followUpPlanNoticeService;
+    @Resource
+    private FollowUpPlanContentService followUpPlanContentService;
 
     @ApiOperation(value = "查询历史记录")
     @PostMapping("/queryChatMsgHistory")
@@ -81,16 +82,69 @@ public class ChatMsgController {
 
 
         List<ChatMsg> records = resultPage.getRecords();
-        //查询每个人的头像昵称
+
         if (!CollectionUtils.isEmpty(records)) {
+            //查询每个人的头像昵称
             List<Integer> userIds = records.stream().map(ChatMsg::getFromUid)
                     .collect(Collectors.toList());
             List<User> users = (List<User>) userService.listByIds(userIds);
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
+
+
+            List<String> otherOrderIds = new ArrayList<>();//获取图文咨询内容
+            List<String> followUpPlanNoticeIds = new ArrayList<>();//随访计划
+            Map<Integer, PatientOtherOrder> patientOtherOrderMap = new HashMap<>();
+            Map<Integer, FollowUpPlanNotice> followUpPlanNoticeMap = new HashMap<>();
             for (ChatMsg chatMsg : records) {
                 chatMsg.setUser(userMap.get(chatMsg.getFromUid()));
+                if (chatMsg.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {//图文咨询
+                    otherOrderIds.add(chatMsg.getStr1());
+                }
+                if (chatMsg.getMsgType().equals(ChatProto.FOLLOW_UP_PLAN)) {//随访计划
+                    followUpPlanNoticeIds.add(chatMsg.getStr1());
+                }
             }
+            if (!CollectionUtils.isEmpty(otherOrderIds)) {//图文咨询
+                List<PatientOtherOrder> patientOtherOrders = (List<PatientOtherOrder>) patientOtherOrderService.listByIds(otherOrderIds);
+                patientOtherOrderMap = patientOtherOrders.stream()
+                        .collect(Collectors.toMap(PatientOtherOrder::getId, t -> t));
+            }
+            if (!CollectionUtils.isEmpty(followUpPlanNoticeIds)) {//随访计划
+                List<FollowUpPlanNotice> followUpPlanNoticeList = (List<FollowUpPlanNotice>) followUpPlanNoticeService.listByIds(followUpPlanNoticeIds);
+                if (!CollectionUtils.isEmpty(followUpPlanNoticeList)) {
+                    //查询推送内容
+                    List<Integer> followUpPlanContentIds = followUpPlanNoticeList.stream().map(FollowUpPlanNotice::getFollowUpPlanContentId)
+                            .collect(Collectors.toList());
+                    List<FollowUpPlanContent> followUpPlanContents = (List<FollowUpPlanContent>) followUpPlanContentService.listByIds(followUpPlanContentIds);
+                    if (!CollectionUtils.isEmpty(followUpPlanContents)) {
+                        Map<Integer, FollowUpPlanContent> followUpPlanContentMap = followUpPlanContents.stream()
+                                .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
+                        for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
+                            followUpPlanNotice.setFollowUpPlanContent(followUpPlanContentMap.get(followUpPlanNotice.getFollowUpPlanContentId()));
+                        }
+                    }
+
+
+                }
+
+                followUpPlanNoticeMap = followUpPlanNoticeList.stream()
+                        .collect(Collectors.toMap(FollowUpPlanNotice::getId, t -> t));
+            }
+            for (ChatMsg chatMsg : records) {
+                if (chatMsg.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {//图文咨询
+                    PatientOtherOrder patientOtherOrder = patientOtherOrderMap.get(Integer.parseInt(chatMsg.getStr1()));
+
+                    chatMsg.setPatientOtherOrder(patientOtherOrder);
+                }
+
+                if (chatMsg.getMsgType().equals(ChatProto.FOLLOW_UP_PLAN)) {//随访计划
+                    FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeMap.get(Integer.parseInt(chatMsg.getStr1()));
+
+                    chatMsg.setFollowUpPlanNotice(followUpPlanNotice);
+                }
+            }
+
             resultPage.setRecords(records);
         }
 

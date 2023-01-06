@@ -61,25 +61,20 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             if (!CollectionUtils.isEmpty(users)) {
                 List<Integer> userIds = users.stream().map(User::getId)
                         .collect(Collectors.toList());
-                wrapper.and(wq0 -> wq0.in(ChatUser::getTargetUid, userIds));
-                for (Integer userId : userIds) {
-                    wrapper.or();
-                    wrapper.like(ChatUser::getUserIds, userId);
-                }
+                wrapper.and(wq0 -> wq0.in(ChatUser::getTargetUid, userIds).or().
+                        like(ChatUser::getUserIds, userIds.get(0))
+
+                );
+
             }
             if (!CollectionUtils.isEmpty(doctorTeams)) {
 
                 //团队搜索条件
                 List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
                         .collect(Collectors.toList());
-                for (int i=0;i<teamIds.size();i++) {
-                    if(i==0){
-                        wrapper.and(wq0 -> wq0.like(ChatUser::getTeamId, teamIds.get(0)));
+                wrapper.and(wq0 -> wq0.like(ChatUser::getTeamId, teamIds.get(0))
+                );
 
-                    }
-                    wrapper.or();
-                    wrapper.like(ChatUser::getTeamId, teamIds.get(i));
-                }
             }
 
         }
@@ -176,7 +171,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                         chatUserVO.setServiceStartTime(chatUserMap.get(tenantUser.getId()).getServiceStartTime());
                         chatUserVO.setRemark(chatUserMap.get(tenantUser.getId()).getRemark());
                         chatUserVO.setClearTime(chatUserMap.get(tenantUser.getId()).getClearTime());
-
+                        chatUserVO.setChatUserId(chatUserMap.get(tenantUser.getId()).getId());
                         // 最后聊天时间和内容
                         ChatUser user =
                                 chatUsersList.stream()

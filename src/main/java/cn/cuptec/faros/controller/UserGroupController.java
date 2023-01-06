@@ -1,24 +1,30 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.common.utils.StringUtils;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.AddUserToGroupParam;
+import cn.cuptec.faros.dto.PageResult;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ArrayUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mchange.v1.identicator.IdList;
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -192,13 +198,101 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
 
                 page1.setRecords(users);
             }
+
             return RestResponse.ok(page1);
         }
 
 
     }
 
+    /**
+     * 医生端查询患者列表 按字母排序
+     *
+     * @return
+     */
+    @GetMapping("/pageQueryPatientUserSort")
+    public RestResponse getUserToGroupCount(
+            @RequestParam("pageNum") Integer pageNum,
+            @RequestParam("pageSize") Integer pageSize) {
+        List<UserFollowDoctor> userFollowDoctors = userFollowDoctorService.pageQueryPatientUserSort(pageNum, pageSize, SecurityUtils.getUser().getId());
+        int count = userFollowDoctorService.pageQueryPatientUserSortTotal(SecurityUtils.getUser().getId());
+        //按字母分组
+        TreeMap<String, List<UserFollowDoctor>> letterMap = new TreeMap<>((s1, s2) -> {
+            //#号组放到最后
+            if ("#".equals(s1) ) {
+                return 1;
+            }
+            if ("#".equals(s2) ) {
+                return -1;
+            }
+            return s1.compareTo(s2);
+        });
+        if(!CollectionUtils.isEmpty(userFollowDoctors)){
 
+            for (UserFollowDoctor t : userFollowDoctors) {
+                String pinYinFirstLetter = getPinYinFirstCharFirstLetter(t.getNickname());
+                if (!letterMap.containsKey(pinYinFirstLetter)) {
+                    if (pinYinFirstLetter.matches("[A-Z]")) {
+                        letterMap.put(pinYinFirstLetter, new ArrayList<UserFollowDoctor>());
+                    } else {
+                        letterMap.put("#", new ArrayList<UserFollowDoctor>());
+                    }
+                }
+            }
+
+            for (Map.Entry<String, List<UserFollowDoctor>> next : letterMap.entrySet()) {
+                List<UserFollowDoctor> listTemp = new ArrayList<UserFollowDoctor>();
+                for (UserFollowDoctor t : userFollowDoctors) {
+                    String pinYinFirstLetter = getPinYinFirstCharFirstLetter(t.getNickname());
+                    if (next.getKey().equals("#")) {
+                        if (StringUtils.isNotBlank(pinYinFirstLetter) && !pinYinFirstLetter.matches("[A-Z]|[a-z]")) {
+                            listTemp.add(t);
+                            continue;
+                        }
+                    }
+                    if (StringUtils.isNotBlank(pinYinFirstLetter) && next.getKey().equalsIgnoreCase(pinYinFirstLetter)) {
+                        listTemp.add(t);
+                    }
+                }
+                List<UserFollowDoctor> value = next.getValue();
+                value.addAll(listTemp);
+            }
+
+        }
+        PageResult result=new PageResult();
+        result.setTotal(count);
+        result.setRecords(letterMap);
+        return RestResponse.ok(result);
+    }
+    /**
+     * @description: 将字符串转成拼音,只要首字符的首字母
+     * @params:
+     * @return:
+     */
+    public static String getPinYinFirstCharFirstLetter(String chinese) {
+        if (StringUtils.isBlank(chinese)){
+            return "";
+        }
+        char spell = chinese.toCharArray()[0];
+        String pinYin = String.valueOf(spell);
+        HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
+        //大写
+        defaultFormat.setCaseType(HanyuPinyinCaseType.UPPERCASE);
+        //无语调
+        defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+
+        if (spell > 128) {
+            try {
+                String[] strings = PinyinHelper.toHanyuPinyinStringArray(spell, defaultFormat);
+                if (ArrayUtils.isNotEmpty(strings)) {
+                    pinYin = String.valueOf(strings[0].charAt(0));
+                }
+            } catch (BadHanyuPinyinOutputFormatCombination e) {
+                return pinYin;
+            }
+        }
+        return pinYin.toUpperCase();
+    }
     @Override
     protected Class<UserGroup> getEntityClass() {
         return UserGroup.class;

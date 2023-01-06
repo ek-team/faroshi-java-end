@@ -10,4 +10,5 @@ public class PayResultData {
     private String packageValue;
     private String signType;
     private String paySign;
+    private Integer orderId;
 }

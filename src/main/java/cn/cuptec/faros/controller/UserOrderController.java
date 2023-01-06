@@ -3,6 +3,7 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
+import cn.cuptec.faros.dto.CalculatePriceResult;
 import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
@@ -177,23 +178,39 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
     /**
      * 计算订单价格
+     * servicePackId
+     * saleSpecId
+     * orderType
+     * rentDay;//租用天数
      */
     @PostMapping("/calculatePrice")
     public RestResponse calculatePrice(@RequestBody UserOrder userOrder) {
+        if (userOrder.getOrderType() != null && userOrder.getOrderType().equals(2)) {
+            //购买
+            ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+            CalculatePriceResult result = new CalculatePriceResult();
+            result.setTotalAmount(new BigDecimal(servicePack.getProductPrice()));
+            return RestResponse.ok(result);
+        }
         String[] split = userOrder.getSaleSpecId().split(",");
         List<String> saleSpecIds = Arrays.asList(split);//销售规格
         List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
         BigDecimal payment = null;
         for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
             if (payment == null) {
-                payment = new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit()));
+                payment = new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit()));
 
             } else {
-                payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit())));
+                payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit())));
             }
 
         }
-        return RestResponse.ok(payment);
+        CalculatePriceResult result = new CalculatePriceResult();
+        result.setTotalAmount(payment);//总价
+        result.setRent(saleSpecDescs.get(0).getRent());
+        result.setDeposit(saleSpecDescs.get(0).getDeposit());
+        result.setRecoveryPrice(saleSpecDescs.get(0).getRecoveryPrice());
+        return RestResponse.ok(result);
     }
 
     /**
@@ -207,6 +224,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         Integer addressId = userOrder.getAddressId();
         Address address = addressService.getById(addressId);
         userOrder.setReceiverName(address.getAddresseeName());
+        userOrder.setCity(address.getCity());
+        userOrder.setProvince(address.getProvince());
+        userOrder.setArea(address.getArea());
         userOrder.setReceiverPhone(address.getAddresseePhone());
         userOrder.setReceiverDetailAddress(address.getAddress());
         userOrder.setReceiverRegion(address.getArea());
@@ -221,19 +241,25 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setUserId(SecurityUtils.getUser().getId());
 
         //计算订单价格
-        String[] split = userOrder.getSaleSpecId().split(",");
-        List<String> saleSpecIds = Arrays.asList(split);//销售规格
-        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
         BigDecimal payment = null;
-        for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
-            if (payment == null) {
-                payment = new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit()));
+        if (userOrder.getOrderType().equals(2)) {
+            //购买
+            payment = new BigDecimal(byId.getProductPrice());
+        } else {
+            String[] split = userOrder.getSaleSpecId().split(",");
+            List<String> saleSpecIds = Arrays.asList(split);//销售规格
+            List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+                if (payment == null) {
+                    payment = new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit()));
 
-            } else {
-                payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).add(new BigDecimal(saleSpecDesc.getDeposit())));
+                } else {
+                    payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit())));
+                }
+
             }
-
         }
+
         userOrder.setPayment(payment);
         service.save(userOrder);
 
@@ -324,8 +350,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      * 用户查询自己的订单详细信息
      */
     @GetMapping("/user/orderDetail")
-    public RestResponse getMyOrderDetail(@RequestParam("userId") int userId) {
-        UserOrder userOrder = service.getById(userId);
+    public RestResponse getMyOrderDetail(@RequestParam("orderId") int orderId) {
+        UserOrder userOrder = service.getById(orderId);
         //就诊人
         Integer patientUserId = userOrder.getPatientUserId();
         userOrder.setPatientUser(patientUserService.getById(patientUserId));
@@ -336,21 +362,22 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             userOrder.setIsForm(1);
         }
         //服务信息
-        List<UserServicePackageInfo> userServicePackageInfos = userServicePackageInfoService.list(new QueryWrapper<UserServicePackageInfo>().
-                lambda().eq(UserServicePackageInfo::getOrderId, userOrder.getId()));
-        if (!CollectionUtils.isEmpty(userServicePackageInfos)) {
-            List<Integer> servicePackageInfoIds = userServicePackageInfos.stream().map(UserServicePackageInfo::getServicePackageInfoId)
-                    .collect(Collectors.toList());
-            List<ServicePackageInfo> servicePackageInfos = (List<ServicePackageInfo>) servicePackageInfoService.listByIds(servicePackageInfoIds);
-            Map<Integer, ServicePackageInfo> servicePackageInfoMap = servicePackageInfos.stream()
-                    .collect(Collectors.toMap(ServicePackageInfo::getId, t -> t));
-            for (UserServicePackageInfo userServicePackageInfo : userServicePackageInfos) {
-                userServicePackageInfo.setServicePackageInfo(servicePackageInfoMap.get(userServicePackageInfo.getServicePackageInfoId()));
+        List<ServicePackageInfo> servicePackageInfo = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
+                .in(ServicePackageInfo::getServicePackageId, userOrder.getServicePackId()));
+        userOrder.setServicePackageInfos(servicePackageInfo);
+        //服务包信息
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+        //查询服务包图片信息
+        if (servicePack != null) {
+            List<ServicePackProductPic> servicePackProductPics = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
+                    .eq(ServicePackProductPic::getServicePackId, servicePack.getId()));
+            if (!CollectionUtils.isEmpty(servicePackProductPics)) {
+
+                servicePack.setServicePackProductPics(servicePackProductPics);
 
             }
-            userOrder.setUserServicePackageInfos(userServicePackageInfos);
         }
-
+        userOrder.setServicePack(servicePack);
         return RestResponse.ok(userOrder);
     }
 
@@ -358,6 +385,19 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     public RestResponse getById(@RequestParam String id) {
         UserOrder userOrder = service.getById(id);
 
+        return RestResponse.ok(userOrder);
+    }
+
+    /**
+     * 确认收货
+     *
+     * @return
+     */
+    @GetMapping("/confirmReceieve")
+    public RestResponse confirmReceieve(@RequestParam Integer id) {
+        UserOrder userOrder = service.getById(id);
+        userOrder.setStatus(4);
+        userOrder.setRevTime(LocalDateTime.now());
         return RestResponse.ok(userOrder);
     }
 

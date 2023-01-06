@@ -22,6 +22,7 @@ public class ServicePackageInfo extends Model<ServicePackageInfo> {
     private Integer type;//服务类型 1-图文咨询 2-电话咨询 3-康复指导
     private String image;//
     private Integer count;//服务次数
+    private Integer expiredDay;//过期天数
     private String doctorTeamId;//医生团队id
     @TableField(exist = false)
     private List<Integer> doctorTeamIds;//医生团队id

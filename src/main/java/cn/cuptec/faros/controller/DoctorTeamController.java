@@ -4,10 +4,9 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.datascope.DataScope;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
+import cn.cuptec.faros.dto.BindDiseasesParam;
 import cn.cuptec.faros.entity.*;
-import cn.cuptec.faros.service.DoctorTeamPeopleService;
-import cn.cuptec.faros.service.DoctorTeamService;
-import cn.cuptec.faros.service.UserService;
+import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,8 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +28,10 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     private DoctorTeamPeopleService doctorTeamPeopleService;
     @Resource
     private UserService userService;
+    @Resource
+    private DoctorTeamDiseasesService doctorTeamDiseasesService;//医生病种关联
+    @Resource
+    private DiseasesService diseasesService;
 
     /**
      * 添加医生团队
@@ -73,7 +75,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
                 doctorTeamPeople.setTeamId(doctorTeam.getId());
             }
-            doctorTeamPeopleService.saveBatch(doctorTeamPeopleList);
+            doctorTeamPeopleService.saveOrUpdateBatch(doctorTeamPeopleList);
         }
         return RestResponse.ok();
     }
@@ -96,7 +98,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
      * @return
      */
     @GetMapping("/pageScoped")
-    public RestResponse pageScoped() {
+    public RestResponse pageScoped(@RequestParam(required = false, value = "status") Integer status) {
         Page<DoctorTeam> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         User user = userService.getById(SecurityUtils.getUser().getId());
@@ -106,11 +108,27 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             dataScope.setIsOnly(false);
         } else {
             dataScope.setIsOnly(true);
+        }
+        if (status != null) {
             queryWrapper.eq("status", 1);
         }
-
         IPage<DoctorTeam> doctorTeamIPage = service.pageScoped(page, queryWrapper, dataScope);
         return RestResponse.ok(doctorTeamIPage);
+    }
+
+    /**
+     * 查询医生团队 只查询有 成员的的团队
+     */
+    @GetMapping("/pageScopedHavePeople")
+    public RestResponse pageScopedHavePeople() {
+        User user = userService.getById(SecurityUtils.getUser().getId());
+        List<DoctorTeam> doctorTeams = service.pageScopedHavePeople(user.getDeptId());
+        doctorTeams = doctorTeams.stream().collect(
+                Collectors.collectingAndThen(
+                        Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(DoctorTeam::getId))), ArrayList::new)
+        );
+
+        return RestResponse.ok(doctorTeams);
     }
 
     /**
@@ -130,6 +148,8 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
                     .collect(Collectors.toMap(User::getId, t -> t));
             for (DoctorTeamPeople doctorTeamPeople : list) {
                 doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
+                doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+
             }
         }
         byId.setDoctorTeamPeopleList(list);
@@ -144,6 +164,50 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     @PostMapping("/checkDoctorTeam")
     public RestResponse checkDoctorTeam(@RequestBody DoctorTeam doctorTeam) {
         service.updateById(doctorTeam);
+        return RestResponse.ok();
+    }
+
+    /**
+     * 医生团队绑定病种
+     *
+     * @return
+     */
+    @PostMapping("/bindDiseases")
+    public RestResponse bindDiseases(@RequestBody BindDiseasesParam param) {
+        doctorTeamDiseasesService.remove(new QueryWrapper<DoctorTeamDiseases>().lambda()
+                .eq(DoctorTeamDiseases::getTeamId, param.getTeamId()));
+        List<Integer> diseasesIds = param.getDiseasesIds();
+        if (!CollectionUtils.isEmpty(diseasesIds)) {
+            List<DoctorTeamDiseases> doctorTeamDiseases = new ArrayList<>();
+            for (Integer diseasesId : diseasesIds) {
+                DoctorTeamDiseases diseases = new DoctorTeamDiseases();
+                diseases.setDiseasesId(diseasesId);
+                diseases.setTeamId(param.getTeamId());
+                doctorTeamDiseases.add(diseases);
+            }
+            doctorTeamDiseasesService.saveBatch(doctorTeamDiseases);
+
+
+        }
+        return RestResponse.ok();
+    }
+
+    /**
+     * 查询医生团队绑定的病种
+     *
+     * @return
+     */
+    @GetMapping("/getTeamDiseases")
+    public RestResponse getTeamDiseases(@RequestParam("teamId") int teamId) {
+        List<DoctorTeamDiseases> list = doctorTeamDiseasesService.list(new QueryWrapper<DoctorTeamDiseases>().lambda()
+                .eq(DoctorTeamDiseases::getTeamId, teamId));
+        if (!CollectionUtils.isEmpty(list)) {
+            List<Integer> diseasesIds = list.stream().map(DoctorTeamDiseases::getDiseasesId)
+                    .collect(Collectors.toList());
+            List<Diseases> diseases = (List<Diseases>) diseasesService.listByIds(diseasesIds);
+
+            return RestResponse.ok(diseases);
+        }
         return RestResponse.ok();
     }
 

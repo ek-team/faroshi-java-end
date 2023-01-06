@@ -17,8 +17,10 @@ public class DoctorPoint extends Model<DoctorPoint> {
     private Integer id;
 
     private String pointDesc;
-    private Double point; //单位 分
+    private Double point; //单位 元
     private Integer doctorUserId;
+    private Integer doctorTeamId;
     private LocalDateTime createTime;
     private Integer withdrawStatus;//提现状态 1-待提现0-已提现
+    private String orderNo;
 }

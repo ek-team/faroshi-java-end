@@ -26,6 +26,7 @@ public class UserServicePackageInfo extends Model<UserServicePackageInfo> {
     private Integer totalCount = 0;//总服务次数
     private Integer chatUserId;//聊天组id
     private LocalDateTime createTime;
+    private LocalDateTime expiredTime;//过期时间
     private Integer orderId;
     private Integer userId;
 }

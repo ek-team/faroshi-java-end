@@ -120,14 +120,30 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     public RestResponse updateProductSpec(@RequestBody ProductSpec productSpec) {
 
         productSpecService.updateById(productSpec);
-        productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
-                .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
+//        productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
+//                .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
+
+
         List<ProductSpecDesc> productSpecDesc = productSpec.getProductSpecDesc();
+
+        List<ProductSpecDesc> saveProductSpecDesc=new ArrayList<>();
+        List<ProductSpecDesc> updateProductSpecDesc=new ArrayList<>();
         if (!CollectionUtils.isEmpty(productSpecDesc)) {
             for (ProductSpecDesc productSpecDesc1 : productSpecDesc) {
                 productSpecDesc1.setProductSpecId(productSpec.getId());
+                if(productSpecDesc1.getId()==null){
+                    saveProductSpecDesc.add(productSpecDesc1);
+                }else{
+                    updateProductSpecDesc.add(productSpecDesc1);
+
+                }
             }
-            productSpecDescService.saveBatch(productSpecDesc);
+            if(!CollectionUtils.isEmpty(saveProductSpecDesc)){
+                productSpecDescService.saveBatch(saveProductSpecDesc);
+            }
+            if(!CollectionUtils.isEmpty(updateProductSpecDesc)){
+                productSpecDescService.updateBatchById(updateProductSpecDesc);
+            }
         }
 
         return RestResponse.ok();
@@ -206,14 +222,25 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @PostMapping("/updateSaleSpec")
     public RestResponse updateSaleSpec(@RequestBody SaleSpec saleSpec) {
         saleSpecService.updateById(saleSpec);
-        saleSpecDescService.remove(new QueryWrapper<SaleSpecDesc>().lambda()
-                .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
+
         List<SaleSpecDesc> saleSpecDescs = saleSpec.getSaleSpecDescs();
+        List<SaleSpecDesc> saveSaleSpecDesc=new ArrayList<>();
+        List<SaleSpecDesc> updateSaleSpecDesc=new ArrayList<>();
         if (!CollectionUtils.isEmpty(saleSpecDescs)) {
             for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
                 saleSpecDesc.setSaleSpecId(saleSpec.getId());
+                if(saleSpecDesc.getId()==null){
+                    saveSaleSpecDesc.add(saleSpecDesc);
+                }else{
+                    updateSaleSpecDesc.add(saleSpecDesc);
+                }
             }
-            saleSpecDescService.saveBatch(saleSpecDescs);
+            if(!CollectionUtils.isEmpty(saveSaleSpecDesc)){
+                saleSpecDescService.saveBatch(saveSaleSpecDesc);
+            }
+            if(!CollectionUtils.isEmpty(updateSaleSpecDesc)){
+                saleSpecDescService.updateBatchById(updateSaleSpecDesc);
+            }
         }
 
         return RestResponse.ok();
@@ -389,7 +416,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             servicePackSaleSpecService.saveBatch(servicePackSaleSpecs);
         }
-        servicePackageInfoService.remove(new QueryWrapper<ServicePackageInfo>().lambda().eq(ServicePackageInfo::getServicePackageId, servicePack.getId()));
+        //servicePackageInfoService.remove(new QueryWrapper<ServicePackageInfo>().lambda().eq(ServicePackageInfo::getServicePackageId, servicePack.getId()));
         //服务信息
         List<ServicePackageInfo> servicePackageInfos = servicePack.getServicePackageInfos();
         if (!CollectionUtils.isEmpty(servicePackageInfos)) {
@@ -410,9 +437,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                 }
 
             }
-            servicePackageInfoService.saveBatch(servicePackageInfos);
+            servicePackageInfoService.saveOrUpdateBatch(servicePackageInfos);
         }
-        servicePackDetailService.remove(new QueryWrapper<ServicePackDetail>().lambda().eq(ServicePackDetail::getServicePackId, servicePack.getId()));
+        //servicePackDetailService.remove(new QueryWrapper<ServicePackDetail>().lambda().eq(ServicePackDetail::getServicePackId, servicePack.getId()));
 
         //服务详情
         List<ServicePackDetail> servicePackDetails = servicePack.getServicePackDetails();
@@ -420,17 +447,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             for (ServicePackDetail servicePackDetail : servicePackDetails) {
                 servicePackDetail.setServicePackId(servicePack.getId());
             }
-            servicePackDetailService.saveBatch(servicePackDetails);
+            servicePackDetailService.saveOrUpdateBatch(servicePackDetails);
         }
-        //服务简介
-        introductionService.remove(new QueryWrapper<Introduction>().lambda().eq(Introduction::getServicePackId, servicePack.getId()));
-        List<Introduction> introductions = servicePack.getIntroductions();
-        if (!CollectionUtils.isEmpty(introductions)) {
-            for (Introduction introduction : introductions) {
-                introduction.setServicePackId(servicePack.getId());
-            }
-            introductionService.saveBatch(introductions);
-        }
+
         return RestResponse.ok();
     }
 
@@ -481,20 +500,24 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                 List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
 
                 List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda().in(DoctorTeamPeople::getTeamId, teamIds));
-                List<Integer> userIds = list.stream().map(DoctorTeamPeople::getUserId)
-                        .collect(Collectors.toList());
-                List<User> users = (List<User>) userService.listByIds(userIds);
-                Map<Integer, User> userMap = users.stream()
-                        .collect(Collectors.toMap(User::getId, t -> t));
-                for (DoctorTeamPeople doctorTeamPeople : list) {
-                    doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
-                    doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+                if(!CollectionUtils.isEmpty(list)){
+                    List<Integer> userIds = list.stream().map(DoctorTeamPeople::getUserId)
+                            .collect(Collectors.toList());
+                    List<User> users = (List<User>) userService.listByIds(userIds);
+                    Map<Integer, User> userMap = users.stream()
+                            .collect(Collectors.toMap(User::getId, t -> t));
+                    for (DoctorTeamPeople doctorTeamPeople : list) {
+                        doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
+                        doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+                    }
+
+                    Map<Integer, List<DoctorTeamPeople>> doctorTeamPeopleMap = list.stream()
+                            .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
+                    for (DoctorTeam doctorTeam : doctorTeams) {
+                        doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
+                    }
                 }
-                Map<Integer, List<DoctorTeamPeople>> doctorTeamPeopleMap = list.stream()
-                        .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
-                for (DoctorTeam doctorTeam : doctorTeams) {
-                    doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
-                }
+
                 return RestResponse.ok(doctorTeams);
             }
 
@@ -607,6 +630,12 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         List<Introduction> introductions = introductionService.list(new QueryWrapper<Introduction>().lambda()
                 .eq(Introduction::getServicePackId, id));
         servicePack.setIntroductions(introductions);
+        String rentDay = servicePack.getRentDay();
+        if(!StringUtils.isEmpty(rentDay)){
+            String[] split = rentDay.split(",");
+            List<String> strings = Arrays.asList(split);
+            servicePack.setRentDays(strings);
+        }
         return RestResponse.ok(servicePack);
     }
 
@@ -620,6 +649,20 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         service.removeById(id);
 
         return RestResponse.ok();
+
+
+    }
+
+    /**
+     * 查询服务简介富文本
+     *
+     * @return
+     */
+    @GetMapping("/getServicePackById")
+    public RestResponse getServicePackById(@RequestParam("id") Integer id) {
+        QueryWrapper<ServicePack> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("introductions_content", "id").eq("id", id);
+        return RestResponse.ok(service.getBaseMapper().selectOne(queryWrapper));
 
 
     }

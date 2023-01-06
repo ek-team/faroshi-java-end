@@ -6,10 +6,8 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.DoctorPointCountResult;
 import cn.cuptec.faros.entity.*;
-import cn.cuptec.faros.service.DoctorPointService;
-import cn.cuptec.faros.service.DoctorTeamService;
-import cn.cuptec.faros.service.DoctorUserActionService;
-import cn.cuptec.faros.service.PatientOtherOrderService;
+import cn.cuptec.faros.service.*;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -30,6 +28,12 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     private PatientOtherOrderService patientOtherOrderService;//患者其它订单
     @Resource
     private DoctorUserActionService doctorUserActionService;//医生设置的服务价格
+    @Resource
+    private UserService userService;
+    @Resource
+    private DoctorTeamService doctorTeamService;
+    @Resource
+    private WxPayFarosService wxPayFarosService;
 
     /**
      * 分页查询医生积分
@@ -68,20 +72,61 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     }
 
     /**
+     * 判断医生和团队是否开通图文咨询申请
+     */
+    @PostMapping("/checkOpen")
+    public RestResponse checkOpen(@RequestBody PatientOtherOrder patientOtherOrder) {
+
+        if (patientOtherOrder.getDoctorId() != null) {
+            //查询医生图文咨询申请价格
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId()));
+            if (one != null) {
+                return RestResponse.ok(one);
+            }
+        } else {
+            //查询团队图文咨询申请价格
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if (one != null) {
+                return RestResponse.ok(one);
+            }
+        }
+        return RestResponse.ok();
+    }
+
+    /**
      * 患者图文咨询申请
+     *
      * @return
      */
     @PostMapping("/addPatientOtherOrder")
     public RestResponse addPatientOtherOrder(@RequestBody PatientOtherOrder patientOtherOrder) {
         patientOtherOrder.setUserId(SecurityUtils.getUser().getId());
         patientOtherOrder.setCreateTime(LocalDateTime.now());
-        if(patientOtherOrder.getDoctorId()!=null){
+        patientOtherOrder.setStatus(1);
+        patientOtherOrder.setType(1);
+        patientOtherOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        if (patientOtherOrder.getDoctorId() != null) {
+            User doctorUser = userService.getById(patientOtherOrder.getDoctorId());
+            patientOtherOrder.setDeptId(doctorUser.getDeptId());
             //查询医生图文咨询申请价格
-
-        }else {
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId()));
+            patientOtherOrder.setAmount(one.getPrice());
+            patientOtherOrder.setHour(one.getHour());
+        } else {
+            DoctorTeam doctorTeam = doctorTeamService.getById(patientOtherOrder.getDoctorTeamId());
+            patientOtherOrder.setDeptId(doctorTeam.getDeptId());
             //查询团队图文咨询申请价格
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            patientOtherOrder.setAmount(one.getPrice());
+            patientOtherOrder.setHour(one.getHour());
         }
-        return RestResponse.ok();
+        patientOtherOrderService.save(patientOtherOrder);
+        RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
+        return restResponse;
     }
 
     @Override

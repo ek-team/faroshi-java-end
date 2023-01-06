@@ -10,6 +10,8 @@ import com.baomidou.mybatisplus.core.toolkit.Constants;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 public interface DoctorTeamMapper  extends BaseMapper<DoctorTeam> {
     @Select("SELECT doctor_team.*,hospital_info.name as hospitalName " +
             "FROM doctor_team " +
@@ -19,4 +21,9 @@ public interface DoctorTeamMapper  extends BaseMapper<DoctorTeam> {
             "${ew.customSqlSegment}  ORDER BY doctor_team.create_time,doctor_team.status DESC")
     IPage<DoctorTeam> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 
+
+    @Select("SELECT doctor_team.`name`,doctor_team.id from doctor_team LEFT JOIN doctor_team_people on doctor_team.id=\n" +
+            "doctor_team_people.team_id WHERE doctor_team_people.id is not null and doctor_team.dept_id =#{deptId} " +
+            "and doctor_team.status=1")
+  List<DoctorTeam> pageScopedHavePeople(@Param("deptId") Integer deptId);
 }

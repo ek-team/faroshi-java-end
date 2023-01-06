@@ -32,18 +32,24 @@ public class ServicePack extends Model<ServicePack> {
     private String preSaleText;//售前手机号提示文本
     private String afterSaleMobile;//售后手机号
     private String afterSaleText;//售后手机号提示文本
+    private String introductionsImage;//服务简介图片
+    private String introductionsContent;//服务简介富文本
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer hospitalId;//医院id
     @TableField(exist = false)
     private String hospitalName;//医院名称
     private String productName;//产品名称
-    private Double productPrice;//产品价格
+    private Double productPrice;//产品购买价格
     @TableField(exist = false)
     private List<ServicePackProductPic> servicePackProductPics;
     @TableField(exist = false)
     private List<Integer> productSpecs;//产品规格
     @TableField(exist = false)
     private List<ProductSpec> productSpec;//产品规格
+
+    private String rentDay;//租用天数
+    @TableField(exist = false)
+    private List<String> rentDays;//租用天数
     @TableField(exist = false)
     private List<Integer> saleSpecs;//销售规格
     @TableField(exist = false)
@@ -52,7 +58,7 @@ public class ServicePack extends Model<ServicePack> {
     private List<ServicePackageInfo> servicePackageInfos;//服务信息
     private Integer showIntroduction;//是否展示服务简介 0-不展示 1-展示
     @TableField(exist = false)
-    private List<Introduction> introductions;//服务简介数据
+    private List<Introduction> introductions;//服务简介数据 弃用
     private String width;
     @TableField(exist = false)
     private List<ServicePackDetail> servicePackDetails;//服务详情
