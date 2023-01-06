@@ -16,7 +16,7 @@ public class FormSetting extends Model<FormSetting> {
     private String name;
     private Integer formId;
     private String placeholder;//默认值
-    private Integer type;//1-输入框 2-单选框 3-输入框 4-下拉框 5-日期 6 -多选框
+    private Integer type;//1-输入框 2-单选框 3-多行入框 4-下拉框 5-日期 6 -多选框
     @TableField(exist = false)
     private List<FormOptions> formOptionsList;//选项
     private Integer isMust = 0;//是否必填 0-否 1-是

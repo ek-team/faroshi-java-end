@@ -5,6 +5,7 @@ import cn.cuptec.faros.config.pay.PayConfig;
 
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -61,6 +62,9 @@ public class WxPayController {
     private PatientOtherOrderService patientOtherOrderService;//患者其它订单
     @Resource
     private DoctorPointService doctorPointService;//医生积分
+    @Resource
+    private ChatMsgService chatMsgService;
+
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -167,7 +171,9 @@ public class WxPayController {
             chatUser.setServiceStartTime(LocalDateTime.now());
             chatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
             chatUserService.updateById(chatUser);
-            DoctorPoint doctorPoint=new DoctorPoint();
+
+
+            DoctorPoint doctorPoint = new DoctorPoint();
             doctorPoint.setPoint(patientOtherOrder.getAmount());
             doctorPoint.setDoctorTeamId(patientOtherOrder.getDoctorTeamId());
             doctorPoint.setDoctorUserId(patientOtherOrder.getDoctorId());

@@ -12,10 +12,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -128,6 +131,27 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
         return restResponse;
     }
+
+    /**
+     * 查询图文咨询详情
+     *
+     * @return
+     */
+    @GetMapping("/getByPatientOtherOrderId")
+    public RestResponse getByPatientOtherOrderId(@RequestParam("id") Integer id) {
+        PatientOtherOrder patientOtherOrder = patientOtherOrderService.getById(id);
+        String imageUrl = patientOtherOrder.getImageUrl();
+        if (!StringUtils.isEmpty(imageUrl)) {
+            String[] split = imageUrl.split(",");
+            List<String> strings = Arrays.asList(split);
+            patientOtherOrder.setImageUrlList(strings);
+
+        } else {
+            patientOtherOrder.setImageUrlList(new ArrayList<>());
+        }
+        return RestResponse.ok(patientOtherOrder);
+    }
+
 
     @Override
     protected Class<DoctorPoint> getEntityClass() {

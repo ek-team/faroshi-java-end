@@ -37,6 +37,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     private UserFollowDoctorService userFollowDoctorService;//医生和患者的好友表
     @Resource
     private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
+    @Resource
+    private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;//随访计划推送次数记录
 
     /**
      * 添加随访计划
@@ -75,14 +77,14 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         service.updateById(followUpPlan);
         //添加随访计划通知记录
         List<FollowUpPlanNotice> followUpPlanNoticeList = new ArrayList<>();
-
+        List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(followUpPlanContentList) && !CollectionUtils.isEmpty(userIds)) {
             Collections.sort(followUpPlanContentList, (o1, o2) -> {
                 Collator collator = Collator.getInstance(Locale.CHINA);
                 return collator.compare(o1.getDay(), o2.getDay());
             });
 
-
+            List<Integer> countUserIds = new ArrayList<>();
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
                 for (Integer userId : userIds) {
                     //随访计划记录
@@ -95,15 +97,27 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                     followUpPlanNotice.setPatientUserId(userId);
                     followUpPlanNotice.setNoticeTime(noticeTime);
-                    followUpPlanNotice.setTotalPush(followUpPlanContentList.size());
-                    followUpPlanNotice.setPush(0);
+
                     followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                     followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
                     followUpPlanNoticeList.add(followUpPlanNotice);
+
+                    //通知次数记录
+                    if (!countUserIds.contains(userId)) {
+                        countUserIds.add(userId);
+                        FollowUpPlanNoticeCount count = new FollowUpPlanNoticeCount();
+                        count.setTotalPush(followUpPlanContentList.size());
+                        count.setDoctorId(followUpPlan.getCreateUserId());
+                        count.setPush(0);
+                        count.setFollowUpPlanId(followUpPlan.getId());
+                        count.setPatientUserId(userId);
+                        followUpPlanNoticeCountList.add(count);
+                    }
+
                 }
 
             }
-
+            followUpPlanNoticeCountService.saveBatch(followUpPlanNoticeCountList);
             followUpPlanNoticeService.saveBatch(followUpPlanNoticeList);
         }
 
@@ -169,6 +183,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 return collator.compare(o1.getDay(), o2.getDay());
             });
             List<FollowUpPlanNotice> newFollowUpPlanNoticeList = new ArrayList<>();
+            List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
+            List<Integer> countUserIds = new ArrayList<>();
+
             if (CollectionUtils.isEmpty(followUpPlanNoticeList)) {
                 //如果记录是空就全部添加
                 for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
@@ -183,7 +200,22 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                         followUpPlanNotice.setPatientUserId(userId);
                         followUpPlanNotice.setNoticeTime(noticeTime);
-                        newFollowUpPlanNoticeList.add(followUpPlanNotice);
+                        followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
+                        followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
+                        followUpPlanNoticeList.add(followUpPlanNotice);
+
+
+                        //通知次数记录
+                        if (!countUserIds.contains(userId)) {
+                            countUserIds.add(userId);
+                            FollowUpPlanNoticeCount count = new FollowUpPlanNoticeCount();
+                            count.setTotalPush(followUpPlanContentList.size());
+                            count.setDoctorId(followUpPlan.getCreateUserId());
+                            count.setPush(0);
+                            count.setFollowUpPlanId(followUpPlan.getId());
+                            count.setPatientUserId(userId);
+                            followUpPlanNoticeCountList.add(count);
+                        }
                     }
 
                 }
@@ -212,10 +244,21 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                             followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
                             followUpPlanNotice.setPatientUserId(userId);
                             followUpPlanNotice.setNoticeTime(noticeTime);
-                            followUpPlanNotice.setTotalPush(followUpPlanContentList.size());
-                            followUpPlanNotice.setPush(0);
+
                             followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                             newFollowUpPlanNoticeList.add(followUpPlanNotice);
+
+                            //通知次数记录
+                            if (!countUserIds.contains(userId)) {
+                                countUserIds.add(userId);
+                                FollowUpPlanNoticeCount count = new FollowUpPlanNoticeCount();
+                                count.setTotalPush(followUpPlanContentList.size());
+                                count.setDoctorId(followUpPlan.getCreateUserId());
+                                count.setPush(0);
+                                count.setFollowUpPlanId(followUpPlan.getId());
+                                count.setPatientUserId(userId);
+                                followUpPlanNoticeCountList.add(count);
+                            }
                         }
                         //处理新增计划给老的患者添加记录
                         if (!followUpPlanContentDays.contains(followUpPlanContent.getDay())) {
@@ -230,10 +273,20 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                                 followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
                                 followUpPlanNotice.setPatientUserId(userId);
                                 followUpPlanNotice.setNoticeTime(noticeTime);
-                                followUpPlanNotice.setTotalPush(followUpPlanContentList.size());
-                                followUpPlanNotice.setPush(0);
+
                                 followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                                 newFollowUpPlanNoticeList.add(followUpPlanNotice);
+
+
+                                FollowUpPlanNoticeCount followUpPlanNoticeCount = followUpPlanNoticeCountService.getOne(new QueryWrapper<FollowUpPlanNoticeCount>().lambda()
+                                        .eq(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlan.getId())
+                                        .eq(FollowUpPlanNoticeCount::getPatientUserId, userId)
+                                        .eq(FollowUpPlanNoticeCount::getDoctorId, followUpPlan.getCreateUserId()));
+                                if (followUpPlanNoticeCount != null) {
+                                    followUpPlanNoticeCount.setTotalPush(followUpPlanNoticeCount.getTotalPush() + followUpPlanContentList.size());
+                                    followUpPlanNoticeCountService.updateById(followUpPlanNoticeCount);
+                                }
+
                             }
 
 
@@ -244,7 +297,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 if (!CollectionUtils.isEmpty(newFollowUpPlanNoticeList)) {
                     followUpPlanNoticeService.saveBatch(newFollowUpPlanNoticeList);
                 }
-
+                if (!CollectionUtils.isEmpty(followUpPlanNoticeCountList)) {
+                    followUpPlanNoticeCountService.saveBatch(followUpPlanNoticeCountList);
+                }
 
             }
 

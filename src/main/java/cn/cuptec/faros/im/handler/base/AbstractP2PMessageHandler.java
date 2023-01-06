@@ -65,9 +65,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
                 origionMessage.setMsg("图文咨询");
             }
+
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             chatMsg.setMsg(origionMessage.getMsg());
-
+            log.info("收到消息=======================");
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
             User byId1 = userService.getById(chatMsg.getFromUid());
             chatMsg.setUser(byId1);
@@ -79,7 +80,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 String data = byId.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
                 for (String userId : allUserIds) {
-                    if (!userId.equals(fromUser.getId())) {
+                    if (!userId.equals(fromUser.getId() + "")) {
                         Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
                         //2.向目标用户发送新消息提醒
                         SocketFrameTextMessage targetUserMessage
@@ -205,6 +206,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         chatMsg.setStr1(origionMessage.getStr1());
         chatMsg.setStr2(origionMessage.getStr2());
         chatMsg.setChatUserId(origionMessage.getChatUserId());
+        chatMsg.setReadUserIds(fromUser.getId() + "");
         chatMsgService.save(chatMsg);
         return chatMsg;
     }

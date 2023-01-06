@@ -120,28 +120,42 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     public RestResponse updateProductSpec(@RequestBody ProductSpec productSpec) {
 
         productSpecService.updateById(productSpec);
-//        productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
-//                .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
+
+        List<ProductSpecDesc> list = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda()
+                .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
 
 
         List<ProductSpecDesc> productSpecDesc = productSpec.getProductSpecDesc();
+        List<ProductSpecDesc> updateProductSpecDesc = new ArrayList<>();
+        if (CollectionUtils.isEmpty(productSpecDesc)) {
+            productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
+                    .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
+        } else if (!CollectionUtils.isEmpty(list)) {
+            List<Integer> productSpecIds = productSpecDesc.stream().map(ProductSpecDesc::getId)
+                    .collect(Collectors.toList());
+            for (ProductSpecDesc desc : list) {
+                if (!productSpecIds.contains(desc.getId())) {
+                    desc.setStatus(1);
+                    updateProductSpecDesc.add(desc);
+                }
+            }
 
-        List<ProductSpecDesc> saveProductSpecDesc=new ArrayList<>();
-        List<ProductSpecDesc> updateProductSpecDesc=new ArrayList<>();
+        }
+        List<ProductSpecDesc> saveProductSpecDesc = new ArrayList<>();
         if (!CollectionUtils.isEmpty(productSpecDesc)) {
             for (ProductSpecDesc productSpecDesc1 : productSpecDesc) {
                 productSpecDesc1.setProductSpecId(productSpec.getId());
-                if(productSpecDesc1.getId()==null){
+                if (productSpecDesc1.getId() == null) {
                     saveProductSpecDesc.add(productSpecDesc1);
-                }else{
+                } else {
                     updateProductSpecDesc.add(productSpecDesc1);
 
                 }
             }
-            if(!CollectionUtils.isEmpty(saveProductSpecDesc)){
+            if (!CollectionUtils.isEmpty(saveProductSpecDesc)) {
                 productSpecDescService.saveBatch(saveProductSpecDesc);
             }
-            if(!CollectionUtils.isEmpty(updateProductSpecDesc)){
+            if (!CollectionUtils.isEmpty(updateProductSpecDesc)) {
                 productSpecDescService.updateBatchById(updateProductSpecDesc);
             }
         }
@@ -181,7 +195,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         List<Integer> productSpecIds = list.stream().map(ProductSpec::getId)
                 .collect(Collectors.toList());
         List<ProductSpecDesc> productSpecDescs = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda()
-                .in(ProductSpecDesc::getProductSpecId, productSpecIds));
+                .in(ProductSpecDesc::getProductSpecId, productSpecIds)
+                .in(ProductSpecDesc::getStatus, 0));
         if (!CollectionUtils.isEmpty(productSpecDescs)) {
             Map<Integer, List<ProductSpecDesc>> map = productSpecDescs.stream()
                     .collect(Collectors.groupingBy(ProductSpecDesc::getProductSpecId));
@@ -222,23 +237,41 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @PostMapping("/updateSaleSpec")
     public RestResponse updateSaleSpec(@RequestBody SaleSpec saleSpec) {
         saleSpecService.updateById(saleSpec);
+        List<SaleSpecDesc> list = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
 
         List<SaleSpecDesc> saleSpecDescs = saleSpec.getSaleSpecDescs();
-        List<SaleSpecDesc> saveSaleSpecDesc=new ArrayList<>();
-        List<SaleSpecDesc> updateSaleSpecDesc=new ArrayList<>();
+        List<SaleSpecDesc> updateSaleSpecDesc = new ArrayList<>();
+        if (CollectionUtils.isEmpty(saleSpecDescs)) {
+            saleSpecDescService.remove(new QueryWrapper<SaleSpecDesc>().lambda()
+                    .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
+        } else if (!CollectionUtils.isEmpty(list)) {
+            List<Integer> productSpecIds = saleSpecDescs.stream().map(SaleSpecDesc::getId)
+                    .collect(Collectors.toList());
+            for (SaleSpecDesc desc : list) {
+                if (!productSpecIds.contains(desc.getId())) {
+                    desc.setStatus(1);
+                    updateSaleSpecDesc.add(desc);
+                }
+            }
+
+        }
+
+
+        List<SaleSpecDesc> saveSaleSpecDesc = new ArrayList<>();
         if (!CollectionUtils.isEmpty(saleSpecDescs)) {
             for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
                 saleSpecDesc.setSaleSpecId(saleSpec.getId());
-                if(saleSpecDesc.getId()==null){
+                if (saleSpecDesc.getId() == null) {
                     saveSaleSpecDesc.add(saleSpecDesc);
-                }else{
+                } else {
                     updateSaleSpecDesc.add(saleSpecDesc);
                 }
             }
-            if(!CollectionUtils.isEmpty(saveSaleSpecDesc)){
+            if (!CollectionUtils.isEmpty(saveSaleSpecDesc)) {
                 saleSpecDescService.saveBatch(saveSaleSpecDesc);
             }
-            if(!CollectionUtils.isEmpty(updateSaleSpecDesc)){
+            if (!CollectionUtils.isEmpty(updateSaleSpecDesc)) {
                 saleSpecDescService.updateBatchById(updateSaleSpecDesc);
             }
         }
@@ -275,7 +308,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         List<Integer> saleSpecIds = saleSpecs.stream().map(SaleSpec::getId)
                 .collect(Collectors.toList());
         List<SaleSpecDesc> saleSpecDescs = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
-                .in(SaleSpecDesc::getSaleSpecId, saleSpecIds));
+                .in(SaleSpecDesc::getSaleSpecId, saleSpecIds)
+                .in(SaleSpecDesc::getStatus, 0));
         if (!CollectionUtils.isEmpty(saleSpecDescs)) {
             Map<Integer, List<SaleSpecDesc>> map = saleSpecDescs.stream()
                     .collect(Collectors.groupingBy(SaleSpecDesc::getSaleSpecId));
@@ -500,7 +534,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                 List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
 
                 List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda().in(DoctorTeamPeople::getTeamId, teamIds));
-                if(!CollectionUtils.isEmpty(list)){
+                if (!CollectionUtils.isEmpty(list)) {
                     List<Integer> userIds = list.stream().map(DoctorTeamPeople::getUserId)
                             .collect(Collectors.toList());
                     List<User> users = (List<User>) userService.listByIds(userIds);
@@ -569,7 +603,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
             //销售规格子类查询
             if (!CollectionUtils.isEmpty(saleSpecs)) {
-                List<SaleSpecDesc> saleSpecDescs = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda().in(SaleSpecDesc::getSaleSpecId, saleSpecIds));
+                List<SaleSpecDesc> saleSpecDescs = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda().in(SaleSpecDesc::getSaleSpecId, saleSpecIds).in(SaleSpecDesc::getStatus, 0));
                 if (!CollectionUtils.isEmpty(saleSpecDescs)) {
                     Map<Integer, List<SaleSpecDesc>> saleSpecDescMap = saleSpecDescs.stream()
                             .collect(Collectors.groupingBy(SaleSpecDesc::getSaleSpecId));
@@ -631,7 +665,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                 .eq(Introduction::getServicePackId, id));
         servicePack.setIntroductions(introductions);
         String rentDay = servicePack.getRentDay();
-        if(!StringUtils.isEmpty(rentDay)){
+        if (!StringUtils.isEmpty(rentDay)) {
             String[] split = rentDay.split(",");
             List<String> strings = Arrays.asList(split);
             servicePack.setRentDays(strings);

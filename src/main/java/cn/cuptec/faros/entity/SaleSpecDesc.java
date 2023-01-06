@@ -20,4 +20,5 @@ public class SaleSpecDesc extends Model<SaleSpecDesc> {
     private Double rent;//租金
     private Double recoveryPrice;//回收价
     private Integer saleSpecId;
+    private Integer status=0; //0-正常 1-删除
 }

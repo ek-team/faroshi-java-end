@@ -13,4 +13,5 @@ public class ProductSpecDesc extends Model<ProductSpecDesc> {
     private Integer id;
     private String descText;
     private Integer productSpecId;
+    private Integer status=0;//0-正常 1-删除
 }

@@ -47,7 +47,7 @@ public class ChatMsgController {
     @ApiOperation(value = "查询历史记录")
     @PostMapping("/queryChatMsgHistory")
     public RestResponse queryChatMsgHistory(@RequestBody SocketFrameTextMessage param) {
-
+        log.info("获取聊天记录开始===============================");
         Integer pageNum = param.getPageNum();
         Integer pageSize = param.getPageSize();
         param.setMyUserId(SecurityUtils.getUser().getId());
@@ -148,7 +148,7 @@ public class ChatMsgController {
             resultPage.setRecords(records);
         }
 
-
+        log.info("获取聊天记录结束===============================");
         return RestResponse.ok(resultPage);
     }
 }

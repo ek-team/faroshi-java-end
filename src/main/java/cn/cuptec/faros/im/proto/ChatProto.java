@@ -25,7 +25,7 @@ public class ChatProto {
 
     public static final String RESPONSE_MESSAGE = "RESPONSE_MESSAGE";
 
-    public static final String REQUEST_CLOSECHAT = "REQUEST_CLOSECHAT"; //关闭会话
+    public static final String REMOVE_CHANNEL = "REMOVE_CHANNEL"; //关闭会话
     public static final String RESPONSE_CLOSECHAT = "RESPONSE_CLOSECHAT"; //关闭会话
     //提示类消息
     public static final String TIP_NEWMESSAGE = "TIP_NEWMESSAGE"; //新聊天消息提醒 系统-》用户

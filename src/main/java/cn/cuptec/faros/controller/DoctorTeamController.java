@@ -32,6 +32,8 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     private DoctorTeamDiseasesService doctorTeamDiseasesService;//医生病种关联
     @Resource
     private DiseasesService diseasesService;
+    @Resource
+    private HospitalInfoService hospitalInfoService;
 
     /**
      * 添加医生团队
@@ -210,6 +212,41 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         }
         return RestResponse.ok();
     }
+
+    /**
+     * 查询医生所在的团队
+     *
+     * @return
+     */
+
+    @GetMapping("/queryMyTeam")
+    public RestResponse queryMyTeam() {
+        List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        if (CollectionUtils.isEmpty(list)) {
+            return RestResponse.ok(new ArrayList<>());
+        }
+        List<Integer> teamIds = list.stream().map(DoctorTeamPeople::getTeamId)
+                .collect(Collectors.toList());
+        List<DoctorTeam> doctorTeams = (List<DoctorTeam>) service.listByIds(teamIds);
+
+        List<Integer> hospitalIds = doctorTeams.stream().map(DoctorTeam::getHospitalId)
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(hospitalIds)) {
+            List<HospitalInfo> hospitalInfos = (List<HospitalInfo>) hospitalInfoService.listByIds(hospitalIds);
+            Map<Integer, HospitalInfo> hospitalInfoMap = hospitalInfos.stream()
+                    .collect(Collectors.toMap(HospitalInfo::getId, t -> t));
+            for (DoctorTeam doctorTeam : doctorTeams) {
+                HospitalInfo hospitalInfo = hospitalInfoMap.get(doctorTeam.getHospitalId());
+                if (hospitalInfo != null) {
+                    doctorTeam.setHospitalName(hospitalInfo.getName());
+
+                }
+            }
+        }
+        return RestResponse.ok(doctorTeams);
+    }
+
 
     @Override
     protected Class<DoctorTeam> getEntityClass() {

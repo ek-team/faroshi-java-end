@@ -256,7 +256,6 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         }
         LambdaQueryWrapper<ChatUser> wrapper = Wrappers.<ChatUser>lambdaQuery()
                 .eq(ChatUser::getTeamId, doctorTeamId);
-        wrapper.or();
         wrapper.like(ChatUser::getUserIds, patientUserId);
         List<ChatUser> list = list(wrapper);
         if (!CollectionUtils.isEmpty(list)) {

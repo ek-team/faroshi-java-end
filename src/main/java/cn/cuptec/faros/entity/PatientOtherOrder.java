@@ -3,10 +3,12 @@ package cn.cuptec.faros.entity;
 import cn.cuptec.faros.common.annotation.Queryable;
 import cn.cuptec.faros.common.enums.QueryLogical;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 患者其它订单 比如图文咨询申请等
@@ -36,4 +38,6 @@ public class PatientOtherOrder {
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
     private String orderNo;
+    @TableField(exist = false)
+    private List<String> imageUrlList;
 }

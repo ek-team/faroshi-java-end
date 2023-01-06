@@ -55,7 +55,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         List<FormOptions> addFormOptionsList = new ArrayList<>();
         for (FormSetting formSetting : formSettings) {
             List<FormOptions> formOptionsList = formSetting.getFormOptionsList();
-            if(!CollectionUtils.isEmpty(formOptionsList)){
+            if (!CollectionUtils.isEmpty(formOptionsList)) {
                 for (FormOptions formOptions : formOptionsList) {
                     formOptions.setFormId(form.getId());
                     formOptions.setFormSettingId(formSetting.getId());
@@ -79,7 +79,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
      */
     @GetMapping("/deleteById")
     public RestResponse deleteById(@RequestParam("id") Integer id) {
-        Form form=new Form();
+        Form form = new Form();
         form.setId(id);
         form.setStatus(1);
         service.updateById(form);
@@ -137,6 +137,22 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     }
 
     /**
+     * 分页查询自己创建的表单
+     *
+     * @return
+     */
+    @GetMapping("/pageMyScoped")
+    public RestResponse pageMyScoped() {
+        Page<Form> page = getPage();
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        queryWrapper.eq("create_id", SecurityUtils.getUser().getId());
+        queryWrapper.eq("status", 0);
+        queryWrapper.orderByDesc("create_time");
+        IPage<Form> formIPage = service.page(page);
+        return RestResponse.ok(formIPage);
+    }
+
+    /**
      * 根据id查询详情
      *
      * @return
@@ -147,7 +163,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         List<FormSetting> list = formSettingService.list(new QueryWrapper<FormSetting>().lambda().eq(FormSetting::getFormId, id));
         List<Integer> formSettingIds = list.stream().map(FormSetting::getId)
                 .collect(Collectors.toList());
-        if(!CollectionUtils.isEmpty(formSettingIds)){
+        if (!CollectionUtils.isEmpty(formSettingIds)) {
             List<FormOptions> formOptions = formOptionsService.list(new QueryWrapper<FormOptions>().lambda()
                     .in(FormOptions::getFormSettingId, formSettingIds));
             if (!CollectionUtils.isEmpty(formOptions)) {
