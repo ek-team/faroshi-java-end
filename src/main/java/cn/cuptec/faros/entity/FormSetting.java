@@ -14,6 +14,7 @@ public class FormSetting extends Model<FormSetting> {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private String name;
+    private String text;
     private Integer formId;
     private String placeholder;//默认值
     private Integer type;//1-输入框 2-单选框 3-多行入框 4-下拉框 5-日期 6 -多选框

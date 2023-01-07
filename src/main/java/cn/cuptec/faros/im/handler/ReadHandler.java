@@ -34,28 +34,13 @@ public class ReadHandler extends AbstractMessageHandler {
 
     @Override
     public void handle(Channel channel, SocketFrameTextMessage origionMsg) {
-        Assert.notNull(origionMsg.getTargetUid(), "目标用户不能为空");
 
         SocketUser userInfo = UserChannelManager.getUserInfo(channel);
 
-        Long timestamp = origionMsg.getMsgTimeStamp();
-
-        Date date = new Date(timestamp);
-
-        TextWebSocketFrame textWebSocketFrame = new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseSetReaded(timestamp)));
-        channel.writeAndFlush(textWebSocketFrame);
-
-        Channel userChannel = UserChannelManager.getUserChannel(origionMsg.getTargetUid());
-        if (userChannel != null) {
-            TextWebSocketFrame textWebSocketFrame2 = new TextWebSocketFrame(
-                    JSON.toJSONString(SocketFrameTextMessage.responseSetReaded(timestamp))
-            );
-            userChannel.writeAndFlush(textWebSocketFrame2);
-        }
         Integer chatUserId = origionMsg.getChatUserId();//有群聊id
         if (chatUserId == null) {
 
-            chatMsgService.setReaded(userInfo.getUserInfo().getId(), origionMsg.getTargetUid(), date);
+            chatMsgService.setReaded(userInfo.getUserInfo().getId(), origionMsg.getTargetUid());
 
         } else {
             List<ChatMsg> chatMsgs = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getChatUserId, chatUserId));

@@ -16,11 +16,10 @@ import java.util.Date;
 @AllArgsConstructor
 @Service
 public class ChatMsgService extends ServiceImpl<ChatMsgMapper, ChatMsg> {
-    public boolean setReaded(Integer uid, Integer targetUid, Date lastMsgTime) {
+    public boolean setReaded(Integer uid, Integer targetUid) {
 
         return update(Wrappers.<ChatMsg>lambdaUpdate()
                 .set(ChatMsg::getReadStatus, 1)
-                .le(ChatMsg::getCreateTime, lastMsgTime)
                 .eq(ChatMsg::getToUid, uid)
                 .eq(ChatMsg::getFromUid, targetUid)
         );
