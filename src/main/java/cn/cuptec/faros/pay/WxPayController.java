@@ -64,7 +64,8 @@ public class WxPayController {
     private DoctorPointService doctorPointService;//医生积分
     @Resource
     private ChatMsgService chatMsgService;
-
+    @Resource
+    private DiseasesService diseasesService;
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -132,8 +133,17 @@ public class WxPayController {
                 userIds.add(userOrder.getUserId());
                 chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId());
             }
-
-
+            //修改用户的病种
+            Integer diseasesId = userOrder.getDiseasesId();
+            if(diseasesId!=null){
+                Diseases diseases = diseasesService.getById(diseasesId);
+                if(diseases!=null){
+                    User user=new User();
+                    user.setId(userOrder.getUserId());
+                    user.setDiseasesName(diseases.getName());
+                    userService.updateById(user);
+                }
+            }
             userOrder.setChatUserId(chatUser.getId());
             userOrdertService.updateById(userOrder);
             //添加用户自己的服务

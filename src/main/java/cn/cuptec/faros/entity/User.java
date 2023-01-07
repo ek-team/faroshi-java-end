@@ -53,7 +53,7 @@ public class User extends Model<User> {
     private String city;
 
     private String province;
-
+    private String diseasesName;//病种名称
     private String remarks;
 
     private String realName;
@@ -102,4 +102,6 @@ public class User extends Model<User> {
     private String hospitalName;
     @TableField(exist = false)
     private String doctorTeamName;//所属团队名称
+    @TableField(exist = false)
+    private List<FollowUpPlanNotice> followUpPlanNoticeList;//患者随访计划
 }
