@@ -478,10 +478,30 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         //服务详情
         List<ServicePackDetail> servicePackDetails = servicePack.getServicePackDetails();
         if (!CollectionUtils.isEmpty(servicePackDetails)) {
+            List<ServicePackDetail> servicePackDetailList = servicePackDetailService.list(new QueryWrapper<ServicePackDetail>().lambda()
+                    .eq(ServicePackDetail::getServicePackId, servicePack.getId()));
+            if (!CollectionUtils.isEmpty(servicePackDetailList)) {
+                List<Integer> servicePackDetailIds = servicePackDetails.stream().map(ServicePackDetail::getId)
+                        .collect(Collectors.toList());
+                List<Integer> removeDetailIds = new ArrayList<>();
+                for (ServicePackDetail servicePackDetail : servicePackDetailList) {
+                    if (!servicePackDetailIds.contains(servicePackDetail.getId())) {
+                        removeDetailIds.add(servicePackDetail.getId());
+                    }
+                }
+                if (!CollectionUtils.isEmpty(removeDetailIds)) {
+                    servicePackDetailService.removeByIds(removeDetailIds);
+                }
+            }
+
+
             for (ServicePackDetail servicePackDetail : servicePackDetails) {
                 servicePackDetail.setServicePackId(servicePack.getId());
             }
             servicePackDetailService.saveOrUpdateBatch(servicePackDetails);
+        } else {
+            servicePackDetailService.remove(new QueryWrapper<ServicePackDetail>().lambda()
+                    .eq(ServicePackDetail::getServicePackId, servicePack.getId()));
         }
 
         return RestResponse.ok();
@@ -577,7 +597,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             List<ProductSpec> productSpecs = (List<ProductSpec>) productSpecService.listByIds(productSpecIds);
             //产品规格查询描述信息
             if (!CollectionUtils.isEmpty(productSpecs)) {
-                List<ProductSpecDesc> productSpecDescList = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda().in(ProductSpecDesc::getProductSpecId, productSpecIds));
+                List<ProductSpecDesc> productSpecDescList = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda().in(ProductSpecDesc::getProductSpecId, productSpecIds).eq(ProductSpecDesc::getStatus, 0));
                 if (!CollectionUtils.isEmpty(productSpecDescList)) {
                     Map<Integer, List<ProductSpecDesc>> productSpecDescMap = productSpecDescList.stream()
                             .collect(Collectors.groupingBy(ProductSpecDesc::getProductSpecId));

@@ -104,4 +104,6 @@ public class User extends Model<User> {
     private String doctorTeamName;//所属团队名称
     @TableField(exist = false)
     private List<FollowUpPlanNotice> followUpPlanNoticeList;//患者随访计划
+    @TableField(exist = false)
+    private List<ElectronicCase> electronicCaseList;//电子病例
 }

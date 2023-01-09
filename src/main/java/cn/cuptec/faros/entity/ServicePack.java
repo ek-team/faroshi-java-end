@@ -41,7 +41,7 @@ public class ServicePack extends Model<ServicePack> {
     private String productName;//产品名称
     private Double productPrice;//产品购买价格
     @TableField(exist = false)
-    private List<ServicePackProductPic> servicePackProductPics;
+    private List<ServicePackProductPic> servicePackProductPics;//产品图片
     @TableField(exist = false)
     private List<Integer> productSpecs;//产品规格
     @TableField(exist = false)

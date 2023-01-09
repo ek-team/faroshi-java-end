@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -95,11 +96,15 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
 
     public RetrieveOrderCountVo countScoped() {
         List<RetrieveOrder> tbUserOrders = baseMapper.listScoped(Wrappers.<RetrieveOrder>lambdaQuery(), new DataScope());
-        long count0 = tbUserOrders.stream().filter(it -> it.getStatus() == 0).count();
-        long count9 = tbUserOrders.stream().filter(it -> it.getStatus() == 9).count();
         RetrieveOrderCountVo vo = new RetrieveOrderCountVo();
-        vo.setStatu0(count0);
-        vo.setStatu9(count9);
+        if (!CollectionUtils.isEmpty(tbUserOrders)) {
+            long count0 = tbUserOrders.stream().filter(it -> it.getStatus()!=null && it.getStatus() == 0).count();
+            long count9 = tbUserOrders.stream().filter(it -> it.getStatus()!=null && it.getStatus() == 9).count();
+
+            vo.setStatu0(count0);
+            vo.setStatu9(count9);
+
+        }
         return vo;
     }
 

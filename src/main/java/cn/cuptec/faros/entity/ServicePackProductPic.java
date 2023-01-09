@@ -13,4 +13,5 @@ public class ServicePackProductPic extends Model<ServicePackProductPic> {
     private Integer id;
     private Integer servicePackId;
     private String image;
+    private Integer type=0; //0-租用图片 1-购买图片
 }

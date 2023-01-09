@@ -39,6 +39,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
     @Resource
     private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;//随访计划推送次数记录
+    @Resource
+    private ElectronicCaseService electronicCaseService;
 
     /**
      * 添加随访计划
@@ -564,16 +566,41 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             userIds.add(followUpPlanNotice.getPatientUserId());
             followUpPlanContentIds.add(followUpPlanNotice.getFollowUpPlanContentId());
         }
-        List<FollowUpPlan> followUpPlans = (List<FollowUpPlan>) service.listByIds(followUpPlanIds);
-        Map<Integer, FollowUpPlan> followUpPlanMap = followUpPlans.stream()
-                .collect(Collectors.toMap(FollowUpPlan::getId, t -> t));
+        Map<Integer, FollowUpPlan> followUpPlanMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanIds)) {
+            List<FollowUpPlan> followUpPlans = (List<FollowUpPlan>) service.listByIds(followUpPlanIds);
+            followUpPlanMap = followUpPlans.stream()
+                    .collect(Collectors.toMap(FollowUpPlan::getId, t -> t));
+        }
+
 
         //查询推送内容
-        List<FollowUpPlanContent> followUpPlanContents = (List<FollowUpPlanContent>) followUpPlanContentService.listByIds(followUpPlanContentIds);
+        Map<Integer, FollowUpPlanContent> followUpPlanContentMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanContentIds)) {
+            List<FollowUpPlanContent> followUpPlanContents = (List<FollowUpPlanContent>) followUpPlanContentService.listByIds(followUpPlanContentIds);
 
-        Map<Integer, FollowUpPlanContent> followUpPlanContentMap = followUpPlanContents.stream()
-                .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
+            followUpPlanContentMap = followUpPlanContents.stream()
+                    .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
+        }
 
+        //查询电子病例
+        List<ElectronicCase> electronicCaseList = electronicCaseService.list(new QueryWrapper<ElectronicCase>().lambda()
+                .eq(ElectronicCase::getPatientId, patientId).orderByDesc(ElectronicCase::getCreateTime));
+
+        if(!CollectionUtils.isEmpty(electronicCaseList)){
+            //查询医生名字
+            List<Integer> doctorIds = electronicCaseList.stream().map(ElectronicCase::getCreateUserId)
+                    .collect(Collectors.toList());
+            List<User> users = (List<User>) userService.listByIds(doctorIds);
+            Map<Integer,User>userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+            for(ElectronicCase electronicCase:electronicCaseList){
+                if(userMap.get(electronicCase.getCreateUserId())!=null){
+                    electronicCase.setCreateUserName(userMap.get(electronicCase.getCreateUserId()).getNickname());
+
+                }
+            }
+        }
 
         for (FollowUpPlanNotice followUpPlanNotice : list) {
             followUpPlanNotice.setFollowUpPlan(followUpPlanMap.get(followUpPlanNotice.getFollowUpPlanId()));
@@ -622,6 +649,28 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         return RestResponse.ok(list);
     }
 
+    /**
+     * 查询推送计划节点详情
+     * @return
+     */
+    @GetMapping("/getFollowUpPlanContentDetail")
+    public RestResponse getFollowUpPlanContentDetail(@RequestParam("followUpPlanContentId") Integer followUpPlanContentId) {
+        FollowUpPlanContent followUpPlanContent = followUpPlanContentService.getById(followUpPlanContentId);
+        Integer formId = followUpPlanContent.getFormId();
+        Form byId = formService.getById(formId);
+        followUpPlanContent.setForm(byId);
+        return RestResponse.ok(followUpPlanContent);
+    }
+    /**
+     * 修改推送计划节点详情
+     * @return
+     */
+    @PostMapping("/updateFollowUpPlanContent")
+    public RestResponse updateFollowUpPlanContent(@RequestBody FollowUpPlanContent followUpPlanContent) {
+        followUpPlanContentService.updateById(followUpPlanContent);
+
+        return RestResponse.ok(followUpPlanContent);
+    }
     @Override
     protected Class<FollowUpPlan> getEntityClass() {
         return FollowUpPlan.class;

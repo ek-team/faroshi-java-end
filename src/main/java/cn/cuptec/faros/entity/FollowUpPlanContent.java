@@ -18,6 +18,7 @@ public class FollowUpPlanContent extends Model<FollowUpPlanContent> {
     private String day;//几天后
     private String notice;//提醒消息
     private Integer formId;//表单id
+    private Integer status = 0;//0-正常执行 1-停止执行
     @TableField(exist = false)
     private Form form;//
 }
