@@ -143,7 +143,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/pneumaticEvaluationRecords/addBatch",
                         "/pneumaticEvaluationRecords/getRecordsByUserId",
                         "/pneumaticEvaluationRecords/deleteRecordsByUserId",
-                        "/wxpay/notifyOrder"
+                        "/wxpay/notifyOrder",
+                        "/purchase/order/deliveryMoBan"
 
                 )
                 .permitAll()

@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -243,11 +244,11 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         }
         //添加租用或者 销售信息
         List<SaleSpec> saleSpecs = servicePack.getSaleSpec();
-        if(CollectionUtils.isEmpty(saleSpecs)){
-            saleSpecs=new ArrayList<>();
+        if (CollectionUtils.isEmpty(saleSpecs)) {
+            saleSpecs = new ArrayList<>();
         }
         List<SaleSpec> buySaleSpec = servicePack.getBuySaleSpec();
-        if(!CollectionUtils.isEmpty(buySaleSpec)){
+        if (!CollectionUtils.isEmpty(buySaleSpec)) {
             saleSpecs.addAll(buySaleSpec);
         }
 
@@ -330,11 +331,11 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         }
         //添加销售规格
         List<SaleSpec> saleSpecs = servicePack.getSaleSpec();
-        if(CollectionUtils.isEmpty(saleSpecs)){
-            saleSpecs=new ArrayList<>();
+        if (CollectionUtils.isEmpty(saleSpecs)) {
+            saleSpecs = new ArrayList<>();
         }
         List<SaleSpec> buySaleSpec = servicePack.getBuySaleSpec();
-        if(!CollectionUtils.isEmpty(buySaleSpec)){
+        if (!CollectionUtils.isEmpty(buySaleSpec)) {
             saleSpecs.addAll(buySaleSpec);
         }
         List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
@@ -529,7 +530,13 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         //查询产品图片
         List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>()
                 .lambda().eq(ServicePackProductPic::getServicePackId, id));
-        servicePack.setServicePackProductPics(list);
+        if (!CollectionUtils.isEmpty(list)) {
+            Map<Integer, List<ServicePackProductPic>> servicePackProductPicMap = list.stream()
+                    .collect(Collectors.groupingBy(ServicePackProductPic::getType));
+            servicePack.setServicePackProductPics(servicePackProductPicMap.get(0));
+            servicePack.setServicePackProductPicsBuy(servicePackProductPicMap.get(1));
+        }
+
         //查询购买租用规格
         List<SaleSpec> saleSpecs = saleSpecService.list(new QueryWrapper<SaleSpec>()
                 .lambda().eq(SaleSpec::getServicePackId, id).eq(SaleSpec::getStatus, 0));
@@ -619,6 +626,114 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
 
     }
+
+    /**
+     * 复制服务包
+     *
+     * @return
+     */
+    @GetMapping("/copyServicePack")
+    public RestResponse copyServicePack(@RequestParam("id") Integer id) {
+        ServicePack servicePack = service.getById(id);
+        servicePack.setName(servicePack.getName() + "复制");
+        ServicePack newServicePack = new ServicePack();
+        BeanUtils.copyProperties(servicePack, newServicePack, "id");
+        newServicePack.setName(servicePack.getName() + "复制");
+        newServicePack.setCreateTime(LocalDateTime.now());
+        service.save(newServicePack);
+
+        //查询产品规格
+        List<ServicePackProductSpec> servicePackProductSpecs = servicePackProductSpecService.list(new QueryWrapper<ServicePackProductSpec>()
+                .lambda().eq(ServicePackProductSpec::getServicePackId, id));
+        if (!CollectionUtils.isEmpty(servicePackProductSpecs)) {
+            List<ServicePackProductSpec> newServicePackProductSpecs = new ArrayList<>();
+            for (ServicePackProductSpec servicePackProductSpec : servicePackProductSpecs) {
+                ServicePackProductSpec newServicePackProductSpec = new ServicePackProductSpec();
+                BeanUtils.copyProperties(servicePackProductSpec, newServicePackProductSpec, "id");
+                newServicePackProductSpec.setServicePackId(newServicePack.getId());
+                newServicePackProductSpecs.add(newServicePackProductSpec);
+            }
+            servicePackProductSpecService.saveBatch(newServicePackProductSpecs);
+        }
+        //查询产品图片
+        List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>()
+                .lambda().eq(ServicePackProductPic::getServicePackId, id));
+        if (!CollectionUtils.isEmpty(list)) {
+            List<ServicePackProductPic> newServicePackProductPics = new ArrayList<>();
+            for (ServicePackProductPic servicePackProductPic : list) {
+                ServicePackProductPic newServicePackProductPic = new ServicePackProductPic();
+                BeanUtils.copyProperties(servicePackProductPic, newServicePackProductPic, "id");
+                newServicePackProductPic.setServicePackId(newServicePack.getId());
+                newServicePackProductPics.add(newServicePackProductPic);
+            }
+
+            servicePackProductPicService.saveBatch(newServicePackProductPics);
+        }
+        //查询购买租用规格
+        List<SaleSpec> saleSpecs = saleSpecService.list(new QueryWrapper<SaleSpec>()
+                .lambda().eq(SaleSpec::getServicePackId, id).eq(SaleSpec::getStatus, 0));
+        if (!CollectionUtils.isEmpty(saleSpecs)) {
+
+            List<SaleSpec> newSaleSpecs = new ArrayList<>();
+            for (SaleSpec saleSpec : saleSpecs) {
+                SaleSpec newSaleSpec = new SaleSpec();
+                BeanUtils.copyProperties(saleSpec, newSaleSpec, "id");
+                newSaleSpec.setServicePackId(newServicePack.getId());
+                newSaleSpecs.add(newSaleSpec);
+            }
+            saleSpecService.saveBatch(newSaleSpecs);
+        }
+
+        //查询服务信息
+        List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>()
+                .lambda().eq(ServicePackageInfo::getServicePackageId, id));
+        //查询服务的医生团队
+        if (!CollectionUtils.isEmpty(servicePackageInfos)) {
+            List<ServicePackageInfo> newServicePackageInfos = new ArrayList<>();
+            for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
+                ServicePackageInfo newServicePackageInfo = new ServicePackageInfo();
+                BeanUtils.copyProperties(servicePackageInfo, newServicePackageInfo, "id");
+                newServicePackageInfo.setServicePackageId(newServicePack.getId());
+                newServicePackageInfos.add(newServicePackageInfo);
+            }
+            servicePackageInfoService.saveBatch(newServicePackageInfos);
+        }
+
+        //查询服务详情
+        List<ServicePackDetail> servicePackDetails = servicePackDetailService.list(new QueryWrapper<ServicePackDetail>()
+                .lambda().eq(ServicePackDetail::getServicePackId, id));
+        if (!CollectionUtils.isEmpty(servicePackDetails)) {
+            List<ServicePackDetail> newServicePackDetails = new ArrayList<>();
+            for (ServicePackDetail servicePackDetail : servicePackDetails) {
+                ServicePackDetail newServicePackDetail = new ServicePackDetail();
+                BeanUtils.copyProperties(servicePackDetail, newServicePackDetail, "id");
+                newServicePackDetail.setServicePackId(newServicePack.getId());
+                newServicePackDetails.add(newServicePackDetail);
+            }
+            servicePackDetailService.saveBatch(newServicePackDetails);
+        }
+
+        //查询服务简介
+        List<Introduction> introductions = introductionService.list(new QueryWrapper<Introduction>().lambda()
+                .eq(Introduction::getServicePackId, id));
+        if (!CollectionUtils.isEmpty(introductions)) {
+
+            List<Introduction> newIntroductions = new ArrayList<>();
+            for (Introduction introduction : introductions) {
+                Introduction newIntroduction = new Introduction();
+                BeanUtils.copyProperties(introduction, newIntroduction, "id");
+                newIntroduction.setServicePackId(newServicePack.getId());
+                newIntroductions.add(newIntroduction);
+            }
+            introductionService.saveBatch(newIntroductions);
+        }
+
+
+        return RestResponse.ok(newServicePack);
+
+
+    }
+
 
     @Override
     protected Class<ServicePack> getEntityClass() {

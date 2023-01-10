@@ -74,6 +74,17 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
         return RestResponse.ok();
     }
 
+    /**
+     * 查询服务详情
+     * @return
+     */
+    @GetMapping("/getServiceDetail")
+    public RestResponse getServiceDetail(@RequestParam("id") Integer id) {
+        DoctorUserAction byId = service.getById(id);
+
+        return RestResponse.ok(byId);
+    }
+
 
     @Override
     protected Class<DoctorUserAction> getEntityClass() {

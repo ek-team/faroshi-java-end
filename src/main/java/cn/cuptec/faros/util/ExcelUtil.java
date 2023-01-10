@@ -1,6 +1,7 @@
 package cn.cuptec.faros.util;
 
 import cn.cuptec.faros.common.utils.StringUtils;
+import cn.cuptec.faros.entity.DeliveryMoBan;
 import cn.cuptec.faros.entity.PlanExcelBO;
 import cn.cuptec.faros.entity.UserOrderExcelBO;
 import com.alibaba.excel.EasyExcel;
@@ -67,7 +68,7 @@ public class ExcelUtil {
 
         for (int i = 0; i < planExcelBOS.size(); i++) {
             if (planExcelBOS.get(i).getSize() != null) {
-                List<LoopMergeStrategy> merge = merge(planExcelBOS.get(i).getSize()+1);
+                List<LoopMergeStrategy> merge = merge(planExcelBOS.get(i).getSize() + 1);
                 loopMergeStrategies.addAll(merge);
 
             }
@@ -85,6 +86,41 @@ public class ExcelUtil {
                 .doWrite(data);
 
     }
+
+    public static void writeDeliveryMoBanExcel(HttpServletResponse response, List<? extends Object> data, String fileName, String sheetName, Class model) throws Exception {
+
+        // 头的策略
+        WriteCellStyle headWriteCellStyle = new WriteCellStyle();
+        //设置表头居中对齐
+        headWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        // 颜色
+        headWriteCellStyle.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+        WriteFont headWriteFont = new WriteFont();
+        headWriteFont.setFontHeightInPoints((short) 10);
+        // 字体
+        headWriteCellStyle.setWriteFont(headWriteFont);
+        headWriteCellStyle.setWrapped(true);
+        // 内容的策略
+        WriteCellStyle contentWriteCellStyle = new WriteCellStyle();
+        //设置内容靠中对齐
+        contentWriteCellStyle.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        // 这个策略是 头是头的样式 内容是内容的样式 其他的策略可以自己实现
+        List<LoopMergeStrategy> loopMergeStrategies = new ArrayList<>();
+
+
+        HorizontalCellStyleStrategy horizontalCellStyleStrategy = new HorizontalCellStyleStrategy(headWriteCellStyle, contentWriteCellStyle);
+        // 这里 需要指定写用哪个class去写，然后写到第一个sheet，名字为模板 然后文件流会自动关闭
+        ExcelWriterBuilder write = EasyExcel.write(getOutputStream(fileName, response), model);
+        loopMergeStrategies.forEach(m -> {
+            write.registerWriteHandler(m);
+        });
+        write.excelType(ExcelTypeEnum.XLSX).sheet(sheetName).registerWriteHandler(horizontalCellStyleStrategy)
+                //最大长度自适应 目前没有对应算法优化 建议注释掉不用 会出bug
+//                .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+                .doWrite(data);
+
+    }
+
     public static void writeUserOrderExcel(HttpServletResponse response, List<? extends Object> data, String fileName, String sheetName, Class model) throws Exception {
 
         // 头的策略
@@ -125,6 +161,7 @@ public class ExcelUtil {
                 .doWrite(data);
 
     }
+
     private static List<LoopMergeStrategy> merge(int index) {
         List<LoopMergeStrategy> loopMergeStrategies = new ArrayList<>();
         for (int i = 0; i < 11; i++) {

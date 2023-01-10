@@ -7,9 +7,11 @@ import cn.cuptec.faros.dto.CalculatePriceResult;
 import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ExcelUtil;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -18,9 +20,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -376,6 +383,200 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setStatus(4);
         userOrder.setRevTime(LocalDateTime.now());
         return RestResponse.ok(userOrder);
+    }
+
+    /**
+     * excel导出发货模版
+     *
+     * @return
+     */
+    @GetMapping("/deliveryMoBan")
+    public RestResponse deliveryMoBan(HttpServletResponse response) {
+        String cFileName = null;
+        try {
+            cFileName = URLEncoder.encode("DeliveryMoBan", "UTF-8");
+            List<DeliveryMoBan> deliveryMoBans = new ArrayList<>();
+            ExcelUtil.writeDeliveryMoBanExcel(response, deliveryMoBans, cFileName, "DeliveryMoBan", DeliveryMoBan.class);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return RestResponse.ok();
+    }
+
+    /**
+     * excel导入发货模版
+     *
+     * @return
+     */
+    @PostMapping("/deliveryMoBanImport")
+    public RestResponse deliveryMoBanImport(@RequestPart(value = "file") MultipartFile file) {
+        try {
+            List<DeliveryMoBan> deliveryMoBans = EasyExcel.read(file.getInputStream())
+                    .head(DeliveryMoBan.class)
+                    .sheet()
+                    .doReadSync();
+            if (!CollectionUtils.isEmpty(deliveryMoBans)) {
+                Map<String, DeliveryMoBan> deliveryMoBanmap = new HashMap<>();
+                for (DeliveryMoBan deliveryMoBan : deliveryMoBans) {
+                    DeliveryMoBan deliveryMoBan1 = deliveryMoBanmap.get(deliveryMoBan.getOrderNo());
+                    if (deliveryMoBan1 == null) {
+                        deliveryMoBanmap.put(deliveryMoBan.getOrderNo(), deliveryMoBan);
+                    }
+                }
+                List<String> orderNos = deliveryMoBans.stream().map(DeliveryMoBan::getOrderNo)
+                        .collect(Collectors.toList());
+                List<UserOrder> userOrders = service.list(new QueryWrapper<UserOrder>().lambda()
+                        .in(UserOrder::getOrderNo, orderNos)
+                        .eq(UserOrder::getStatus, 2));
+                if (!CollectionUtils.isEmpty(userOrders)) {
+
+                    for (UserOrder userOrder : userOrders) {
+                        DeliveryMoBan deliveryMoBan = deliveryMoBanmap.get(userOrder.getOrderNo());
+                        String deliveryCompanyCode = "";
+                        switch (deliveryMoBan.getName()) {
+                            case "京东":
+                                deliveryCompanyCode = "jd";
+                                break; //可选
+                            case "德邦":
+                                deliveryCompanyCode = "debangkuaidi";
+                                break; //可选
+                            case "顺丰":
+                                deliveryCompanyCode = "shunfeng";
+                                break; //可选
+                            case "极兔":
+                                deliveryCompanyCode = "jtexpress";
+                                break; //可选
+                            case "圆通":
+                                deliveryCompanyCode = "yuantong";
+                                break; //可选
+                            case "申通":
+                                deliveryCompanyCode = "shentong";
+                                break; //可选
+                            case "中通":
+                                deliveryCompanyCode = "zhongtong";
+                                break; //可选
+                            case "韵达":
+                                deliveryCompanyCode = "yunda";
+                                break; //可选
+                            case "邮政":
+                                deliveryCompanyCode = "youzhengguonei";
+                                break; //可选
+                            case "百世":
+                                deliveryCompanyCode = "huitongkuaidi";
+                                break; //可选
+                        }
+
+                        userOrder.setStatus(3);
+                        userOrder.setDeliveryCompanyCode(deliveryCompanyCode);
+                        userOrder.setDeliverySn(deliveryMoBan.getDeliverySn());
+                        userOrder.setDeliveryNumber(deliveryMoBan.getDeliverySn());
+                        userOrder.setDeliveryTime(new Date());
+                    }
+                    service.updateBatchById(userOrders);
+                }
+
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return RestResponse.ok();
+    }
+
+    /**
+     * 订单导出excel
+     *
+     * @return
+     */
+    @GetMapping("/exportOrder")
+    public RestResponse exportOrder(HttpServletResponse response, @RequestParam(value = "servicePackName", required = false) String servicePackName,
+                                    @RequestParam(value = "startTime", required = false) String startTime,
+                                    @RequestParam(value = "endTime", required = false) String endTime,
+                                    @RequestParam(value = "nickname", required = false) String nickname,
+                                    @RequestParam(value = "receiverPhone", required = false) String receiverPhone) {
+
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        if (!StringUtils.isEmpty(servicePackName)) {
+            queryWrapper.eq("service_pack.name", servicePackName);
+        }
+        if (!StringUtils.isEmpty(nickname)) {
+            queryWrapper.eq("patient_user.name", nickname);
+        }
+        if (!StringUtils.isEmpty(receiverPhone)) {
+            queryWrapper.eq("user_order.receiver_phone", receiverPhone);
+        }
+        if (!StringUtils.isEmpty(startTime)) {
+            if (StringUtils.isEmpty(endTime)) {
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                endTime = df.format(now);
+            }
+            queryWrapper.le("user_order.create_time", endTime);
+            queryWrapper.ge("user_order.create_time", startTime);
+        }
+        List<UserOrder> userOrders = service.scoped(queryWrapper);
+        if (!CollectionUtils.isEmpty(userOrders)) {
+            //服务包信息
+            List<Integer> servicePackIds = userOrders.stream().map(UserOrder::getServicePackId)
+                    .collect(Collectors.toList());
+            List<ServicePack> servicePacks = (List<ServicePack>) servicePackService.listByIds(servicePackIds);
+
+            Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
+                    .collect(Collectors.toMap(ServicePack::getId, t -> t));
+            for (UserOrder userOrder : userOrders) {
+                userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
+            }
+
+
+            String cFileName = null;
+            try {
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                cFileName = URLEncoder.encode("order", "UTF-8");
+                List<UserOrderExcel> userOrderExcels = new ArrayList<>();
+                for (UserOrder userOrder : userOrders) {
+                    UserOrderExcel userOrderExcel = new UserOrderExcel();
+                    userOrderExcel.setOrderNo(userOrder.getOrderNo());
+                    userOrderExcel.setUserName(userOrder.getPatientUserName());
+                    userOrderExcel.setPayment(userOrder.getPayment().toString());
+                    String status = "";
+                    switch (userOrder.getStatus()) {
+                        case 1:
+                            status = "待付款";
+                            break; //可选
+                        case 2:
+                            status = "待发货";
+                            break; //可选
+                        case 3:
+                            status = "待收货";
+                            break; //可选
+                        case 4:
+                            status = "已收货";
+                            break; //可选
+                        case 5:
+                            status = "已回收";
+                            break; //可选
+                    }
+                    userOrderExcel.setStatus(status);
+                    userOrderExcel.setServicePackName(userOrder.getServicePack().getName());
+                    userOrderExcel.setCreateTime(df.format(userOrder.getCreateTime()));
+                }
+
+                ExcelUtil.writeUserOrderExcel(response, userOrderExcels, cFileName, "order", UserOrderExcel.class);
+
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        return RestResponse.ok();
     }
 
 

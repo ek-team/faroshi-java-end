@@ -43,6 +43,8 @@ public class ServicePack extends Model<ServicePack> {
     @TableField(exist = false)
     private List<ServicePackProductPic> servicePackProductPics;//产品图片
     @TableField(exist = false)
+    private List<ServicePackProductPic> servicePackProductPicsBuy;//产品图片 购买
+    @TableField(exist = false)
     private List<Integer> productSpecs;//产品规格
     @TableField(exist = false)
     private List<ProductSpec> productSpec;//产品规格

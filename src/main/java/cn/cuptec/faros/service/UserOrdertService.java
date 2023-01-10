@@ -188,7 +188,12 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         dataScop3.setIsOnly(true);
         return baseMapper.pageScoped(page, queryWrapper, dataScop3);
     }
-
+    //查询部门订单
+    public List<UserOrder> scoped( Wrapper<UserOrder> queryWrapper) {
+        DataScope dataScop3 = new DataScope();
+        dataScop3.setIsOnly(true);
+        return baseMapper.scoped( queryWrapper, dataScop3);
+    }
     //
 //    //手动修改订单
 //    public void updateOrderManual(UserOrder order) {
