@@ -4,7 +4,9 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -37,10 +39,21 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     private UserFollowDoctorService userFollowDoctorService;//医生和患者的好友表
     @Resource
     private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
+
     @Resource
     private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;//随访计划推送次数记录
     @Resource
     private ElectronicCaseService electronicCaseService;
+    @Resource
+    private InquiryService inquiryService;
+    @Resource
+    private WxMpService wxMpService;
+    @Resource
+    private ChatUserService chatUserService;
+    @Resource
+    private ChatMsgService chatMsgService;
+    @Resource
+    private HospitalInfoService hospitalInfoService;
 
     /**
      * 添加随访计划
@@ -123,8 +136,75 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             followUpPlanNoticeService.saveBatch(followUpPlanNoticeList);
         }
 
-
+        //判断是否是首次加入推送
+        if (followUpPlan.getPushType() != null && followUpPlan.getPushType() == 1) {
+            pushFollowUpPlan(followUpPlan.getCreateUserId());
+        }
         return RestResponse.ok(followUpPlan);
+    }
+
+    private void pushFollowUpPlan(Integer doctorUserId) {
+
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                User doctorUser = userService.getById(doctorUserId);
+                List<User> users = new ArrayList<>();
+                users.add(doctorUser);
+                hospitalInfoService.getHospitalByUser(users);
+                doctorUser = users.get(0);
+                LocalDate now = LocalDate.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                String format = df.format(now);
+                String startTime = format + " 00:00:00";
+                String endTime = format + " 24:00:00";
+                List<FollowUpPlanNotice> followUpPlanNoticeList = followUpPlanNoticeService.list(new QueryWrapper<FollowUpPlanNotice>().lambda()
+                        .ge(FollowUpPlanNotice::getNoticeTime, startTime)
+                        .le(FollowUpPlanNotice::getNoticeTime, endTime)
+                        .le(FollowUpPlanNotice::getDoctorId, doctorUserId));
+                //推送计划给患者
+                //发送公众号随访计划提醒
+
+                if (!CollectionUtils.isEmpty(followUpPlanNoticeList)) {
+                    List<Integer> patientUserIds = followUpPlanNoticeList.stream().map(FollowUpPlanNotice::getPatientUserId)
+                            .collect(Collectors.toList());
+                    List<User> users1 = (List<User>) userService.listByIds(patientUserIds);
+                    Map<Integer, User> userMap = users1.stream()
+                            .collect(Collectors.toMap(User::getId, t -> t));
+                    for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
+                        wxMpService.sendFollowUpPlanNotice(userMap.get(followUpPlanNotice.getPatientUserId()).getMpOpenId(), "新的康复计划提醒", doctorUser.getNickname(), doctorUser.getHospitalName(), "/pages/news/news");
+                        //生成聊天记录
+                        List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
+                                .eq(ChatUser::getUid, followUpPlanNotice.getPatientUserId())
+                                .eq(ChatUser::getTargetUid, followUpPlanNotice.getDoctorId()));
+                        if (CollectionUtils.isEmpty(chatUsers)) {
+                            //创建聊天对象
+                            chatUserService.saveOrUpdateChatUser(followUpPlanNotice.getDoctorId(), followUpPlanNotice.getPatientUserId(), "随访计划提醒");
+                        }
+                        ChatMsg chatMsg = new ChatMsg();
+                        chatMsg.setFromUid(followUpPlanNotice.getDoctorId());
+                        chatMsg.setToUid(followUpPlanNotice.getPatientUserId());
+                        chatMsg.setMsg("随访计划提醒");
+                        chatMsg.setCreateTime(new Date());
+                        chatMsg.setMsgType(ChatProto.FOLLOW_UP_PLAN);
+                        chatMsg.setStr1(followUpPlanNotice.getId() + "");
+                        chatMsg.setReadStatus(0);
+                        chatMsgService.save(chatMsg);
+
+                        //修改发送次数
+                        FollowUpPlanNoticeCount one = followUpPlanNoticeCountService.getOne(new QueryWrapper<FollowUpPlanNoticeCount>()
+                                .lambda().eq(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanNotice.getFollowUpPlanId())
+                                .eq(FollowUpPlanNoticeCount::getPatientUserId, followUpPlanNotice.getPatientUserId()));
+                        one.setPush(one.getPush() + 1);
+                        followUpPlanNoticeCountService.updateById(one);
+                    }
+
+                }
+
+            }
+        });
+
+
     }
 
     /**
@@ -453,10 +533,31 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         List<User> users = (List<User>) userService.listByIds(userIds);
         Map<Integer, User> userMap = users.stream()
                 .collect(Collectors.toMap(User::getId, t -> t));
+        //查询计划推送次数
+        List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
+                .lambda()
+                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds));
+        Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
+            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
+
+
+        }
+
         for (FollowUpPlanNotice followUpPlanNotice : list) {
             followUpPlanNotice.setFollowUpPlan(followUpPlanMap.get(followUpPlanNotice.getFollowUpPlanId()));
             followUpPlanNotice.setUser(userMap.get(followUpPlanNotice.getPatientUserId()));
             followUpPlanNotice.setFollowUpPlanContent(followUpPlanContentMap.get(followUpPlanNotice.getFollowUpPlanContentId()));
+            FollowUpPlanNoticeCount followUpPlanNoticeCount = followUpPlanNoticeCountMap.get(followUpPlanNotice.getFollowUpPlanId());
+            if (followUpPlanNoticeCount != null) {
+                followUpPlanNotice.setTotalPush(followUpPlanNoticeCount.getTotalPush());
+                followUpPlanNotice.setPush(followUpPlanNoticeCount.getPush());
+
+            } else {
+                followUpPlanNotice.setTotalPush(0);
+                followUpPlanNotice.setPush(0);
+            }
         }
         return RestResponse.ok(list);
     }
@@ -524,11 +625,30 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
         Map<Integer, FollowUpPlanContent> followUpPlanContentMap = followUpPlanContents.stream()
                 .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
+        //查询计划推送次数
+        List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
+                .lambda()
+                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds));
+        Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
+            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
 
+
+        }
 
         for (FollowUpPlanNotice followUpPlanNotice : list) {
             followUpPlanNotice.setFollowUpPlan(followUpPlanMap.get(followUpPlanNotice.getFollowUpPlanId()));
             followUpPlanNotice.setFollowUpPlanContent(followUpPlanContentMap.get(followUpPlanNotice.getFollowUpPlanContentId()));
+            FollowUpPlanNoticeCount followUpPlanNoticeCount = followUpPlanNoticeCountMap.get(followUpPlanNotice.getFollowUpPlanId());
+            if (followUpPlanNoticeCount != null) {
+                followUpPlanNotice.setTotalPush(followUpPlanNoticeCount.getTotalPush());
+                followUpPlanNotice.setPush(followUpPlanNoticeCount.getPush());
+
+            } else {
+                followUpPlanNotice.setTotalPush(0);
+                followUpPlanNotice.setPush(0);
+            }
         }
         return RestResponse.ok(list);
     }
@@ -582,29 +702,52 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             followUpPlanContentMap = followUpPlanContents.stream()
                     .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
         }
+        //查询计划推送次数
+        List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
+                .lambda().eq(FollowUpPlanNoticeCount::getPatientUserId, patientId)
+                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds));
+        Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
+            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
+
+
+        }
 
         //查询电子病例
         List<ElectronicCase> electronicCaseList = electronicCaseService.list(new QueryWrapper<ElectronicCase>().lambda()
-                .eq(ElectronicCase::getPatientId, patientId).orderByDesc(ElectronicCase::getCreateTime));
+                .eq(ElectronicCase::getPatientId, patientId).orderByDesc(ElectronicCase::getCreateTime).last(" limit 1"));
 
-        if(!CollectionUtils.isEmpty(electronicCaseList)){
+        if (!CollectionUtils.isEmpty(electronicCaseList)) {
             //查询医生名字
             List<Integer> doctorIds = electronicCaseList.stream().map(ElectronicCase::getCreateUserId)
                     .collect(Collectors.toList());
             List<User> users = (List<User>) userService.listByIds(doctorIds);
-            Map<Integer,User>userMap = users.stream()
+            Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
-            for(ElectronicCase electronicCase:electronicCaseList){
-                if(userMap.get(electronicCase.getCreateUserId())!=null){
+            for (ElectronicCase electronicCase : electronicCaseList) {
+                if (userMap.get(electronicCase.getCreateUserId()) != null) {
                     electronicCase.setCreateUserName(userMap.get(electronicCase.getCreateUserId()).getNickname());
 
                 }
             }
+            user.setElectronicCase(electronicCaseList.get(0));
+        } else {
+            user.setElectronicCase(null);
         }
 
         for (FollowUpPlanNotice followUpPlanNotice : list) {
             followUpPlanNotice.setFollowUpPlan(followUpPlanMap.get(followUpPlanNotice.getFollowUpPlanId()));
             followUpPlanNotice.setFollowUpPlanContent(followUpPlanContentMap.get(followUpPlanNotice.getFollowUpPlanContentId()));
+            FollowUpPlanNoticeCount followUpPlanNoticeCount = followUpPlanNoticeCountMap.get(followUpPlanNotice.getFollowUpPlanId());
+            if (followUpPlanNoticeCount != null) {
+                followUpPlanNotice.setTotalPush(followUpPlanNoticeCount.getTotalPush());
+                followUpPlanNotice.setPush(followUpPlanNoticeCount.getPush());
+
+            } else {
+                followUpPlanNotice.setTotalPush(0);
+                followUpPlanNotice.setPush(0);
+            }
         }
         user.setFollowUpPlanNoticeList(list);
         return RestResponse.ok(user);
@@ -640,17 +783,37 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
         Map<Integer, FollowUpPlanContent> followUpPlanContentMap = followUpPlanContents.stream()
                 .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
+        //查询计划推送次数
+        List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
+                .lambda().eq(FollowUpPlanNoticeCount::getPatientUserId, patientId)
+                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds));
+        Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
+            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
 
+
+        }
 
         for (FollowUpPlanNotice followUpPlanNotice : list) {
             followUpPlanNotice.setFollowUpPlan(followUpPlanMap.get(followUpPlanNotice.getFollowUpPlanId()));
             followUpPlanNotice.setFollowUpPlanContent(followUpPlanContentMap.get(followUpPlanNotice.getFollowUpPlanContentId()));
+            FollowUpPlanNoticeCount followUpPlanNoticeCount = followUpPlanNoticeCountMap.get(followUpPlanNotice.getFollowUpPlanId());
+            if (followUpPlanNoticeCount != null) {
+                followUpPlanNotice.setTotalPush(followUpPlanNoticeCount.getTotalPush());
+                followUpPlanNotice.setPush(followUpPlanNoticeCount.getPush());
+
+            } else {
+                followUpPlanNotice.setTotalPush(0);
+                followUpPlanNotice.setPush(0);
+            }
         }
         return RestResponse.ok(list);
     }
 
     /**
      * 查询推送计划节点详情
+     *
      * @return
      */
     @GetMapping("/getFollowUpPlanContentDetail")
@@ -661,16 +824,95 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         followUpPlanContent.setForm(byId);
         return RestResponse.ok(followUpPlanContent);
     }
+
     /**
      * 修改推送计划节点详情
+     *
      * @return
      */
     @PostMapping("/updateFollowUpPlanContent")
     public RestResponse updateFollowUpPlanContent(@RequestBody FollowUpPlanContent followUpPlanContent) {
         followUpPlanContentService.updateById(followUpPlanContent);
-
-        return RestResponse.ok(followUpPlanContent);
+        return RestResponse.ok();
     }
+
+    /**
+     * 查询患者病例列表
+     *
+     * @return
+     */
+    @GetMapping("/getElectronicCaseList")
+    public RestResponse getElectronicCaseList(@RequestParam("patientId") Integer patientId) {
+        List<ElectronicCase> electronicCaseList = electronicCaseService.list(new QueryWrapper<ElectronicCase>().lambda()
+                .eq(ElectronicCase::getPatientId, patientId).orderByDesc(ElectronicCase::getCreateTime));
+
+        if (!CollectionUtils.isEmpty(electronicCaseList)) {
+            //查询医生名字
+            List<Integer> doctorIds = new ArrayList<>();
+
+            for (ElectronicCase electronicCase : electronicCaseList) {
+                doctorIds.add(electronicCase.getCreateUserId());
+            }
+            List<User> users = (List<User>) userService.listByIds(doctorIds);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+
+            for (ElectronicCase electronicCase : electronicCaseList) {
+                if (userMap.get(electronicCase.getCreateUserId()) != null) {
+                    electronicCase.setCreateUserName(userMap.get(electronicCase.getCreateUserId()).getNickname());
+
+                }
+            }
+        }
+
+        return RestResponse.ok(electronicCaseList);
+    }
+
+    /**
+     * 查询患者病例详情
+     *
+     * @return
+     */
+    @GetMapping("/getElectronicCaseDetail")
+    public RestResponse getElectronicCaseDetail(@RequestParam("id") Integer id) {
+        ElectronicCase electronicCase = electronicCaseService.getOne(new QueryWrapper<ElectronicCase>().lambda()
+                .eq(ElectronicCase::getId, id));
+        User user = userService.getById(electronicCase.getCreateUserId());
+        electronicCase.setCreateUserName(user.getNickname());
+        String followUpPlanIdList = electronicCase.getFollowUpPlanIdList();
+        String[] split = followUpPlanIdList.split(",");
+        List<String> followUpPlanIds = Arrays.asList(split);
+        if (!CollectionUtils.isEmpty(followUpPlanIds)) {
+            //查询随访计划
+            List<FollowUpPlan> followUpPlans = (List<FollowUpPlan>) service.listByIds(followUpPlanIds);
+            if (!CollectionUtils.isEmpty(followUpPlans)) {
+                List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
+                        .lambda().in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds)
+                        .eq(FollowUpPlanNoticeCount::getPatientUserId, electronicCase.getPatientId()));
+                if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
+                    Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+                            .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
+                    for (FollowUpPlan followUpPlan : followUpPlans) {
+                        followUpPlan.setFollowUpPlanNoticeCount(followUpPlanNoticeCountMap.get(followUpPlan.getId()));
+                    }
+                }
+
+
+            } else {
+                followUpPlans = new ArrayList<>();
+            }
+            electronicCase.setFollowUpPlans(followUpPlans);
+        }
+
+        //查询问诊单信息
+        List<Inquiry> inquiryList = inquiryService.list(new QueryWrapper<Inquiry>().lambda()
+                .eq(Inquiry::getElectronicCaseId, id));
+        electronicCase.setInquirys(inquiryList);
+
+
+        return RestResponse.ok(electronicCase);
+    }
+
     @Override
     protected Class<FollowUpPlan> getEntityClass() {
         return FollowUpPlan.class;

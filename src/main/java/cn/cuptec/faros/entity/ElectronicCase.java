@@ -38,5 +38,7 @@ public class ElectronicCase {
     @TableField(exist = false)
     private List<Integer> followUpPlanIds;//随访计划id
     private String followUpPlanIdList;//随访计划id
+    @TableField(exist = false)
+    private List<FollowUpPlan> followUpPlans;
 
 }

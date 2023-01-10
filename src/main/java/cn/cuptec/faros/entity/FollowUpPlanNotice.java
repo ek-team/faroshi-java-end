@@ -23,6 +23,7 @@ public class FollowUpPlanNotice extends Model<FollowUpPlanNotice> {
     private Integer doctorId;
     private Integer totalPush;//总的推送次数
     private Integer push;//已推送次数
+    private Integer status = 0;//0-待推送 1-已推送
     @TableField(exist = false)
     private User user;
     @TableField(exist = false)

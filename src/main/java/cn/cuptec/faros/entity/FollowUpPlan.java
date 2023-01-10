@@ -34,4 +34,6 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     private List<Integer> followUpPlanPatientUsers;//随访计划患者
     @TableField(exist = false)
     private List<FollowUpPlanPatientUser> followUpPlanPatientUserList;//随访计划患者
+    @TableField(exist = false)
+    private FollowUpPlanNoticeCount followUpPlanNoticeCount;
 }

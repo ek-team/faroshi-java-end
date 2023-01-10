@@ -105,5 +105,5 @@ public class User extends Model<User> {
     @TableField(exist = false)
     private List<FollowUpPlanNotice> followUpPlanNoticeList;//患者随访计划
     @TableField(exist = false)
-    private List<ElectronicCase> electronicCaseList;//电子病例
+    private ElectronicCase electronicCase;//电子病例
 }

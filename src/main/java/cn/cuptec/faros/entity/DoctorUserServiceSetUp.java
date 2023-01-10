@@ -17,7 +17,7 @@ public class DoctorUserServiceSetUp extends Model<DoctorUserServiceSetUp> {
     private Integer id;
     private String category;//服务类型 图文咨询 电话咨询 团队图文咨询
 
-    private String desc;//描述
+    private String serviceDesc;//描述
     @TableField(exist = false)
     private DoctorUserAction doctorUserAction;//已开通的服务
 }

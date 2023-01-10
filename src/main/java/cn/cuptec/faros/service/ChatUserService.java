@@ -131,6 +131,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     chatUserVO.setChatUserId(chatUser.getId());
                     chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
                     chatUserVO.setServiceStartTime(chatUser.getServiceStartTime());
+                    chatUserVO.setTargetUid(chatUser.getTargetUid());
                     // 最后聊天时间和内容
 
                     chatUserVO.setLastChatTime(chatUser.getLastChatTime());
@@ -153,7 +154,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             List<User> users = (List<User>) userService.listByIds(targetUids);
             List<ChatUser> chatUsersList = new ArrayList<>();
             for (ChatUser chatUser : chatUsers) {
-                if (chatUser.getTargetUid() != null) {
+                if (chatUser.getGroupType()==0) {
                     chatUsersList.add(chatUser);
                 }
             }
@@ -266,6 +267,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         chatUser.setGroupType(1);
         chatUser.setLastChatTime(new Date());
         chatUser.setTeamId(doctorTeamId);
+        chatUser.setTargetUid(patientUserId);
         save(chatUser);
         return chatUser;
     }

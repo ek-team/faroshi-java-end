@@ -31,8 +31,7 @@ import java.util.stream.Collectors;
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
     @Resource
     private SaleSpecService saleSpecService;//销售规格
-    @Resource
-    private SaleSpecDescService saleSpecDescService;//销售规格子类
+
     @Resource
     private PatientUserService patientUserService;
     @Resource
@@ -185,31 +184,19 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/calculatePrice")
     public RestResponse calculatePrice(@RequestBody UserOrder userOrder) {
+        SaleSpec saleSpec = saleSpecService.getById(userOrder.getSaleSpecId());
         if (userOrder.getOrderType() != null && userOrder.getOrderType().equals(2)) {
             //购买
-            ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+
+
             CalculatePriceResult result = new CalculatePriceResult();
-            result.setTotalAmount(new BigDecimal(servicePack.getProductPrice()));
+            result.setTotalAmount(new BigDecimal(saleSpec.getRent()));
             return RestResponse.ok(result);
         }
-        String[] split = userOrder.getSaleSpecId().split(",");
-        List<String> saleSpecIds = Arrays.asList(split);//销售规格
-        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
-        BigDecimal payment = null;
-        for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
-            if (payment == null) {
-                payment = new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit()));
 
-            } else {
-                payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit())));
-            }
-
-        }
         CalculatePriceResult result = new CalculatePriceResult();
-        result.setTotalAmount(payment);//总价
-        result.setRent(saleSpecDescs.get(0).getRent());
-        result.setDeposit(saleSpecDescs.get(0).getDeposit());
-        result.setRecoveryPrice(saleSpecDescs.get(0).getRecoveryPrice());
+        result.setTotalAmount(new BigDecimal(saleSpec.getRent()));//总价
+        result.setRecoveryPrice(saleSpec.getRecoveryPrice());
         return RestResponse.ok(result);
     }
 
@@ -242,22 +229,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         //计算订单价格
         BigDecimal payment = null;
+        SaleSpec saleSpec = saleSpecService.getById(userOrder.getSaleSpecId());
         if (userOrder.getOrderType().equals(2)) {
             //购买
-            payment = new BigDecimal(byId.getProductPrice());
+            payment = new BigDecimal(saleSpec.getRent());
         } else {
-            String[] split = userOrder.getSaleSpecId().split(",");
-            List<String> saleSpecIds = Arrays.asList(split);//销售规格
-            List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
-            for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
-                if (payment == null) {
-                    payment = new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit()));
-
-                } else {
-                    payment = payment.add(new BigDecimal(saleSpecDesc.getRent()).multiply(new BigDecimal(userOrder.getRentDay())).add(new BigDecimal(saleSpecDesc.getDeposit())));
-                }
-
-            }
+            payment = new BigDecimal(saleSpec.getRent());
         }
 
         userOrder.setPayment(payment);

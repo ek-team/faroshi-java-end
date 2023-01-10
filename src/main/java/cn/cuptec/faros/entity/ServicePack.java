@@ -47,13 +47,10 @@ public class ServicePack extends Model<ServicePack> {
     @TableField(exist = false)
     private List<ProductSpec> productSpec;//产品规格
 
-    private String rentDay;//租用天数
     @TableField(exist = false)
-    private List<String> rentDays;//租用天数
+    private List<SaleSpec> saleSpec;//租用规格
     @TableField(exist = false)
-    private List<Integer> saleSpecs;//销售规格
-    @TableField(exist = false)
-    private List<SaleSpec> saleSpec;//销售规格
+    private List<SaleSpec> buySaleSpec;//购买规格
     @TableField(exist = false)
     private List<ServicePackageInfo> servicePackageInfos;//服务信息
     private Integer showIntroduction;//是否展示服务简介 0-不展示 1-展示

@@ -1,10 +1,7 @@
 package cn.cuptec.faros.config.job;
 
 import cn.cuptec.faros.config.properties.RedisConfigProperties;
-import cn.cuptec.faros.entity.ChatMsg;
-import cn.cuptec.faros.entity.ChatUser;
-import cn.cuptec.faros.entity.FollowUpPlanNotice;
-import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.StrUtil;
@@ -44,6 +41,7 @@ public class RedisKeyExpirationListener implements MessageListener {
     private ChatMsgService chatMsgService;
 
     private HospitalInfoService hospitalInfoService;
+    private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;
     public static final String URL = "/pages/orderConfirm/orderConfirm?id=";
 
     public RedisKeyExpirationListener(RedisTemplate<String, String> redisTemplate,
@@ -54,7 +52,8 @@ public class RedisKeyExpirationListener implements MessageListener {
                                       WxMpService wxMpService,
                                       UserService userService,
                                       HospitalInfoService hospitalInfoService,
-                                      ChatMsgService chatMsgService
+                                      ChatMsgService chatMsgService,
+                                      FollowUpPlanNoticeCountService followUpPlanNoticeCountService
     ) {
         this.redisTemplate = redisTemplate;
         this.redisConfigProperties = redisConfigProperties;
@@ -64,7 +63,8 @@ public class RedisKeyExpirationListener implements MessageListener {
         this.wxMpService = wxMpService;
         this.userService = userService;
         this.hospitalInfoService = hospitalInfoService;
-        this.chatMsgService=chatMsgService;
+        this.chatMsgService = chatMsgService;
+        this.followUpPlanNoticeCountService = followUpPlanNoticeCountService;
     }
 
     @Override
@@ -92,11 +92,11 @@ public class RedisKeyExpirationListener implements MessageListener {
                 List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
                         .eq(ChatUser::getUid, patientUser.getId())
                         .eq(ChatUser::getTargetUid, doctorUser.getId()));
-                if(CollectionUtils.isEmpty(list)){
+                if (CollectionUtils.isEmpty(list)) {
                     //创建聊天对象
-                    chatUserService.saveOrUpdateChatUser(doctorUser.getId(),patientUser.getId(),"随访计划提醒");
+                    chatUserService.saveOrUpdateChatUser(doctorUser.getId(), patientUser.getId(), "随访计划提醒");
                 }
-                ChatMsg chatMsg=new ChatMsg();
+                ChatMsg chatMsg = new ChatMsg();
                 chatMsg.setFromUid(doctorUser.getId());
                 chatMsg.setToUid(patientUser.getId());
                 chatMsg.setMsg("随访计划提醒");
@@ -107,8 +107,11 @@ public class RedisKeyExpirationListener implements MessageListener {
                 chatMsgService.save(chatMsg);
 
                 //修改发送次数
-
-
+                FollowUpPlanNoticeCount one = followUpPlanNoticeCountService.getOne(new QueryWrapper<FollowUpPlanNoticeCount>()
+                        .lambda().eq(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanNotice.getFollowUpPlanId())
+                        .eq(FollowUpPlanNoticeCount::getPatientUserId, patientUser.getId()));
+                one.setPush(one.getPush() + 1);
+                followUpPlanNoticeCountService.updateById(one);
             }
 
         }
