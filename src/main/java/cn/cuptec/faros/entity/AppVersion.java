@@ -14,5 +14,5 @@ public class AppVersion {
     private String apkUrl;
     private Integer wgtVersion;
     private String wgtUrl;
-    private Integer model;
+    private String model;
 }

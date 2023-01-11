@@ -39,20 +39,17 @@ public class ServicePack extends Model<ServicePack> {
     @TableField(exist = false)
     private String hospitalName;//医院名称
     private String productName;//产品名称
-    private Double productPrice;//产品购买价格
+
     @TableField(exist = false)
     private List<ServicePackProductPic> servicePackProductPics;//产品图片
     @TableField(exist = false)
     private List<ServicePackProductPic> servicePackProductPicsBuy;//产品图片 购买
-    @TableField(exist = false)
-    private List<Integer> productSpecs;//产品规格
-    @TableField(exist = false)
-    private List<ProductSpec> productSpec;//产品规格
 
     @TableField(exist = false)
-    private List<SaleSpec> saleSpec;//租用规格
+    private List<SaleSpec> saleSpec;//规格
     @TableField(exist = false)
-    private List<SaleSpec> buySaleSpec;//购买规格
+    private List<SaleSpecGroup> saleSpecGroupList;//规格值组合
+
     @TableField(exist = false)
     private List<ServicePackageInfo> servicePackageInfos;//服务信息
     private Integer showIntroduction;//是否展示服务简介 0-不展示 1-展示

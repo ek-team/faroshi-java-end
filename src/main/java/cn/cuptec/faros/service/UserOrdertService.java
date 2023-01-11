@@ -190,9 +190,8 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     }
     //查询部门订单
     public List<UserOrder> scoped( Wrapper<UserOrder> queryWrapper) {
-        DataScope dataScop3 = new DataScope();
-        dataScop3.setIsOnly(true);
-        return baseMapper.scoped( queryWrapper, dataScop3);
+
+        return baseMapper.scoped( queryWrapper);
     }
     //
 //    //手动修改订单

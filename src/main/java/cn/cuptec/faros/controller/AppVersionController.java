@@ -3,6 +3,7 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.entity.AppVersion;
 import cn.cuptec.faros.service.AppVersionService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.ApiOperation;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,9 +21,10 @@ public class AppVersionController {
 
     @ApiOperation(value = "app自动更新")
     @GetMapping("/update")
-    public RestResponse checkUpdate(@RequestParam("version") String version) {
+    public RestResponse checkUpdate(@RequestParam("version") String version,@RequestParam("model") String model) {
         Integer integer = Integer.valueOf(version.replaceAll("\\.", ""));
-        AppVersion appVersion = appVersionServiceImpl.getById(1);
+        AppVersion appVersion = appVersionServiceImpl.getOne(new QueryWrapper<AppVersion>().lambda()
+                .eq(AppVersion::getModel, model));
 
 
         System.out.println("version:" + version);

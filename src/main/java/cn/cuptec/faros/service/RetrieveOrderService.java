@@ -46,7 +46,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
     private UserOrdertService userOrdertService;
-
+    @Resource
+    private SaleSpecService saleSpecService;
 
     @Resource
     private WxMpService wxMpService;
@@ -59,18 +60,10 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
                 .eq(ServicePackProductPic::getServicePackId, userOrder.getServicePackId()));
         entity.setProductPic(list.get(0).getImage());
-        String[] split = userOrder.getSaleSpecId().split(",");
-        List<String> saleSpecIds = Arrays.asList(split);//销售规格
-        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecIds);
-        BigDecimal retrieveAmount = null;
-        for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
-            if (retrieveAmount == null) {
-                retrieveAmount = new BigDecimal(saleSpecDesc.getRecoveryPrice());
+        String saleSpecId = userOrder.getSaleSpecId();
+        SaleSpec saleSpec = saleSpecService.getById(saleSpecId);
+        BigDecimal retrieveAmount = new BigDecimal(1);
 
-            } else {
-                retrieveAmount = retrieveAmount.add(new BigDecimal(saleSpecDesc.getRecoveryPrice()));
-            }
-        }
         entity.setRetrieveAmount(retrieveAmount);//回收价格
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 

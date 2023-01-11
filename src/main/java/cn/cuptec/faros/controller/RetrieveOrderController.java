@@ -3,35 +3,43 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
-import cn.cuptec.faros.dto.MyStateCount;
+import cn.cuptec.faros.dto.*;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * 回收单
  */
+@Slf4j
 @RestController
 @RequestMapping("/retrieveOrder")
 public class RetrieveOrderController extends AbstractBaseController<RetrieveOrderService, RetrieveOrder> {
@@ -166,8 +174,6 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         Page<RetrieveOrder> page = getPage();
         queryWrapper.eq("user_id", SecurityUtils.getUser().getId());
         queryWrapper.orderByDesc("create_time");
-
-
 
 
         return RestResponse.ok(service.page(page, queryWrapper));
@@ -413,6 +419,129 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         return RestResponse.ok(service.getOne(new QueryWrapper<RetrieveOrder>().lambda().eq(RetrieveOrder::getProductSn, productSn).orderByDesc(RetrieveOrder::getId).last(" limit 1")));
     }
 
+    /**
+     * 回收单自动下单 叫物流
+     *
+     * @param param
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("xiadan")
+    public RestResponse XiaDan(@RequestBody KuaiDiXiaDanParam param) throws Exception {
+
+        Map<String, String> params = new HashMap();
+        params.put("secret_key", "C58ZzLwXbQu6hqSHvz");
+        params.put("secret_code", "ddffadd3df4b4c0d8d6f9942c7a8c990");
+        params.put("secret_sign", "2E20DED9F6AC5E211E84A80A4E13FAC8");
+        params.put("com", param.getCom());
+        params.put("recManName", param.getRecManName());
+        params.put("recManMobile", param.getRecManMobile());
+        params.put("recManPrintAddr", param.getRecManPrintAddr());
+        params.put("sendManName", param.getSendManName());
+        params.put("sendManMobile", param.getSendManMobile());
+        params.put("sendManPrintAddr", param.getSendManPrintAddr());
+        params.put("cargo", param.getCargo());
+        params.put("weight", param.getWeight());
+        params.put("remark", param.getRemark());
+        params.put("salt", "123456");
+        params.put("callBackUrl", "https://pharos3.ewj100.com/retrieveOrder/kuaidicallback");
+        params.put("dayType", param.getDayType());
+        params.put("pickupStartTime", param.getPickupStartTime());
+        params.put("pickupEndTime", param.getPickupEndTime());
+
+
+        String post = post(params);
+
+        XiaDanParam xiaDanParam = new Gson().fromJson(post, XiaDanParam.class);
+        if (xiaDanParam.getCode() == 200 && xiaDanParam.getMessage().equals("success")) {
+            RetrieveOrder retrieveOrder = new RetrieveOrder();
+            retrieveOrder.setOrderId(param.getOrderNo());
+            retrieveOrder.setUserId(SecurityUtils.getUser().getId());
+            retrieveOrder.setCreateTime(new Date());
+            retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+            retrieveOrder.setStatus(1);
+            retrieveOrder.setKuAiDiTaskId(xiaDanParam.getData().getTaskId());
+            retrieveOrder.setDeliveryCompanyCode(param.getCom());
+            service.saveRetrieveOrder(retrieveOrder);
+            return RestResponse.ok();
+        }
+        return RestResponse.failed(xiaDanParam.getMessage());
+    }
+
+    /**
+     * 回收单物流订阅回掉
+     *
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("kuaidicallback")
+    public KuaiDiCallBackResult kuaidicallback(HttpServletRequest request) throws Exception {
+        String param = request.getParameter("param");
+        String taskId = request.getParameter("taskId");
+        log.info("快递回调快递回调快递回调快递回调快递回调快递回调快递回调快递回调快递回调:{}", param);
+
+        KuaiDiCallBackParam kuaiDiCallBackParam = new Gson().fromJson(param, KuaiDiCallBackParam.class);
+        RetrieveOrder one = service.getOne(new QueryWrapper<RetrieveOrder>().lambda().eq(RetrieveOrder::getKuAiDiTaskId, taskId));
+        one.setKuAiDiStatus(Integer.parseInt(kuaiDiCallBackParam.getData().getStatus()));
+        one.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
+
+        service.updateById(one);
+        //判断快递状态 修改租用周期状态为已结束
+        if (kuaiDiCallBackParam.getData().getStatus().equals("13")) {
+            one.setStatus(2);
+            service.updateById(one);
+        }
+
+        KuaiDiCallBackResult kuaiDiCallBackResult = new KuaiDiCallBackResult();
+        kuaiDiCallBackResult.setResult(true);
+        kuaiDiCallBackResult.setMessage("成功");
+        kuaiDiCallBackResult.setReturnCode("200");
+        return kuaiDiCallBackResult;
+    }
+
+    public static String post(Map<String, String> params) {
+        StringBuilder response = new StringBuilder("");
+        BufferedReader reader = null;
+        try {
+            StringBuilder builder = new StringBuilder();
+            for (Map.Entry param : params.entrySet()) {
+                if (builder.length() > 0) {
+                    builder.append('&');
+                }
+                builder.append(URLEncoder.encode(param.getKey() + "", "UTF-8"));
+                builder.append('=');
+                builder.append(URLEncoder.encode(String.valueOf(param.getValue()), "UTF-8"));
+            }
+            byte[] bytes = builder.toString().getBytes("UTF-8");
+            URL url = new URL("http://cloud.kuaidi100.com/api");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("accept", "*/*");
+            conn.setRequestProperty("connection", "Keep-Alive");
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            conn.setRequestProperty("Content-Length", String.valueOf(bytes.length));
+            conn.setDoOutput(true);
+            conn.getOutputStream().write(bytes);
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (null != reader) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return response.toString();
+    }
 
     @Override
     protected Class<RetrieveOrder> getEntityClass() {

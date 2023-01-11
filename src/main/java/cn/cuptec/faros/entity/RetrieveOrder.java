@@ -20,6 +20,7 @@ public class RetrieveOrder {
     @TableId
     private Integer id;
     @TableField(exist = false)
+    private String kuAiDiTaskId;//快递任务id
     private String reviewData;//回收单厂家审核信息
     private String deliveryName;//发货人姓名
     private String deliveryPhone;//发货人手机号
@@ -83,7 +84,7 @@ public class RetrieveOrder {
     //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
-
+    private Integer kuAiDiStatus;
     //回收价格
     private BigDecimal retrieveAmount;
     //建议扣款金额

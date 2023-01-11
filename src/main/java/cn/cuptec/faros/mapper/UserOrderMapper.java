@@ -66,7 +66,7 @@ public interface UserOrderMapper extends BaseMapper<UserOrder> {
             "LEFT JOIN patient_user ON user_order.patient_user_id = patient_user.id " +
             "LEFT JOIN service_pack ON user_order.service_pack_id = service_pack.id " +
             "${ew.customSqlSegment} ORDER BY user_order.create_time DESC")
-   List<UserOrder> scoped( @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
+   List<UserOrder> scoped( @Param(Constants.WRAPPER) Wrapper wrapper);
 
 
 

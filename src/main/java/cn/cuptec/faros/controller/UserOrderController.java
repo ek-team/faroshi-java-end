@@ -12,6 +12,7 @@ import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -55,6 +56,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private WxPayFarosService wxPayFarosService;
     @Resource
     private AddressService addressService;
+    @Resource
+    private UserService userService;
 
     /**
      * 获取省的订单数量
@@ -197,13 +200,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
 
             CalculatePriceResult result = new CalculatePriceResult();
-            result.setTotalAmount(new BigDecimal(saleSpec.getRent()));
+            result.setTotalAmount(new BigDecimal(1));
             return RestResponse.ok(result);
         }
 
         CalculatePriceResult result = new CalculatePriceResult();
-        result.setTotalAmount(new BigDecimal(saleSpec.getRent()));//总价
-        result.setRecoveryPrice(saleSpec.getRecoveryPrice());
+        result.setTotalAmount(new BigDecimal(1));//总价
+        result.setRecoveryPrice(0.1);
         return RestResponse.ok(result);
     }
 
@@ -239,9 +242,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         SaleSpec saleSpec = saleSpecService.getById(userOrder.getSaleSpecId());
         if (userOrder.getOrderType().equals(2)) {
             //购买
-            payment = new BigDecimal(saleSpec.getRent());
+            payment = new BigDecimal(1);
         } else {
-            payment = new BigDecimal(saleSpec.getRent());
+            payment = new BigDecimal(1);
         }
 
         userOrder.setPayment(payment);
@@ -498,16 +501,25 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                     @RequestParam(value = "startTime", required = false) String startTime,
                                     @RequestParam(value = "endTime", required = false) String endTime,
                                     @RequestParam(value = "nickname", required = false) String nickname,
-                                    @RequestParam(value = "receiverPhone", required = false) String receiverPhone) {
-
-        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-        if (!StringUtils.isEmpty(servicePackName)) {
+                                    @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
+                                    @RequestParam(value = "userId", required = false) Integer userId,
+                                    @RequestParam(value = "orderType", required = false) String orderType,
+                                    @RequestParam(value = "status", required = false) String orderStatus) {
+        User user = userService.getById(userId);
+        QueryWrapper queryWrapper = new QueryWrapper<>();
+        if (!StringUtils.isEmpty(orderStatus) && !orderStatus.equals("null")) {
+            queryWrapper.eq("user_order.status", Integer.parseInt(orderStatus));
+        }
+        if (!StringUtils.isEmpty(orderType) && !orderType.equals("null")) {
+            queryWrapper.eq("user_order.order_type", Integer.parseInt(orderType));
+        }
+        if (!StringUtils.isEmpty(servicePackName) && !servicePackName.equals("null")) {
             queryWrapper.eq("service_pack.name", servicePackName);
         }
-        if (!StringUtils.isEmpty(nickname)) {
+        if (!StringUtils.isEmpty(nickname) && !nickname.equals("null")) {
             queryWrapper.eq("patient_user.name", nickname);
         }
-        if (!StringUtils.isEmpty(receiverPhone)) {
+        if (!StringUtils.isEmpty(receiverPhone) && !receiverPhone.equals("null")) {
             queryWrapper.eq("user_order.receiver_phone", receiverPhone);
         }
         if (!StringUtils.isEmpty(startTime)) {
@@ -519,6 +531,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.le("user_order.create_time", endTime);
             queryWrapper.ge("user_order.create_time", startTime);
         }
+        queryWrapper.eq("user_order.dept_id", user.getDeptId());
         List<UserOrder> userOrders = service.scoped(queryWrapper);
         if (!CollectionUtils.isEmpty(userOrders)) {
             //服务包信息
@@ -564,6 +577,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     userOrderExcel.setStatus(status);
                     userOrderExcel.setServicePackName(userOrder.getServicePack().getName());
                     userOrderExcel.setCreateTime(df.format(userOrder.getCreateTime()));
+                    userOrderExcels.add(userOrderExcel);
                 }
 
                 ExcelUtil.writeUserOrderExcel(response, userOrderExcels, cFileName, "order", UserOrderExcel.class);

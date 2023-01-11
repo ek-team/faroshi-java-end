@@ -9,16 +9,22 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 销售规格
+ * 规格组合
  */
 @Data
-public class SaleSpec extends Model<SaleSpec> {
+public class SaleSpecGroup extends Model<SaleSpecGroup> {
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
-    private String name;
+    private String saleSpecIds;
+    private String querySaleSpecIds;//查询值
+    private Integer recovery;//0-回收 1-不回收
+    private String price;//售价
+    private String remark;//备注
+    private Double recoveryPrice;//回收价
+    private Integer urlImage;//图片
     private Integer servicePackId;//服务包id
     @TableField(exist = false)
-    private List<SaleSpecDesc> saleSpecDescs;
+    private List<SaleSpecDesc> saleSpecDescList;//规格值信息
 }
