@@ -58,6 +58,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private AddressService addressService;
     @Resource
     private UserService userService;
+    @Resource
+    private SaleSpecGroupService saleSpecGroupService;
 
     /**
      * 获取省的订单数量
@@ -144,15 +146,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
-            //规格信息
-            List<String> saleSpecIds = records.stream().map(UserOrder::getSaleSpecId)
-                    .collect(Collectors.toList());
-            List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
-            Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()
-                    .collect(Collectors.toMap(SaleSpec::getId, t -> t));
+
             for (UserOrder userOrder : records) {
                 userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
-                userOrder.setSaleSpec(saleSpecMap.get(userOrder.getSaleSpecId()));
             }
         }
 
@@ -194,20 +190,21 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/calculatePrice")
     public RestResponse calculatePrice(@RequestBody UserOrder userOrder) {
-        SaleSpec saleSpec = saleSpecService.getById(userOrder.getSaleSpecId());
-        if (userOrder.getOrderType() != null && userOrder.getOrderType().equals(2)) {
-            //购买
-
-
-            CalculatePriceResult result = new CalculatePriceResult();
-            result.setTotalAmount(new BigDecimal(1));
-            return RestResponse.ok(result);
+        List<Integer> saleSpecDescIds = userOrder.getSaleSpecDescIds();
+        String querySaleSpecIds = "";
+        for (Integer saleSpecDescId : saleSpecDescIds) {
+            querySaleSpecIds = querySaleSpecIds + saleSpecDescId;
         }
+        querySaleSpecIds = querySaleSpecIds.chars()        // IntStream
+                .sorted()
+                .collect(StringBuilder::new,
+                        StringBuilder::appendCodePoint,
+                        StringBuilder::append)
+                .toString();
+        SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
 
-        CalculatePriceResult result = new CalculatePriceResult();
-        result.setTotalAmount(new BigDecimal(1));//总价
-        result.setRecoveryPrice(0.1);
-        return RestResponse.ok(result);
+        return RestResponse.ok(saleSpecGroup);
     }
 
     /**
@@ -237,16 +234,22 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setCreateTime(LocalDateTime.now());
         userOrder.setUserId(SecurityUtils.getUser().getId());
 
-        //计算订单价格
-        BigDecimal payment = null;
-        SaleSpec saleSpec = saleSpecService.getById(userOrder.getSaleSpecId());
-        if (userOrder.getOrderType().equals(2)) {
-            //购买
-            payment = new BigDecimal(1);
-        } else {
-            payment = new BigDecimal(1);
-        }
 
+        List<Integer> saleSpecDescIds = userOrder.getSaleSpecDescIds();
+        String querySaleSpecIds = "";
+        for (Integer saleSpecDescId : saleSpecDescIds) {
+            querySaleSpecIds = querySaleSpecIds + saleSpecDescId;
+        }
+        querySaleSpecIds = querySaleSpecIds.chars()        // IntStream
+                .sorted()
+                .collect(StringBuilder::new,
+                        StringBuilder::appendCodePoint,
+                        StringBuilder::append)
+                .toString();
+        SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+        //计算订单价格
+        BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
         service.save(userOrder);
 
@@ -283,13 +286,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
-            //规格信息
-            List<String> saleSpecIds = records.stream().map(UserOrder::getSaleSpecId)
-                    .collect(Collectors.toList());
-            List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
-            Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()
-                    .collect(Collectors.toMap(SaleSpec::getId, t -> t));
-            //产品规格信息
+
             //赠送的服务信息
             List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
                     .in(ServicePackageInfo::getServicePackageId, servicePackIds));
@@ -300,7 +297,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
             for (UserOrder userOrder : records) {
                 userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
-                userOrder.setSaleSpec(saleSpecMap.get(userOrder.getSaleSpecId()));
                 List<ServicePackageInfo> servicePackageInfos1 = servicePackageInfoMap.get(userOrder.getServicePackId());
                 userOrder.setServicePackageInfos(servicePackageInfos1);
             }

@@ -30,7 +30,7 @@ public class UserOrder {
     private LocalDateTime operationTime;//手术时间
     private Integer diseasesId;//病种id
     private String remark;//备注
-    private int rentDay=1;//租用天数
+    private int rentDay = 1;//租用天数
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer orderType;//订单类型 1-租用 2-购买
     @TableField(exist = false)
@@ -45,8 +45,6 @@ public class UserOrder {
     private Integer isForm;//判断订单是否有表单
     @TableField(exist = false)
     private ServicePack servicePack;//服务包信息
-    @TableField(exist = false)
-    private SaleSpec saleSpec;//销售规格信息
 
     //服务包id
     private Integer servicePackId;
@@ -55,6 +53,8 @@ public class UserOrder {
     private Integer formId;//表单id
     private Integer doctorTeamId;//服务团队id
     private String saleSpecId;//销售规格id
+    @TableField(exist = false)
+    private List<Integer> saleSpecDescIds;
     private String productSpec;//选择的产品规格信息 字符串拼接多个
     private Integer addressId;//收货人地址id
     //快递单号
