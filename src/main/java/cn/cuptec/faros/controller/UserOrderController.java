@@ -60,7 +60,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private UserService userService;
     @Resource
     private SaleSpecGroupService saleSpecGroupService;
-
+    @Resource
+    private SaleSpecDescService saleSpecDescService;
     /**
      * 获取省的订单数量
      *
@@ -248,6 +249,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 .toString();
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
                 .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
+        if(!CollectionUtils.isEmpty(saleSpecDescs)){
+            String saleSpecId="";
+            for(SaleSpecDesc saleSpecDesc:saleSpecDescs){
+                saleSpecId=saleSpecId+"/"+saleSpecDesc.getName();
+
+            }
+            userOrder.setSaleSpecId(saleSpecId);
+
+        }
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);

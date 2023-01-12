@@ -93,125 +93,151 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         return RestResponse.ok();
     }
 
+//    /**
+//     * 添加产品规格
+//     *
+//     * @return
+//     */
+//    @PostMapping("/saveProductSpec")
+//    public RestResponse saveProductSpec(@RequestBody ProductSpec productSpec) {
+//        User byId = userService.getById(SecurityUtils.getUser().getId());
+//        productSpec.setDeptId(byId.getDeptId());
+//        productSpecService.save(productSpec);
+//        List<ProductSpecDesc> productSpecDesc = productSpec.getProductSpecDesc();
+//        if (!CollectionUtils.isEmpty(productSpecDesc)) {
+//            for (ProductSpecDesc productSpecDesc1 : productSpecDesc) {
+//                productSpecDesc1.setProductSpecId(productSpec.getId());
+//            }
+//            productSpecDescService.saveBatch(productSpecDesc);
+//        }
+//
+//        return RestResponse.ok();
+//    }
+//
+//    /**
+//     * 编辑产品规格
+//     *
+//     * @return
+//     */
+//    @PostMapping("/updateProductSpec")
+//    public RestResponse updateProductSpec(@RequestBody ProductSpec productSpec) {
+//
+//        productSpecService.updateById(productSpec);
+//
+//        List<ProductSpecDesc> list = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda()
+//                .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
+//
+//
+//        List<ProductSpecDesc> productSpecDesc = productSpec.getProductSpecDesc();
+//        List<ProductSpecDesc> updateProductSpecDesc = new ArrayList<>();
+//        if (CollectionUtils.isEmpty(productSpecDesc)) {
+//            productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
+//                    .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
+//        } else if (!CollectionUtils.isEmpty(list)) {
+//            List<Integer> productSpecIds = productSpecDesc.stream().map(ProductSpecDesc::getId)
+//                    .collect(Collectors.toList());
+//            for (ProductSpecDesc desc : list) {
+//                if (!productSpecIds.contains(desc.getId())) {
+//                    desc.setStatus(1);
+//                    updateProductSpecDesc.add(desc);
+//                }
+//            }
+//
+//        }
+//        List<ProductSpecDesc> saveProductSpecDesc = new ArrayList<>();
+//        if (!CollectionUtils.isEmpty(productSpecDesc)) {
+//            for (ProductSpecDesc productSpecDesc1 : productSpecDesc) {
+//                productSpecDesc1.setProductSpecId(productSpec.getId());
+//                if (productSpecDesc1.getId() == null) {
+//                    saveProductSpecDesc.add(productSpecDesc1);
+//                } else {
+//                    updateProductSpecDesc.add(productSpecDesc1);
+//
+//                }
+//            }
+//            if (!CollectionUtils.isEmpty(saveProductSpecDesc)) {
+//                productSpecDescService.saveBatch(saveProductSpecDesc);
+//            }
+//            if (!CollectionUtils.isEmpty(updateProductSpecDesc)) {
+//                productSpecDescService.updateBatchById(updateProductSpecDesc);
+//            }
+//        }
+//
+//        return RestResponse.ok();
+//    }
+//
+//    /**
+//     * 删除产品规格
+//     *
+//     * @return
+//     */
+//    @GetMapping("/deleteProductSpec")
+//    public RestResponse listProductSpec(@RequestParam("id") Integer id) {
+//        if (id == null) {
+//            return RestResponse.ok();
+//        }
+//        productSpecService.removeById(id);
+//        productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
+//                .eq(ProductSpecDesc::getProductSpecId, id));
+//        return RestResponse.ok();
+//    }
+
+//    /**
+//     * 产品规格列表查询
+//     *
+//     * @return
+//     */
+//    @GetMapping("/listProductSpec")
+//    public RestResponse listProductSpec() {
+//        User byId = userService.getById(SecurityUtils.getUser().getId());
+//        List<ProductSpec> list = productSpecService.list(new QueryWrapper<ProductSpec>().lambda()
+//                .eq(ProductSpec::getDeptId, byId.getDeptId()));
+//        if (CollectionUtils.isEmpty(list)) {
+//            return RestResponse.ok();
+//        }
+//        List<Integer> productSpecIds = list.stream().map(ProductSpec::getId)
+//                .collect(Collectors.toList());
+//        List<ProductSpecDesc> productSpecDescs = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda()
+//                .in(ProductSpecDesc::getProductSpecId, productSpecIds)
+//                .in(ProductSpecDesc::getStatus, 0));
+//        if (!CollectionUtils.isEmpty(productSpecDescs)) {
+//            Map<Integer, List<ProductSpecDesc>> map = productSpecDescs.stream()
+//                    .collect(Collectors.groupingBy(ProductSpecDesc::getProductSpecId));
+//            for (ProductSpec productSpec : list) {
+//                productSpec.setProductSpecDesc(map.get(productSpec.getId()));
+//            }
+//        }
+//        return RestResponse.ok(list);
+//
+//
+//    }
+
     /**
-     * 添加产品规格
-     *
-     * @return
+     * 生成规格值
      */
-    @PostMapping("/saveProductSpec")
-    public RestResponse saveProductSpec(@RequestBody ProductSpec productSpec) {
-        User byId = userService.getById(SecurityUtils.getUser().getId());
-        productSpec.setDeptId(byId.getDeptId());
-        productSpecService.save(productSpec);
-        List<ProductSpecDesc> productSpecDesc = productSpec.getProductSpecDesc();
-        if (!CollectionUtils.isEmpty(productSpecDesc)) {
-            for (ProductSpecDesc productSpecDesc1 : productSpecDesc) {
-                productSpecDesc1.setProductSpecId(productSpec.getId());
+    @PostMapping("/saveSale")
+    public RestResponse saveSale(@RequestBody ServicePack servicePack) {
+        List<SaleSpec> saleSpecs = servicePack.getSaleSpec();
+        if (!CollectionUtils.isEmpty(saleSpecs)) {
+            for (SaleSpec saleSpec : saleSpecs) {
+                saleSpec.setServicePackId(servicePack.getId());
+
             }
-            productSpecDescService.saveBatch(productSpecDesc);
-        }
+            saleSpecService.saveBatch(saleSpecs);
 
-        return RestResponse.ok();
-    }
-
-    /**
-     * 编辑产品规格
-     *
-     * @return
-     */
-    @PostMapping("/updateProductSpec")
-    public RestResponse updateProductSpec(@RequestBody ProductSpec productSpec) {
-
-        productSpecService.updateById(productSpec);
-
-        List<ProductSpecDesc> list = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda()
-                .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
-
-
-        List<ProductSpecDesc> productSpecDesc = productSpec.getProductSpecDesc();
-        List<ProductSpecDesc> updateProductSpecDesc = new ArrayList<>();
-        if (CollectionUtils.isEmpty(productSpecDesc)) {
-            productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
-                    .eq(ProductSpecDesc::getProductSpecId, productSpec.getId()));
-        } else if (!CollectionUtils.isEmpty(list)) {
-            List<Integer> productSpecIds = productSpecDesc.stream().map(ProductSpecDesc::getId)
-                    .collect(Collectors.toList());
-            for (ProductSpecDesc desc : list) {
-                if (!productSpecIds.contains(desc.getId())) {
-                    desc.setStatus(1);
-                    updateProductSpecDesc.add(desc);
+            for (SaleSpec saleSpec : saleSpecs) {
+                List<SaleSpecDesc> saleSpecDescs1 = saleSpec.getSaleSpecDescs();
+                if (!CollectionUtils.isEmpty(saleSpecDescs1)) {
+                    for (SaleSpecDesc saleSpecDesc : saleSpecDescs1) {
+                        saleSpecDesc.setSaleSpecId(saleSpec.getId());
+                    }
+                    saleSpecDescService.saveBatch(saleSpecDescs1);
                 }
             }
 
         }
-        List<ProductSpecDesc> saveProductSpecDesc = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(productSpecDesc)) {
-            for (ProductSpecDesc productSpecDesc1 : productSpecDesc) {
-                productSpecDesc1.setProductSpecId(productSpec.getId());
-                if (productSpecDesc1.getId() == null) {
-                    saveProductSpecDesc.add(productSpecDesc1);
-                } else {
-                    updateProductSpecDesc.add(productSpecDesc1);
-
-                }
-            }
-            if (!CollectionUtils.isEmpty(saveProductSpecDesc)) {
-                productSpecDescService.saveBatch(saveProductSpecDesc);
-            }
-            if (!CollectionUtils.isEmpty(updateProductSpecDesc)) {
-                productSpecDescService.updateBatchById(updateProductSpecDesc);
-            }
-        }
-
-        return RestResponse.ok();
+        return RestResponse.ok(saleSpecs);
     }
-
-    /**
-     * 删除产品规格
-     *
-     * @return
-     */
-    @GetMapping("/deleteProductSpec")
-    public RestResponse listProductSpec(@RequestParam("id") Integer id) {
-        if (id == null) {
-            return RestResponse.ok();
-        }
-        productSpecService.removeById(id);
-        productSpecDescService.remove(new QueryWrapper<ProductSpecDesc>().lambda()
-                .eq(ProductSpecDesc::getProductSpecId, id));
-        return RestResponse.ok();
-    }
-
-    /**
-     * 产品规格列表查询
-     *
-     * @return
-     */
-    @GetMapping("/listProductSpec")
-    public RestResponse listProductSpec() {
-        User byId = userService.getById(SecurityUtils.getUser().getId());
-        List<ProductSpec> list = productSpecService.list(new QueryWrapper<ProductSpec>().lambda()
-                .eq(ProductSpec::getDeptId, byId.getDeptId()));
-        if (CollectionUtils.isEmpty(list)) {
-            return RestResponse.ok();
-        }
-        List<Integer> productSpecIds = list.stream().map(ProductSpec::getId)
-                .collect(Collectors.toList());
-        List<ProductSpecDesc> productSpecDescs = productSpecDescService.list(new QueryWrapper<ProductSpecDesc>().lambda()
-                .in(ProductSpecDesc::getProductSpecId, productSpecIds)
-                .in(ProductSpecDesc::getStatus, 0));
-        if (!CollectionUtils.isEmpty(productSpecDescs)) {
-            Map<Integer, List<ProductSpecDesc>> map = productSpecDescs.stream()
-                    .collect(Collectors.groupingBy(ProductSpecDesc::getProductSpecId));
-            for (ProductSpec productSpec : list) {
-                productSpec.setProductSpecDesc(map.get(productSpec.getId()));
-            }
-        }
-        return RestResponse.ok(list);
-
-
-    }
-
 
     /**
      * 添加服务包
@@ -239,24 +265,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         if (!CollectionUtils.isEmpty(saleSpecs)) {
             for (SaleSpec saleSpec : saleSpecs) {
                 saleSpec.setServicePackId(servicePack.getId());
+            }
+            saleSpecService.updateBatchById(saleSpecs);
 
-            }
-            saleSpecService.saveBatch(saleSpecs);
-            List<SaleSpecDesc> saleSpecDescs = new ArrayList<>();
 
-            for (SaleSpec saleSpec : saleSpecs) {
-                saleSpec.setServicePackId(servicePack.getId());
-                List<SaleSpecDesc> saleSpecDescs1 = saleSpec.getSaleSpecDescs();
-                if (CollectionUtils.isEmpty(saleSpecDescs1)) {
-                    for (SaleSpecDesc saleSpecDesc : saleSpecDescs1) {
-                        saleSpecDesc.setSaleSpecId(saleSpec.getId());
-                        saleSpecDescs.add(saleSpecDesc);
-                    }
-                }
-            }
-            if (!CollectionUtils.isEmpty(saleSpecDescs)) {
-                saleSpecDescService.saveBatch(saleSpecDescs);
-            }
         }
         //生成规格组合值
         List<SaleSpecGroup> saleSpecGroupList = servicePack.getSaleSpecGroupList();
@@ -362,22 +374,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                 saleSpec.setServicePackId(servicePack.getId());
 
             }
-            saleSpecService.saveBatch(saleSpecs);
-            List<SaleSpecDesc> saleSpecDescs = new ArrayList<>();
+            saleSpecService.updateBatchById(saleSpecs);
 
-            for (SaleSpec saleSpec : saleSpecs) {
-                saleSpec.setServicePackId(servicePack.getId());
-                List<SaleSpecDesc> saleSpecDescs1 = saleSpec.getSaleSpecDescs();
-                if (CollectionUtils.isEmpty(saleSpecDescs1)) {
-                    for (SaleSpecDesc saleSpecDesc : saleSpecDescs1) {
-                        saleSpecDesc.setSaleSpecId(saleSpec.getId());
-                        saleSpecDescs.add(saleSpecDesc);
-                    }
-                }
-            }
-            if (!CollectionUtils.isEmpty(saleSpecDescs)) {
-                saleSpecDescService.saveBatch(saleSpecDescs);
-            }
         }
         //编辑规格组合值
         saleSpecGroupService.remove(new QueryWrapper<SaleSpecGroup>().lambda()
