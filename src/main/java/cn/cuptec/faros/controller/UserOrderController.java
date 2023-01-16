@@ -272,6 +272,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             userOrder.setSaleSpecId(saleSpecId);
 
         }
+        userOrder.setQuerySaleSpecIds(querySaleSpecIds);
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);

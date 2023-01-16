@@ -62,19 +62,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         entity.setProductPic(list.get(0).getImage());
         entity.setSaleSpecId(entity.getSaleSpecId());
 
-        List<Integer> saleSpecDescIds = userOrder.getSaleSpecDescIds();
-        String querySaleSpecIds = "";
-        for (Integer saleSpecDescId : saleSpecDescIds) {
-            querySaleSpecIds = querySaleSpecIds + saleSpecDescId;
-        }
-        querySaleSpecIds = querySaleSpecIds.chars()        // IntStream
-                .sorted()
-                .collect(StringBuilder::new,
-                        StringBuilder::appendCodePoint,
-                        StringBuilder::append)
-                .toString();
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
-                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds()));
         entity.setRetrieveAmount(new BigDecimal(saleSpecGroup.getRecoveryPrice()));//回收价格
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 

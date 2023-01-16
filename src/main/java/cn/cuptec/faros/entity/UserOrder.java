@@ -25,6 +25,7 @@ public class UserOrder {
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String orderNo;
     private Integer patientUserId;//就诊人id
+    private String querySaleSpecIds;//查询规格值
     private Integer chatUserId;//聊天id
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDateTime operationTime;//手术时间
