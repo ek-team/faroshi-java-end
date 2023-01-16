@@ -103,7 +103,7 @@ public class WxPayController {
         if (userOrder != null) {
 
 
-            if (userOrder.getStatus().equals(2)) {
+            if (!userOrder.getStatus().equals(1)) {
                 return RestResponse.ok();
             }
             userOrder.setConfirmPayTime(new Date());

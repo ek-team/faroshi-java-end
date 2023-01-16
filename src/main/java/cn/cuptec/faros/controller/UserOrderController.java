@@ -62,6 +62,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private SaleSpecGroupService saleSpecGroupService;
     @Resource
     private SaleSpecDescService saleSpecDescService;
+
     /**
      * 获取省的订单数量
      *
@@ -142,9 +143,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                             .collect(Collectors.groupingBy(ServicePackProductPic::getServicePackId));
                     for (ServicePack servicePack : servicePacks) {
                         List<ServicePackProductPic> servicePackProductPics1 = servicePackProductPicMap.get(servicePack.getId());
-                        if(!CollectionUtils.isEmpty(servicePackProductPics1)){
+                        if (!CollectionUtils.isEmpty(servicePackProductPics1)) {
                             servicePack.setServicePackProductPics(servicePackProductPics1);
-                        }else{
+                        } else {
                             servicePack.setServicePackProductPics(new ArrayList<>());
                         }
 
@@ -156,11 +157,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
             for (UserOrder userOrder : records) {
                 ServicePack servicePack = servicePackMap.get(userOrder.getServicePackId());
-                if(servicePack==null){
-                    servicePack=new ServicePack();
+                if (servicePack == null) {
+                    servicePack = new ServicePack();
                 }
                 List<ServicePackProductPic> servicePackProductPics = servicePack.getServicePackProductPics();
-                if(CollectionUtils.isEmpty(servicePackProductPics)){
+                if (CollectionUtils.isEmpty(servicePackProductPics)) {
                     servicePack.setServicePackProductPics(new ArrayList<>());
                 }
                 userOrder.setServicePack(servicePack);
@@ -262,10 +263,10 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
                 .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
         List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
-        if(!CollectionUtils.isEmpty(saleSpecDescs)){
-            String saleSpecId="";
-            for(SaleSpecDesc saleSpecDesc:saleSpecDescs){
-                saleSpecId=saleSpecId+"/"+saleSpecDesc.getName();
+        if (!CollectionUtils.isEmpty(saleSpecDescs)) {
+            String saleSpecId = "";
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+                saleSpecId = saleSpecId + "/" + saleSpecDesc.getName();
 
             }
             userOrder.setSaleSpecId(saleSpecId);
@@ -274,9 +275,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
-        Integer orderType=1;
-        if(saleSpecGroup.getRecovery().equals(1)){
-            orderType=2;
+        Integer orderType = 1;
+        if (saleSpecGroup.getRecovery().equals(1)) {
+            orderType = 2;
         }
         userOrder.setOrderType(orderType);
         service.save(userOrder);
@@ -409,6 +410,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         UserOrder userOrder = service.getById(id);
         userOrder.setStatus(4);
         userOrder.setRevTime(LocalDateTime.now());
+        service.updateById(userOrder);
         return RestResponse.ok(userOrder);
     }
 
