@@ -145,7 +145,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/pneumaticEvaluationRecords/deleteRecordsByUserId",
                         "/wxpay/notifyOrder",
                         "/purchase/order/deliveryMoBan",
-                        "/purchase/order/exportOrder"
+                        "/purchase/order/exportOrder",
+                        "/userServicePackageInfo/listByIdCard"
 
                 )
                 .permitAll()

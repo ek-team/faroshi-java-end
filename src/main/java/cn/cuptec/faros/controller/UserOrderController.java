@@ -141,7 +141,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     Map<Integer, List<ServicePackProductPic>> servicePackProductPicMap = servicePackProductPics.stream()
                             .collect(Collectors.groupingBy(ServicePackProductPic::getServicePackId));
                     for (ServicePack servicePack : servicePacks) {
-                        servicePack.setServicePackProductPics(servicePackProductPicMap.get(servicePack.getId()));
+                        List<ServicePackProductPic> servicePackProductPics1 = servicePackProductPicMap.get(servicePack.getId());
+                        if(!CollectionUtils.isEmpty(servicePackProductPics1)){
+                            servicePack.setServicePackProductPics(servicePackProductPics1);
+                        }else{
+                            servicePack.setServicePackProductPics(new ArrayList<>());
+                        }
+
                     }
                 }
             }
@@ -225,9 +231,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setReceiverPhone(address.getAddresseePhone());
         userOrder.setReceiverDetailAddress(address.getAddress());
         userOrder.setReceiverRegion(address.getArea());
-        if (userOrder.getOrderType() == null) {
-            userOrder.setOrderType(1);
-        }
+
         ServicePack byId = servicePackService.getById(userOrder.getServicePackId());
         userOrder.setDeptId(byId.getDeptId());
         userOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
@@ -262,6 +266,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
+        Integer orderType=1;
+        if(saleSpecGroup.getRecovery().equals(1)){
+            orderType=2;
+        }
+        userOrder.setOrderType(orderType);
         service.save(userOrder);
 
         RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getOrderNo());

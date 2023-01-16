@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,39 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
     private DoctorTeamService doctorTeamService;
     @Resource
     private UserService userService;
+    @Resource
+    private PatientUserService patientUserService;
+    /**
+     * 根据就诊人身份证查询用户的服务
+     */
+    @GetMapping("/listByIdCard")
+    public RestResponse listByIdCard(@RequestParam(value = "idCard", required = false) String idCard) {
+        List<PatientUser> patientUserList = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
+                .eq(PatientUser::getIdCard, idCard));
+        if(CollectionUtils.isEmpty(patientUserList)){
+            return RestResponse.ok(new ArrayList<>());
+        }
+        Integer userId = patientUserList.get(0).getUserId();
+        User user = userService.getById(userId);
+
+        LambdaQueryWrapper<UserServicePackageInfo> eq = new QueryWrapper<UserServicePackageInfo>().lambda()
+                .eq(UserServicePackageInfo::getUserId, userId).orderByAsc(UserServicePackageInfo::getUseCount);
+
+        List<UserServicePackageInfo> list = service.list(eq);
+        if (!CollectionUtils.isEmpty(list)) {
+            List<Integer> ids = list.stream().map(UserServicePackageInfo::getServicePackageInfoId)
+                    .collect(Collectors.toList());
+            List<ServicePackageInfo> servicePackageInfos = (List<ServicePackageInfo>) servicePackageInfoService.listByIds(ids);
+            Map<Integer, ServicePackageInfo> map = servicePackageInfos.stream()
+                    .collect(Collectors.toMap(ServicePackageInfo::getId, t -> t));
+            for (UserServicePackageInfo servicePackageInfo : list) {
+                servicePackageInfo.setUser(user);
+                servicePackageInfo.setServicePackageInfo(map.get(servicePackageInfo.getServicePackageInfoId()));
+            }
+        }
+        return RestResponse.ok(list);
+    }
+
 
     /**
      * 查询用户自己的服务信息

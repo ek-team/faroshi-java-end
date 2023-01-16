@@ -29,7 +29,7 @@ public class User extends Model<User> {
     private String cid;//APP消息推送 cid
     @JSONField(serialize = false)
     private String password;
-
+    private String token;
     @JSONField(deserialize = false)
     private String salt;
 

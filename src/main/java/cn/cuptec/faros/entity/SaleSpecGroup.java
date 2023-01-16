@@ -23,7 +23,7 @@ public class SaleSpecGroup extends Model<SaleSpecGroup> {
     private String price;//售价
     private String remark;//备注
     private Double recoveryPrice;//回收价
-    private Integer urlImage;//图片
+    private String urlImage;//图片
     private Integer servicePackId;//服务包id
     @TableField(exist = false)
     private List<SaleSpecDesc> saleSpecDescList;//规格值信息

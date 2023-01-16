@@ -494,8 +494,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         Page<ServicePack> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(startTime) && !StringUtils.isEmpty(endTime)) {
-            queryWrapper.le("create_time", endTime);
-            queryWrapper.ge("create_time", startTime);
+            queryWrapper.le("service_pack.create_time", endTime);
+            queryWrapper.ge("service_pack.create_time", startTime);
         }
         IPage<ServicePack> servicePackIPage = service.pageScoped(page, queryWrapper);
 

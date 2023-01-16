@@ -15,7 +15,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RestResponse<T> implements Serializable {
 	private static final long serialVersionUID = 1L;
 

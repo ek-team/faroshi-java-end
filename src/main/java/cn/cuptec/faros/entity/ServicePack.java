@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,7 +42,7 @@ public class ServicePack extends Model<ServicePack> {
     private String productName;//产品名称
 
     @TableField(exist = false)
-    private List<ServicePackProductPic> servicePackProductPics;//产品图片
+    private List<ServicePackProductPic> servicePackProductPics=new ArrayList<>();//产品图片
     @TableField(exist = false)
     private List<ServicePackProductPic> servicePackProductPicsBuy;//产品图片 购买
 

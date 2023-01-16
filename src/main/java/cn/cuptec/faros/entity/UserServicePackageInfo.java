@@ -29,4 +29,6 @@ public class UserServicePackageInfo extends Model<UserServicePackageInfo> {
     private LocalDateTime expiredTime;//过期时间
     private Integer orderId;
     private Integer userId;
+    @TableField(exist = false)
+    private User user;
 }

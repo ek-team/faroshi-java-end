@@ -136,7 +136,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                     Map<Integer, List<ServicePackProductPic>> servicePackProductPicMap = servicePackProductPics.stream()
                             .collect(Collectors.groupingBy(ServicePackProductPic::getServicePackId));
                     for (ServicePack servicePack : servicePacks) {
-                        servicePack.setServicePackProductPics(servicePackProductPicMap.get(servicePack.getId()));
+                        List<ServicePackProductPic> servicePackProductPics1 = servicePackProductPicMap.get(servicePack.getId());
+                        if(!org.springframework.util.CollectionUtils.isEmpty(servicePackProductPics1)){
+                            servicePack.setServicePackProductPics(servicePackProductPics1);
+                        }else{
+                            servicePack.setServicePackProductPics(new ArrayList<>());
+                        }
                     }
                 }
             }
