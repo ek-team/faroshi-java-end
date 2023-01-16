@@ -367,15 +367,33 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         }
         //添加销售规格
         List<SaleSpec> saleSpecs = servicePack.getSaleSpec();
-        saleSpecService.remove(new QueryWrapper<SaleSpec>().lambda()
-                .eq(SaleSpec::getServicePackId, servicePack.getId()));
+
         if (!CollectionUtils.isEmpty(saleSpecs)) {
+            List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
+                    .eq(SaleSpec::getServicePackId, servicePack.getId()));
+
             for (SaleSpec saleSpec : saleSpecs) {
                 saleSpec.setServicePackId(servicePack.getId());
 
             }
+            List<Integer> saleSpecIds = saleSpecs.stream().map(SaleSpec::getId)
+                    .collect(Collectors.toList());
             saleSpecService.updateBatchById(saleSpecs);
+            List<Integer> removeIds = new ArrayList<>();
+            if (!CollectionUtils.isEmpty(saleSpecList)) {
+                for (SaleSpec saleSpec : saleSpecList) {
+                    if (!saleSpecIds.contains(saleSpec.getId())) {
+                        removeIds.add(saleSpec.getId());
+                    }
+                }
 
+            }
+            if (!CollectionUtils.isEmpty(removeIds)) {
+                saleSpecService.removeByIds(removeIds);
+            }
+        } else {
+            saleSpecService.remove(new QueryWrapper<SaleSpec>().lambda()
+                    .eq(SaleSpec::getServicePackId, servicePack.getId()));
         }
         //编辑规格组合值
         saleSpecGroupService.remove(new QueryWrapper<SaleSpecGroup>().lambda()

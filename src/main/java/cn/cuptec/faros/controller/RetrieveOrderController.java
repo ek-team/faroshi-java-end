@@ -137,9 +137,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                             .collect(Collectors.groupingBy(ServicePackProductPic::getServicePackId));
                     for (ServicePack servicePack : servicePacks) {
                         List<ServicePackProductPic> servicePackProductPics1 = servicePackProductPicMap.get(servicePack.getId());
-                        if(!org.springframework.util.CollectionUtils.isEmpty(servicePackProductPics1)){
+                        if (!org.springframework.util.CollectionUtils.isEmpty(servicePackProductPics1)) {
                             servicePack.setServicePackProductPics(servicePackProductPics1);
-                        }else{
+                        } else {
                             servicePack.setServicePackProductPics(new ArrayList<>());
                         }
                     }
@@ -148,15 +148,16 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
 
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
-            //规格信息
-            List<String> saleSpecIds = records.stream().map(RetrieveOrder::getSaleSpecId)
-                    .collect(Collectors.toList());
-            List<SaleSpec> saleSpecs = (List<SaleSpec>) saleSpecService.listByIds(saleSpecIds);
-            Map<Integer, SaleSpec> saleSpecMap = saleSpecs.stream()
-                    .collect(Collectors.toMap(SaleSpec::getId, t -> t));
             for (RetrieveOrder retrieveOrder : records) {
-                retrieveOrder.setServicePack(servicePackMap.get(retrieveOrder.getServicePackId()));
-                retrieveOrder.setSaleSpec(saleSpecMap.get(retrieveOrder.getSaleSpecId()));
+                ServicePack servicePack = servicePackMap.get(retrieveOrder.getServicePackId());
+                if (servicePack == null) {
+                    servicePack = new ServicePack();
+                }
+                List<ServicePackProductPic> servicePackProductPics = servicePack.getServicePackProductPics();
+                if (org.springframework.util.CollectionUtils.isEmpty(servicePackProductPics)) {
+                    servicePack.setServicePackProductPics(new ArrayList<>());
+                }
+                retrieveOrder.setServicePack(servicePack);
             }
         }
 

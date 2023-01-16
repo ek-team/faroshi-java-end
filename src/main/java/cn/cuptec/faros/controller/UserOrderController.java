@@ -155,7 +155,15 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
 
             for (UserOrder userOrder : records) {
-                userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
+                ServicePack servicePack = servicePackMap.get(userOrder.getServicePackId());
+                if(servicePack==null){
+                    servicePack=new ServicePack();
+                }
+                List<ServicePackProductPic> servicePackProductPics = servicePack.getServicePackProductPics();
+                if(CollectionUtils.isEmpty(servicePackProductPics)){
+                    servicePack.setServicePackProductPics(new ArrayList<>());
+                }
+                userOrder.setServicePack(servicePack);
             }
         }
 

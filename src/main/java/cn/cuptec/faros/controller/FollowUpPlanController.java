@@ -465,6 +465,25 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     }
 
     /**
+     * 查询今日计划的患者数量
+     *
+     * @return
+     */
+    @GetMapping("/getThisDayPlanCount")
+    public RestResponse getThisDayPlanCount() {
+        LocalDate now = LocalDate.now();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String format = df.format(now);
+        String startTime = format + " 00:00:00";
+        String endTime = format + " 24:00:00";
+        int count = followUpPlanNoticeService.count(new QueryWrapper<FollowUpPlanNotice>().lambda()
+                .eq(FollowUpPlanNotice::getDoctorId, SecurityUtils.getUser().getId())
+                .ge(FollowUpPlanNotice::getNoticeTime, startTime)
+        );
+        return RestResponse.ok(count);
+    }
+
+    /**
      * 查询今日计划的患者
      *
      * @return

@@ -41,7 +41,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     @Resource
     private MobileService mobileService;
     @Resource
-    private SaleSpecDescService saleSpecDescService;
+    private SaleSpecGroupService saleSpecGroupService;
     @Resource
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
@@ -60,11 +60,22 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
                 .eq(ServicePackProductPic::getServicePackId, userOrder.getServicePackId()));
         entity.setProductPic(list.get(0).getImage());
-        String saleSpecId = userOrder.getSaleSpecId();
-        SaleSpec saleSpec = saleSpecService.getById(saleSpecId);
-        BigDecimal retrieveAmount = new BigDecimal(1);
+        entity.setSaleSpecId(entity.getSaleSpecId());
 
-        entity.setRetrieveAmount(retrieveAmount);//回收价格
+        List<Integer> saleSpecDescIds = userOrder.getSaleSpecDescIds();
+        String querySaleSpecIds = "";
+        for (Integer saleSpecDescId : saleSpecDescIds) {
+            querySaleSpecIds = querySaleSpecIds + saleSpecDescId;
+        }
+        querySaleSpecIds = querySaleSpecIds.chars()        // IntStream
+                .sorted()
+                .collect(StringBuilder::new,
+                        StringBuilder::appendCodePoint,
+                        StringBuilder::append)
+                .toString();
+        SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+        entity.setRetrieveAmount(new BigDecimal(saleSpecGroup.getRecoveryPrice()));//回收价格
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 
         entity.setProductName(servicePack.getName());

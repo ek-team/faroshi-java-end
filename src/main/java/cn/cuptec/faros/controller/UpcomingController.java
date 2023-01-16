@@ -90,6 +90,22 @@ public class UpcomingController extends AbstractBaseController<UpcomingService, 
         return RestResponse.ok();
     }
 
+    /**
+     * 查询待办事项数量
+     *
+     * @return
+     */
+    @GetMapping("/getCount")
+    public RestResponse getCount() {
+
+
+        return RestResponse.ok(service.count(Wrappers.<Upcoming>lambdaUpdate()
+                .set(Upcoming::getRedStatus, 0)
+                .eq(Upcoming::getDoctorId, SecurityUtils.getUser().getId())
+        ));
+    }
+
+
     @Override
     protected Class<Upcoming> getEntityClass() {
         return Upcoming.class;
