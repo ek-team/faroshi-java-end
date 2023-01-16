@@ -20,7 +20,7 @@ public class SaleSpecGroup extends Model<SaleSpecGroup> {
     private String saleSpecIds;
     private String querySaleSpecIds;//查询值
     private Integer recovery;//0-回收 1-不回收
-    private String price;//售价
+    private Double price;//售价
     private String remark;//备注
     private Double recoveryPrice;//回收价
     private String urlImage;//图片
