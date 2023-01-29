@@ -8,12 +8,14 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.mapper.UserOrderMapper;
 import cn.cuptec.faros.vo.MapExpressTrackVo;
+import cn.cuptec.faros.vo.SubscribeVO;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -22,6 +24,15 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
+import com.kuaidi100.sdk.api.Subscribe;
+import com.kuaidi100.sdk.contant.ApiInfoConstant;
+import com.kuaidi100.sdk.core.IBaseClient;
+import com.kuaidi100.sdk.pojo.HttpResult;
+import com.kuaidi100.sdk.request.SubscribeParam;
+import com.kuaidi100.sdk.request.SubscribeParameters;
+import com.kuaidi100.sdk.request.SubscribeReq;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -29,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import java.io.Serializable;
@@ -37,7 +49,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Slf4j
 @Service
 public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 
@@ -233,7 +245,42 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         userOrder.setDeliveryNumber(deliveryNumber);
         userOrder.setDeliveryTime(new Date());
         super.updateById(userOrder);
+        SubscribeVO subscribeVO=new SubscribeVO();
+        subscribeVO.setLogisticsNo(deliveryNumber);
+        subscribeVO.setLogisticsCode(deliveryCompanyCode);
+        subscribeVO.setPhone(userOrder.getReceiverPhone());
+        try {
+            subscribe(subscribeVO);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void subscribe( SubscribeVO subscribeVO) throws Exception {
+
+        SubscribeParameters subscribeParameters = new SubscribeParameters();
+        subscribeParameters.setCallbackurl("https://pharos3.ewj100.com/purchase/order/subscribe_Callback");
+        subscribeParameters.setPhone(subscribeVO.getPhone());
+        subscribeParameters.setResultv2("6");
+
+        SubscribeParam subscribeParam = new SubscribeParam();
+        subscribeParam.setParameters(subscribeParameters);
+        subscribeParam.setCompany(subscribeVO.getLogisticsCode());
+        subscribeParam.setNumber(subscribeVO.getLogisticsNo());
+        subscribeParam.setKey("JAnUGrLl5945");
+
+        SubscribeReq subscribeReq = new SubscribeReq();
+        subscribeReq.setSchema(ApiInfoConstant.SUBSCRIBE_SCHEMA);
+        subscribeReq.setParam(new Gson().toJson(subscribeParam));
+
+        IBaseClient subscribe = new Subscribe();
+
+
+        HttpResult result = subscribe.execute(subscribeReq);
+        String body = result.getBody();
+        JSONObject jsonObject = JSONObject.parseObject(body);
+
+        String message = jsonObject.getString("message");
+        log.info("message:" + message);
 
     }
-
 }

@@ -50,6 +50,7 @@ public class OrderRefundInfo implements Serializable {
     @TableField(value = "refund_status")
     private Integer refundStatus;
     private String refundReason;//退款原因
+    private String errCodeDes;
 
     private static final long serialVersionUID = 1L;
 }

@@ -25,6 +25,7 @@ public class SaleSpecGroup extends Model<SaleSpecGroup> {
     private Double recoveryPrice;//回收价
     private String urlImage;//图片
     private Integer servicePackId;//服务包id
+    private Integer status=0;//0-正常 1-禁用
     @TableField(exist = false)
     private List<SaleSpecDesc> saleSpecDescList;//规格值信息
 }

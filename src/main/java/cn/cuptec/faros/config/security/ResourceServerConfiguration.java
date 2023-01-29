@@ -146,7 +146,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/wxpay/notifyOrder",
                         "/purchase/order/deliveryMoBan",
                         "/purchase/order/exportOrder",
-                        "/userServicePackageInfo/listByIdCard"
+                        "/userServicePackageInfo/listByIdCard",
+                        "/wxpay/notifyRefunds"
 
                 )
                 .permitAll()

@@ -17,6 +17,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.Gson;
+import com.kuaidi100.sdk.response.SubscribePushParamResp;
+import com.kuaidi100.sdk.response.SubscribeResp;
+import com.kuaidi100.sdk.utils.SignUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -24,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -34,6 +40,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/purchase/order")
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
@@ -79,6 +86,51 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 //        }
 
         return RestResponse.ok();
+    }
+
+    /**
+     * 物流订阅回掉
+     *
+     * @param request
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("subscribe_Callback")
+    public SubscribeResp subscribe_Callback(HttpServletRequest request) throws Exception {
+        String param = request.getParameter("param");
+        String sign = request.getParameter("sign");
+        //建议记录一下这个回调的内容，方便出问题后双方排查问题
+        log.info("快递100订阅推送回调结果|", param);
+        //订阅时传的salt,没有可以忽略
+        String salt = null;
+        String ourSign = SignUtils.sign(param + salt);
+        SubscribeResp subscribeResp = new SubscribeResp();
+        subscribeResp.setResult(Boolean.TRUE);
+        subscribeResp.setReturnCode("200");
+        subscribeResp.setMessage("成功");
+        //加密如果相等，属于快递100推送；否则可以忽略掉当前请求
+        log.info("进入业务处理");
+        SubscribePushParamResp subscribePushParamResp = new Gson().fromJson(param, SubscribePushParamResp.class);
+        //TODO 业务处理
+
+
+        List<UserOrder> userOrders = service.list(new QueryWrapper<UserOrder>().lambda()
+                .eq(UserOrder::getDeliveryCompanyCode, subscribePushParamResp.getLastResult().getCom())
+                .eq(UserOrder::getDeliverySn, subscribePushParamResp.getLastResult().getNu()));
+
+        if ("shutdown".equals(subscribePushParamResp.getStatus())) {
+
+            // 修改状态为收货
+            if (!CollectionUtils.isEmpty(userOrders)) {
+                for (UserOrder userOrder : userOrders) {
+                    userOrder.setStatus(4);
+                }
+                service.updateBatchById(userOrders);
+            }
+        }
+
+        return subscribeResp;
+
     }
 
     /**

@@ -19,6 +19,12 @@
 	</properties>
 
 	<dependencies>
+        <!--快递 100-->
+        <dependency>
+            <groupId>com.github.kuaidi100-api</groupId>
+            <artifactId>sdk</artifactId>
+            <version>1.0.4</version>
+        </dependency>
         <dependency>
             <groupId>com.belerweb</groupId>
             <artifactId>pinyin4j</artifactId>

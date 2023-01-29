@@ -1,9 +1,12 @@
 package cn.cuptec.faros.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * 销售规格子类
@@ -15,7 +18,8 @@ public class SaleSpecDesc extends Model<SaleSpecDesc> {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private String name;
-
+    private Integer parentId;
     private Integer saleSpecId;
-
+    @TableField(exist = false)
+    private List<SaleSpecDesc> subclassSaleSpecDesc;
 }
