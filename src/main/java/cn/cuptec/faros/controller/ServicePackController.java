@@ -67,6 +67,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     private ServicePackDiseasesService servicePackDiseasesService;
     @Resource
     private DiseasesService diseasesService;
+
     /**
      * 设备二维码绑定服务包
      */
@@ -494,6 +495,26 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     }
 
     /**
+     * 根据服务包id查询所对应的病种
+     *
+     * @return
+     */
+    @GetMapping("/queryDiseasesByServicePackId")
+    public RestResponse queryDiseasesByServicePackId(@RequestParam(value = "servicePackId") Integer servicePackId) {
+        //查询病种
+        List<ServicePackDiseases> servicePackDiseasesList = servicePackDiseasesService.list(new QueryWrapper<ServicePackDiseases>().lambda().eq(ServicePackDiseases::getServicePackId, servicePackId));
+        if (!CollectionUtils.isEmpty(servicePackDiseasesList)) {
+            List<Integer> diseasesIds = servicePackDiseasesList.stream().map(ServicePackDiseases::getDiseasesId)
+                    .collect(Collectors.toList());
+            List<Diseases> diseases = (List<Diseases>) diseasesService.listByIds(diseasesIds);
+            return RestResponse.ok(diseases);
+        } else {
+            return RestResponse.ok(new ArrayList<>());
+        }
+
+    }
+
+    /**
      * 服务包详情查询
      *
      * @return
@@ -503,12 +524,12 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         ServicePack servicePack = service.getById(id);
         //查询病种
         List<ServicePackDiseases> servicePackDiseasesList = servicePackDiseasesService.list(new QueryWrapper<ServicePackDiseases>().lambda().eq(ServicePackDiseases::getServicePackId, id));
-        if(!CollectionUtils.isEmpty(servicePackDiseasesList)){
+        if (!CollectionUtils.isEmpty(servicePackDiseasesList)) {
             List<Integer> diseasesIds = servicePackDiseasesList.stream().map(ServicePackDiseases::getDiseasesId)
                     .collect(Collectors.toList());
             List<Diseases> diseases = (List<Diseases>) diseasesService.listByIds(diseasesIds);
             servicePack.setDiseasesList(diseases);
-        }else{
+        } else {
             servicePack.setDiseasesList(new ArrayList<>());
         }
         //查询产品图片

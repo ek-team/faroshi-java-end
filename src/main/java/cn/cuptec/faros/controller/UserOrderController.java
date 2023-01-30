@@ -44,15 +44,11 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/purchase/order")
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
-    @Resource
-    private SaleSpecService saleSpecService;//销售规格
 
     @Resource
     private PatientUserService patientUserService;
     @Resource
     private FormUserDataService formUserDataService;
-    @Resource
-    private UserServicePackageInfoService userServicePackageInfoService;
     @Resource
     private ServicePackageInfoService servicePackageInfoService;
     @Resource

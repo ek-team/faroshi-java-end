@@ -44,6 +44,18 @@ public class DeliveryTimeController extends AbstractBaseController<DeliveryTimeS
         return RestResponse.ok(deliveryTime);
     }
 
+    @GetMapping("/getByDeptId")
+    public RestResponse getByDeptId(@RequestParam("deptId") Integer deptId) {
+        DeliveryTime one = service.getOne(new QueryWrapper<DeliveryTime>().lambda()
+                .eq(DeliveryTime::getDeptId, deptId));
+        if (one == null) {
+            one = new DeliveryTime();
+            one.setDeptId(deptId);
+            service.save(one);
+        }
+        return RestResponse.ok(one);
+    }
+
     @Override
     protected Class<DeliveryTime> getEntityClass() {
         return DeliveryTime.class;
