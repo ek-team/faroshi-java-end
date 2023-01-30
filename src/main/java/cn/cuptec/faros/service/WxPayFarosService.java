@@ -10,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -26,7 +27,13 @@ public class WxPayFarosService {
     private PatientOtherOrderService patientOtherOrderService;//患者其它订单
 
 
-    public RestResponse unifiedOrder(String orderNo) {
+    public RestResponse unifiedOrder(String orderNo,String tradeType) {
+        if(StringUtils.isEmpty(tradeType)){
+            tradeType="JSAPI";
+        }else{
+            tradeType="MWEB";
+        }
+
         UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, orderNo));
         if (!userOrder.getStatus().equals(1)) {
             return RestResponse.failed("订单已支付");
@@ -34,7 +41,7 @@ public class WxPayFarosService {
         Dept dept = deptService.getById(userOrder.getDeptId());
         User user = userService.getById(SecurityUtils.getUser().getId());
 
-        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue();
+        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);
         PayResult wenXinInfo = JSONObject.parseObject(result, PayResult.class);
         return RestResponse.ok(wenXinInfo.getData());

@@ -124,6 +124,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             if (!CollectionUtils.isEmpty(userOrders)) {
                 for (UserOrder userOrder : userOrders) {
                     userOrder.setStatus(4);
+                    userOrder.setRevTime(LocalDateTime.now());
                 }
                 service.updateBatchById(userOrders);
             }
@@ -276,6 +277,66 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     /**
+     * 生成订单
+     */
+    @PostMapping("/createOrder")
+    public RestResponse createOrder(@RequestBody UserOrder userOrder) {
+        Integer addressId = userOrder.getAddressId();
+        Address address = addressService.getById(addressId);
+        userOrder.setReceiverName(address.getAddresseeName());
+        userOrder.setCity(address.getCity());
+        userOrder.setProvince(address.getProvince());
+        userOrder.setArea(address.getArea());
+        userOrder.setReceiverPhone(address.getAddresseePhone());
+        userOrder.setReceiverDetailAddress(address.getAddress());
+        userOrder.setReceiverRegion(address.getArea());
+
+        ServicePack byId = servicePackService.getById(userOrder.getServicePackId());
+        userOrder.setDeptId(byId.getDeptId());
+        userOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        userOrder.setStatus(1);
+        userOrder.setCreateTime(LocalDateTime.now());
+        userOrder.setUserId(SecurityUtils.getUser().getId());
+
+
+        List<Integer> saleSpecDescIds = userOrder.getSaleSpecDescIds();
+        String querySaleSpecIds = "";
+        for (Integer saleSpecDescId : saleSpecDescIds) {
+            querySaleSpecIds = querySaleSpecIds + saleSpecDescId;
+        }
+        querySaleSpecIds = querySaleSpecIds.chars()        // IntStream
+                .sorted()
+                .collect(StringBuilder::new,
+                        StringBuilder::appendCodePoint,
+                        StringBuilder::append)
+                .toString();
+        SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+        List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
+        if (!CollectionUtils.isEmpty(saleSpecDescs)) {
+            String saleSpecId = "";
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+                saleSpecId = saleSpecId + "/" + saleSpecDesc.getName();
+
+            }
+            userOrder.setSaleSpecId(saleSpecId);
+
+        }
+        userOrder.setQuerySaleSpecIds(querySaleSpecIds);
+        //计算订单价格
+        BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
+        userOrder.setPayment(payment);
+        Integer orderType = 1;
+        if (saleSpecGroup.getRecovery().equals(1)) {
+            orderType = 2;
+        }
+        userOrder.setOrderType(orderType);
+        service.save(userOrder);
+
+        return RestResponse.ok(userOrder.getOrderNo());
+    }
+
+    /**
      * 购买者申请单的增加
      *
      * @param userOrder
@@ -335,7 +396,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setOrderType(orderType);
         service.save(userOrder);
 
-        RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getOrderNo());
+        RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getOrderNo(), null);
         return restResponse;
     }
 
@@ -417,6 +478,41 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/user/orderDetail")
     public RestResponse getMyOrderDetail(@RequestParam("orderId") int orderId) {
         UserOrder userOrder = service.getById(orderId);
+        //就诊人
+        Integer patientUserId = userOrder.getPatientUserId();
+        userOrder.setPatientUser(patientUserService.getById(patientUserId));
+        //表单
+        List<FormUserData> list = formUserDataService.list(new QueryWrapper<FormUserData>().lambda()
+                .eq(FormUserData::getOrderId, userOrder.getId()));
+        if (!CollectionUtils.isEmpty(list)) {
+            userOrder.setIsForm(1);
+        }
+        //服务信息
+        List<ServicePackageInfo> servicePackageInfo = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
+                .in(ServicePackageInfo::getServicePackageId, userOrder.getServicePackId()));
+        userOrder.setServicePackageInfos(servicePackageInfo);
+        //服务包信息
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+        //查询服务包图片信息
+        if (servicePack != null) {
+            List<ServicePackProductPic> servicePackProductPics = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
+                    .eq(ServicePackProductPic::getServicePackId, servicePack.getId()));
+            if (!CollectionUtils.isEmpty(servicePackProductPics)) {
+
+                servicePack.setServicePackProductPics(servicePackProductPics);
+
+            }
+        }
+        userOrder.setServicePack(servicePack);
+        return RestResponse.ok(userOrder);
+    }
+    /**
+     * 查询订单详细信息
+     */
+    @GetMapping("/user/orderDetailByOrderNo")
+    public RestResponse orderDetailByOrderNo(@RequestParam("orderNo") String orderNo) {
+        UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda()
+                .eq(UserOrder::getOrderNo, orderNo));
         //就诊人
         Integer patientUserId = userOrder.getPatientUserId();
         userOrder.setPatientUser(patientUserService.getById(patientUserId));

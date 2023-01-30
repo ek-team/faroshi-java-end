@@ -61,6 +61,15 @@ public class DiseasesController extends AbstractBaseController<DiseasesService, 
         List<Diseases> records = followUpPlanIPage.getRecords();
         return RestResponse.ok(followUpPlanIPage);
     }
+    @GetMapping("/list")
+    public RestResponse list() {
+        User user = userService.getById(SecurityUtils.getUser().getId());
+
+        List<Diseases> followUpPlans = service.list(new QueryWrapper<Diseases>()
+                .lambda().eq(Diseases::getDeptId, user.getDeptId())
+                .eq(Diseases::getStatus, 1));
+        return RestResponse.ok(followUpPlans);
+    }
 
 
     @Override

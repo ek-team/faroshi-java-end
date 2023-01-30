@@ -45,7 +45,8 @@ public class ServicePack extends Model<ServicePack> {
     private List<ServicePackProductPic> servicePackProductPics=new ArrayList<>();//产品图片
     @TableField(exist = false)
     private List<ServicePackProductPic> servicePackProductPicsBuy;//产品图片 购买
-
+    @TableField(exist = false)
+    private List<Diseases> diseasesList;//病种
     @TableField(exist = false)
     private List<SaleSpec> saleSpec;//规格
     @TableField(exist = false)

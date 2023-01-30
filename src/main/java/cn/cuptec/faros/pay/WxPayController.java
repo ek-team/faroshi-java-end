@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -75,9 +76,9 @@ public class WxPayController {
      */
     @ApiOperation(value = "调用统一下单接口")
     @GetMapping("/unifiedOrder")
-    public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo) {
+    public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo,@RequestParam(value = "tradeType",required = false) String tradeType) {
 
-        return wxPayFarosService.unifiedOrder(orderNo);
+        return wxPayFarosService.unifiedOrder(orderNo,tradeType);
 
     }
 
