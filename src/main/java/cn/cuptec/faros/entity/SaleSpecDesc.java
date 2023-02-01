@@ -18,8 +18,6 @@ public class SaleSpecDesc extends Model<SaleSpecDesc> {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private String name;
-    private Integer parentId;
     private Integer saleSpecId;
-    @TableField(exist = false)
-    private List<SaleSpecDesc> subclassSaleSpecDesc;
+
 }

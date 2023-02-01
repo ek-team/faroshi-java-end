@@ -44,13 +44,14 @@ public interface UserOrderMapper extends BaseMapper<UserOrder> {
             "ORDER BY user_order.create_time DESC")
     IPage<UserOrder> pageMyOrder(IPage page, @Param(Constants.WRAPPER)Wrapper queryWrapper);
 
-    @Select("SELECT user_order.id,user_order.order_no," +
+    @Select("SELECT user_order.id,user_order.bill_image,user_order.delivery_date,user_order.order_no,doctor_team.name as doctorTeamName, " +
             "user_order.dept_id,user_order.receiver_phone,user_order.receiver_name,user_order.receiver_detail_address," +
             "user_order.status,user_order.create_time,user_order.remark," +
             "user_order.payment,user_order.sale_spec_id,user_order.product_spec," +
-            "user_order.service_pack_id,user_order.user_id,patient_user.name as patientUserName " +
+            "user_order.service_pack_id,user_order.user_id,patient_user.name as patientUserName,patient_user.id_card as patientUserIdCard " +
             " FROM user_order " +
             "LEFT JOIN dept ON user_order.dept_id = dept.id " +
+            "LEFT JOIN doctor_team ON user_order.doctor_team_id = doctor_team.id " +
             "LEFT JOIN patient_user ON user_order.patient_user_id = patient_user.id " +
             "LEFT JOIN service_pack ON user_order.service_pack_id = service_pack.id " +
             "${ew.customSqlSegment} ORDER BY user_order.create_time DESC")

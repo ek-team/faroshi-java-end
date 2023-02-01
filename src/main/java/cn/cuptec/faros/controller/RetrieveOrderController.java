@@ -492,7 +492,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         one.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
 
         service.updateById(one);
-        //判断快递状态 修改租用周期状态为已结束
+        //判断快递状态 修改状态为待审核
         if (kuaiDiCallBackParam.getData().getStatus().equals("13")) {
             one.setStatus(2);
             service.updateById(one);

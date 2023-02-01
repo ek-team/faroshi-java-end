@@ -212,7 +212,7 @@ public class WxPayController {
      */
     @ApiOperation(value = "申请退款")
     @GetMapping("/refundOrder")
-    public RestResponse refundOrder(@RequestParam("retrieveOrderId") Integer retrieveOrderId, @RequestParam("refundReason") String refundReson, @RequestParam("amount") Double amount) {
+    public RestResponse refundOrder(@RequestParam("retrieveOrderId") Integer retrieveOrderId, @RequestParam(value = "refundReason",required = false) String refundReson, @RequestParam("amount") Double amount) {
 
         RetrieveOrder retrieveOrder = retrieveOrderService.getById(retrieveOrderId);
         Integer status = retrieveOrder.getStatus();

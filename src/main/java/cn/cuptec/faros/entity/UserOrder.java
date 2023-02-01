@@ -53,9 +53,15 @@ public class UserOrder {
     private Integer doctorId;//支付成功随机选择的医生id
     private Integer formId;//表单id
     private Integer doctorTeamId;//服务团队id
+    @TableField(exist = false)
+    private String doctorTeamName;//团队名称
     private String saleSpecId;//销售规格id
     @TableField(exist = false)
     private List<Integer> saleSpecDescIds;
+    @TableField(exist = false)
+    private String patientUserIdCard;//就诊人身份证号
+    @TableField(exist = false)
+    private String patientUserPhone;//就诊人手机号
     private String productSpec;//选择的产品规格信息 字符串拼接多个
     private Integer addressId;//收货人地址id
     //快递单号
@@ -67,7 +73,7 @@ public class UserOrder {
     //收货人省市区地址
     private String receiverRegion;
     public String city;//市
-
+    private String billImage;//发票照片
     public String area;//区
     public String province;//省
     //收货人详细地址

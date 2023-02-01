@@ -10,6 +10,7 @@ import cn.cuptec.faros.entity.*;
 
 import cn.cuptec.faros.service.*;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -105,7 +106,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     public RestResponse saveSale(@RequestBody ServicePack servicePack) {
         List<SaleSpec> saleSpecs = servicePack.getSaleSpec();
         if (!CollectionUtils.isEmpty(saleSpecs)) {
+
             for (SaleSpec saleSpec : saleSpecs) {
+
                 saleSpec.setServicePackId(servicePack.getId());
 
             }
@@ -122,6 +125,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
 
         }
+        Collections.sort(saleSpecs);
         return RestResponse.ok(saleSpecs);
     }
 
@@ -145,6 +149,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             servicePackProductPicService.saveBatch(servicePackProductPics);
         }
+
         //添加病种
         List<Diseases> diseasesList = servicePack.getDiseasesList();
         if (!CollectionUtils.isEmpty(diseasesList)) {
@@ -292,6 +297,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                     .eq(SaleSpec::getServicePackId, servicePack.getId()));
 
             for (SaleSpec saleSpec : saleSpecs) {
+
                 saleSpec.setServicePackId(servicePack.getId());
 
             }
@@ -568,6 +574,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
                     .in(SaleSpecDesc::getSaleSpecId, saleSpecIds));
             if (!CollectionUtils.isEmpty(saleSpecDescList)) {
+
                 Map<Integer, List<SaleSpecDesc>> saleSpecDescMap = saleSpecDescList.stream()
                         .collect(Collectors.groupingBy(SaleSpecDesc::getSaleSpecId));
                 for (SaleSpec saleSpec : saleSpecs) {
@@ -595,6 +602,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
         }
         servicePack.setSaleSpecGroupList(saleSpecGroupList);
+        Collections.sort(saleSpecs);
         servicePack.setSaleSpec(saleSpecs);
         //查询服务信息
         List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>()
@@ -646,6 +654,35 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         servicePack.setIntroductions(introductions);
 
         return RestResponse.ok(servicePack);
+    }
+
+    /**
+     * 查询可选子规格值
+     */
+    @GetMapping("/querySpecSelect")
+    public RestResponse querySpecSelect(@RequestParam("specDescId") List<Integer> specDescId,
+                                        @RequestParam("servicePackId") Integer servicePackId) {
+        LambdaQueryWrapper<SaleSpecGroup> wrapper = new QueryWrapper<SaleSpecGroup>().lambda()
+                .eq(SaleSpecGroup::getServicePackId, servicePackId)
+                .gt(SaleSpecGroup::getStock, 0);
+        for (Integer str : specDescId) {
+            wrapper.and(wq0 -> wq0.like(SaleSpecGroup::getSaleSpecIds, str));
+        }
+        List<SaleSpecGroup> list = saleSpecGroupService.list(wrapper);
+
+        if (!CollectionUtils.isEmpty(list)) {
+            List<String> specDescIds = new ArrayList<>();
+            for (SaleSpecGroup saleSpecGroup : list) {
+                String saleSpecIds = saleSpecGroup.getSaleSpecIds();
+                String[] split = saleSpecIds.split(",");
+                List<String> ids = Arrays.asList(split);
+                specDescIds.addAll(ids);
+            }
+            return RestResponse.ok(specDescIds);
+        }
+        return RestResponse.ok();
+
+
     }
 
     /**

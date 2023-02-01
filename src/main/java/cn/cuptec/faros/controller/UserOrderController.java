@@ -284,7 +284,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setProvince(address.getProvince());
         userOrder.setArea(address.getArea());
         userOrder.setReceiverPhone(address.getAddresseePhone());
-        userOrder.setReceiverDetailAddress(address.getAddress());
+        userOrder.setReceiverDetailAddress(address.getProvince()+address.getCity()+address.getArea()+address.getAddress());
         userOrder.setReceiverRegion(address.getArea());
 
         ServicePack byId = servicePackService.getById(userOrder.getServicePackId());
