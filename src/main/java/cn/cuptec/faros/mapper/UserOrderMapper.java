@@ -30,7 +30,7 @@ public interface UserOrderMapper extends BaseMapper<UserOrder> {
     )
     UserOrder getOrderDetail(Serializable id);
 
-    @Select("SELECT user_order.id,user_order.order_no,user_order.order_type, " +
+    @Select("SELECT user_order.id,user_order.receiver_detail_address,user_order.order_no,user_order.order_type, " +
             "user_order.user_id," +
             "user_order.dept_id," +
             "user_order.sale_price,user_order.status,user_order.create_time," +

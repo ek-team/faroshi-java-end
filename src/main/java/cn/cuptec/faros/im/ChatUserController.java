@@ -83,7 +83,7 @@ public class ChatUserController {
         chatUser.setServiceStartTime(LocalDateTime.now());
         chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
         chatUserService.updateById(chatUser);
-        return RestResponse.ok();
+        return RestResponse.ok("1");
     }
 
 

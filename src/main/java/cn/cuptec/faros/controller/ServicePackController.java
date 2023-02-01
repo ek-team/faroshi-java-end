@@ -417,16 +417,6 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         return RestResponse.ok();
     }
 
-    public static void main(String[] args) {
-        String a = "1865435131";
-        a = a.chars()        // IntStream
-                .sorted()
-                .collect(StringBuilder::new,
-                        StringBuilder::appendCodePoint,
-                        StringBuilder::append)
-                .toString();
-        System.out.println(a);
-    }
 
     /**
      * 服务包列表查询分页
@@ -662,27 +652,74 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
      */
     @PostMapping("/querySpecSelect")
     public RestResponse querySpecSelect(@RequestBody QuerySpecSelect param) {
+        List<String> specDescIds = new ArrayList<>();
+        List<Integer> specDescId1 = param.getSpecDescId();
+        if (CollectionUtils.isEmpty(param.getSpecDescId())) {
+            List<SaleSpec> list = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
+                    .eq(SaleSpec::getServicePackId, param.getServicePackId()));
+            List<Integer> saleSpecIds = list.stream().map(SaleSpec::getId)
+                    .collect(Collectors.toList());
+            List<SaleSpecDesc> saleSpecDescs = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                    .in(SaleSpecDesc::getSaleSpecId, saleSpecIds));
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+                specDescIds.add(saleSpecDesc.getId() + "");
+            }
+            return RestResponse.ok(specDescIds);
+        }
         LambdaQueryWrapper<SaleSpecGroup> wrapper = new QueryWrapper<SaleSpecGroup>().lambda()
                 .eq(SaleSpecGroup::getServicePackId, param.getServicePackId())
                 .gt(SaleSpecGroup::getStock, 0);
         for (Integer str : param.getSpecDescId()) {
             wrapper.and(wq0 -> wq0.like(SaleSpecGroup::getSaleSpecIds, str));
         }
+
+
         List<SaleSpecGroup> list = saleSpecGroupService.list(wrapper);
 
+
         if (!CollectionUtils.isEmpty(list)) {
-            List<String> specDescIds = new ArrayList<>();
-            for (SaleSpecGroup saleSpecGroup : list) {
-                String saleSpecIds = saleSpecGroup.getSaleSpecIds();
-                String[] split = saleSpecIds.split(",");
-                List<String> ids = Arrays.asList(split);
-                specDescIds.addAll(ids);
+            Collections.sort(specDescId1);
+            for (Integer paramDescId : specDescId1) {
+                List<String> thisSpecDescIds = new ArrayList<>();
+                for (SaleSpecGroup saleSpecGroup : list) {
+                    if (saleSpecGroup.getSaleSpecIds().indexOf(paramDescId+"") != -1) {
+                        String saleSpecIds = saleSpecGroup.getSaleSpecIds();
+                        String[] split = saleSpecIds.split(",");
+                        List<String> ids = Arrays.asList(split);
+                        specDescIds.addAll(ids);
+
+                        thisSpecDescIds.addAll(ids);
+                    }
+                }
+
+
             }
-            return RestResponse.ok(specDescIds);
+//            for (SaleSpecGroup saleSpecGroup : list) {
+//                String saleSpecIds = saleSpecGroup.getSaleSpecIds();
+//                String[] split = saleSpecIds.split(",");
+//                List<String> ids = Arrays.asList(split);
+//                specDescIds.addAll(ids);
+//            }
+            SaleSpecDesc saleSpecDescs1 = saleSpecDescService.getById(specDescId1.get(0));
+
+
+            SaleSpec saleSpec=  saleSpecService.getById(saleSpecDescs1.getSaleSpecId());
+            List<SaleSpecDesc> list1 = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                    .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
+            for (SaleSpecDesc saleSpecDesc : list1) {
+                specDescIds.add(saleSpecDesc.getId() + "");
+            }
+            Set<String> set = new HashSet<>(specDescIds);
+            return RestResponse.ok(set);
         }
         return RestResponse.ok();
 
 
+    }
+
+    public static void main(String[] args) {
+       String a="2,23,3";
+        System.out.println(a.indexOf("2"));
     }
 
     /**
