@@ -6,6 +6,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.config.wx.WxMpConfiguration;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 
+import cn.cuptec.faros.dto.QuerySpecSelect;
 import cn.cuptec.faros.entity.*;
 
 import cn.cuptec.faros.service.*;
@@ -659,13 +660,12 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     /**
      * 查询可选子规格值
      */
-    @GetMapping("/querySpecSelect")
-    public RestResponse querySpecSelect(@RequestParam("specDescId") List<Integer> specDescId,
-                                        @RequestParam("servicePackId") Integer servicePackId) {
+    @PostMapping("/querySpecSelect")
+    public RestResponse querySpecSelect(@RequestBody QuerySpecSelect param) {
         LambdaQueryWrapper<SaleSpecGroup> wrapper = new QueryWrapper<SaleSpecGroup>().lambda()
-                .eq(SaleSpecGroup::getServicePackId, servicePackId)
+                .eq(SaleSpecGroup::getServicePackId, param.getServicePackId())
                 .gt(SaleSpecGroup::getStock, 0);
-        for (Integer str : specDescId) {
+        for (Integer str : param.getSpecDescId()) {
             wrapper.and(wq0 -> wq0.like(SaleSpecGroup::getSaleSpecIds, str));
         }
         List<SaleSpecGroup> list = saleSpecGroupService.list(wrapper);
