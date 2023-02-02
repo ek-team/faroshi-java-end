@@ -28,6 +28,7 @@ public class RetrieveOrder {
     private String orderId;
     private String naLiOrderId;
     private String orderNo;
+    private Integer rentDay;//实际租用天数
     //服务包id
     private Integer servicePackId;
     private String saleSpecId;//销售规格id

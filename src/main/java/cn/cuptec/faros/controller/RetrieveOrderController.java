@@ -245,6 +245,22 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         retrieveOrder.setCreateTime(new Date());
         retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
         retrieveOrder.setStatus(1);
+        Long day = 1L;
+        String orderId = retrieveOrder.getOrderId();
+        UserOrder userOrder = userOrdertService.getById(orderId);
+        if (userOrder != null) {
+            Date deliveryTime = userOrder.getDeliveryTime();
+            Instant instant = deliveryTime.toInstant();
+            ZoneId zoneId = ZoneId.systemDefault();
+
+            LocalDateTime localDateDeliveryTime = instant.atZone(zoneId).toLocalDateTime();
+
+            LocalDateTime now = LocalDateTime.now();
+            java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
+            day = duration.toDays();
+
+        }
+        retrieveOrder.setRentDay(day.intValue());
         service.saveRetrieveOrder(retrieveOrder);
         return RestResponse.ok();
     }
@@ -457,10 +473,26 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
 
 
         String post = post(params);
+        //计算回收天数
+        String orderId = param.getOrderNo();
+        UserOrder userOrder = userOrdertService.getById(orderId);
+        Long day = 1L;
+        if (userOrder != null) {
+            Date deliveryTime = userOrder.getDeliveryTime();
+            Instant instant = deliveryTime.toInstant();
+            ZoneId zoneId = ZoneId.systemDefault();
 
+            LocalDateTime localDateDeliveryTime = instant.atZone(zoneId).toLocalDateTime();
+
+            LocalDateTime now = LocalDateTime.now();
+            java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
+            day = duration.toDays();
+
+        }
         XiaDanParam xiaDanParam = new Gson().fromJson(post, XiaDanParam.class);
         if (xiaDanParam.getCode() == 200 && xiaDanParam.getMessage().equals("success")) {
             RetrieveOrder retrieveOrder = new RetrieveOrder();
+            retrieveOrder.setRentDay(day.intValue());
             retrieveOrder.setOrderId(param.getOrderNo());
             retrieveOrder.setUserId(SecurityUtils.getUser().getId());
             retrieveOrder.setCreateTime(new Date());

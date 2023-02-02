@@ -6,6 +6,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.DoctorPointCountResult;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.pay.PayResultData;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -130,6 +131,36 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         patientOtherOrderService.save(patientOtherOrder);
         RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
         return restResponse;
+    }
+
+    @PostMapping("/addPatientOtherOrder1")
+    public RestResponse addPatientOtherOrder1(@RequestBody PatientOtherOrder patientOtherOrder) {
+        patientOtherOrder.setUserId(SecurityUtils.getUser().getId());
+        patientOtherOrder.setCreateTime(LocalDateTime.now());
+        patientOtherOrder.setStatus(1);
+        patientOtherOrder.setType(1);
+        patientOtherOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        if (patientOtherOrder.getDoctorId() != null) {
+            User doctorUser = userService.getById(patientOtherOrder.getDoctorId());
+            patientOtherOrder.setDeptId(doctorUser.getDeptId());
+            //查询医生图文咨询申请价格
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId()));
+            patientOtherOrder.setAmount(one.getPrice());
+            patientOtherOrder.setHour(one.getHour());
+        } else {
+            DoctorTeam doctorTeam = doctorTeamService.getById(patientOtherOrder.getDoctorTeamId());
+            patientOtherOrder.setDeptId(doctorTeam.getDeptId());
+            //查询团队图文咨询申请价格
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            patientOtherOrder.setAmount(one.getPrice());
+            patientOtherOrder.setHour(one.getHour());
+        }
+        patientOtherOrderService.save(patientOtherOrder);
+        PayResultData data = new PayResultData();
+        data.setOrderId(patientOtherOrder.getId());
+        return RestResponse.ok(data);
     }
 
     /**

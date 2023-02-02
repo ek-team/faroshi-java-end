@@ -85,7 +85,19 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
         return RestResponse.ok(byId);
     }
 
-
+    /**
+     * 查询医生团队服务详情
+     * @return
+     */
+    @GetMapping("/getTeamServiceDetail")
+    public RestResponse getTeamServiceDetail(@RequestParam("teamId") Integer teamId) {
+        DoctorUserAction byId = service.getOne(new QueryWrapper<DoctorUserAction>()
+                .lambda().eq(DoctorUserAction::getTeamId, teamId));
+        if(byId==null){
+            byId.setDoctorUserServiceSetUpId(3);
+        }
+        return RestResponse.ok(byId);
+    }
     @Override
     protected Class<DoctorUserAction> getEntityClass() {
         return DoctorUserAction.class;
