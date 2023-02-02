@@ -32,7 +32,7 @@ public class User extends Model<User> {
     private String token;
     @JSONField(deserialize = false)
     private String salt;
-
+    private String country;
     @JSONField(deserialize = false)
     private String maOpenId;
 
@@ -42,10 +42,12 @@ public class User extends Model<User> {
     //唯一键
     @JSONField(deserialize = false)
     private String unionId;
-
+    private Integer inviterId;
+    private Integer isImState;
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String nickname;
-
+    //是否跳过手动确认订单步骤 0否 1是
+    private int confirmOrder = 0;
     private String gender;
 
     private String language;

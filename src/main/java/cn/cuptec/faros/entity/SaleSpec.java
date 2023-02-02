@@ -23,6 +23,8 @@ public class SaleSpec  extends Model<SaleSpec>  implements Comparable<SaleSpec> 
     private Integer servicePackId;//服务包id
     @TableField(exist = false)
     private List<SaleSpecDesc> saleSpecDescs;
+
+    private Integer oldId;
     @Override
     public int compareTo(SaleSpec o) {
         return this.sorts.compareTo(o.sorts);//升序

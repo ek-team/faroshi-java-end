@@ -47,8 +47,11 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
@@ -69,6 +72,8 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     private UserRoleService userRoleService;
     @Resource
     private SalesmanPayChannelService salesmanPayChannelService;
+    @Resource
+    private cn.cuptec.faros.service.WxMpService wxMpService;
 
     public String queryStorehouseByProductSn(String productSn, QueryWrapper queryWrapper) {
 
@@ -200,11 +205,13 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         dataScop3.setIsOnly(true);
         return baseMapper.pageScoped(page, queryWrapper, dataScop3);
     }
-    //查询部门订单
-    public List<UserOrder> scoped( Wrapper<UserOrder> queryWrapper) {
 
-        return baseMapper.scoped( queryWrapper);
+    //查询部门订单
+    public List<UserOrder> scoped(Wrapper<UserOrder> queryWrapper) {
+
+        return baseMapper.scoped(queryWrapper);
     }
+
     //
 //    //手动修改订单
 //    public void updateOrderManual(UserOrder order) {
@@ -245,7 +252,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         userOrder.setDeliveryNumber(deliveryNumber);
         userOrder.setDeliveryTime(new Date());
         super.updateById(userOrder);
-        SubscribeVO subscribeVO=new SubscribeVO();
+        SubscribeVO subscribeVO = new SubscribeVO();
         subscribeVO.setLogisticsNo(deliveryNumber);
         subscribeVO.setLogisticsCode(deliveryCompanyCode);
         subscribeVO.setPhone(userOrder.getReceiverPhone());
@@ -254,8 +261,49 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        User byId = userService.getById(userOrder.getUserId());
+        String deliveryCompany = "";
+        switch (deliveryCompanyCode) {
+            case "jd":
+                deliveryCompany = "京东";
+                break; //可选
+            case "debangkuaidi":
+                deliveryCompany = "德邦";
+                break; //可选
+            case "shunfeng":
+                deliveryCompany = "顺丰";
+                break; //可选
+            case "jtexpress":
+                deliveryCompany = "极兔";
+                break; //可选
+            case "yuantong":
+                deliveryCompany = "圆通";
+                break; //可选
+            case "shentong":
+                deliveryCompany = "申通";
+                break; //可选
+            case "zhongtong":
+                deliveryCompany = "中通";
+                break; //可选
+            case "yunda":
+                deliveryCompany = "韵达";
+                break; //可选
+            case "youzhengguonei":
+                deliveryCompany = "邮政";
+                break; //可选
+            case "huitongkuaidi":
+                deliveryCompany = "百世";
+                break; //可选
+        }
+
+        //发送公众号通知
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        wxMpService.shipNotice(byId.getMpOpenId(), "您的订单已发货", userOrder.getOrderNo(), deliveryCompany, deliveryNumber,
+                df.format(LocalDateTime.now()), "点击查看详情", "pages/myOrder/myOrder");
+
     }
-    public void subscribe( SubscribeVO subscribeVO) throws Exception {
+
+    public void subscribe(SubscribeVO subscribeVO) throws Exception {
 
         SubscribeParameters subscribeParameters = new SubscribeParameters();
         subscribeParameters.setCallbackurl("https://pharos3.ewj100.com/purchase/order/subscribe_Callback");

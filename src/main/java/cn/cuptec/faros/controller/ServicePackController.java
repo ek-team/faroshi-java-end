@@ -682,7 +682,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             for (Integer paramDescId : specDescId1) {
                 List<String> thisSpecDescIds = new ArrayList<>();
                 for (SaleSpecGroup saleSpecGroup : list) {
-                    if (saleSpecGroup.getSaleSpecIds().indexOf(paramDescId+"") != -1) {
+                    if (saleSpecGroup.getSaleSpecIds().indexOf(paramDescId + "") != -1) {
                         String saleSpecIds = saleSpecGroup.getSaleSpecIds();
                         String[] split = saleSpecIds.split(",");
                         List<String> ids = Arrays.asList(split);
@@ -690,13 +690,13 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                     }
                 }
 
-                if(!CollectionUtils.isEmpty(specDescIds)){
-                    for(String id:thisSpecDescIds){
-                        if(specDescIds.contains(id)){
+                if (!CollectionUtils.isEmpty(specDescIds)) {
+                    for (String id : thisSpecDescIds) {
+                        if (specDescIds.contains(id)) {
                             specDescIds.add(id);
                         }
                     }
-                }else{
+                } else {
                     specDescIds.addAll(thisSpecDescIds);
 
                 }
@@ -710,7 +710,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             SaleSpecDesc saleSpecDescs1 = saleSpecDescService.getById(specDescId1.get(0));
 
 
-            SaleSpec saleSpec=  saleSpecService.getById(saleSpecDescs1.getSaleSpecId());
+            SaleSpec saleSpec = saleSpecService.getById(saleSpecDescs1.getSaleSpecId());
             List<SaleSpecDesc> list1 = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
                     .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
             for (SaleSpecDesc saleSpecDesc : list1) {
@@ -725,7 +725,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     }
 
     public static void main(String[] args) {
-       String a="2,23,3";
+        String a = "2,23,3";
         System.out.println(a.indexOf("2"));
     }
 
@@ -772,19 +772,6 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         newServicePack.setCreateTime(LocalDateTime.now());
         service.save(newServicePack);
 
-        //查询产品规格
-        List<ServicePackProductSpec> servicePackProductSpecs = servicePackProductSpecService.list(new QueryWrapper<ServicePackProductSpec>()
-                .lambda().eq(ServicePackProductSpec::getServicePackId, id));
-        if (!CollectionUtils.isEmpty(servicePackProductSpecs)) {
-            List<ServicePackProductSpec> newServicePackProductSpecs = new ArrayList<>();
-            for (ServicePackProductSpec servicePackProductSpec : servicePackProductSpecs) {
-                ServicePackProductSpec newServicePackProductSpec = new ServicePackProductSpec();
-                BeanUtils.copyProperties(servicePackProductSpec, newServicePackProductSpec, "id");
-                newServicePackProductSpec.setServicePackId(newServicePack.getId());
-                newServicePackProductSpecs.add(newServicePackProductSpec);
-            }
-            servicePackProductSpecService.saveBatch(newServicePackProductSpecs);
-        }
         //查询产品图片
         List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>()
                 .lambda().eq(ServicePackProductPic::getServicePackId, id));
@@ -799,20 +786,64 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
             servicePackProductPicService.saveBatch(newServicePackProductPics);
         }
-        //查询购买租用规格
+        //查询规格信息
         List<SaleSpec> saleSpecs = saleSpecService.list(new QueryWrapper<SaleSpec>()
                 .lambda().eq(SaleSpec::getServicePackId, id));
+        List<SaleSpecDesc> saleSpecDescList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(saleSpecs)) {
-
+            //查询规格值
+            List<Integer> saleSpecIds = saleSpecs.stream().map(SaleSpec::getId)
+                    .collect(Collectors.toList());
+            saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                    .in(SaleSpecDesc::getSaleSpecId, saleSpecIds));
             List<SaleSpec> newSaleSpecs = new ArrayList<>();
+
+            Map<Integer, List<SaleSpecDesc>> saleSpecDescMap = saleSpecDescList.stream()
+                    .collect(Collectors.groupingBy(SaleSpecDesc::getSaleSpecId));
+
+
             for (SaleSpec saleSpec : saleSpecs) {
                 SaleSpec newSaleSpec = new SaleSpec();
                 BeanUtils.copyProperties(saleSpec, newSaleSpec, "id");
                 newSaleSpec.setServicePackId(newServicePack.getId());
+                newSaleSpec.setOldId(saleSpec.getId());
                 newSaleSpecs.add(newSaleSpec);
+
+
             }
             saleSpecService.saveBatch(newSaleSpecs);
+            List<SaleSpecDesc> newSaleSpecDescs = new ArrayList<>();
+            for (SaleSpec saleSpec : newSaleSpecs) {
+                List<SaleSpecDesc> saleSpecDescs = saleSpecDescMap.get(saleSpec.getOldId());//规格值
+                if (!CollectionUtils.isEmpty(saleSpecDescs)) {
+
+                    for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
+                        SaleSpecDesc newSaleSpecDesc = new SaleSpecDesc();
+                        BeanUtils.copyProperties(saleSpecDesc, newSaleSpecDesc, "id");
+                        newSaleSpecDesc.setSaleSpecId(saleSpec.getId());
+                        newSaleSpecDescs.add(newSaleSpecDesc);
+                    }
+                }
+
+            }
+            if (!CollectionUtils.isEmpty(newSaleSpecDescs)) {
+                saleSpecDescService.saveBatch(newSaleSpecDescs);
+            }
         }
+        //查询规格组合值
+        List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda()
+                .eq(SaleSpecGroup::getServicePackId, id));
+        if (!CollectionUtils.isEmpty(saleSpecGroupList)) {
+            List<SaleSpecGroup> newSaleSpecGroups = new ArrayList<>();
+            for (SaleSpecGroup saleSpecGroup : saleSpecGroupList) {
+                SaleSpecGroup newSaleSpecGroup = new SaleSpecGroup();
+                BeanUtils.copyProperties(saleSpecGroup, newSaleSpecGroup, "id");
+                newSaleSpecGroup.setServicePackId(newServicePack.getId());
+                newSaleSpecGroups.add(newSaleSpecGroup);
+            }
+            saleSpecGroupService.saveBatch(newSaleSpecGroups);
+        }
+
 
         //查询服务信息
         List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>()

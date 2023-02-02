@@ -129,6 +129,60 @@ public class WxMpService {
         dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
         sendTemplateMsg(openId, templateId, url, dataList);
     }
+    //支付成功
+    public void paySuccessNotice(String openId, String first, String keyword1,
+                              String keyword2, String remark, String url) {
+        String templateId = "mzXslzSjZiMhCQJ6MQi_bcDJOVbDLl6sfLn6u_0gocI";
+
+        List<WxMpTemplateData> dataList = new ArrayList<>();
+        WxMpTemplateData wxMpTemplateData = new WxMpTemplateData();
+        wxMpTemplateData.setName("first");
+        wxMpTemplateData.setValue(first);
+        dataList.add(wxMpTemplateData);
+        WxMpTemplateData wxMpTemplateData1 = new WxMpTemplateData();
+        wxMpTemplateData1.setName("keyword1");
+        wxMpTemplateData1.setValue(keyword1);
+        dataList.add(wxMpTemplateData1);
+        WxMpTemplateData wxMpTemplateData2 = new WxMpTemplateData();
+        wxMpTemplateData2.setName("keyword2");
+        wxMpTemplateData2.setValue(keyword2);
+        dataList.add(wxMpTemplateData2);
+        dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
+        sendTemplateMsg(openId, templateId, url, dataList);
+    }
+    //发货通知
+    public void shipNotice(String openId, String first, String keyword1,
+                                 String keyword2,String keyword3,String keyword4, String remark, String url) {
+        String templateId = "4bNAEvxGtvR3itx2X6SzUOBiU8wtmby9tdEOhGU5a3I";
+
+        List<WxMpTemplateData> dataList = new ArrayList<>();
+        WxMpTemplateData wxMpTemplateData = new WxMpTemplateData();
+        wxMpTemplateData.setName("first");
+        wxMpTemplateData.setValue(first);
+        dataList.add(wxMpTemplateData);
+        WxMpTemplateData wxMpTemplateData1 = new WxMpTemplateData();
+        wxMpTemplateData1.setName("keyword1");
+        wxMpTemplateData1.setValue(keyword1);
+        dataList.add(wxMpTemplateData1);
+        WxMpTemplateData wxMpTemplateData2 = new WxMpTemplateData();
+        wxMpTemplateData2.setName("keyword2");
+        wxMpTemplateData2.setValue(keyword2);
+        dataList.add(wxMpTemplateData2);
+
+        WxMpTemplateData wxMpTemplateData3 = new WxMpTemplateData();
+        wxMpTemplateData3.setName("keyword3");
+        wxMpTemplateData3.setValue(keyword3);
+        dataList.add(wxMpTemplateData3);
+
+        WxMpTemplateData wxMpTemplateData4 = new WxMpTemplateData();
+        wxMpTemplateData4.setName("keyword4");
+        wxMpTemplateData4.setValue(keyword4);
+        dataList.add(wxMpTemplateData4);
+
+        dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
+        sendTemplateMsg(openId, templateId, url, dataList);
+    }
+
     //随访计划
     public void sendFollowUpPlanNotice(String openId, String first, String keyword1,
                               String keyword2, String url) {
