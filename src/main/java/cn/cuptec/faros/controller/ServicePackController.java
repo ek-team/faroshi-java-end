@@ -669,9 +669,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         LambdaQueryWrapper<SaleSpecGroup> wrapper = new QueryWrapper<SaleSpecGroup>().lambda()
                 .eq(SaleSpecGroup::getServicePackId, param.getServicePackId())
                 .gt(SaleSpecGroup::getStock, 0);
-        for (Integer str : param.getSpecDescId()) {
-            wrapper.and(wq0 -> wq0.like(SaleSpecGroup::getSaleSpecIds, str));
-        }
+//        for (Integer str : param.getSpecDescId()) {
+//            wrapper.and(wq0 -> wq0.like(SaleSpecGroup::getSaleSpecIds, str));
+//        }
 
 
         List<SaleSpecGroup> list = saleSpecGroupService.list(wrapper);
@@ -686,13 +686,20 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                         String saleSpecIds = saleSpecGroup.getSaleSpecIds();
                         String[] split = saleSpecIds.split(",");
                         List<String> ids = Arrays.asList(split);
-                        specDescIds.addAll(ids);
-
                         thisSpecDescIds.addAll(ids);
                     }
                 }
 
+                if(!CollectionUtils.isEmpty(specDescIds)){
+                    for(String id:thisSpecDescIds){
+                        if(specDescIds.contains(id)){
+                            specDescIds.add(id);
+                        }
+                    }
+                }else{
+                    specDescIds.addAll(thisSpecDescIds);
 
+                }
             }
 //            for (SaleSpecGroup saleSpecGroup : list) {
 //                String saleSpecIds = saleSpecGroup.getSaleSpecIds();

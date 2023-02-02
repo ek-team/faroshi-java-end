@@ -68,7 +68,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             chatMsg.setMsg(origionMessage.getMsg());
-            log.info("收到消息=======================");
+            log.info("收到消息======================="+origionMessage.toString());
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
             User byId1 = userService.getById(chatMsg.getFromUid());
             chatMsg.setUser(byId1);
