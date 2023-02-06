@@ -417,6 +417,38 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         return RestResponse.ok();
     }
 
+    /**
+     * 查询规格组合值根据条件筛选
+     */
+    @PostMapping("/listSpecGroup")
+    public RestResponse listSpecGroup(@RequestBody SaleSpecGroup saleSpecGroup) {
+        LambdaQueryWrapper<SaleSpecGroup> eq = new QueryWrapper<SaleSpecGroup>().lambda();
+        if (saleSpecGroup.getPrice() != null) {
+            eq.eq(SaleSpecGroup::getPrice, saleSpecGroup.getPrice());
+        }
+        if (saleSpecGroup.getRecovery() != null) {
+            eq.eq(SaleSpecGroup::getRecovery, saleSpecGroup.getRecovery());
+        }
+        if (saleSpecGroup.getStock() != null) {
+            eq.eq(SaleSpecGroup::getStock, saleSpecGroup.getStock());
+        }
+        if (saleSpecGroup.getRemark() != null) {
+            eq.eq(SaleSpecGroup::getRemark, saleSpecGroup.getRemark());
+        }
+        if (saleSpecGroup.getStatus() != null) {
+            eq.eq(SaleSpecGroup::getStatus, saleSpecGroup.getStatus());
+        }
+        if (saleSpecGroup.getRecoveryPrice() != null) {
+            eq.eq(SaleSpecGroup::getRecoveryPrice, saleSpecGroup.getRecoveryPrice());
+        }
+        if (saleSpecGroup.getServicePackId() != null) {
+            eq.eq(SaleSpecGroup::getServicePackId, saleSpecGroup.getServicePackId());
+        }
+        //规格值查询
+
+        List<SaleSpecGroup> list = saleSpecGroupService.list(eq);
+        return RestResponse.ok(list);
+    }
 
     /**
      * 服务包列表查询分页

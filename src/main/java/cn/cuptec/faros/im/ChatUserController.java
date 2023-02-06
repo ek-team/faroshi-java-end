@@ -59,6 +59,17 @@ public class ChatUserController {
         return RestResponse.ok(chatUser);
     }
 
+    /**
+     * 医生主动结束会话
+     */
+    @ApiOperation(value = "查询会话信息 聊天是否有效")
+    @GetMapping("/endChat")
+    public RestResponse endChat(@RequestParam("chatUserId") int chatUserId) {
+
+        ChatUser chatUser = chatUserService.getById(chatUserId);
+        chatUser.setServiceEndTime(LocalDateTime.now().minusDays(2));
+        return RestResponse.ok(chatUser);
+    }
 
     /**
      * 用户进入聊天 开始计时 使用服务

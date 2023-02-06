@@ -95,7 +95,12 @@ public class User extends Model<User> {
      */
     @TableField(exist = false)
     private Role[] roles;
-
+    @TableField(exist = false)
+    private String birthday;
+    @TableField(exist = false)
+    private String age;
+    @TableField(exist = false)
+    private String sexCode;
     @TableField(exist = false)
     private String deptName;
     @TableField(exist = false)

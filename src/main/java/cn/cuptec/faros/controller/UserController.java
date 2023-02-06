@@ -134,6 +134,11 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @GetMapping("/calculate")
     public RestResponse calculate(@RequestParam("idCard") String idCard) {
+
+        return RestResponse.ok(getAge(idCard));
+    }
+
+    private Map<String, String> getAge(String idCard) {
         String birthday = "";
         String age = "";
         Integer sexCode = 0;
@@ -145,14 +150,14 @@ public class UserController extends AbstractBaseController<UserService, User> {
         if (number.length == 15) {
             for (int x = 0; x < number.length; x++) {
                 if (!flag) {
-                    return RestResponse.ok(new HashMap<String, String>());
+                    return new HashMap<String, String>();
                 }
                 flag = Character.isDigit(number[x]);
             }
         } else if (number.length == 18) {
             for (int x = 0; x < number.length - 1; x++) {
                 if (!flag) {
-                    return RestResponse.ok(new HashMap<String, String>());
+                    return new HashMap<String, String>();
                 }
                 flag = Character.isDigit(number[x]);
             }
@@ -176,8 +181,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         map.put("birthday", birthday);
         map.put("age", age);
         map.put("sexCode", sexCode + "");
-
-        return RestResponse.ok(map);
+        return map;
     }
 
     /**
@@ -189,6 +193,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     public RestResponse deletePatientUser(@RequestParam("id") Integer id) {
         return RestResponse.ok(patientUserService.removeById(id));
     }
+
     /**
      * 查询用户就诊人详细
      *
@@ -207,6 +212,16 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @GetMapping("/info")
     public RestResponse<User> user_me() {
         User user = service.selectUserVoById(SecurityUtils.getUser().getId());
+        //生成年龄性别
+        String idCard = user.getIdCard();
+        if (!StringUtils.isEmpty(idCard)) {
+            Map<String, String> map = getAge(idCard);
+            user.setAge(map.get("age"));
+
+            user.setBirthday(map.get("birthday"));
+            user.setSexCode(map.get("sexCode"));//1-男0-女
+
+        }
         //查询医院信息
         List<User> users = new ArrayList<>();
         users.add(user);

@@ -20,6 +20,7 @@ public class ChatUserVO implements Comparable<ChatUserVO> {
      * 昵称
      */
     private String nickname;
+    private String patientName;
     private LocalDateTime clearTime;
     /**
      * 头像

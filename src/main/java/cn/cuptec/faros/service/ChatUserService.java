@@ -86,11 +86,13 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         }
         List<Integer> targetUids = new ArrayList<>();
         List<Integer> teamIds = new ArrayList<>();
+        List<Integer> patientUserIds = new ArrayList<>();
         for (ChatUser chatUser : chatUsers) {
             if (chatUser.getGroupType() == 0) {
                 targetUids.add(chatUser.getTargetUid());
             } else {
                 teamIds.add(chatUser.getTeamId());
+                patientUserIds.add(chatUser.getTargetUid());
             }
 
         }
@@ -100,11 +102,13 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             //查询所有人员头像
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .in(DoctorTeamPeople::getTeamId, teamIds));
+            Map<Integer, User> userMap = new HashMap<>();
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
+                userIds.addAll(patientUserIds);
                 List<User> users = (List<User>) userService.listByIds(userIds);
-                Map<Integer, User> userMap = users.stream()
+                userMap = users.stream()
                         .collect(Collectors.toMap(User::getId, t -> t));
                 for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
                     if (userMap.get(doctorTeamPeople.getUserId()) != null) {
@@ -127,6 +131,11 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     List<DoctorTeamPeople> doctorTeamPeopleList1 = doctorTeam.getDoctorTeamPeopleList();
                     chatUserVO.setDoctorTeamPeopleList(doctorTeamPeopleList1);
                     chatUserVO.setNickname(doctorTeam.getName());
+                    User user = userMap.get(chatUser.getTargetUid());
+                    if (user != null) {
+                        chatUserVO.setPatientName(user.getNickname());
+
+                    }
                     chatUserVO.setGroupType(1);
                     chatUserVO.setChatUserId(chatUser.getId());
                     chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
@@ -154,7 +163,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             List<User> users = (List<User>) userService.listByIds(targetUids);
             List<ChatUser> chatUsersList = new ArrayList<>();
             for (ChatUser chatUser : chatUsers) {
-                if (chatUser.getGroupType()==0) {
+                if (chatUser.getGroupType() == 0) {
                     chatUsersList.add(chatUser);
                 }
             }
