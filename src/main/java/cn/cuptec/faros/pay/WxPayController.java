@@ -70,6 +70,8 @@ public class WxPayController {
     private DiseasesService diseasesService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+    @Resource
+    private PatientUserService patientUserService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -106,14 +108,19 @@ public class WxPayController {
         UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda()
                 .eq(UserOrder::getOrderNo, outTradeNo));
         if (userOrder != null) {
+
+            if (!userOrder.getStatus().equals(1)) {
+                return RestResponse.ok();
+            }
             User userById = userService.getById(userOrder.getUserId());
             //发送公众号通知
             wxMpService.paySuccessNotice(userById.getMpOpenId(), "您的订单已支付成功!请耐心等待发货", userOrder.getOrderNo(), userOrder.getPayment().toString(),
                     "点击查看详情", "pages/myOrder/myOrder");
-
-
-            if (!userOrder.getStatus().equals(1)) {
-                return RestResponse.ok();
+            Integer patientUserId = userOrder.getPatientUserId();
+            PatientUser byId = patientUserService.getById(patientUserId);
+            if(byId!=null){
+                userById.setNickname(byId.getName());
+                userService.updateById(userById);
             }
             userOrder.setConfirmPayTime(new Date());
             userOrder.setTransactionId(transactionId);

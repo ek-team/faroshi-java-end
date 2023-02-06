@@ -189,6 +189,15 @@ public class UserController extends AbstractBaseController<UserService, User> {
     public RestResponse deletePatientUser(@RequestParam("id") Integer id) {
         return RestResponse.ok(patientUserService.removeById(id));
     }
+    /**
+     * 查询用户就诊人详细
+     *
+     * @return
+     */
+    @GetMapping("/getPatientUserById")
+    public RestResponse getPatientUserById(@RequestParam("id") Integer id) {
+        return RestResponse.ok(patientUserService.getById(id));
+    }
 
     /**
      * 获取个人信息

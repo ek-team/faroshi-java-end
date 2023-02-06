@@ -151,11 +151,11 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         } else {
             DoctorTeam doctorTeam = doctorTeamService.getById(patientOtherOrder.getDoctorTeamId());
             patientOtherOrder.setDeptId(doctorTeam.getDeptId());
-            //查询团队图文咨询申请价格
-            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
-            patientOtherOrder.setAmount(one.getPrice());
-            patientOtherOrder.setHour(one.getHour());
+//            //查询团队图文咨询申请价格
+//            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+//                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+//            patientOtherOrder.setAmount(one.getPrice());
+//            patientOtherOrder.setHour(one.getHour());
         }
         patientOtherOrderService.save(patientOtherOrder);
         PayResultData data = new PayResultData();

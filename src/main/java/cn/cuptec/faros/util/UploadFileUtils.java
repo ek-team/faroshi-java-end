@@ -1,6 +1,7 @@
 package cn.cuptec.faros.util;
 
 import cn.cuptec.faros.config.oss.OssProperties;
+import com.aliyun.oss.OSS;
 
 import java.io.File;
 
@@ -19,6 +20,12 @@ public class UploadFileUtils {
 
         AliOssUtils aliOssUtils = new AliOssUtils(ossProperties);
         return aliOssUtils.uploadFile(file, dir, fileName);
+
+    }
+    public static OSS getOssClient( OssProperties ossProperties) throws Exception {
+
+        AliOssUtils aliOssUtils = new AliOssUtils(ossProperties);
+        return aliOssUtils.getOssClient();
 
     }
 

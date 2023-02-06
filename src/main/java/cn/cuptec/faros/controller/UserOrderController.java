@@ -1,6 +1,9 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.common.utils.QrCodeUtil;
+import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.CalculatePriceResult;
@@ -8,10 +11,13 @@ import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ExcelUtil;
+import cn.cuptec.faros.util.UploadFileUtils;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.excel.EasyExcel;
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.model.PutObjectResult;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -21,6 +27,7 @@ import com.google.gson.Gson;
 import com.kuaidi100.sdk.response.SubscribePushParamResp;
 import com.kuaidi100.sdk.response.SubscribeResp;
 import com.kuaidi100.sdk.utils.SignUtils;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +36,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.*;
@@ -42,8 +51,10 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
+@AllArgsConstructor
 @RequestMapping("/purchase/order")
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
+    private final OssProperties ossProperties;
 
     @Resource
     private PatientUserService patientUserService;
@@ -65,6 +76,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private SaleSpecGroupService saleSpecGroupService;
     @Resource
     private SaleSpecDescService saleSpecDescService;
+    @Resource
+    private DoctorTeamService doctorTeamService;
 
     /**
      * 获取省的订单数量
@@ -284,7 +297,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setProvince(address.getProvince());
         userOrder.setArea(address.getArea());
         userOrder.setReceiverPhone(address.getAddresseePhone());
-        userOrder.setReceiverDetailAddress(address.getProvince()+address.getCity()+address.getArea()+address.getAddress());
+        userOrder.setReceiverDetailAddress(address.getProvince() + address.getCity() + address.getArea() + address.getAddress());
         userOrder.setReceiverRegion(address.getArea());
 
         ServicePack byId = servicePackService.getById(userOrder.getServicePackId());
@@ -328,9 +341,45 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         userOrder.setOrderType(orderType);
         service.save(userOrder);
+        //生成一个图片返回
+        String url="https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo="+userOrder.getOrderNo();
+        BufferedImage png = null;
+        try {
+            png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(),  "", url,300);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String name="";
+        //转换上传到oss
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        ImageOutputStream imOut = null;
+        try {
+            imOut = ImageIO.createImageOutputStream(bs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            ImageIO.write(png, "png", imOut);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        InputStream inputStream = new ByteArrayInputStream(bs.toByteArray());
+        try {
+            OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
+            Random random = new Random();
+             name = random.nextInt(10000)+ System.currentTimeMillis() + "_YES.png";
+            // 上传文件
+            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(),"poster/"+name,inputStream);
 
-        return RestResponse.ok(userOrder.getOrderNo());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
+        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/"+"poster/"+name;
+        return RestResponse.ok(resultStr);
+
     }
+
 
     /**
      * 购买者申请单的增加
@@ -500,8 +549,10 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
         }
         userOrder.setServicePack(servicePack);
+        userOrder.setDoctorTeamName(doctorTeamService.getById(userOrder.getDoctorTeamId()).getName());
         return RestResponse.ok(userOrder);
     }
+
     /**
      * 查询订单详细信息
      */
@@ -535,6 +586,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
         }
         userOrder.setServicePack(servicePack);
+        userOrder.setDoctorTeamName(doctorTeamService.getById(userOrder.getDoctorTeamId()).getName());
+
         return RestResponse.ok(userOrder);
     }
 

@@ -94,6 +94,10 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
         DoctorUserAction byId = service.getOne(new QueryWrapper<DoctorUserAction>()
                 .lambda().eq(DoctorUserAction::getTeamId, teamId));
         if(byId==null){
+            byId=new DoctorUserAction();
+            byId.setHour(0);
+            byId.setCount(0);
+            byId.setPrice(0.0);
             byId.setDoctorUserServiceSetUpId(3);
         }
         return RestResponse.ok(byId);

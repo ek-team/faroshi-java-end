@@ -5,11 +5,13 @@ import com.aliyun.oss.ClientConfiguration;
 import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.model.OSSObject;
 import com.aliyun.oss.model.PutObjectRequest;
+import com.aliyun.oss.model.PutObjectResult;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.AllArgsConstructor;
 import com.aliyun.oss.OSS;
 
 import java.io.*;
+import java.util.Random;
 import java.util.UUID;
 
 @AllArgsConstructor
@@ -44,6 +46,17 @@ public class AliOssUtils {
         // 解析结果
         String resultStr = "https://" + storageConfig.getBucket() + "." + storageConfig.getEndpoint() + "/" + key;
         return resultStr;
+    }
+    /**
+
+     */
+    public OSS getOssClient() {
+        // 创建OSSClient实例。
+        OSS ossClient = new OSSClientBuilder().build(storageConfig.getEndpoint(), storageConfig.getAccessKeyId(), storageConfig.getAccessKeySecret());
+
+
+
+        return ossClient;
     }
 
     /**
