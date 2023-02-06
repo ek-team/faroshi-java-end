@@ -38,7 +38,7 @@ public class User extends Model<User> {
 
     @JSONField(deserialize = false)
     private String mpOpenId;
-
+    private String idCard;
     //唯一键
     @JSONField(deserialize = false)
     private String unionId;

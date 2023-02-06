@@ -120,6 +120,7 @@ public class WxPayController {
             PatientUser byId = patientUserService.getById(patientUserId);
             if(byId!=null){
                 userById.setNickname(byId.getName());
+                userById.setIdCard(byId.getIdCard());
                 userService.updateById(userById);
             }
             userOrder.setConfirmPayTime(new Date());
