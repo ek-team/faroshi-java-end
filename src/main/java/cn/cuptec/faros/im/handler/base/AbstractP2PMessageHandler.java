@@ -65,7 +65,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
                 origionMessage.setMsg("图文咨询");
             }
-
+            if (origionMessage.getMsgType().equals(ChatProto.CONFIRM_STATUS)) {
+                origionMessage.setMsg("是否接受咨询");
+                origionMessage.setStr1("0");//0-待接收 1-接收 2-拒绝
+            }
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             chatMsg.setMsg(origionMessage.getMsg());
             log.info("收到消息======================="+origionMessage.toString());

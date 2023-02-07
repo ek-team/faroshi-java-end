@@ -15,7 +15,9 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,10 +61,9 @@ public class FollowUpPlanTask {
     }
 
     public static void main(String[] args) {
-        LocalDateTime noticeTime = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime thisNow = LocalDateTime.now();
-        java. time.Duration duration = java.time.Duration.between(thisNow,  noticeTime );
-        long minutes = duration.toMinutes();//分钟
-        System.out.println(minutes);
+        LocalDateTime noticeTime = LocalDateTime.now();
+        Map<LocalDateTime,String> map=new HashMap<>();
+        map.put(noticeTime,"ll");
+        System.out.println(map.get(noticeTime));
     }
 }

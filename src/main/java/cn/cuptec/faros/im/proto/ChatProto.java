@@ -46,6 +46,6 @@ public class ChatProto {
 
     public static final String FOLLOW_UP_PLAN = "FOLLOW_UP_PLAN"; //随访计划消息类型
     public static final String PIC_CONSULTATION = "PIC_CONSULTATION"; //图文咨询消息类型
-
+    public static final String CONFIRM_STATUS = "CONFIRM_STATUS"; //咨询消息医生确认消息
 }
 

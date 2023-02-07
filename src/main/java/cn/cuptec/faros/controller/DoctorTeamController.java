@@ -247,6 +247,26 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         return RestResponse.ok(doctorTeams);
     }
 
+    /**
+     * 查询医生所在的团队
+     *
+     * @return
+     */
+
+    @GetMapping("/queryMyTeamNoResultHospital")
+    public RestResponse queryMyTeamNoResultHospital() {
+        List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        if (CollectionUtils.isEmpty(list)) {
+            return RestResponse.ok(new ArrayList<>());
+        }
+        List<Integer> teamIds = list.stream().map(DoctorTeamPeople::getTeamId)
+                .collect(Collectors.toList());
+        List<DoctorTeam> doctorTeams = (List<DoctorTeam>) service.listByIds(teamIds);
+
+
+        return RestResponse.ok(doctorTeams);
+    }
 
     @Override
     protected Class<DoctorTeam> getEntityClass() {

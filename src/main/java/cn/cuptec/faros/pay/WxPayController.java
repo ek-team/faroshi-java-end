@@ -118,7 +118,7 @@ public class WxPayController {
                     "点击查看详情", "pages/myOrder/myOrder");
             Integer patientUserId = userOrder.getPatientUserId();
             PatientUser byId = patientUserService.getById(patientUserId);
-            if(byId!=null){
+            if (byId != null) {
                 userById.setNickname(byId.getName());
                 userById.setIdCard(byId.getIdCard());
                 userService.updateById(userById);
@@ -131,25 +131,24 @@ public class WxPayController {
             Integer doctorTeamId = userOrder.getDoctorTeamId();
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
-            ChatUser chatUser = new ChatUser();
-            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
-                List<UserFollowDoctor> userFollowDoctors = new ArrayList<>();
-                List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
-                        .collect(Collectors.toList());
-                for (Integer doctorId : userIds) {
-                    UserFollowDoctor userDoctorRelation = new UserFollowDoctor();
-                    userDoctorRelation.setDoctorId(doctorId);
-                    userDoctorRelation.setUserId(userOrder.getUserId());
-                    userFollowDoctors.add(userDoctorRelation);
-                }
-                userFollowDoctorService.remove(new QueryWrapper<UserFollowDoctor>().lambda()
-                        .eq(UserFollowDoctor::getUserId, userOrder.getUserId())
-                        .in(UserFollowDoctor::getDoctorId, userIds));
-                //添加医生和患者的好友关系
-                userFollowDoctorService.saveBatch(userFollowDoctors);
-                userIds.add(userOrder.getUserId());
-                chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId());
+
+            List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                    .collect(Collectors.toList());
+
+            UserFollowDoctor one = userFollowDoctorService.getOne(new QueryWrapper<UserFollowDoctor>().lambda()
+                    .eq(UserFollowDoctor::getUserId, userOrder.getUserId())
+                    .in(UserFollowDoctor::getTeamId, doctorTeamId));
+            if (one == null) {
+                //添加医生和团队的好友关系
+                UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
+                userFollowDoctor.setTeamId(doctorTeamId);
+                userFollowDoctor.setUserId(userOrder.getUserId());
+                userFollowDoctorService.save(userFollowDoctor);
             }
+
+            userIds.add(userOrder.getUserId());
+            ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId());
+
             //修改用户的病种
             Integer diseasesId = userOrder.getDiseasesId();
             if (diseasesId != null) {
@@ -191,6 +190,7 @@ public class WxPayController {
             if (patientOtherOrder.getStatus().equals(2)) {
                 return RestResponse.ok();
             }
+            patientOtherOrder.setTransactionId(transactionId);
             patientOtherOrder.setStatus(2);
             patientOtherOrderService.updateById(patientOtherOrder);
             Integer chatUserId = patientOtherOrder.getChatUserId();
@@ -289,14 +289,20 @@ public class WxPayController {
             orderRefundInfo.setSuccessTime(new Date());
             orderRefundInfo.setRefundStatus(2);
             orderRefundInfoService.updateById(orderRefundInfo);
+            if (refundStatus.equals("SUCCESS")) {
+                RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                        .eq(RetrieveOrder::getOrderId, outRefundNo));
+                retrieveOrder.setStatus(5);
+                retrieveOrderService.updateById(retrieveOrder);
+            }
         }
-        if (refundStatus.equals("SUCCESS")) {
-            RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                    .eq(RetrieveOrder::getOrderId, outRefundNo));
-            retrieveOrder.setStatus(5);
-            retrieveOrderService.updateById(retrieveOrder);
+        //图文咨询订单
+        PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
+                .eq(PatientOtherOrder::getOrderNo, outRefundNo));
+        if (patientOtherOrder != null) {
+            patientOtherOrder.setStatus(3);
+            patientOtherOrderService.updateById(patientOtherOrder);
         }
-
         return RestResponse.ok();
 
     }

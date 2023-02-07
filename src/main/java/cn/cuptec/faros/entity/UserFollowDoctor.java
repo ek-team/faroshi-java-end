@@ -15,6 +15,7 @@ public class UserFollowDoctor {
 
     private Integer userId;
     private Integer doctorId;
+    private Integer teamId;
     @TableField(exist = false)
     private User user;
     @TableField(exist = false)

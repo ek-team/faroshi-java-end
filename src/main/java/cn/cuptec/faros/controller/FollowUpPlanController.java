@@ -94,24 +94,18 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         List<FollowUpPlanNotice> followUpPlanNoticeList = new ArrayList<>();
         List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(followUpPlanContentList) && !CollectionUtils.isEmpty(userIds)) {
-            Collections.sort(followUpPlanContentList, (o1, o2) -> {
-                Collator collator = Collator.getInstance(Locale.CHINA);
-                return collator.compare(o1.getDay(), o2.getDay());
-            });
 
             List<Integer> countUserIds = new ArrayList<>();
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
+
                 for (Integer userId : userIds) {
                     //随访计划记录
-                    String day = followUpPlanContent.getDay();
-                    LocalDateTime noticeTime = LocalDateTime.now();
-                    if (!day.equals("1")) {
-                        noticeTime = noticeTime.plusDays(Integer.parseInt(day));
-                    }
+                    LocalDateTime pushDay = followUpPlanContent.getDay();
+
                     FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
                     followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                     followUpPlanNotice.setPatientUserId(userId);
-                    followUpPlanNotice.setNoticeTime(noticeTime);
+                    followUpPlanNotice.setNoticeTime(pushDay);
 
                     followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                     followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
@@ -273,11 +267,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
                     for (Integer userId : userIds) {
                         //随访计划记录
-                        String day = followUpPlanContent.getDay();
-                        LocalDateTime noticeTime = LocalDateTime.now();
-                        if (!day.equals("1")) {
-                            noticeTime = noticeTime.plusDays(Integer.parseInt(day));
-                        }
+                        LocalDateTime noticeTime = followUpPlanContent.getDay();
                         FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
                         followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                         followUpPlanNotice.setPatientUserId(userId);
@@ -309,18 +299,15 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 List<Integer> patientUserIds = followUpPlanNoticeList.stream().map(FollowUpPlanNotice::getPatientUserId)
                         .collect(Collectors.toList());
 
-                List<String> followUpPlanContentDays = oldFollowUpPlanContentList.stream().map(FollowUpPlanContent::getDay)
+                List<LocalDateTime> followUpPlanContentDays = oldFollowUpPlanContentList.stream().map(FollowUpPlanContent::getDay)
                         .collect(Collectors.toList());
 
                 for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
                     for (Integer userId : userIds) {
                         if (!patientUserIds.contains(userId)) {//处理有新增患者 给新的患者添加通知记录
                             //随访计划记录
-                            String day = followUpPlanContent.getDay();
-                            LocalDateTime noticeTime = LocalDateTime.now();
-                            if (!day.equals("1")) {
-                                noticeTime = noticeTime.plusDays(Integer.parseInt(day));
-                            }
+                            LocalDateTime noticeTime = followUpPlanContent.getDay();
+
                             FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
                             followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                             followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
@@ -345,11 +332,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         //处理新增计划给老的患者添加记录
                         if (!followUpPlanContentDays.contains(followUpPlanContent.getDay())) {
                             if (patientUserIds.contains(userId)) {
-                                String day = followUpPlanContent.getDay();
-                                LocalDateTime noticeTime = LocalDateTime.now();
-                                if (!day.equals("1")) {
-                                    noticeTime = noticeTime.plusDays(Integer.parseInt(day));
-                                }
+                                LocalDateTime noticeTime = followUpPlanContent.getDay();
+
                                 FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
                                 followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                                 followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());

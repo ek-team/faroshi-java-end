@@ -18,6 +18,7 @@ public class PatientOtherOrder {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private Integer userId;
+    private String transactionId;
     private Integer deptId;
     private Integer chatUserId;
     private Integer hour;//过期时间
@@ -34,7 +35,7 @@ public class PatientOtherOrder {
     private Integer kidneyFunction;//肾功能1-有 2-无
     private Integer pregnancy;//备孕1-有 2-无
     private Integer type;//1-图文咨询申请
-    //订单状态  1-待付款 2-已付款
+    //订单状态  1-待付款 2-已付款 3-已退款
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
     private String orderNo;
