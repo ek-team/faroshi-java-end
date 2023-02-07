@@ -12,6 +12,7 @@ import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ import java.util.List;
 /**
  * 医生积分管理
  */
+@Slf4j
 @RestController
 @RequestMapping("/doctorPoint")
 public class DoctorPointController extends AbstractBaseController<DoctorPointService, DoctorPoint> {
@@ -38,7 +40,10 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     private DoctorTeamService doctorTeamService;
     @Resource
     private WxPayFarosService wxPayFarosService;
-
+    @Resource
+    private UserServicePackageInfoService userServicePackageInfoService;
+    @Resource
+    private ChatUserService chatUserService;
     /**
      * 分页查询医生积分
      *
@@ -160,6 +165,21 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         patientOtherOrderService.save(patientOtherOrder);
         PayResultData data = new PayResultData();
         data.setOrderId(patientOtherOrder.getId());
+
+        log.info("patientOtherOrder.getUserServiceId()================="+patientOtherOrder.getUserServiceId());
+        UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
+        if(userServicePackageInfo!=null){
+            userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
+            userServicePackageInfoService.updateById(userServicePackageInfo);
+            ChatUser chatUser = chatUserService.getById(userServicePackageInfo.getChatUserId());
+
+            //修改聊天框使用时间
+            chatUser.setId(userServicePackageInfo.getChatUserId());
+            chatUser.setServiceStartTime(LocalDateTime.now());
+            chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
+            chatUserService.updateById(chatUser);
+        }
+
         return RestResponse.ok(data);
     }
 

@@ -71,7 +71,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             }
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             chatMsg.setMsg(origionMessage.getMsg());
-            log.info("收到消息======================="+origionMessage.toString());
+            log.info("收到消息=======================" + origionMessage.toString());
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
             User byId1 = userService.getById(chatMsg.getFromUid());
             chatMsg.setUser(byId1);
@@ -106,7 +106,11 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 }
                 //更新群聊 聊天时间和 最后聊天内容
                 byId.setLastChatTime(new Date());
-                byId.setLastMsg(origionMessage.getMsg());
+                if (origionMessage.getMsgType().equals(ChatProto.MESSAGE_PIC)) {
+                    byId.setLastMsg("[图片]");
+                } else {
+                    byId.setLastMsg(origionMessage.getMsg());
+                }
                 chatUserService.updateById(byId);
             } else {
                 origionMessage.setMyUserId(fromUser.getId());

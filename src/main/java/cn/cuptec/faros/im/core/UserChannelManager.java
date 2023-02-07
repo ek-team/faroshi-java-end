@@ -95,6 +95,7 @@ public class UserChannelManager {
      * @param channel
      */
     public static void removeChannel(Channel channel) {
+        
         try {
             SocketUser socketUser = getUserInfo(channel);
 

@@ -97,13 +97,7 @@ public class ChatUserController {
         if (userServicePackageInfo.getTotalCount().equals(userServicePackageInfo.getUseCount())) {
             return RestResponse.ok();
         }
-        userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
-        userServicePackageInfoService.updateById(userServicePackageInfo);
-        //修改聊天框使用时间
-        chatUser.setId(userServicePackageInfo.getChatUserId());
-        chatUser.setServiceStartTime(LocalDateTime.now());
-        chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
-        chatUserService.updateById(chatUser);
+
         return RestResponse.ok("1");
     }
 

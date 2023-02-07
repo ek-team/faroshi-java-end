@@ -39,6 +39,7 @@ public class PatientOtherOrder {
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
     private String orderNo;
+    private Integer userServiceId;
     @TableField(exist = false)
     private List<String> imageUrlList;
 }

@@ -295,7 +295,6 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
                 deliveryCompany = "百世";
                 break; //可选
         }
-
         //发送公众号通知
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         wxMpService.shipNotice(byId.getMpOpenId(), "您的订单已发货", userOrder.getOrderNo(), deliveryCompany, deliveryNumber,
