@@ -2,27 +2,26 @@ package cn.cuptec.faros.im;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
-import cn.cuptec.faros.entity.ChatMsg;
-import cn.cuptec.faros.entity.ChatUser;
-import cn.cuptec.faros.entity.UserServicePackageInfo;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.ChatUserVO;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.im.core.UserChannelManager;
-import cn.cuptec.faros.service.ChatMsgService;
-import cn.cuptec.faros.service.ChatUserService;
-import cn.cuptec.faros.service.UserServicePackageInfoService;
+import cn.cuptec.faros.service.*;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -37,6 +36,8 @@ public class ChatUserController {
     public RedisTemplate redisTemplate;
     @Resource
     private UserServicePackageInfoService userServicePackageInfoService;
+    @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
 
     /**
      * 查询会话信息 聊天是否有效
@@ -133,5 +134,57 @@ public class ChatUserController {
                         Wrappers.<ChatMsg>lambdaQuery()
                                 .notLike(ChatMsg::getReadUserIds, SecurityUtils.getUser().getId()));
         return RestResponse.ok(count + count1);
+    }
+
+    /**
+     * 设置全部已读
+     */
+    @GetMapping("/readAll")
+    public RestResponse readAll() {
+        //设置单聊
+        chatMsgService.update(Wrappers.<ChatMsg>lambdaUpdate()
+                .set(ChatMsg::getReadStatus, 1)
+                .eq(ChatMsg::getToUid, SecurityUtils.getUser().getId())
+        );
+        //设置群聊
+        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        if (CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+            return RestResponse.ok();
+
+
+        }
+        List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
+                .collect(Collectors.toList());
+        List<ChatUser> chatUserList = chatUserService.list(new QueryWrapper<ChatUser>().lambda().in(ChatUser::getTeamId, teamIds));
+        if (CollectionUtils.isEmpty(chatUserList)) {
+            return RestResponse.ok();
+
+        }
+        List<Integer> chatIds = chatUserList.stream().map(ChatUser::getId)
+                .collect(Collectors.toList());
+        List<ChatMsg> chatMsgs = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda().in(ChatMsg::getChatUserId, chatIds));
+        if (!CollectionUtils.isEmpty(chatMsgs)) {
+            List<ChatMsg> updateChatMsg = new ArrayList<>();
+            for (ChatMsg chatMsg : chatMsgs) {
+                String readUserIds = chatMsg.getReadUserIds();
+                if (StringUtils.isEmpty(readUserIds)) {
+                    readUserIds = SecurityUtils.getUser().getId() + "";
+                    chatMsg.setReadUserIds(readUserIds);
+                    updateChatMsg.add(chatMsg);
+                } else {
+                    if (readUserIds.indexOf(SecurityUtils.getUser().getId() + "") < 0) {
+                        readUserIds = readUserIds + "," + SecurityUtils.getUser().getId();
+                        chatMsg.setReadUserIds(readUserIds);
+                        updateChatMsg.add(chatMsg);
+                    }
+                }
+
+            }
+            if (!org.springframework.util.CollectionUtils.isEmpty(updateChatMsg)) {
+                chatMsgService.updateBatchById(updateChatMsg);
+            }
+        }
+        return RestResponse.ok();
     }
 }

@@ -325,7 +325,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         if (!CollectionUtils.isEmpty(saleSpecDescs)) {
             String saleSpecId = "";
             for (SaleSpecDesc saleSpecDesc : saleSpecDescs) {
-                saleSpecId = saleSpecId + "/" + saleSpecDesc.getName();
+                if (StringUtils.isEmpty(saleSpecId)) {
+                    saleSpecId = saleSpecDesc.getName();
+                } else {
+                    saleSpecId = saleSpecId + "/" + saleSpecDesc.getName();
+
+                }
 
             }
             userOrder.setSaleSpecId(saleSpecId);
@@ -342,14 +347,14 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setOrderType(orderType);
         service.save(userOrder);
         //生成一个图片返回
-        String url="https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo="+userOrder.getOrderNo();
+        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" + userOrder.getOrderNo();
         BufferedImage png = null;
         try {
-            png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(),  "", url,300);
+            png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String name="";
+        String name = "";
         //转换上传到oss
         ByteArrayOutputStream bs = new ByteArrayOutputStream();
         ImageOutputStream imOut = null;
@@ -367,15 +372,15 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         try {
             OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
             Random random = new Random();
-             name = random.nextInt(10000)+ System.currentTimeMillis() + "_YES.png";
+            name = random.nextInt(10000) + System.currentTimeMillis() + "_YES.png";
             // 上传文件
-            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(),"poster/"+name,inputStream);
+            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(), "poster/" + name, inputStream);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
-        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/"+"poster/"+name;
+        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
         return RestResponse.ok(resultStr);
 
     }
