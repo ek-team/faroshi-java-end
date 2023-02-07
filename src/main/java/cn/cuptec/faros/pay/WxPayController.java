@@ -307,6 +307,22 @@ public class WxPayController {
 
     }
 
+    @ApiOperation(value = "图文咨询订单申请退款")
+    @GetMapping("/otherRefundOrder")
+    public RestResponse otherRefundOrder(@RequestParam("orderNo") String orderNo) {
+        //退款
+        PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
+                .eq(PatientOtherOrder::getOrderNo, orderNo));
+
+        if (patientOtherOrder.getStatus().equals(2)) {
+            Dept dept = deptService.getById(patientOtherOrder.getDeptId());
+            String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + orderNo + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+            String result = HttpUtil.get(url);
+        }
+        return RestResponse.ok();
+
+    }
+
 }
 
 
