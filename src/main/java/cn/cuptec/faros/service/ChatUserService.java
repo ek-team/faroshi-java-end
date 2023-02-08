@@ -175,6 +175,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     tenantUser -> {
                         ChatUserVO chatUserVO = new ChatUserVO();
                         chatUserVO.setTargetUid(tenantUser.getId());
+                        chatUserVO.setPatientName(tenantUser.getNickname());
                         chatUserVO.setAvatar(tenantUser.getAvatar());
                         chatUserVO.setNickname(tenantUser.getNickname());
                         chatUserVO.setServiceEndTime(chatUserMap.get(tenantUser.getId()).getServiceEndTime());

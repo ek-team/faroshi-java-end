@@ -72,7 +72,6 @@ public class ChatUserController {
     /**
      * 医生主动结束会话
      */
-    @ApiOperation(value = "查询会话信息 聊天是否有效")
     @GetMapping("/endChat")
     public RestResponse endChat(@RequestParam("chatUserId") int chatUserId) {
 

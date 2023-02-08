@@ -1,15 +1,20 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.properties.RedisConfigProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,14 +24,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
  * 随访计划管理
  */
+@AllArgsConstructor
 @RestController
 @RequestMapping("/followUpPlan")
 public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanService, FollowUpPlan> {
+    private final RedisConfigProperties redisConfigProperties;
     @Resource
     private FollowUpPlanContentService followUpPlanContentService;
     @Resource
@@ -39,7 +47,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     private UserFollowDoctorService userFollowDoctorService;//医生和患者的好友表
     @Resource
     private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
-
+    @Autowired
+    public RedisTemplate redisTemplate;
     @Resource
     private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;//随访计划推送次数记录
     @Resource
@@ -109,6 +118,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
                     followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                     followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
+
+
                     followUpPlanNoticeList.add(followUpPlanNotice);
 
                     //通知次数记录
@@ -127,7 +138,21 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
             }
             followUpPlanNoticeCountService.saveBatch(followUpPlanNoticeCountList);
-            followUpPlanNoticeService.saveBatch(followUpPlanNoticeList);
+            if (!CollectionUtils.isEmpty(followUpPlanNoticeList)) {
+                followUpPlanNoticeService.saveBatch(followUpPlanNoticeList);
+                for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
+                    LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
+                    LocalDateTime thisNow = LocalDateTime.now();
+                    java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
+                    long hours = duration.toHours();//分钟
+                    String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
+                    redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
+
+                }
+
+            }
+
+
         }
 
         //判断是否是首次加入推送
@@ -199,6 +224,20 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         });
 
 
+    }
+
+    /**
+     * 测试redis通知
+     *
+     * @return
+     */
+    @GetMapping("/testRedis")
+    public RestResponse testRedis(@RequestParam("minutes") Integer minutes, @RequestParam("followUpPlanNoticeId") Integer followUpPlanNoticeId) {
+
+        String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNoticeId));
+        redisTemplate.opsForValue().set(keyRedis, followUpPlanNoticeId, minutes, TimeUnit.MINUTES);//设置过期时间
+
+        return RestResponse.ok(redisConfigProperties.getPassword());
     }
 
     /**
@@ -275,6 +314,11 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                         followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
                         followUpPlanNoticeList.add(followUpPlanNotice);
+                        LocalDateTime thisNow = LocalDateTime.now();
+                        java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
+                        long hours = duration.toHours();//分钟
+                        String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
+                        redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
 
 
                         //通知次数记录
@@ -315,6 +359,12 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                             followUpPlanNotice.setNoticeTime(noticeTime);
 
                             followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
+                            LocalDateTime thisNow = LocalDateTime.now();
+                            java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
+                            long hours = duration.toHours();//分钟
+                            String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
+                            redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
+
                             newFollowUpPlanNoticeList.add(followUpPlanNotice);
 
                             //通知次数记录
@@ -341,6 +391,12 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                                 followUpPlanNotice.setNoticeTime(noticeTime);
 
                                 followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
+                                LocalDateTime thisNow = LocalDateTime.now();
+                                java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
+                                long hours = duration.toHours();//分钟
+                                String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
+                                redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
+
                                 newFollowUpPlanNoticeList.add(followUpPlanNotice);
 
 
@@ -362,6 +418,16 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
                 if (!CollectionUtils.isEmpty(newFollowUpPlanNoticeList)) {
                     followUpPlanNoticeService.saveBatch(newFollowUpPlanNoticeList);
+                    for (FollowUpPlanNotice followUpPlanNotice : newFollowUpPlanNoticeList) {
+                        LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
+                        LocalDateTime thisNow = LocalDateTime.now();
+                        java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
+                        long hours = duration.toHours();//分钟
+                        String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
+                        redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
+
+                    }
+
                 }
                 if (!CollectionUtils.isEmpty(followUpPlanNoticeCountList)) {
                     followUpPlanNoticeCountService.saveBatch(followUpPlanNoticeCountList);
@@ -781,22 +847,22 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             userIds.add(followUpPlanNotice.getPatientUserId());
             followUpPlanContentIds.add(followUpPlanNotice.getFollowUpPlanContentId());
         }
-        Map<Integer, FollowUpPlan> followUpPlanMap=new HashMap<>();
-        if(!CollectionUtils.isEmpty(followUpPlanIds)){
+        Map<Integer, FollowUpPlan> followUpPlanMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanIds)) {
             List<FollowUpPlan> followUpPlans = (List<FollowUpPlan>) service.listByIds(followUpPlanIds);
             followUpPlanMap = followUpPlans.stream()
                     .collect(Collectors.toMap(FollowUpPlan::getId, t -> t));
         }
-        Map<Integer, FollowUpPlanContent> followUpPlanContentMap=new HashMap<>();
-    if(!CollectionUtils.isEmpty(followUpPlanContentIds)){
-        //查询推送内容
-        List<FollowUpPlanContent> followUpPlanContents = (List<FollowUpPlanContent>) followUpPlanContentService.listByIds(followUpPlanContentIds);
-        followUpPlanContentMap = followUpPlanContents.stream()
-                .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
-    }
+        Map<Integer, FollowUpPlanContent> followUpPlanContentMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(followUpPlanContentIds)) {
+            //查询推送内容
+            List<FollowUpPlanContent> followUpPlanContents = (List<FollowUpPlanContent>) followUpPlanContentService.listByIds(followUpPlanContentIds);
+            followUpPlanContentMap = followUpPlanContents.stream()
+                    .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
+        }
         Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
 
-        if(!CollectionUtils.isEmpty(followUpPlanIds)){
+        if (!CollectionUtils.isEmpty(followUpPlanIds)) {
             //查询计划推送次数
             List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
                     .lambda().eq(FollowUpPlanNoticeCount::getPatientUserId, patientId)

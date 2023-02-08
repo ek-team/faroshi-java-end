@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -289,12 +290,18 @@ public class WxPayController {
             orderRefundInfo.setSuccessTime(new Date());
             orderRefundInfo.setRefundStatus(2);
             orderRefundInfoService.updateById(orderRefundInfo);
+            RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                    .eq(RetrieveOrder::getOrderId, outRefundNo));
             if (refundStatus.equals("SUCCESS")) {
-                RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                        .eq(RetrieveOrder::getOrderId, outRefundNo));
+
                 retrieveOrder.setStatus(5);
                 retrieveOrderService.updateById(retrieveOrder);
             }
+            User userById = userService.getById(retrieveOrder.getUserId());
+            //发送公众号通知
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", orderRefundInfo.getRefundFee()+"", df.format(LocalDateTime.now()),df.format(LocalDateTime.now()),
+                    "点击查看详情", "pages/myOrder/myOrder");
         }
         //图文咨询订单
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()

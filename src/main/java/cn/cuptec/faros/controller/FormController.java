@@ -4,10 +4,7 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
-import cn.cuptec.faros.service.FormOptionsService;
-import cn.cuptec.faros.service.FormService;
-import cn.cuptec.faros.service.FormSettingService;
-import cn.cuptec.faros.service.UserService;
+import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +31,8 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     private FormSettingService formSettingService;
     @Resource
     private UserService userService;
+    @Resource
+    private FormUserDataService formUserDataService;
 
     /**
      * 添加
@@ -177,6 +177,13 @@ public class FormController extends AbstractBaseController<FormService, Form> {
 
 
         byId.setFormSettings(list);
+        //查询用户填写的表单数据
+        //题目数据
+        List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda().eq(FormUserData::getFormId, id)
+                .eq(FormUserData::getUserId, SecurityUtils.getUser().getId()));
+        List<FormUserData> collect = formUserDataList.stream()
+                .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
+        byId.setFormUserDataList(collect);
         return RestResponse.ok(byId);
     }
 

@@ -242,7 +242,17 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @GetMapping("/infoByUid/{uid}")
     public RestResponse<User> user_me(@PathVariable int uid) {
-        return RestResponse.ok(service.getById(uid));
+        User user = service.getById(uid);
+        String idCard = user.getIdCard();
+        if (!StringUtils.isEmpty(idCard)) {
+            Map<String, String> map = getAge(idCard);
+            user.setAge(map.get("age"));
+
+            user.setBirthday(map.get("birthday"));
+            user.setSexCode(map.get("sexCode"));//1-男0-女
+
+        }
+        return RestResponse.ok(user);
     }
 
     @GetMapping("/getByUid")
@@ -250,7 +260,18 @@ public class UserController extends AbstractBaseController<UserService, User> {
         if (uid == null && SecurityUtils.getUser() != null) {
             uid = SecurityUtils.getUser().getId();
         }
-        return RestResponse.ok(service.getById(uid));
+        //生成年龄性别
+        User user = service.getById(uid);
+        String idCard = user.getIdCard();
+        if (!StringUtils.isEmpty(idCard)) {
+            Map<String, String> map = getAge(idCard);
+            user.setAge(map.get("age"));
+
+            user.setBirthday(map.get("birthday"));
+            user.setSexCode(map.get("sexCode"));//1-男0-女
+
+        }
+        return RestResponse.ok(user);
     }
 
     /**

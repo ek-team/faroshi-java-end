@@ -17,7 +17,9 @@ public class FormUserData extends Model<FormUserData> {
     private Integer id;
 
     private Integer orderId;
+    private Integer str;
     private Integer userId;
+    private Integer doctorId;
     private Integer formId;//表单id
 
     private Integer formSettingId;//选项id

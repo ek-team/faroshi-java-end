@@ -78,6 +78,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private SaleSpecDescService saleSpecDescService;
     @Resource
     private DoctorTeamService doctorTeamService;
+    @Resource
+    private cn.cuptec.faros.service.WxMpService wxMpService;
 
     /**
      * 获取省的订单数量
@@ -238,6 +240,20 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @PutMapping("/manage/updateOrder")
     public RestResponse updateOrderManual(@RequestBody UserOrder order) {
         service.updateById(order);
+
+        return RestResponse.ok();
+    }
+
+    //上传发票
+    @PutMapping("/uploadBillImage")
+    public RestResponse uploadBillImage(@RequestBody UserOrder order) {
+        service.updateById(order);
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        UserOrder byId = service.getById(order.getId());
+        User userById = userService.getById(byId.getUserId());
+
+        wxMpService.faPiaoNotice(userById.getMpOpenId(), "发票已上传", byId.getOrderNo(), byId.getPayment() + "", userById.getNickname(),
+                "点击查看详情", "pages/myOrder/myOrder");
         return RestResponse.ok();
     }
 

@@ -34,29 +34,29 @@ public class FollowUpPlanTask {
      */
      @Scheduled(cron = "0 0 1 * * ?")
     public void cancelOrder() {
-        //生成今天的推送任务 存入redis过期推送
-         LocalDate now = LocalDate.now();
-         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-         String format = df.format(now);
-         String startTime = format + " 00:00:00";
-         String endTime = format + " 24:00:00";
-         List<FollowUpPlanNotice> list = followUpPlanNoticeService.list(new QueryWrapper<FollowUpPlanNotice>().lambda()
-                 .ge(FollowUpPlanNotice::getNoticeTime, startTime)
-                 .le(FollowUpPlanNotice::getNoticeTime, endTime));
-         if(!CollectionUtils.isEmpty(list)){
-            for(FollowUpPlanNotice followUpPlanNotice:list){
-                LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
-                LocalDateTime thisNow = LocalDateTime.now();
-                java. time.Duration duration = java.time.Duration.between(thisNow,  noticeTime );
-                long minutes = duration.toMinutes();//分钟
-                //加入redis
-                String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-                redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), minutes, TimeUnit.MINUTES);//设置过期时间
-
-
-            }
-
-         }
+//        //生成今天的推送任务 存入redis过期推送
+//         LocalDate now = LocalDate.now();
+//         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//         String format = df.format(now);
+//         String startTime = format + " 00:00:00";
+//         String endTime = format + " 24:00:00";
+//         List<FollowUpPlanNotice> list = followUpPlanNoticeService.list(new QueryWrapper<FollowUpPlanNotice>().lambda()
+//                 .ge(FollowUpPlanNotice::getNoticeTime, startTime)
+//                 .le(FollowUpPlanNotice::getNoticeTime, endTime));
+//         if(!CollectionUtils.isEmpty(list)){
+//            for(FollowUpPlanNotice followUpPlanNotice:list){
+//                LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
+//                LocalDateTime thisNow = LocalDateTime.now();
+//                java. time.Duration duration = java.time.Duration.between(thisNow,  noticeTime );
+//                long minutes = duration.toMinutes();//分钟
+//                //加入redis
+//                String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
+//                redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), minutes, TimeUnit.MINUTES);//设置过期时间
+//
+//
+//            }
+//
+//         }
 
     }
 

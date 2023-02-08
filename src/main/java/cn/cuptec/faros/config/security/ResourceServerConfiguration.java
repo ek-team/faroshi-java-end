@@ -148,7 +148,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/purchase/order/exportOrder",
                         "/userServicePackageInfo/listByIdCard",
                         "/wxpay/notifyRefunds",
-                        "/purchase/order/user/orderDetailByOrderNo"
+                        "/purchase/order/user/orderDetailByOrderNo",
+                        "/followUpPlan/testRedis"
 
                 )
                 .permitAll()
@@ -179,7 +180,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
     }
 
     @Bean
-    public AuthenticationFailureHandler mobileLoginFailureHandler(){
+    public AuthenticationFailureHandler mobileLoginFailureHandler() {
         return MobileLoginFailureHandler.builder()
                 .objectMapper(objectMapper)
                 .build();
