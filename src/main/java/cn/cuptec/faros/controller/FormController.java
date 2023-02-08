@@ -175,15 +175,17 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             }
         }
 
+        if(byId!=null){
+            byId.setFormSettings(list);
+            //查询用户填写的表单数据
+            //题目数据
+            List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda().eq(FormUserData::getFormId, id)
+                    .eq(FormUserData::getUserId, SecurityUtils.getUser().getId()));
+            List<FormUserData> collect = formUserDataList.stream()
+                    .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
+            byId.setFormUserDataList(collect);
+        }
 
-        byId.setFormSettings(list);
-        //查询用户填写的表单数据
-        //题目数据
-        List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda().eq(FormUserData::getFormId, id)
-                .eq(FormUserData::getUserId, SecurityUtils.getUser().getId()));
-        List<FormUserData> collect = formUserDataList.stream()
-                .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
-        byId.setFormUserDataList(collect);
         return RestResponse.ok(byId);
     }
 
