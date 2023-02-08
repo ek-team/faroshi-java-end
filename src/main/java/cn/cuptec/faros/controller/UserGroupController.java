@@ -50,7 +50,7 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
     public RestResponse save(@RequestBody UserGroup userGroup) {
         userGroup.setCreateUserId(SecurityUtils.getUser().getId());
         service.save(userGroup);
-        if(!CollectionUtils.isEmpty(userGroup.getUserIds())){
+        if (!CollectionUtils.isEmpty(userGroup.getUserIds())) {
             List<Integer> userIds = userGroup.getUserIds();
             List<UserGroupRelationUser> userGroupRelationUsers = new ArrayList<>();
             for (Integer userId : userIds) {
@@ -125,6 +125,26 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
 
 
         return RestResponse.ok();
+    }
+
+    /**
+     * 获取分组详情
+     *
+     * @return
+     */
+    @GetMapping("/getById")
+    public RestResponse getById(@RequestParam("id") Integer id) {
+        UserGroup byId = service.getById(id);
+        List<UserGroupRelationUser> list = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>().lambda()
+                .eq(UserGroupRelationUser::getUserGroupId, id));
+        if (!CollectionUtils.isEmpty(list)) {
+
+            List<Integer> userIds = list.stream().map(UserGroupRelationUser::getUserId)
+                    .collect(Collectors.toList());
+            List<User> users = (List<User>) userService.listByIds(userIds);
+            byId.setUsers(users);
+        }
+        return RestResponse.ok(byId);
     }
 
     /**
@@ -210,8 +230,14 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
             userGroup.setCount(count);
         }
         //查询未分组数量
-        int count = userFollowDoctorService.count(new QueryWrapper<UserFollowDoctor>().lambda()
-                .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId()));
+        LambdaQueryWrapper<UserFollowDoctor> eq = new QueryWrapper<UserFollowDoctor>().lambda();
+        if (teamId != null) {
+            eq.eq(UserFollowDoctor::getTeamId, teamId);
+        } else {
+            eq.eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
+        }
+
+        int count = userFollowDoctorService.count(eq);
 
         UserGroup userGroup = new UserGroup();
         userGroup.setCount(count);
@@ -219,6 +245,33 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
         userGroup.setId(-1);
         userGroups.add(0, userGroup);
         return RestResponse.ok(userGroups);
+    }
+
+    /**
+     * 查询可分配分组的患者
+     *
+     * @return
+     */
+    @GetMapping("/getUserNoGroup")
+    public RestResponse getUserNoGroup(@RequestParam(value = "teamId", required = false) Integer teamId) {
+
+        //查询未分组数量
+        LambdaQueryWrapper<UserFollowDoctor> eq = new QueryWrapper<UserFollowDoctor>().lambda()
+                .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
+        if (teamId != null) {
+            eq.eq(UserFollowDoctor::getTeamId, teamId);
+        } else {
+            eq.eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
+        }
+
+        List<UserFollowDoctor> userFollowDoctorList = userFollowDoctorService.list(eq);
+        if (CollectionUtils.isEmpty(userFollowDoctorList)) {
+            return RestResponse.ok();
+        }
+        List<Integer> userIds = userFollowDoctorList.stream().map(UserFollowDoctor::getUserId)
+                .collect(Collectors.toList());
+
+        return RestResponse.ok(userService.listByIds(userIds));
     }
 
     /**

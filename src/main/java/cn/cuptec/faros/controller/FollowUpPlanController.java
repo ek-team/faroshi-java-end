@@ -9,10 +9,12 @@ import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
@@ -63,6 +65,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     private ChatMsgService chatMsgService;
     @Resource
     private HospitalInfoService hospitalInfoService;
+    @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
 
     /**
      * 添加随访计划
@@ -143,10 +147,13 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
                     LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
                     LocalDateTime thisNow = LocalDateTime.now();
+                    if (noticeTime.isBefore(thisNow)) {
+                        noticeTime = noticeTime.plusHours(1);
+                    }
                     java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
-                    long hours = duration.toHours();//分钟
+                    long hours = duration.toMinutes();//分钟
                     String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-                    redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
+                    redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
 
                 }
 
@@ -156,9 +163,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         }
 
         //判断是否是首次加入推送
-        if (followUpPlan.getPushType() != null && followUpPlan.getPushType() == 1) {
-            pushFollowUpPlan(followUpPlan.getCreateUserId());
-        }
+//        if (followUpPlan.getPushType() != null && followUpPlan.getPushType() == 1) {
+//            pushFollowUpPlan(followUpPlan.getCreateUserId());
+//        }
         return RestResponse.ok(followUpPlan);
     }
 
@@ -315,10 +322,13 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
                         followUpPlanNoticeList.add(followUpPlanNotice);
                         LocalDateTime thisNow = LocalDateTime.now();
+                        if (noticeTime.isBefore(thisNow)) {
+                            noticeTime = noticeTime.plusHours(1);
+                        }
                         java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
-                        long hours = duration.toHours();//分钟
+                        long hours = duration.toMinutes();//分钟
                         String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-                        redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
+                        redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
 
 
                         //通知次数记录
@@ -359,11 +369,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                             followUpPlanNotice.setNoticeTime(noticeTime);
 
                             followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
-                            LocalDateTime thisNow = LocalDateTime.now();
-                            java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
-                            long hours = duration.toHours();//分钟
-                            String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-                            redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
 
                             newFollowUpPlanNoticeList.add(followUpPlanNotice);
 
@@ -380,7 +385,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                             }
                         }
                         //处理新增计划给老的患者添加记录
-                        if (!followUpPlanContentDays.contains(followUpPlanContent.getDay())) {
+                        if (!followUpPlanContentDays.contains(followUpPlanContent.getDay()) && followUpPlanContent.getId() == null) {
                             if (patientUserIds.contains(userId)) {
                                 LocalDateTime noticeTime = followUpPlanContent.getDay();
 
@@ -391,11 +396,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                                 followUpPlanNotice.setNoticeTime(noticeTime);
 
                                 followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
-                                LocalDateTime thisNow = LocalDateTime.now();
-                                java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
-                                long hours = duration.toHours();//分钟
-                                String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-                                redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
 
                                 newFollowUpPlanNoticeList.add(followUpPlanNotice);
 
@@ -421,10 +421,14 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     for (FollowUpPlanNotice followUpPlanNotice : newFollowUpPlanNoticeList) {
                         LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
                         LocalDateTime thisNow = LocalDateTime.now();
+                        if (noticeTime.isBefore(thisNow)) {
+                            noticeTime = noticeTime.plusHours(1);
+                        }
                         java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
-                        long hours = duration.toHours();//分钟
+
+                        long hours = duration.toMinutes();//分钟
                         String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-                        redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.HOURS);//设置过期时间
+                        redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
 
                     }
 
@@ -504,8 +508,18 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
      */
     @GetMapping("/getPatientUserByDoctor")
     public RestResponse getPatientUserByDoctor() {
-        List<UserFollowDoctor> list = userFollowDoctorService.list(new QueryWrapper<UserFollowDoctor>().lambda()
-                .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId()));
+        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+
+        LambdaQueryWrapper<UserFollowDoctor> wapper = new QueryWrapper<UserFollowDoctor>().lambda()
+                .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
+        if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+            List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
+                    .collect(Collectors.toList());
+            wapper.or();
+            wapper.in(UserFollowDoctor::getTeamId, teamIds);
+        }
+        List<UserFollowDoctor> list = userFollowDoctorService.list(wapper);
         if (CollectionUtils.isEmpty(list)) {
             return RestResponse.ok();
         }
@@ -721,6 +735,51 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         }
         return RestResponse.ok(list);
     }
+    private static Map<String, String> getAge(String idCard) {
+        String birthday = "";
+        String age = "";
+        Integer sexCode = 0;
+
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        char[] number = idCard.toCharArray();
+        boolean flag = true;
+
+        if (number.length == 15) {
+            for (int x = 0; x < number.length; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        } else if (number.length == 18) {
+            for (int x = 0; x < number.length - 1; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        }
+
+        if (flag && idCard.length() == 15) {
+            birthday = "19" + idCard.substring(6, 8) + "-"
+                    + idCard.substring(8, 10) + "-"
+                    + idCard.substring(10, 12);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 3, idCard.length())) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt("19" + idCard.substring(6, 8))) + "";
+        } else if (flag && idCard.length() == 18) {
+            birthday = idCard.substring(6, 10) + "-"
+                    + idCard.substring(10, 12) + "-"
+                    + idCard.substring(12, 14);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 4, idCard.length() - 1)) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt(idCard.substring(6, 10))) + "";
+        }
+
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("birthday", birthday);
+        map.put("age", age);
+        map.put("sexCode", sexCode + "");
+        return map;
+    }
 
     /**
      * 医生端查询患者详情
@@ -730,6 +789,16 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @GetMapping("/getPatientDetail")
     public RestResponse getPatientDetail(@RequestParam("patientId") Integer patientId) {
         User user = userService.getById(patientId);
+        //生成年龄性别
+        String idCard = user.getIdCard();
+        if (!StringUtils.isEmpty(idCard)) {
+            Map<String, String> map = getAge(idCard);
+            user.setAge(map.get("age"));
+
+            user.setBirthday(map.get("birthday"));
+            user.setSexCode(map.get("sexCode"));//1-男0-女
+
+        }
         //查询患者的所有计划
         LocalDate now = LocalDate.now();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");

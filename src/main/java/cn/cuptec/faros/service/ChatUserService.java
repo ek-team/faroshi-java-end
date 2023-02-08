@@ -133,10 +133,11 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     chatUserVO.setNickname(doctorTeam.getName());
                     User user = userMap.get(chatUser.getTargetUid());
                     if (user != null) {
-                        chatUserVO.setPatientName(user.getNickname());
-
+                        chatUserVO.setPatientName(user.getPatientName());
+                        chatUserVO.setPatientAvatar(user.getAvatar());
                     }
                     chatUserVO.setGroupType(1);
+
                     chatUserVO.setChatUserId(chatUser.getId());
                     chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
                     chatUserVO.setServiceStartTime(chatUser.getServiceStartTime());
@@ -175,8 +176,9 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     tenantUser -> {
                         ChatUserVO chatUserVO = new ChatUserVO();
                         chatUserVO.setTargetUid(tenantUser.getId());
-                        chatUserVO.setPatientName(tenantUser.getNickname());
+                        chatUserVO.setPatientName(tenantUser.getPatientName());
                         chatUserVO.setAvatar(tenantUser.getAvatar());
+                        chatUserVO.setPatientAvatar(tenantUser.getAvatar());
                         chatUserVO.setNickname(tenantUser.getNickname());
                         chatUserVO.setServiceEndTime(chatUserMap.get(tenantUser.getId()).getServiceEndTime());
                         chatUserVO.setServiceStartTime(chatUserMap.get(tenantUser.getId()).getServiceStartTime());

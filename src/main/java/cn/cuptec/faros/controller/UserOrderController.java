@@ -767,7 +767,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         if (!StringUtils.isEmpty(receiverPhone) && !receiverPhone.equals("null")) {
             queryWrapper.eq("user_order.receiver_phone", receiverPhone);
         }
-        if (!StringUtils.isEmpty(startTime)) {
+        if (!StringUtils.isEmpty(startTime) && !startTime.equals("null")) {
             if (StringUtils.isEmpty(endTime)) {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -801,6 +801,25 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     userOrderExcel.setOrderNo(userOrder.getOrderNo());
                     userOrderExcel.setUserName(userOrder.getPatientUserName());
                     userOrderExcel.setPayment(userOrder.getPayment().toString());
+                    userOrderExcel.setPatientUserIdCard(userOrder.getPatientUserIdCard());
+                    userOrderExcel.setDoctorTeamName(userOrder.getDoctorTeamName());
+                    if (userOrder.getPayTime() != null) {
+                        userOrderExcel.setPayTime(df.format(userOrder.getPayTime()));
+
+                    } else {
+                        userOrderExcel.setPayTime("");
+
+                    }
+                    userOrderExcel.setHospitalName(userOrder.getHospitalName());
+                    if (userOrder.getDeliveryDate() != null) {
+                        userOrderExcel.setDeliveryDate(df.format(userOrder.getDeliveryDate()));
+                    } else {
+                        userOrderExcel.setDeliveryDate("");
+
+                    }
+
+                    userOrderExcel.setReceiverName(userOrder.getReceiverName());
+                    userOrderExcel.setReceiverDetailAddress(userOrder.getReceiverDetailAddress());
                     String status = "";
                     switch (userOrder.getStatus()) {
                         case 1:

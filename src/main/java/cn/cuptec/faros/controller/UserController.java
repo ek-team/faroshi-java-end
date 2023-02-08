@@ -138,7 +138,8 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return RestResponse.ok(getAge(idCard));
     }
 
-    private Map<String, String> getAge(String idCard) {
+
+    private static Map<String, String> getAge(String idCard) {
         String birthday = "";
         String age = "";
         Integer sexCode = 0;

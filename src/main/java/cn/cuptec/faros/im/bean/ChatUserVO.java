@@ -26,6 +26,7 @@ public class ChatUserVO implements Comparable<ChatUserVO> {
      * 头像
      */
     private String avatar;
+    private String patientAvatar;
     private List<DoctorTeamPeople> doctorTeamPeopleList;
     /**
      * 最后通讯时间

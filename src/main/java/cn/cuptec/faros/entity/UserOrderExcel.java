@@ -26,4 +26,28 @@ public class UserOrderExcel {
     @ColumnWidth(10)
     @ExcelProperty(value = "买家", index = 5)
     private String userName;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "支付时间", index = 6)
+    private String payTime;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "就诊人", index = 7)
+    private String patientUserName;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "期望发货时间", index = 8)
+    private String deliveryDate;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "医院", index = 9)
+    private String hospitalName;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "团队", index = 10)
+    private String doctorTeamName;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "身份证号", index = 11)
+    private String patientUserIdCard;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "收货人姓名", index = 12)
+    private String receiverName;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "收货人地址", index = 13)
+    private String receiverDetailAddress;//
 }

@@ -23,4 +23,6 @@ public class UserGroup {
     private Integer count;
     @TableField(exist = false)
     private List<Integer> userIds;
+    @TableField(exist = false)
+    private List<User> users;
 }
