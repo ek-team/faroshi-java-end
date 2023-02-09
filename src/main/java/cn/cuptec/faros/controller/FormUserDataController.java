@@ -161,7 +161,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             form.setFormUserDataList(collect);
 
         }
-        return RestResponse.ok(formList);
+        return RestResponse.ok(formList.get(0));
     }
 
     @Override
