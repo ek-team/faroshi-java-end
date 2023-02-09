@@ -126,5 +126,6 @@ public class UserOrder {
 
     //确认收货时间
     private LocalDateTime revTime;
-
+    //产品图片
+    private String productPic;
 }

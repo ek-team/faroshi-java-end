@@ -9,14 +9,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -175,15 +173,47 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             }
         }
 
-        if(byId!=null){
+        if (byId != null) {
             byId.setFormSettings(list);
             //查询用户填写的表单数据
             //题目数据
-            List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda().eq(FormUserData::getFormId, id)
-                    .eq(FormUserData::getUserId, SecurityUtils.getUser().getId()));
-            List<FormUserData> collect = formUserDataList.stream()
-                    .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
-            byId.setFormUserDataList(collect);
+            List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda()
+                    .eq(FormUserData::getFormId, id)
+                    .eq(FormUserData::getUserId, SecurityUtils.getUser().getId())
+                    .eq(FormUserData::getDoctorId, byId.getCreateUserId()));
+            if (!CollectionUtils.isEmpty(formUserDataList)) {
+                for (FormUserData formUserData : formUserDataList) {
+                    if (!StringUtils.isEmpty(formUserData.getAnswer())) {
+                        Object answer = formUserData.getAnswer();
+                        String s = answer.toString();
+                        if (s.indexOf("[") >= 0) {
+                            String replace = s.replace("[", "");
+                            String replace1 = replace.replace("]", "");
+                            String replace2 = replace1.replace("\"", "");
+
+                            String[] split = replace2.split(",");
+                            List<String> strings = Arrays.asList(split);
+                            if (formUserData.getType().equals("6")) {
+                                List<Integer> ans = new ArrayList<>();
+                                for (String str : strings) {
+                                    ans.add(Integer.parseInt(str));
+                                }
+                                formUserData.setAnswer(ans);
+                            } else {
+
+                                formUserData.setAnswer(strings);
+                            }
+
+                        }
+
+                    }
+
+                }
+                List<FormUserData> collect = formUserDataList.stream()
+                        .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
+                byId.setFormUserDataList(collect);
+            }
+
         }
 
         return RestResponse.ok(byId);

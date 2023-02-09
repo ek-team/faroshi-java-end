@@ -300,7 +300,49 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         return RestResponse.ok(saleSpecGroup);
     }
+    /**
+     * 根据订单id生成分享图片
+     */
+    @GetMapping("/shareOrder")
+    public RestResponse shareOrder(@RequestParam("orderNo") String orderNo) {
+        //生成一个图片返回
+        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" +orderNo;
+        BufferedImage png = null;
+        try {
+            png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String name = "";
+        //转换上传到oss
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        ImageOutputStream imOut = null;
+        try {
+            imOut = ImageIO.createImageOutputStream(bs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            ImageIO.write(png, "png", imOut);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        InputStream inputStream = new ByteArrayInputStream(bs.toByteArray());
+        try {
+            OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
+            Random random = new Random();
+            name = random.nextInt(10000) + System.currentTimeMillis() + "_YES.png";
+            // 上传文件
+            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(), "poster/" + name, inputStream);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
+        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
+        return RestResponse.ok(resultStr);
+
+    }
     /**
      * 生成订单
      */
@@ -361,6 +403,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             orderType = 2;
         }
         userOrder.setOrderType(orderType);
+        userOrder.setProductPic(saleSpecGroup.getUrlImage());
         service.save(userOrder);
         //生成一个图片返回
         String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" + userOrder.getOrderNo();
@@ -460,6 +503,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             orderType = 2;
         }
         userOrder.setOrderType(orderType);
+        userOrder.setProductPic(saleSpecGroup.getUrlImage());
         service.save(userOrder);
 
         RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getOrderNo(), null);

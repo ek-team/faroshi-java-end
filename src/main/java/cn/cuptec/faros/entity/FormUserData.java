@@ -22,8 +22,8 @@ public class FormUserData extends Model<FormUserData> {
     private Integer doctorId;
     private Integer formId;//表单id
 
-    private Integer formSettingId;//选项id
+    private Integer formSettingId;//题目id
     private String type;//1-输入框 2-单选框 3-输入框 4-下拉框 5-日期 6 -多选框
-    private String answer;//答案
+    private Object answer;//答案
     private LocalDateTime createTime;
 }
