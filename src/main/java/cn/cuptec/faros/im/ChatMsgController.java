@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -107,6 +108,19 @@ public class ChatMsgController {
             }
             if (!CollectionUtils.isEmpty(otherOrderIds)) {//图文咨询
                 List<PatientOtherOrder> patientOtherOrders = (List<PatientOtherOrder>) patientOtherOrderService.listByIds(otherOrderIds);
+                if(!CollectionUtils.isEmpty(patientOtherOrders)){
+                    for(PatientOtherOrder patientOtherOrder:patientOtherOrders){
+                        String imageUrl = patientOtherOrder.getImageUrl();
+                        if (!StringUtils.isEmpty(imageUrl)) {
+                            String[] split = imageUrl.split(",");
+                            List<String> strings = Arrays.asList(split);
+                            patientOtherOrder.setImageUrlList(strings);
+
+                        } else {
+                            patientOtherOrder.setImageUrlList(new ArrayList<>());
+                        }
+                    }
+                }
                 patientOtherOrderMap = patientOtherOrders.stream()
                         .collect(Collectors.toMap(PatientOtherOrder::getId, t -> t));
             }
