@@ -44,6 +44,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     private UserServicePackageInfoService userServicePackageInfoService;
     @Resource
     private ChatUserService chatUserService;
+    @Resource
+    private UpcomingService upcomingService;
     /**
      * 分页查询医生积分
      *
@@ -134,6 +136,15 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             patientOtherOrder.setHour(one.getHour());
         }
         patientOtherOrderService.save(patientOtherOrder);
+        //添加待办事项
+        Upcoming upcoming=new Upcoming();
+        upcoming.setContent("图文咨询申请");
+        upcoming.setTitle("图文咨询申请");
+        upcoming.setUserId(SecurityUtils.getUser().getId());
+        upcoming.setDoctorId(patientOtherOrder.getDoctorId());
+        upcoming.setCreateTime(LocalDateTime.now());
+        upcoming.setType("2");
+        upcomingService.save(upcoming);
         RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
         return restResponse;
     }
@@ -165,20 +176,16 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         patientOtherOrderService.save(patientOtherOrder);
         PayResultData data = new PayResultData();
         data.setOrderId(patientOtherOrder.getId());
+        //添加待办事项
+        Upcoming upcoming=new Upcoming();
+        upcoming.setContent("图文咨询申请");
+        upcoming.setTitle("图文咨询申请");
+        upcoming.setUserId(SecurityUtils.getUser().getId());
+        upcoming.setDoctorId(patientOtherOrder.getDoctorId());
+        upcoming.setCreateTime(LocalDateTime.now());
+        upcoming.setType("2");
+        upcomingService.save(upcoming);
 
-        log.info("patientOtherOrder.getUserServiceId()================="+patientOtherOrder.getUserServiceId());
-        UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
-        if(userServicePackageInfo!=null){
-            userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
-            userServicePackageInfoService.updateById(userServicePackageInfo);
-            ChatUser chatUser = chatUserService.getById(userServicePackageInfo.getChatUserId());
-
-            //修改聊天框使用时间
-            chatUser.setId(userServicePackageInfo.getChatUserId());
-            chatUser.setServiceStartTime(LocalDateTime.now());
-            chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
-            chatUserService.updateById(chatUser);
-        }
 
         return RestResponse.ok(data);
     }
@@ -200,6 +207,9 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         } else {
             patientOtherOrder.setImageUrlList(new ArrayList<>());
         }
+        //查询患者信息
+        User user = userService.getUserINfo(patientOtherOrder.getUserId());
+        patientOtherOrder.setUser(user);
         return RestResponse.ok(patientOtherOrder);
     }
 

@@ -48,6 +48,7 @@ public class ChatUserController {
     private UserService userService;
     @Resource
     private PatientOtherOrderService patientOtherOrderService;
+
     /**
      * 查询会话信息 聊天是否有效
      */
@@ -77,7 +78,21 @@ public class ChatUserController {
 
         ChatUser chatUser = chatUserService.getById(chatUserId);
         chatUser.setServiceEndTime(LocalDateTime.now().minusDays(2));
-        return RestResponse.ok(chatUser);
+        chatUserService.updateById(chatUser);
+        //返回金额
+        PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
+                .eq(PatientOtherOrder::getOrderNo, chatUser.getPatientOtherOrderNo()));
+        Dept dept = deptService.getById(patientOtherOrder.getDeptId());
+        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+        String result = HttpUtil.get(url);
+        //返回服务次数
+        UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
+        if (userServicePackageInfo != null) {
+            userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() - 1);
+            userServicePackageInfoService.updateById(userServicePackageInfo);
+        }
+
+        return RestResponse.ok();
     }
 
     /**
@@ -194,14 +209,14 @@ public class ChatUserController {
      * 医生确认咨询状态 0-待接收 1-接收 2-拒绝
      */
     @GetMapping("/confirmStatus")
-    public RestResponse confirmStatus(@RequestParam("status")String status,@RequestParam("orderNo")String orderNo,@RequestParam("chatMsgId")Integer chatMsgId) {
-        ChatMsg chatMsg=new ChatMsg();
-        chatMsg.setId(chatMsgId+"");
+    public RestResponse confirmStatus(@RequestParam("status") String status, @RequestParam("orderNo") String orderNo, @RequestParam("chatMsgId") Integer chatMsgId) {
+        ChatMsg chatMsg = new ChatMsg();
+        chatMsg.setId(chatMsgId + "");
         chatMsg.setStr1(status);
         chatMsgService.updateById(chatMsg);
         ChatMsg byId = chatMsgService.getById(chatMsgId);
 
-        if(status.equals("1")){
+        if (status.equals("1")) {
             //发送公众号消息提醒患者
             Integer userId = byId.getFromUid();//用户id
             User user = userService.getById(userId);
@@ -210,13 +225,13 @@ public class ChatUserController {
             String time = df.format(now);
             wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, "医生已接收您的咨询", "/pages/news/news");
 
-        }else {
+        } else {
             //退款
             PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
                     .eq(PatientOtherOrder::getOrderNo, orderNo));
 
-            if(patientOtherOrder.getStatus().equals(2)){
-                Dept dept= deptService.getById(patientOtherOrder.getDeptId());
+            if (patientOtherOrder.getStatus().equals(2)) {
+                Dept dept = deptService.getById(patientOtherOrder.getDeptId());
                 String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + orderNo + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
                 String result = HttpUtil.get(url);
             }

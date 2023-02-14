@@ -114,4 +114,8 @@ public class User extends Model<User> {
     private List<FollowUpPlanNotice> followUpPlanNoticeList;//患者随访计划
     @TableField(exist = false)
     private ElectronicCase electronicCase;//电子病例
+    @TableField(exist = false)
+    private String userGroupName;
+    @TableField(exist = false)
+    private String remark;
 }

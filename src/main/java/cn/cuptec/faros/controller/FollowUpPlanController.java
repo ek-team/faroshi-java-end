@@ -67,6 +67,12 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     private HospitalInfoService hospitalInfoService;
     @Resource
     private DoctorTeamPeopleService doctorTeamPeopleService;
+    @Resource
+    private UserGroupRelationUserService userGroupRelationUserService;
+    @Resource
+    private UserGroupService userGroupService;
+    @Resource
+    private DoctorUserRemarkService doctorUserRemarkService;
 
     /**
      * 添加随访计划
@@ -735,6 +741,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         }
         return RestResponse.ok(list);
     }
+
     private static Map<String, String> getAge(String idCard) {
         String birthday = "";
         String age = "";
@@ -892,7 +899,49 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             }
         }
         user.setFollowUpPlanNoticeList(list);
+        //查询用户所在的分组
+        user.setUserGroupName("暂无分组");
+        List<UserGroup> userGroupList = userGroupService.list(new QueryWrapper<UserGroup>().lambda()
+                .eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId()));
+        if (!CollectionUtils.isEmpty(userGroupList)) {
+            List<Integer> userGroupIds = userGroupList.stream().map(UserGroup::getId)
+                    .collect(Collectors.toList());
+            List<UserGroupRelationUser> userGroupRelationUsers = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>().lambda()
+                    .eq(UserGroupRelationUser::getUserId, patientId)
+                    .in(UserGroupRelationUser::getUserGroupId, userGroupIds));
+            if (!CollectionUtils.isEmpty(userGroupRelationUsers)) {
+                user.setUserGroupName(userGroupService.getById(userGroupRelationUsers.get(0).getUserGroupId()).getName());
+
+            }
+        }
+        //查询医生对患者的备注
+        DoctorUserRemark doctorUserRemark = doctorUserRemarkService.getOne(new QueryWrapper<DoctorUserRemark>().lambda()
+                .eq(DoctorUserRemark::getDoctorId, SecurityUtils.getUser().getId())
+                .eq(DoctorUserRemark::getUserId, patientId));
+        if (doctorUserRemark != null) {
+            user.setRemark(doctorUserRemark.getRemark());
+        }
         return RestResponse.ok(user);
+    }
+
+    /**
+     * 医生备注
+     *
+     * @return
+     */
+    @GetMapping("/doctorRemark")
+    public RestResponse doctorRemark(@RequestParam("userId") Integer userId, @RequestParam("remark") String remark) {
+        //查询医生对患者的备注
+        DoctorUserRemark doctorUserRemark = doctorUserRemarkService.getOne(new QueryWrapper<DoctorUserRemark>().lambda()
+                .eq(DoctorUserRemark::getDoctorId, SecurityUtils.getUser().getId())
+                .eq(DoctorUserRemark::getUserId, userId));
+        if (doctorUserRemark == null) {
+            doctorUserRemark = new DoctorUserRemark();
+            doctorUserRemark.setUserId(userId);
+        }
+        doctorUserRemark.setRemark(remark);
+        doctorUserRemarkService.saveOrUpdate(doctorUserRemark);
+        return RestResponse.ok();
     }
 
     /**

@@ -21,7 +21,7 @@ public class UserOrder {
 
     @TableId(type = IdType.AUTO)
     private Integer id;
-
+    private Integer billId;
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String orderNo;
     private Integer patientUserId;//就诊人id

@@ -91,56 +91,67 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     /**
      * 校验配置是否合法
      */
-    public RestResponse checkInfo(Integer uid) {
-        //获取该用户的上级
-        User user = getById(uid);
-        Integer deptId = user.getDeptId();
-        if (deptId != null) {
-            //查找该部门权限是一级业务员
-            List<User> users = list(Wrappers.<User>lambdaQuery()
-                    .in(User::getDeptId, deptId));
-            List<Integer> userIds = users.stream().map(User::getId)
-                    .collect(Collectors.toList());
-            List<Integer> roleIds = new ArrayList<>();
-            roleIds.add(17);
-            List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
-                    .in(UserRole::getRoleId, roleIds).in(UserRole::getUserId, userIds));
-            //先查自己是否合法
-            List<Integer> roleUserIds = userRoles.stream().map(UserRole::getUserId).collect(Collectors.toList());
-            //收款设置
-            roleUserIds.remove(uid);
-            if (!checkPayChannel(CollUtil.toList(uid))) {
-                if (!CollectionUtils.isEmpty(roleUserIds)) {
+    public User getUserINfo(Integer uid) {
 
-                    if (!checkPayChannel(roleUserIds)) {
-                        return RestResponse.failed("没有收款设置");
-                    }
-                }
-            }
+        User user = baseMapper.selectById(uid);
+        String idCard = user.getIdCard();
+        if (!org.apache.commons.lang3.StringUtils.isEmpty(idCard)) {
+            Map<String, String> map = getAge(idCard);
+            user.setAge(map.get("age"));
 
-            //租协议配置
-            if (!checkProtocol(CollUtil.toList(uid), deptId)) {
-                if (!CollectionUtils.isEmpty(roleUserIds)) {
+            user.setBirthday(map.get("birthday"));
+            user.setSexCode(map.get("sexCode"));//1-男0-女
 
-                    if (!checkProtocol(roleUserIds, deptId)) {
-                        return RestResponse.failed("没有协议配置");
-                    }
-                }
-            }
-            //回收规则设置
-            if (!checkCustomProduct(deptId)) {
-                return RestResponse.failed("没有回收规则设置");
-            }
-
-        } else {
-            //代表没有部门
-            return RestResponse.failed("没查询到该业务员所属部门");
         }
 
-
-        return RestResponse.ok();
+        return user;
     }
 
+    private static Map<String, String> getAge(String idCard) {
+        String birthday = "";
+        String age = "";
+        Integer sexCode = 0;
+
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        char[] number = idCard.toCharArray();
+        boolean flag = true;
+
+        if (number.length == 15) {
+            for (int x = 0; x < number.length; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        } else if (number.length == 18) {
+            for (int x = 0; x < number.length - 1; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        }
+
+        if (flag && idCard.length() == 15) {
+            birthday = "19" + idCard.substring(6, 8) + "-"
+                    + idCard.substring(8, 10) + "-"
+                    + idCard.substring(10, 12);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 3, idCard.length())) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt("19" + idCard.substring(6, 8))) + "";
+        } else if (flag && idCard.length() == 18) {
+            birthday = idCard.substring(6, 10) + "-"
+                    + idCard.substring(10, 12) + "-"
+                    + idCard.substring(12, 14);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 4, idCard.length() - 1)) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt(idCard.substring(6, 10))) + "";
+        }
+
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("birthday", birthday);
+        map.put("age", age);
+        map.put("sexCode", sexCode + "");
+        return map;
+    }
 
 
     //租协议配置

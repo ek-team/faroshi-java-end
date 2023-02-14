@@ -41,7 +41,7 @@ public class CommonTermsController {
     /**
      * 删除
      */
-    @PostMapping("/deleteById")
+    @GetMapping("/deleteById")
     public RestResponse deleteById(@RequestParam("id") Integer id) {
         commonTermsService.removeById(id);
         return RestResponse.ok();
@@ -50,7 +50,7 @@ public class CommonTermsController {
     /**
      * 查询
      */
-    @PostMapping("/list")
+    @GetMapping("/list")
     public RestResponse list() {
         return RestResponse.ok(commonTermsService.list(new QueryWrapper<CommonTerms>().lambda()
                 .eq(CommonTerms::getUserId, SecurityUtils.getUser().getId())));

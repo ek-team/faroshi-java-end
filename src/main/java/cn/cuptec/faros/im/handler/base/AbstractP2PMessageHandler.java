@@ -64,11 +64,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             //保存新消息到记录中
             if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
                 origionMessage.setMsg("图文咨询");
+                origionMessage.setStr2("0");//0-待接收 1-接收 2-拒绝
             }
-            if (origionMessage.getMsgType().equals(ChatProto.CONFIRM_STATUS)) {
-                origionMessage.setMsg("是否接受咨询");
-                origionMessage.setStr1("0");//0-待接收 1-接收 2-拒绝
-            }
+
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             chatMsg.setMsg(origionMessage.getMsg());
             log.info("收到消息=======================" + origionMessage.toString());
@@ -111,6 +109,13 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 } else {
                     byId.setLastMsg(origionMessage.getMsg());
                 }
+
+                if (origionMessage.getMsgType().equals(ChatProto.FORM)) {
+                    byId.setLastMsg("表单");
+                }
+                if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
+                    byId.setPatientOtherOrderNo(origionMessage.getStr1());
+                }
                 chatUserService.updateById(byId);
             } else {
                 origionMessage.setMyUserId(fromUser.getId());
@@ -122,6 +127,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 //3.保存或更新用户聊天
                 if (chatMsg.getMsgType().equals(ChatProto.MESSAGE_PIC)) {
                     chatMsg.setMsg("[图片]");
+                }
+                if (chatMsg.getMsgType().equals(ChatProto.FORM)) {
+                    chatMsg.setMsg("表单");
                 }
                 //向目标用户发送新消息提醒
                 SocketFrameTextMessage targetUserMessage
@@ -165,12 +173,19 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         fromUserChat.setTargetUid(origionMessage.getTargetUid());
         fromUserChat.setLastChatTime(new Date());
         fromUserChat.setLastMsg(chatMsg.getMsg());
+        if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
+            fromUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
+        }
 
         ChatUser toUserChat = new ChatUser();
         toUserChat.setUid(origionMessage.getTargetUid());
         toUserChat.setTargetUid(fromUser.getId());
         toUserChat.setLastChatTime(new Date());
         toUserChat.setLastMsg(chatMsg.getMsg());
+        if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
+            toUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
+
+        }
         List<ChatUser> chatUsers = new ArrayList<>();
         chatUsers.add(fromUserChat);
         chatUsers.add(toUserChat);

@@ -6,15 +6,13 @@ import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 
 /**
- * 表单选项
+ * 医生对患者的备注
  */
 @Data
-public class FormOptions extends Model<FormOptions> {
-
-    @TableId(type = IdType.AUTO)
+public class DoctorUserRemark extends Model<DoctorUserRemark> {
+    @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
-    private Integer formId;
-    private Integer formSettingId;
-    private String text;
-    private Double score;//分数
+    private Integer doctorId;
+    private Integer userId;
+    private String remark;
 }

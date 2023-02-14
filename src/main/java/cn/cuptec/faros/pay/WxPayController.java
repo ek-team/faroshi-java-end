@@ -62,6 +62,8 @@ public class WxPayController {
     @Resource
     private UserFollowDoctorService userFollowDoctorService;
     @Resource
+    private UserDoctorRelationService userDoctorRelationService;
+    @Resource
     private PatientOtherOrderService patientOtherOrderService;//患者其它订单
     @Resource
     private DoctorPointService doctorPointService;//医生积分
@@ -146,7 +148,18 @@ public class WxPayController {
                 userFollowDoctor.setUserId(userOrder.getUserId());
                 userFollowDoctorService.save(userFollowDoctor);
             }
-
+            //添加医生和患者的关系
+            List<UserDoctorRelation> userDoctorRelationList = new ArrayList<>();
+            userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
+                    .eq(UserDoctorRelation::getUserId, userOrder.getUserId())
+                    .in(UserDoctorRelation::getDoctorId, userIds));
+            for (Integer doctorId : userIds) {
+                UserDoctorRelation userDoctorRelation = new UserDoctorRelation();
+                userDoctorRelation.setDoctorId(doctorId);
+                userDoctorRelation.setUserId(userOrder.getUserId());
+                userDoctorRelationList.add(userDoctorRelation);
+            }
+            userDoctorRelationService.saveBatch(userDoctorRelationList);
             userIds.add(userOrder.getUserId());
             ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId());
 
@@ -194,11 +207,11 @@ public class WxPayController {
             patientOtherOrder.setTransactionId(transactionId);
             patientOtherOrder.setStatus(2);
             patientOtherOrderService.updateById(patientOtherOrder);
-            Integer chatUserId = patientOtherOrder.getChatUserId();
-            ChatUser chatUser = chatUserService.getById(chatUserId);
-            chatUser.setServiceStartTime(LocalDateTime.now());
-            chatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
-            chatUserService.updateById(chatUser);
+//            Integer chatUserId = patientOtherOrder.getChatUserId();
+//            ChatUser chatUser = chatUserService.getById(chatUserId);
+//            chatUser.setServiceStartTime(LocalDateTime.now());
+//            chatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
+//            chatUserService.updateById(chatUser);
 
 
             DoctorPoint doctorPoint = new DoctorPoint();
@@ -300,7 +313,7 @@ public class WxPayController {
             User userById = userService.getById(retrieveOrder.getUserId());
             //发送公众号通知
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", orderRefundInfo.getRefundFee()+"", df.format(LocalDateTime.now()),df.format(LocalDateTime.now()),
+            wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", orderRefundInfo.getRefundFee() + "", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
                     "点击查看详情", "pages/myOrder/myOrder");
         }
         //图文咨询订单

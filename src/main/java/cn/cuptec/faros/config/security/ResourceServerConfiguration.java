@@ -149,7 +149,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/userServicePackageInfo/listByIdCard",
                         "/wxpay/notifyRefunds",
                         "/purchase/order/user/orderDetailByOrderNo",
-                        "/followUpPlan/testRedis"
+                        "/followUpPlan/testRedis",
+                        "/form/exportFormUserData"
 
                 )
                 .permitAll()

@@ -5,6 +5,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ExcelUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,6 +14,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -135,6 +139,100 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     }
 
     /**
+     * 查询某一表单用户填写的数据
+     */
+    @GetMapping("/pageFormUserData")
+    public RestResponse pageFormUserData(@RequestParam("formId") Integer formId) {
+        List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda()
+                .eq(FormUserData::getFormId, formId)
+        );
+        if (!CollectionUtils.isEmpty(formUserDataList)) {
+            List<Integer> userIds = new ArrayList<>();
+            for (FormUserData formUserData : formUserDataList) {
+                userIds.add(formUserData.getUserId());
+                userIds.add(formUserData.getDoctorId());
+            }
+
+            List<User> users = (List<User>) userService.listByIds(userIds);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+            Map<String, List<FormUserData>> formUserDataMap = formUserDataList.stream()
+                    .collect(Collectors.groupingBy(FormUserData::getGroupId));
+            List<Form> formDatas = new ArrayList<>();
+            for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
+                Form form = new Form();
+
+                Double scope = 0.0;
+                for (FormUserData formUserData : formUserDatas) {
+                    if (formUserData.getScope() != null) {
+                        scope = formUserData.getScope() + scope;
+                    }
+                    form.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
+                    form.setDoctorName(userMap.get(formUserData.getDoctorId()).getNickname());
+                }
+                form.setId(formId);
+                form.setScope(scope);
+
+                formDatas.add(form);
+            }
+            return RestResponse.ok(formDatas);
+        }
+        return RestResponse.ok();
+    }
+    /**
+     * 导出某一表单用户填写的数据
+     */
+    @GetMapping("/exportFormUserData")
+    public RestResponse exportFormUserData(HttpServletResponse response, @RequestParam("formId") Integer formId) {
+        Form form = service.getById(formId);
+        List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda()
+                .eq(FormUserData::getFormId, formId)
+        );
+        if (!CollectionUtils.isEmpty(formUserDataList)) {
+            List<Integer> userIds = new ArrayList<>();
+            for (FormUserData formUserData : formUserDataList) {
+                userIds.add(formUserData.getUserId());
+                userIds.add(formUserData.getDoctorId());
+            }
+
+            List<User> users = (List<User>) userService.listByIds(userIds);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+            Map<String, List<FormUserData>> formUserDataMap = formUserDataList.stream()
+                    .collect(Collectors.groupingBy(FormUserData::getGroupId));
+            List<FormExcel> formExcelList = new ArrayList<>();
+            for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
+                FormExcel formExcel = new FormExcel();
+
+                Double scope = 0.0;
+                for (FormUserData formUserData : formUserDatas) {
+                    if (formUserData.getScope() != null) {
+                        scope = formUserData.getScope() + scope;
+                    }
+                    formExcel.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
+                    formExcel.setDoctorName(userMap.get(formUserData.getDoctorId()).getNickname());
+                }
+                formExcel.setScope(scope+"");
+                formExcel.setFormName(form.getTitle());
+                formExcelList.add(formExcel);
+            }
+            String  cFileName = null;
+            try {
+                cFileName = URLEncoder.encode("form", "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                ExcelUtil.writeUserOrderExcel(response, formExcelList, cFileName, "form", FormExcel.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+        return RestResponse.ok();
+    }
+
+    /**
      * 分页查询自己创建的表单
      *
      * @return
@@ -182,7 +280,12 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                     .eq(FormUserData::getUserId, SecurityUtils.getUser().getId())
                     .eq(FormUserData::getDoctorId, byId.getCreateUserId()));
             if (!CollectionUtils.isEmpty(formUserDataList)) {
+                Double scope = 0.0;
                 for (FormUserData formUserData : formUserDataList) {
+                    if (formUserData.getScope() != null) {
+                        scope = formUserData.getScope() + scope;
+                    }
+
                     if (!StringUtils.isEmpty(formUserData.getAnswer())) {
                         Object answer = formUserData.getAnswer();
                         String s = answer.toString();
@@ -212,6 +315,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                 List<FormUserData> collect = formUserDataList.stream()
                         .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
                 byId.setFormUserDataList(collect);
+                byId.setScope(scope);
             }
 
         }

@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class Bill extends Model<Bill> {
 
     @TableId(type = IdType.AUTO)
-    private String id;
+    private Integer id;
     private Integer userId;
     private String orderNo;
     private Integer category;//0-个人 1-公司

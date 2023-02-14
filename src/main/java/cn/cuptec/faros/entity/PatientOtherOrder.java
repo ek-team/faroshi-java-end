@@ -42,4 +42,6 @@ public class PatientOtherOrder {
     private Integer userServiceId;
     @TableField(exist = false)
     private List<String> imageUrlList;
+    @TableField(exist = false)
+    private User user;
 }

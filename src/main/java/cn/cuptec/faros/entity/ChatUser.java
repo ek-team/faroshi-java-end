@@ -33,7 +33,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
     //@TableId(type = IdType.INPUT)
     @TableField
     private Integer targetUid;
-
+    private String  patientOtherOrderNo;//图文咨询订单id
     /**
      * 对话是否已关闭
      */

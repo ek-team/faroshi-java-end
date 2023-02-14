@@ -6,6 +6,7 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
+import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
@@ -15,12 +16,10 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -35,15 +34,21 @@ public class ChatMsgController {
     @Resource
     private ChatMsgService chatMsgService;
     @Resource
+    private PatientOtherOrderService patientOtherOrderService;//患者其它订单
+    @Resource
+    private UserServicePackageInfoService userServicePackageInfoService;
+    @Resource
     private ChatUserService chatUserService;
     @Resource
-    private UserService userService;
+    private DeptService deptService;
     @Resource
-    private PatientOtherOrderService patientOtherOrderService;
+    private UserService userService;
     @Resource
     private FollowUpPlanNoticeService followUpPlanNoticeService;
     @Resource
     private FollowUpPlanContentService followUpPlanContentService;
+    @Resource
+    private FormService formService;
 
     @ApiOperation(value = "查询历史记录")
     @PostMapping("/queryChatMsgHistory")
@@ -95,8 +100,10 @@ public class ChatMsgController {
 
             List<String> otherOrderIds = new ArrayList<>();//获取图文咨询内容
             List<String> followUpPlanNoticeIds = new ArrayList<>();//随访计划
+            List<String> formIds = new ArrayList<>();//表单id
             Map<Integer, PatientOtherOrder> patientOtherOrderMap = new HashMap<>();
             Map<Integer, FollowUpPlanNotice> followUpPlanNoticeMap = new HashMap<>();
+            Map<Integer, Form> formMap = new HashMap<>();
             for (ChatMsg chatMsg : records) {
                 chatMsg.setUser(userMap.get(chatMsg.getFromUid()));
                 if (chatMsg.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {//图文咨询
@@ -105,11 +112,14 @@ public class ChatMsgController {
                 if (chatMsg.getMsgType().equals(ChatProto.FOLLOW_UP_PLAN)) {//随访计划
                     followUpPlanNoticeIds.add(chatMsg.getStr1());
                 }
+                if (chatMsg.getMsgType().equals(ChatProto.FORM)) {//表单
+                    formIds.add(chatMsg.getStr1());
+                }
             }
             if (!CollectionUtils.isEmpty(otherOrderIds)) {//图文咨询
                 List<PatientOtherOrder> patientOtherOrders = (List<PatientOtherOrder>) patientOtherOrderService.listByIds(otherOrderIds);
-                if(!CollectionUtils.isEmpty(patientOtherOrders)){
-                    for(PatientOtherOrder patientOtherOrder:patientOtherOrders){
+                if (!CollectionUtils.isEmpty(patientOtherOrders)) {
+                    for (PatientOtherOrder patientOtherOrder : patientOtherOrders) {
                         String imageUrl = patientOtherOrder.getImageUrl();
                         if (!StringUtils.isEmpty(imageUrl)) {
                             String[] split = imageUrl.split(",");
@@ -145,6 +155,11 @@ public class ChatMsgController {
                 followUpPlanNoticeMap = followUpPlanNoticeList.stream()
                         .collect(Collectors.toMap(FollowUpPlanNotice::getId, t -> t));
             }
+            if (!CollectionUtils.isEmpty(formIds)) {//
+                List<Form> forms = (List<Form>) formService.listByIds(formIds);
+                formMap = forms.stream()
+                        .collect(Collectors.toMap(Form::getId, t -> t));
+            }
             for (ChatMsg chatMsg : records) {
                 if (chatMsg.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {//图文咨询
                     PatientOtherOrder patientOtherOrder = patientOtherOrderMap.get(Integer.parseInt(chatMsg.getStr1()));
@@ -157,6 +172,10 @@ public class ChatMsgController {
 
                     chatMsg.setFollowUpPlanNotice(followUpPlanNotice);
                 }
+                if (chatMsg.getMsgType().equals(ChatProto.FORM)) {//表单
+
+                    chatMsg.setForm(formMap.get(Integer.parseInt(chatMsg.getStr1())));
+                }
             }
 
             resultPage.setRecords(records);
@@ -164,5 +183,48 @@ public class ChatMsgController {
 
         log.info("获取聊天记录结束===============================");
         return RestResponse.ok(resultPage);
+    }
+
+    /**
+     * 医生接受或者拒绝图文咨询
+     * str2 0-待接收 1-接收 2-拒绝
+     */
+    @GetMapping("/receiverPicConsultation")
+    public RestResponse receiverPicConsultation(@RequestParam("msgId") Integer msgId,
+                                                @RequestParam("str2") String str2) {
+        ChatMsg chatMsg = chatMsgService.getById(msgId);
+        chatMsg.setStr2(str2);
+        chatMsgService.updateById(chatMsg);
+        PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
+                .eq(PatientOtherOrder::getOrderNo, chatMsg.getStr1()));
+        UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
+
+        if (str2.equals("1")) {
+            //接收
+            if (userServicePackageInfo != null) {
+                userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
+                userServicePackageInfoService.updateById(userServicePackageInfo);
+                ChatUser chatUser = chatUserService.getById(userServicePackageInfo.getChatUserId());
+
+                //修改聊天框使用时间
+                chatUser.setId(userServicePackageInfo.getChatUserId());
+                chatUser.setServiceStartTime(LocalDateTime.now());
+                chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
+                chatUserService.updateById(chatUser);
+            } else {
+                Integer chatUserId = patientOtherOrder.getChatUserId();
+                ChatUser chatUser = chatUserService.getById(chatUserId);
+                chatUser.setServiceStartTime(LocalDateTime.now());
+                chatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
+                chatUserService.updateById(chatUser);
+            }
+        } else {//拒绝
+            //退款
+            Dept dept = deptService.getById(patientOtherOrder.getDeptId());
+            String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+            String result = HttpUtil.get(url);
+
+        }
+        return RestResponse.ok();
     }
 }

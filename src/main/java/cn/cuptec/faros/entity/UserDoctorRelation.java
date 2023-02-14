@@ -7,6 +7,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import lombok.Data;
 
+/**
+ * 医生和患者的关系表
+ */
 @Data
 @TableName(value = "user_doctor_relation")
 public class UserDoctorRelation implements Serializable {

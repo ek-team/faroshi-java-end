@@ -34,7 +34,6 @@ public class UpcomingController extends AbstractBaseController<UpcomingService, 
      */
     @GetMapping("/page")
     public RestResponse page() {
-        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         Integer uid = SecurityUtils.getUser().getId();
         Page<Upcoming> page = getPage();
         IPage<Upcoming> page1 = service.page(page, new QueryWrapper<Upcoming>().lambda().eq(Upcoming::getDoctorId, uid).orderByDesc(Upcoming::getCreateTime, Upcoming::getRedStatus));

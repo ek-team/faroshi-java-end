@@ -26,4 +26,6 @@ public class FormUserData extends Model<FormUserData> {
     private String type;//1-输入框 2-单选框 3-输入框 4-下拉框 5-日期 6 -多选框
     private Object answer;//答案
     private LocalDateTime createTime;
+    private Double scope;
+    private String groupId;
 }

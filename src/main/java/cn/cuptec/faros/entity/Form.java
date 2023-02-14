@@ -30,4 +30,10 @@ public class Form extends Model<Form> {
     private Integer status=0;//0-正常 1-作废
     @TableField(exist = false)
     private List<FormUserData> formUserDataList;
+    @TableField(exist = false)
+    private Double scope;
+    @TableField(exist = false)
+    private String userName;
+    @TableField(exist = false)
+    private String doctorName;
 }

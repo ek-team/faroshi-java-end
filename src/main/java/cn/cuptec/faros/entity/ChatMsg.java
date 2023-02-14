@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiModel;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @ApiModel("聊天消息")
 @Data
@@ -79,5 +80,7 @@ public class ChatMsg extends Model<ChatMsg> {
     private PatientOtherOrder patientOtherOrder;//图文咨询
     @TableField(exist = false)
     private FollowUpPlanNotice followUpPlanNotice;//随访计划
+    @TableField(exist = false)
+    private Form form;//表单
 }
 

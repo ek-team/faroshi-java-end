@@ -66,8 +66,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     private ProductStockService productStockService;
     @Resource
     private LocatorService locatorService;
-    @Resource
-    private UserDoctorRelationService userDoctorRelationService;
+
     @Resource
     private UserRoleService userRoleService;
     @Resource

@@ -6,6 +6,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.AddUserToGroupParam;
 import cn.cuptec.faros.dto.PageResult;
+import cn.cuptec.faros.dto.SearchUserGroupDto;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -39,6 +40,8 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
     private UserGroupRelationUserService userGroupRelationUserService;//分组和用户的关系表
     @Resource
     private UserService userService;
+    @Resource
+    private UserDoctorRelationService userDoctorRelationService;
 
     /**
      * 添加患者分组
@@ -208,6 +211,106 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
         return RestResponse.ok();
     }
 
+    @GetMapping("/searchUserGroup")
+    public RestResponse searchUserGroup(@RequestParam("key") String key) {
+        List<UserGroup> list = service.list(new QueryWrapper<UserGroup>().lambda()
+                .like(UserGroup::getName, key)
+                .like(UserGroup::getCreateUserId, SecurityUtils.getUser().getId()));
+
+        SearchUserGroupDto searchUserGroupDto = new SearchUserGroupDto();
+        searchUserGroupDto.setUserGroupList(new ArrayList<>());
+        searchUserGroupDto.setUserList(new ArrayList<>());
+        if (!CollectionUtils.isEmpty(list)) {
+            //查询分组人数
+            for (UserGroup userGroup : list) {
+                int count = userGroupRelationUserService.count(new QueryWrapper<UserGroupRelationUser>().lambda()
+                        .eq(UserGroupRelationUser::getUserGroupId, userGroup.getId()));
+                userGroup.setCount(count);
+            }
+            searchUserGroupDto.setUserGroupList(list);
+
+        }
+        //搜索患者
+        List<User> userList = userService.list(new QueryWrapper<User>().lambda()
+                .like(User::getPatientName, key));
+        if (!CollectionUtils.isEmpty(userList)) {
+            List<Integer> userIds = userList.stream().map(User::getId)
+                    .collect(Collectors.toList());
+
+            List<UserDoctorRelation> userDoctorRelationList = userDoctorRelationService.list(new QueryWrapper<UserDoctorRelation>().lambda()
+                    .in(UserDoctorRelation::getUserId, userIds)
+                    .eq(UserDoctorRelation::getDoctorId, SecurityUtils.getUser().getId()));
+            if (!CollectionUtils.isEmpty(userDoctorRelationList)) {
+                List<User> users = new ArrayList<>();
+                Map<Integer, User> userMap = userList.stream()
+                        .collect(Collectors.toMap(User::getId, t -> t));
+                for (User user : userList) {
+                    String idCard = user.getIdCard();
+                    if (!StringUtils.isEmpty(idCard)) {
+                        Map<String, String> map = getAge(idCard);
+                        user.setAge(map.get("age"));
+
+                        user.setBirthday(map.get("birthday"));
+                        user.setSexCode(map.get("sexCode"));//1-男0-女
+
+                    }
+                }
+                for (UserDoctorRelation userDoctorRelation : userDoctorRelationList) {
+                    users.add(userMap.get(userDoctorRelation.getUserId()));
+                }
+                searchUserGroupDto.setUserList(users);
+            }
+        }
+
+        return RestResponse.ok(searchUserGroupDto);
+    }
+
+    private static Map<String, String> getAge(String idCard) {
+        String birthday = "";
+        String age = "";
+        Integer sexCode = 0;
+
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        char[] number = idCard.toCharArray();
+        boolean flag = true;
+
+        if (number.length == 15) {
+            for (int x = 0; x < number.length; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        } else if (number.length == 18) {
+            for (int x = 0; x < number.length - 1; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        }
+
+        if (flag && idCard.length() == 15) {
+            birthday = "19" + idCard.substring(6, 8) + "-"
+                    + idCard.substring(8, 10) + "-"
+                    + idCard.substring(10, 12);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 3, idCard.length())) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt("19" + idCard.substring(6, 8))) + "";
+        } else if (flag && idCard.length() == 18) {
+            birthday = idCard.substring(6, 10) + "-"
+                    + idCard.substring(10, 12) + "-"
+                    + idCard.substring(12, 14);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 4, idCard.length() - 1)) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt(idCard.substring(6, 10))) + "";
+        }
+
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("birthday", birthday);
+        map.put("age", age);
+        map.put("sexCode", sexCode + "");
+        return map;
+    }
+
     /**
      * 查询患者分组 数量
      *
@@ -257,7 +360,7 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
 
         //查询未分组数量
         LambdaQueryWrapper<UserFollowDoctor> eq = new QueryWrapper<UserFollowDoctor>().lambda()
-                .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
+                ;
         if (teamId != null) {
             eq.eq(UserFollowDoctor::getTeamId, teamId);
         } else {
