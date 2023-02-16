@@ -191,10 +191,16 @@ public class ChatMsgController {
      */
     @GetMapping("/receiverPicConsultation")
     public RestResponse receiverPicConsultation(@RequestParam("msgId") Integer msgId,
-                                                @RequestParam("str2") String str2) {
+                                                @RequestParam("str2") String str2,
+                                                @RequestParam(value = "chatId" ,required = false) Integer chatId) {
         ChatMsg chatMsg = chatMsgService.getById(msgId);
         chatMsg.setStr2(str2);
         chatMsgService.updateById(chatMsg);
+        ChatUser updateChatUser = new ChatUser();
+        updateChatUser.setId(chatId);
+        updateChatUser.setPatientOtherOrderStatus(str2);
+        chatUserService.updateById(updateChatUser);
+
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
                 .eq(PatientOtherOrder::getId, chatMsg.getStr1()));
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
@@ -204,19 +210,15 @@ public class ChatMsgController {
             if (userServicePackageInfo != null) {
                 userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
                 userServicePackageInfoService.updateById(userServicePackageInfo);
-                ChatUser chatUser = chatUserService.getById(userServicePackageInfo.getChatUserId());
 
-                //修改聊天框使用时间
-                chatUser.setId(userServicePackageInfo.getChatUserId());
-                chatUser.setServiceStartTime(LocalDateTime.now());
-                chatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
-                chatUserService.updateById(chatUser);
+                updateChatUser.setServiceStartTime(LocalDateTime.now());
+                updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
+                chatUserService.updateById(updateChatUser);
             } else {
                 Integer chatUserId = patientOtherOrder.getChatUserId();
-                ChatUser chatUser = chatUserService.getById(chatUserId);
-                chatUser.setServiceStartTime(LocalDateTime.now());
-                chatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
-                chatUserService.updateById(chatUser);
+                updateChatUser.setServiceStartTime(LocalDateTime.now());
+                updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
+                chatUserService.updateById(updateChatUser);
             }
         } else {//拒绝
             //退款

@@ -21,6 +21,7 @@ public class FollowUpPlanContent extends Model<FollowUpPlanContent> {
     private String notice;//提醒消息
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime day;
+    private Integer dayAfter;//几天后，用于模板
     private Integer formId;//表单id
     private Integer status = 0;//0-正常执行 1-停止执行
     @TableField(exist = false)

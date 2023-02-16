@@ -48,6 +48,20 @@ public class ChatUserController {
     private UserService userService;
     @Resource
     private PatientOtherOrderService patientOtherOrderService;
+    /**
+     * 医生主动开启会话随访
+     */
+    @GetMapping("/openChat")
+    public RestResponse openChat(@RequestParam(value = "chatUserId") Integer chatUserId,
+                                 @RequestParam("hour") int hour) {
+
+        ChatUser chatUser =new ChatUser();
+        chatUser.setId(chatUserId);
+        LocalDateTime localDateTime = LocalDateTime.now().plusHours(hour);
+        chatUser.setServiceEndTime(localDateTime);
+        chatUserService.updateById(chatUser);
+        return RestResponse.ok();
+    }
 
     /**
      * 查询会话信息 聊天是否有效

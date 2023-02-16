@@ -89,7 +89,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     private WxMpTagService wxMpTagService;
 
     /**
-     * 校验配置是否合法
+     *
      */
     public User getUserINfo(Integer uid) {
 

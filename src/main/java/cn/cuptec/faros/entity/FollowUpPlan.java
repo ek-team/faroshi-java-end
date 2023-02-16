@@ -18,7 +18,7 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private Integer createUserId;
-    private Integer deptId;
+    private Integer deptId;//记录部门下的随访模板
     private LocalDateTime createTime;
     private String name;
     private Integer joinType; //加入模式 1-自动加入 2-手动管理

@@ -117,5 +117,7 @@ public class User extends Model<User> {
     @TableField(exist = false)
     private String userGroupName;
     @TableField(exist = false)
+    private String userGroupId;
+    @TableField(exist = false)
     private String remark;
 }
