@@ -196,7 +196,7 @@ public class ChatMsgController {
         chatMsg.setStr2(str2);
         chatMsgService.updateById(chatMsg);
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
-                .eq(PatientOtherOrder::getOrderNo, chatMsg.getStr1()));
+                .eq(PatientOtherOrder::getId, chatMsg.getStr1()));
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
 
         if (str2.equals("1")) {

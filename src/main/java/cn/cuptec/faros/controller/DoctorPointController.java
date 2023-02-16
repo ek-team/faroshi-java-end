@@ -46,6 +46,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     private ChatUserService chatUserService;
     @Resource
     private UpcomingService upcomingService;
+    @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
     /**
      * 分页查询医生积分
      *
@@ -141,11 +143,28 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         upcoming.setContent("图文咨询申请");
         upcoming.setTitle("图文咨询申请");
         upcoming.setUserId(SecurityUtils.getUser().getId());
-        upcoming.setDoctorId(patientOtherOrder.getDoctorId());
+        Integer doctorId = patientOtherOrder.getDoctorId();
+
+
         upcoming.setCreateTime(LocalDateTime.now());
         upcoming.setType("2");
-        upcomingService.save(upcoming);
-        RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
+        List<Upcoming> upcomingList=new ArrayList<>();
+        if(doctorId!=null){
+            upcoming.setDoctorId(doctorId);
+            upcomingList.add(upcoming);
+        }else {
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if(!CollectionUtils.isEmpty(doctorTeamPeopleList)){
+                for(DoctorTeamPeople doctorTeamPeople:doctorTeamPeopleList){
+                    upcoming.setDoctorId(doctorTeamPeople.getUserId());
+                    upcomingList.add(upcoming);
+                }
+
+
+            }
+        }
+        upcomingService.saveBatch(upcomingList);        RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
         return restResponse;
     }
 
@@ -181,10 +200,28 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         upcoming.setContent("图文咨询申请");
         upcoming.setTitle("图文咨询申请");
         upcoming.setUserId(SecurityUtils.getUser().getId());
-        upcoming.setDoctorId(patientOtherOrder.getDoctorId());
+        Integer doctorId = patientOtherOrder.getDoctorId();
+
+
         upcoming.setCreateTime(LocalDateTime.now());
         upcoming.setType("2");
-        upcomingService.save(upcoming);
+        List<Upcoming> upcomingList=new ArrayList<>();
+        if(doctorId!=null){
+            upcoming.setDoctorId(doctorId);
+            upcomingList.add(upcoming);
+        }else {
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if(!CollectionUtils.isEmpty(doctorTeamPeopleList)){
+                for(DoctorTeamPeople doctorTeamPeople:doctorTeamPeopleList){
+                    upcoming.setDoctorId(doctorTeamPeople.getUserId());
+                    upcomingList.add(upcoming);
+                }
+
+
+            }
+        }
+        upcomingService.saveBatch(upcomingList);
 
 
         return RestResponse.ok(data);

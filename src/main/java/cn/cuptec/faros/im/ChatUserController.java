@@ -81,7 +81,7 @@ public class ChatUserController {
         chatUserService.updateById(chatUser);
         //返回金额
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
-                .eq(PatientOtherOrder::getOrderNo, chatUser.getPatientOtherOrderNo()));
+                .eq(PatientOtherOrder::getId, chatUser.getPatientOtherOrderNo()));
         Dept dept = deptService.getById(patientOtherOrder.getDeptId());
         String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
         String result = HttpUtil.get(url);
