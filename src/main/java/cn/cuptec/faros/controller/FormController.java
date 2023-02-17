@@ -157,8 +157,8 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             List<User> users = (List<User>) userService.listByIds(userIds);
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
-            Map<String, List<FormUserData>> formUserDataMap = formUserDataList.stream()
-                    .collect(Collectors.groupingBy(FormUserData::getGroupId));
+            Map<Integer, List<FormUserData>> formUserDataMap = formUserDataList.stream()
+                    .collect(Collectors.groupingBy(FormUserData::getUserId));
             List<Form> formDatas = new ArrayList<>();
             for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
                 Form form = new Form();
@@ -364,6 +364,8 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                         .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
                 byId.setFormUserDataList(collect);
                 byId.setScope(scope);
+            }else{
+                byId.setFormUserDataList(new ArrayList<>());
             }
 
         }
