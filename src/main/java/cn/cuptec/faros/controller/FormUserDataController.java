@@ -114,7 +114,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         followUpPlanNoticeService.updateById(followUpPlanNotice);
 
         //添加待办事项
-        Upcoming upcoming=new Upcoming();
+        Upcoming upcoming = new Upcoming();
         upcoming.setContent("用户填写表单成功");
         upcoming.setTitle("表单");
         upcoming.setUserId(SecurityUtils.getUser().getId());
@@ -184,56 +184,58 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
                 .eq(FormUserData::getUserId, userId)
                 .eq(FormUserData::getFormId, formId)
                 .eq(FormUserData::getDoctorId, SecurityUtils.getUser().getId()));
-        if (CollectionUtils.isEmpty(list)) {
-            return RestResponse.ok();
-        }
 
-        for (FormUserData formUserData : list) {
-            if (!StringUtils.isEmpty(formUserData.getAnswer())) {
-                Object answer = formUserData.getAnswer();
-                String s = answer.toString();
-                if (s.indexOf("[") >= 0) {
-                    String replace = s.replace("[", "");
-                    String replace1 = replace.replace("]", "");
-                    String replace2 = replace1.replace("\"", "");
 
-                    String[] split = replace2.split(",");
-                    List<String> strings = Arrays.asList(split);
-                    if (formUserData.getType().equals("6")) {
-                        List<Integer> ans = new ArrayList<>();
-                        for (String str : strings) {
-                            ans.add(Integer.parseInt(str));
+        List<Integer> formIds = new ArrayList<>();
+        formIds.add(formId);
+        List<Form> formList = formService.getByIds(formIds);
+        if (!CollectionUtils.isEmpty(list)) {
+            for (FormUserData formUserData : list) {
+                if (!StringUtils.isEmpty(formUserData.getAnswer())) {
+                    Object answer = formUserData.getAnswer();
+                    String s = answer.toString();
+                    if (s.indexOf("[") >= 0) {
+                        String replace = s.replace("[", "");
+                        String replace1 = replace.replace("]", "");
+                        String replace2 = replace1.replace("\"", "");
+
+                        String[] split = replace2.split(",");
+                        List<String> strings = Arrays.asList(split);
+                        if (formUserData.getType().equals("6")) {
+                            List<Integer> ans = new ArrayList<>();
+                            for (String str : strings) {
+                                ans.add(Integer.parseInt(str));
+                            }
+                            formUserData.setAnswer(ans);
+                        } else {
+
+                            formUserData.setAnswer(strings);
                         }
-                        formUserData.setAnswer(ans);
-                    } else {
 
-                        formUserData.setAnswer(strings);
                     }
 
                 }
 
             }
 
+            Map<Integer, List<FormUserData>> map = list.stream()
+                    .collect(Collectors.groupingBy(FormUserData::getFormId));
+            for (Form form : formList) {
+                List<FormUserData> formUserDataList = map.get(form.getId());
+                Double scope = 0.0;
+                for (FormUserData formUserData : formUserDataList) {
+                    if (formUserData.getScope() != null) {
+                        scope = formUserData.getScope() + scope;
+                    }
+                }
+                List<FormUserData> collect = formUserDataList.stream()
+                        .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
+                form.setFormUserDataList(collect);
+                form.setScope(scope);
+            }
         }
 
-        List<Integer> formIds = list.stream().map(FormUserData::getFormId)
-                .collect(Collectors.toList());
-        List<Form> formList = formService.getByIds(formIds);
-        Map<Integer, List<FormUserData>> map = list.stream()
-                .collect(Collectors.groupingBy(FormUserData::getFormId));
-        for (Form form : formList) {
-            List<FormUserData> formUserDataList = map.get(form.getId());
-            Double scope = 0.0;
-            for (FormUserData formUserData : formUserDataList) {
-                if (formUserData.getScope() != null) {
-                    scope = formUserData.getScope() + scope;
-                }
-            }
-            List<FormUserData> collect = formUserDataList.stream()
-                    .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
-            form.setFormUserDataList(collect);
-            form.setScope(scope);
-        }
+
         return RestResponse.ok(formList.get(0));
     }
 

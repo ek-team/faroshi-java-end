@@ -25,6 +25,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -283,6 +284,11 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updateById")
     public RestResponse updateById(@RequestBody @Valid User user) {
+        if (user.getNickname().equals("微信用户")) {
+            User user1 = new User();
+            BeanUtils.copyProperties(user, user1, "nickname","avatar");
+            user = user1;
+        }
         user.setId(SecurityUtils.getUser().getId());
         return service.updateById(user) ? RestResponse.ok() : RestResponse.failed();
     }

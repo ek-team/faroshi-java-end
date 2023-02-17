@@ -25,7 +25,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
 
     private Integer uid;
     private String userIds;//群聊用户id
-    private Integer groupType = 0;//0-单聊 1-群聊
+    private Integer groupType;//0-单聊 1-群聊
     private Integer teamId;//团队id
     /**
      * 聊天对象用户id
@@ -38,7 +38,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
      * 对话是否已关闭
      */
     private int isClosed;
-   private String patientOtherOrderStatus;//图文咨询状态
+   private String patientOtherOrderStatus;//图文咨询状态//0-待接收 1-接收 2-拒绝
     /**
      * 最后一条消息
      */

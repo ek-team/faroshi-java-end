@@ -9,6 +9,7 @@ import cn.cuptec.faros.util.ExcelUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.common.collect.Lists;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -179,56 +180,103 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         }
         return RestResponse.ok();
     }
+
     /**
-     * 导出某一表单用户填写的数据
+     * 导出某一表单所有用户填写题目数据
      */
     @GetMapping("/exportFormUserData")
     public RestResponse exportFormUserData(HttpServletResponse response, @RequestParam("formId") Integer formId) {
-        Form form = service.getById(formId);
-        List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda()
-                .eq(FormUserData::getFormId, formId)
-        );
-        if (!CollectionUtils.isEmpty(formUserDataList)) {
-            List<Integer> userIds = new ArrayList<>();
-            for (FormUserData formUserData : formUserDataList) {
-                userIds.add(formUserData.getUserId());
-                userIds.add(formUserData.getDoctorId());
-            }
-
-            List<User> users = (List<User>) userService.listByIds(userIds);
-            Map<Integer, User> userMap = users.stream()
-                    .collect(Collectors.toMap(User::getId, t -> t));
-            Map<String, List<FormUserData>> formUserDataMap = formUserDataList.stream()
-                    .collect(Collectors.groupingBy(FormUserData::getGroupId));
-            List<FormExcel> formExcelList = new ArrayList<>();
-            for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
-                FormExcel formExcel = new FormExcel();
-
-                Double scope = 0.0;
-                for (FormUserData formUserData : formUserDatas) {
-                    if (formUserData.getScope() != null) {
-                        scope = formUserData.getScope() + scope;
-                    }
-                    formExcel.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
-                    formExcel.setDoctorName(userMap.get(formUserData.getDoctorId()).getNickname());
-                }
-                formExcel.setScope(scope+"");
-                formExcel.setFormName(form.getTitle());
-                formExcelList.add(formExcel);
-            }
-            String  cFileName = null;
-            try {
-                cFileName = URLEncoder.encode("form", "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            try {
-                ExcelUtil.writeUserOrderExcel(response, formExcelList, cFileName, "form", FormExcel.class);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
+        List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda().eq(FormUserData::getFormId, formId));
+        if (CollectionUtils.isEmpty(formUserDataList)) {
+            return RestResponse.ok();
         }
+
+
+        List<Integer> formSettingIds = formUserDataList.stream().map(FormUserData::getFormSettingId)
+                .collect(Collectors.toList());
+        List<FormSetting> formSettings = (List<FormSetting>) formSettingService.listByIds(formSettingIds);
+        Map<Integer, FormSetting> formSettingMap = formSettings.stream()
+                .collect(Collectors.toMap(FormSetting::getId, t -> t));
+
+        List<Integer> userIds = formUserDataList.stream().map(FormUserData::getUserId)
+                .collect(Collectors.toList());
+        List<User> users = (List<User>) userService.listByIds(userIds);
+        Map<Integer, User> userMap = users.stream()
+                .collect(Collectors.toMap(User::getId, t -> t));
+        //根据患者分组
+        Map<Integer, List<FormUserData>> FormUserDataMap = formUserDataList.stream()
+                .collect(Collectors.groupingBy(FormUserData::getUserId));
+        for (FormUserData formUserData : formUserDataList) {
+            formUserData.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
+            formUserData.setFormSettingName(formSettingMap.get(formUserData.getFormSettingId()).getName());
+        }
+        //定义表头 患者姓名
+        List<List<String>> headList = new ArrayList<>();
+        headList.add(Lists.newArrayList("题目名称"));
+        //定义数据体
+        List<List<Object>> dataList = new ArrayList<>();
+
+        Map<Integer, List<FormUserData>> newFormUserDataMap = new HashMap<>();
+
+        for (List<FormUserData> formUserDatas : FormUserDataMap.values()) {
+
+            //定义表头
+            headList.add(Lists.newArrayList(formUserDatas.get(0).getUserName()));
+
+            //定义数据体
+            int index = 0;
+            for (FormUserData formUserData : formUserDatas) {
+
+                int size = formUserDatas.size();
+
+                if (dataList.size() != size) {
+                    List<Object> data = new ArrayList<>();
+                    data.add(formUserData.getFormSettingName());//第一列题目名称
+
+                    data.add(formUserData.getAnswer());//答案
+                    dataList.add(data);
+
+                } else {
+                    List<Object> beforeDatas = dataList.get(size - (size - index));
+                    beforeDatas.add(formUserData.getAnswer());//答案
+
+                }
+
+                index++;
+
+
+            }
+        }
+        int index = 0;
+        for (List<FormUserData> formUserDatas : FormUserDataMap.values()) {
+            //定义数据体
+            Double score = 0.0;
+            for (FormUserData formUserData : formUserDatas) {
+                if (formUserData.getScope() != null) {
+                    score = formUserData.getScope() + score;
+                }
+            }
+            if(index==0){
+                List<Object> data = new ArrayList<>();
+                data.add("");//第一列题目名称
+
+                data.add(score + "");//分数
+                dataList.add(data);
+            }
+            else{
+
+                List<Object> objectList = dataList.get(dataList.size() - 1);
+                objectList.add(score);
+            }
+            index++;
+        }
+        try {
+            ExcelUtil.writefFormExcel(response, dataList, "cFileName", "form", headList);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return RestResponse.ok();
     }
 

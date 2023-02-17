@@ -9,19 +9,24 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.pay.PayResultData;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 医生积分管理
@@ -48,6 +53,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     private UpcomingService upcomingService;
     @Resource
     private DoctorTeamPeopleService doctorTeamPeopleService;
+    @Autowired
+    public RedisTemplate redisTemplate;
     /**
      * 分页查询医生积分
      *
@@ -222,6 +229,9 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             }
         }
         upcomingService.saveBatch(upcomingList);
+        //添加到redis 超过24小时如果医生没有接受则退款 返回使用次数
+        String keyRedis = String.valueOf(StrUtil.format("{}{}", "patientOrder:", patientOtherOrder.getId()));
+        redisTemplate.opsForValue().set(keyRedis, patientOtherOrder.getId(), 24, TimeUnit.HOURS);//设置过期时间
 
 
         return RestResponse.ok(data);
@@ -247,6 +257,16 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         //查询患者信息
         User user = userService.getUserINfo(patientOtherOrder.getUserId());
         patientOtherOrder.setUser(user);
+        //计算有效时长
+        LocalDateTime now = LocalDateTime.now();
+
+        LocalDateTime createTime = patientOtherOrder.getCreateTime().plusHours(24);
+        if(now.isBefore(createTime)){
+            Duration duration = java.time.Duration.between(now,  createTime);
+
+            patientOtherOrder.setEfficientHour(duration.toHours());
+
+        }
         return RestResponse.ok(patientOtherOrder);
     }
 

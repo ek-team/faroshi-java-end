@@ -5,6 +5,7 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.bean.template.WxMpTemplateData;
@@ -14,8 +15,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -39,9 +42,10 @@ public class RedisKeyExpirationListener implements MessageListener {
     private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
     private UserService userService;
     private ChatMsgService chatMsgService;
-
+    private PatientOtherOrderService patientOtherOrderService;
     private HospitalInfoService hospitalInfoService;
     private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;
+    private DeptService deptService;
     public static final String URL = "/pages/orderConfirm/orderConfirm?id=";
 
     public RedisKeyExpirationListener(RedisTemplate<String, String> redisTemplate,
@@ -53,7 +57,9 @@ public class RedisKeyExpirationListener implements MessageListener {
                                       UserService userService,
                                       HospitalInfoService hospitalInfoService,
                                       ChatMsgService chatMsgService,
-                                      FollowUpPlanNoticeCountService followUpPlanNoticeCountService
+                                      FollowUpPlanNoticeCountService followUpPlanNoticeCountService,
+                                      PatientOtherOrderService patientOtherOrderService,
+                                      DeptService deptService
     ) {
         this.redisTemplate = redisTemplate;
         this.redisConfigProperties = redisConfigProperties;
@@ -65,6 +71,8 @@ public class RedisKeyExpirationListener implements MessageListener {
         this.hospitalInfoService = hospitalInfoService;
         this.chatMsgService = chatMsgService;
         this.followUpPlanNoticeCountService = followUpPlanNoticeCountService;
+        this.patientOtherOrderService = patientOtherOrderService;
+        this.deptService = deptService;
     }
 
     @Override
@@ -118,7 +126,21 @@ public class RedisKeyExpirationListener implements MessageListener {
                 one.setPush(one.getPush() + 1);
                 followUpPlanNoticeCountService.updateById(one);
             }
+            if (body.contains("patientOrder:")) {//图文咨询过期时间
+                String[] str = body.split(":");
+                String patientOrderId = str[1];
+                PatientOtherOrder patientOtherOrder = patientOtherOrderService.getById(patientOrderId);
+                if (StringUtils.isEmpty(patientOtherOrder.getAcceptStatus())) {
+                    //代表医生没有接受或者拒绝
+                    if (patientOtherOrder.getAmount() != null) {
+                        Dept dept = deptService.getById(patientOtherOrder.getDeptId());
+                        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+                        String result = HttpUtil.get(url);
+                    }
 
+                }
+
+            }
         }
     }
 }

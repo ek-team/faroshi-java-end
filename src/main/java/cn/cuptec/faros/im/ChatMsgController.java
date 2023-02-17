@@ -190,19 +190,20 @@ public class ChatMsgController {
      * str2 0-待接收 1-接收 2-拒绝
      */
     @GetMapping("/receiverPicConsultation")
-    public RestResponse receiverPicConsultation(@RequestParam("msgId") Integer msgId,
+    public RestResponse receiverPicConsultation(
                                                 @RequestParam("str2") String str2,
-                                                @RequestParam(value = "chatId" ,required = false) Integer chatId) {
-        ChatMsg chatMsg = chatMsgService.getById(msgId);
-        chatMsg.setStr2(str2);
-        chatMsgService.updateById(chatMsg);
-        ChatUser updateChatUser = new ChatUser();
-        updateChatUser.setId(chatId);
-        updateChatUser.setPatientOtherOrderStatus(str2);
-        chatUserService.updateById(updateChatUser);
+                                                @RequestParam(value = "patientOtherOrderId" ,required = false) Integer patientOtherOrderId) {
 
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
-                .eq(PatientOtherOrder::getId, chatMsg.getStr1()));
+                .eq(PatientOtherOrder::getId, patientOtherOrderId));
+        Integer chatUserId = patientOtherOrder.getChatUserId();
+        ChatUser updateChatUser = new ChatUser();
+        updateChatUser.setId(chatUserId);
+        updateChatUser.setPatientOtherOrderStatus(str2);
+        chatUserService.updateById(updateChatUser);
+        patientOtherOrder.setAcceptStatus(str2);
+        patientOtherOrderService.updateById(patientOtherOrder);
+
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
 
         if (str2.equals("1")) {
@@ -215,16 +216,18 @@ public class ChatMsgController {
                 updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
                 chatUserService.updateById(updateChatUser);
             } else {
-                Integer chatUserId = patientOtherOrder.getChatUserId();
                 updateChatUser.setServiceStartTime(LocalDateTime.now());
                 updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
                 chatUserService.updateById(updateChatUser);
             }
         } else {//拒绝
             //退款
-            Dept dept = deptService.getById(patientOtherOrder.getDeptId());
-            String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
-            String result = HttpUtil.get(url);
+            if(patientOtherOrder.getAmount()!=null){
+                Dept dept = deptService.getById(patientOtherOrder.getDeptId());
+                String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+                String result = HttpUtil.get(url);
+            }
+
 
         }
         return RestResponse.ok();

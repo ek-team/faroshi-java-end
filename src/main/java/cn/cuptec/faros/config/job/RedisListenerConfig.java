@@ -12,6 +12,7 @@ import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 import javax.annotation.Resource;
+import javax.print.attribute.standard.Finishings;
 
 /**
  * redis监听器配置
@@ -30,11 +31,16 @@ public class RedisListenerConfig {
     private final HospitalInfoService hospitalInfoService;
     private final ChatMsgService chatMsgService;
     private final  FollowUpPlanNoticeCountService followUpPlanNoticeCountService;
+    private final PatientOtherOrderService patientOtherOrderService;
+    private final  DeptService deptService;
     @Bean
     RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(new RedisKeyExpirationListener(redisTemplate, redisConfigProperties, userOrdertService, chatUserService,followUpPlanNoticeService,wxMpService,userService,hospitalInfoService,chatMsgService,followUpPlanNoticeCountService), new PatternTopic(StrUtil.format("__keyevent@{}__:expired", redisConfigProperties.getDatabase())));
+        container.addMessageListener(new RedisKeyExpirationListener(redisTemplate, redisConfigProperties,
+                userOrdertService, chatUserService,followUpPlanNoticeService,
+                wxMpService,userService,hospitalInfoService,chatMsgService,
+                followUpPlanNoticeCountService,patientOtherOrderService,deptService), new PatternTopic(StrUtil.format("__keyevent@{}__:expired", redisConfigProperties.getDatabase())));
         return container;
     }
 }

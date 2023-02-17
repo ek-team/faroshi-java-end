@@ -24,10 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -192,5 +189,8 @@ public class ExcelUtil {
             throw new Exception("导出excel表格失败!", e);
         }
     }
+    public static void writefFormExcel(HttpServletResponse response, List<List<Object>> dataList, String fileName, String sheetName,List<List<String>> headList ) throws Exception {
 
+        EasyExcel.write(getOutputStream("fileName",response)).head(headList).sheet("用户信息").doWrite(dataList);
+    }
 }

@@ -117,6 +117,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     byId.setPatientOtherOrderNo(origionMessage.getStr1());
                     byId.setPatientOtherOrderStatus("0");
                 }
+                byId.setLastChatTime(new Date());
                 chatUserService.updateById(byId);
             } else {
                 origionMessage.setMyUserId(fromUser.getId());

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -48,6 +49,16 @@ public class ChatUserController {
     private UserService userService;
     @Resource
     private PatientOtherOrderService patientOtherOrderService;
+
+    /**
+     * 查询聊天是否有图文咨询你
+     */
+    @GetMapping("/getChat")
+    public RestResponse getChat(@RequestParam(value = "chatUserId") Integer chatUserId) {
+        ChatUser byId = chatUserService.getById(chatUserId);
+
+        return RestResponse.ok(byId);
+    }
     /**
      * 医生主动开启会话随访
      */

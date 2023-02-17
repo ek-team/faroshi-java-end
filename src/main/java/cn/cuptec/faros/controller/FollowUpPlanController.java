@@ -134,11 +134,11 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             LocalDateTime pushDay = followUpPlanContent.getDay();
 
             FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
-            followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
+            followUpPlanNotice.setFollowUpPlanId(newFollowUpPlan.getId());
             followUpPlanNotice.setPatientUserId(userId);
             followUpPlanNotice.setNoticeTime(pushDay);
 
-            followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
+            followUpPlanNotice.setDoctorId(newFollowUpPlan.getCreateUserId());
             followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
 
 
@@ -147,9 +147,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             //通知次数记录
             FollowUpPlanNoticeCount count = new FollowUpPlanNoticeCount();
             count.setTotalPush(newFollowUpPlanContents.size());
-            count.setDoctorId(followUpPlan.getCreateUserId());
+            count.setDoctorId(newFollowUpPlan.getCreateUserId());
             count.setPush(0);
-            count.setFollowUpPlanId(followUpPlan.getId());
+            count.setFollowUpPlanId(newFollowUpPlan.getId());
             count.setPatientUserId(userId);
             followUpPlanNoticeCountList.add(count);
 
@@ -198,6 +198,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         }
         List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
         if (!CollectionUtils.isEmpty(userIds)) {
+            userIds = userIds.stream().distinct().collect(Collectors.toList());
             List<FollowUpPlanPatientUser> followUpPlanPatientUsers = new ArrayList<>();
             for (Integer userId : userIds) {
                 FollowUpPlanPatientUser followUpPlanPatientUser = new FollowUpPlanPatientUser();
@@ -1044,6 +1045,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             doctorUserRemark.setUserId(userId);
         }
         doctorUserRemark.setRemark(remark);
+        doctorUserRemark.setDoctorId(SecurityUtils.getUser().getId());
         doctorUserRemarkService.saveOrUpdate(doctorUserRemark);
         return RestResponse.ok();
     }

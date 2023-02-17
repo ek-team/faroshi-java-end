@@ -103,13 +103,12 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .in(DoctorTeamPeople::getTeamId, teamIds));
             Map<Integer, User> userMap = new HashMap<>();
+            List<Integer> userIds=new ArrayList<>();
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
-                List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
-                userIds.addAll(patientUserIds);
-                List<User> users = (List<User>) userService.listByIds(userIds);
-                userMap = users.stream()
-                        .collect(Collectors.toMap(User::getId, t -> t));
+
+
                 for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
                     if (userMap.get(doctorTeamPeople.getUserId()) != null) {
                         doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
@@ -122,6 +121,10 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
                 }
             }
+            userIds.addAll(patientUserIds);
+            List<User> users = (List<User>) userService.listByIds(userIds);
+            userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
             Map<Integer, DoctorTeam> doctorTeamMap = doctorTeams.stream()
                     .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
             for (ChatUser chatUser : chatUsers) {

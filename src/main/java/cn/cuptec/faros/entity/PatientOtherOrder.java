@@ -38,10 +38,14 @@ public class PatientOtherOrder {
     //订单状态  1-待付款 2-已付款 3-已退款
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
+    @Queryable(queryLogical = QueryLogical.EQUAL)
+    private String acceptStatus;
     private String orderNo;
     private Integer userServiceId;
     @TableField(exist = false)
     private List<String> imageUrlList;
     @TableField(exist = false)
     private User user;
+    @TableField(exist = false)
+    private long efficientHour;//有效小时
 }
