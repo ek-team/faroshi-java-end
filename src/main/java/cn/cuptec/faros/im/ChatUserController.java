@@ -56,9 +56,24 @@ public class ChatUserController {
     @GetMapping("/getChat")
     public RestResponse getChat(@RequestParam(value = "chatUserId") Integer chatUserId) {
         ChatUser byId = chatUserService.getById(chatUserId);
-
+        if (!StringUtils.isEmpty(byId.getPatientOtherOrderStatus())) {
+            if (byId.getPatientOtherOrderStatus().equals("1")) {
+                //接受
+                if (byId.getServiceEndTime().isBefore(LocalDateTime.now())) {
+                    byId.setPatientOtherOrderStatus("3");
+                }
+            }
+            if (byId.getPatientOtherOrderStatus().equals("2")) {
+                //拒绝
+                PatientOtherOrder patientOtherOrder = patientOtherOrderService.getById(byId.getPatientOtherOrderNo());
+                if (patientOtherOrder.getCreateTime().plusHours(24).isBefore(LocalDateTime.now())) {
+                    byId.setPatientOtherOrderStatus("3");
+                }
+            }
+        }
         return RestResponse.ok(byId);
     }
+
     /**
      * 医生主动开启会话随访
      */
@@ -66,7 +81,7 @@ public class ChatUserController {
     public RestResponse openChat(@RequestParam(value = "chatUserId") Integer chatUserId,
                                  @RequestParam("hour") int hour) {
 
-        ChatUser chatUser =new ChatUser();
+        ChatUser chatUser = new ChatUser();
         chatUser.setId(chatUserId);
         LocalDateTime localDateTime = LocalDateTime.now().plusHours(hour);
         chatUser.setServiceEndTime(localDateTime);

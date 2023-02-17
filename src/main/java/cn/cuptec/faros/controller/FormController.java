@@ -289,10 +289,10 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     public RestResponse pageMyScoped() {
         Page<Form> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-        queryWrapper.eq("create_id", SecurityUtils.getUser().getId());
+        queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
         queryWrapper.eq("status", 0);
         queryWrapper.orderByDesc("create_time");
-        IPage<Form> formIPage = service.page(page);
+        IPage<Form> formIPage = service.page(page,queryWrapper);
         return RestResponse.ok(formIPage);
     }
 

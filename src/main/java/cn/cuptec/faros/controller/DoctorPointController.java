@@ -55,6 +55,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     private DoctorTeamPeopleService doctorTeamPeopleService;
     @Autowired
     public RedisTemplate redisTemplate;
+
     /**
      * 分页查询医生积分
      *
@@ -146,7 +147,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         }
         patientOtherOrderService.save(patientOtherOrder);
         //添加待办事项
-        Upcoming upcoming=new Upcoming();
+        Upcoming upcoming = new Upcoming();
         upcoming.setContent("图文咨询申请");
         upcoming.setTitle("图文咨询申请");
         upcoming.setUserId(SecurityUtils.getUser().getId());
@@ -155,15 +156,15 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
         upcoming.setCreateTime(LocalDateTime.now());
         upcoming.setType("2");
-        List<Upcoming> upcomingList=new ArrayList<>();
-        if(doctorId!=null){
+        List<Upcoming> upcomingList = new ArrayList<>();
+        if (doctorId != null) {
             upcoming.setDoctorId(doctorId);
             upcomingList.add(upcoming);
-        }else {
+        } else {
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
-            if(!CollectionUtils.isEmpty(doctorTeamPeopleList)){
-                for(DoctorTeamPeople doctorTeamPeople:doctorTeamPeopleList){
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
                     upcoming.setDoctorId(doctorTeamPeople.getUserId());
                     upcomingList.add(upcoming);
                 }
@@ -171,7 +172,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
             }
         }
-        upcomingService.saveBatch(upcomingList);        RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
+        upcomingService.saveBatch(upcomingList);
+        RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
         return restResponse;
     }
 
@@ -203,7 +205,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         PayResultData data = new PayResultData();
         data.setOrderId(patientOtherOrder.getId());
         //添加待办事项
-        Upcoming upcoming=new Upcoming();
+        Upcoming upcoming = new Upcoming();
         upcoming.setContent("图文咨询申请");
         upcoming.setTitle("图文咨询申请");
         upcoming.setUserId(SecurityUtils.getUser().getId());
@@ -212,15 +214,15 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
         upcoming.setCreateTime(LocalDateTime.now());
         upcoming.setType("2");
-        List<Upcoming> upcomingList=new ArrayList<>();
-        if(doctorId!=null){
+        List<Upcoming> upcomingList = new ArrayList<>();
+        if (doctorId != null) {
             upcoming.setDoctorId(doctorId);
             upcomingList.add(upcoming);
-        }else {
+        } else {
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
-            if(!CollectionUtils.isEmpty(doctorTeamPeopleList)){
-                for(DoctorTeamPeople doctorTeamPeople:doctorTeamPeopleList){
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
                     upcoming.setDoctorId(doctorTeamPeople.getUserId());
                     upcomingList.add(upcoming);
                 }
@@ -261,11 +263,13 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         LocalDateTime now = LocalDateTime.now();
 
         LocalDateTime createTime = patientOtherOrder.getCreateTime().plusHours(24);
-        if(now.isBefore(createTime)){
-            Duration duration = java.time.Duration.between(now,  createTime);
+        if (now.isBefore(createTime)) {
+            Duration duration = java.time.Duration.between(now, createTime);
 
             patientOtherOrder.setEfficientHour(duration.toHours());
 
+        } else {
+            patientOtherOrder.setEfficientHour(0);
         }
         return RestResponse.ok(patientOtherOrder);
     }

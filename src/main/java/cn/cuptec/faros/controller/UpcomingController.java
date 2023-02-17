@@ -99,7 +99,7 @@ public class UpcomingController extends AbstractBaseController<UpcomingService, 
 
 
         return RestResponse.ok(service.count(Wrappers.<Upcoming>lambdaUpdate()
-                .set(Upcoming::getRedStatus, 0)
+                .eq(Upcoming::getRedStatus, 0)
                 .eq(Upcoming::getDoctorId, SecurityUtils.getUser().getId())
         ));
     }

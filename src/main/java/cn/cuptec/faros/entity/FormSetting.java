@@ -17,6 +17,7 @@ public class FormSetting extends Model<FormSetting> {
     private String text;
     private Integer formId;
     private String placeholder;//默认值
+    private Double score;//分数
     private Integer type;//1-输入框 2-单选框 3-多行入框 4文本5图片 6 -多选框
     @TableField(exist = false)
     private List<FormOptions> formOptionsList;//选项
