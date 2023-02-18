@@ -19,8 +19,7 @@ public class RetrieveOrder {
 
     @TableId
     private Integer id;
-    @TableField(exist = false)
-    private String kuAiDiTaskId;//快递任务id
+    private String taskId;//快递任务id
     private String reviewData;//回收单厂家审核信息
     private String deliveryName;//发货人姓名
     private String deliveryPhone;//发货人手机号

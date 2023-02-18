@@ -138,7 +138,8 @@ public class ChatUserController {
     /**
      * 用户进入聊天 开始计时 使用服务
      *
-     * @return
+     * @return 1代表过期时间到需要填写主诉
+     *         2当前已有在申请的咨询
      */
     @ApiOperation(value = "使用服务")
     @GetMapping("/useService")
@@ -150,6 +151,12 @@ public class ChatUserController {
         }
         if (userServicePackageInfo.getTotalCount().equals(userServicePackageInfo.getUseCount())) {
             return RestResponse.ok();
+        }
+        //判断 当前是否有正在待接受的 咨询
+        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
+            if(chatUser.getPatientOtherOrderStatus().equals(0)){
+                return RestResponse.ok("2");
+            }
         }
 
         return RestResponse.ok("1");

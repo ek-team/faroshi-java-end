@@ -123,6 +123,7 @@ public class WxPayController {
             PatientUser byId = patientUserService.getById(patientUserId);
             if (byId != null) {
                 userById.setPatientName(byId.getName());
+                userById.setPatientId(byId.getId());
                 userById.setIdCard(byId.getIdCard());
                 userService.updateById(userById);
             }

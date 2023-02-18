@@ -15,6 +15,7 @@ import cn.cuptec.faros.dto.ChangeDoctorDTO;
 import cn.cuptec.faros.dto.UserPwdDTO;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.IdCardUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -92,7 +93,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return RestResponse.ok();
     }
 
-
+    public static void main(String[] args) {
+        boolean validCard = IdCardUtil.isValidCard("140428199603024132");
+        System.out.println(validCard);
+    }
     /**
      * 添加用户就诊人
      *
@@ -102,6 +106,11 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @PostMapping("/savePatientUser")
     public RestResponse savePatientUser(@RequestBody PatientUser patientUser) {
         patientUser.setUserId(SecurityUtils.getUser().getId());
+
+        boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
+        if(!validCard){
+            return RestResponse.failed("身份证格式错误");
+        }
         patientUserService.save(patientUser);
         return RestResponse.ok();
     }
@@ -114,6 +123,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updatePatientUser")
     public RestResponse updatePatientUser(@RequestBody PatientUser patientUser) {
+        boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
+        if(!validCard){
+            return RestResponse.failed("身份证格式错误");
+        }
         patientUserService.updateById(patientUser);
         return RestResponse.ok();
     }
@@ -214,6 +227,11 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @GetMapping("/info")
     public RestResponse<User> user_me() {
         User user = service.selectUserVoById(SecurityUtils.getUser().getId());
+        if(!StringUtils.isEmpty(user.getPatientId())){
+            PatientUser patientUser = patientUserService.getById(user.getPatientId());
+            user.setIdCard(patientUser.getIdCard());
+            user.setPatientName(patientUser.getName());
+        }
         //生成年龄性别
         String idCard = user.getIdCard();
         if (!StringUtils.isEmpty(idCard)) {
@@ -245,6 +263,11 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @GetMapping("/infoByUid/{uid}")
     public RestResponse<User> user_me(@PathVariable int uid) {
         User user = service.getById(uid);
+        if(!StringUtils.isEmpty(user.getPatientId())){
+            PatientUser patientUser = patientUserService.getById(user.getPatientId());
+            user.setIdCard(patientUser.getIdCard());
+            user.setPatientName(patientUser.getName());
+        }
         String idCard = user.getIdCard();
         if (!StringUtils.isEmpty(idCard)) {
             Map<String, String> map = getAge(idCard);
@@ -264,6 +287,11 @@ public class UserController extends AbstractBaseController<UserService, User> {
         }
         //生成年龄性别
         User user = service.getById(uid);
+        if(!StringUtils.isEmpty(user.getPatientId())){
+            PatientUser patientUser = patientUserService.getById(user.getPatientId());
+            user.setIdCard(patientUser.getIdCard());
+            user.setPatientName(patientUser.getName());
+        }
         String idCard = user.getIdCard();
         if (!StringUtils.isEmpty(idCard)) {
             Map<String, String> map = getAge(idCard);

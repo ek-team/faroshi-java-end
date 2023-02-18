@@ -45,6 +45,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @Resource
     private UserService userService;
     @Resource
+    private PatientUserService patientUserService;
+    @Resource
     private FormService formService;
     @Resource
     private UserFollowDoctorService userFollowDoctorService;//医生和患者的好友表
@@ -900,6 +902,11 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @GetMapping("/getPatientDetail")
     public RestResponse getPatientDetail(@RequestParam("patientId") Integer patientId) {
         User user = userService.getById(patientId);
+        if(!com.baomidou.mybatisplus.core.toolkit.StringUtils.isEmpty(user.getPatientId())){
+            PatientUser patientUser = patientUserService.getById(user.getPatientId());
+            user.setIdCard(patientUser.getIdCard());
+            user.setPatientName(patientUser.getName());
+        }
         //生成年龄性别
         String idCard = user.getIdCard();
         if (!StringUtils.isEmpty(idCard)) {

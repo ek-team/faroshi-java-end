@@ -47,6 +47,7 @@ public class User extends Model<User> {
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String nickname;
     private String patientName;//就诊人名字
+    private String patientId;//就诊人Id
     //是否跳过手动确认订单步骤 0否 1是
     private int confirmOrder = 0;
     private String gender;

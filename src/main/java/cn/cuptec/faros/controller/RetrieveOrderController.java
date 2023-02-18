@@ -489,7 +489,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             day = duration.toDays();
 
         }
+
         XiaDanParam xiaDanParam = new Gson().fromJson(post, XiaDanParam.class);
+        log.info("自动下单回调参数"+post);
+        log.info("自动下单回调参数"+xiaDanParam.getData().toString());
+        log.info("自动下单回调参数"+xiaDanParam.toString());
+        log.info("自动下单回调参数"+xiaDanParam.getData().getTaskId());
         if (xiaDanParam.getCode() == 200 && xiaDanParam.getMessage().equals("success")) {
             RetrieveOrder retrieveOrder = new RetrieveOrder();
             retrieveOrder.setRentDay(day.intValue());
@@ -498,7 +503,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             retrieveOrder.setCreateTime(new Date());
             retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
             retrieveOrder.setStatus(1);
-            retrieveOrder.setKuAiDiTaskId(xiaDanParam.getData().getTaskId());
+            retrieveOrder.setTaskId(xiaDanParam.getData().getTaskId());
             retrieveOrder.setDeliveryCompanyCode(param.getCom());
             service.saveRetrieveOrder(retrieveOrder);
             return RestResponse.ok();
@@ -519,7 +524,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         log.info("快递回调快递回调快递回调快递回调快递回调快递回调快递回调快递回调快递回调:{}", param);
 
         KuaiDiCallBackParam kuaiDiCallBackParam = new Gson().fromJson(param, KuaiDiCallBackParam.class);
-        RetrieveOrder one = service.getOne(new QueryWrapper<RetrieveOrder>().lambda().eq(RetrieveOrder::getKuAiDiTaskId, taskId));
+        RetrieveOrder one = service.getOne(new QueryWrapper<RetrieveOrder>().lambda().eq(RetrieveOrder::getTaskId, taskId));
         one.setKuAiDiStatus(Integer.parseInt(kuaiDiCallBackParam.getData().getStatus()));
         one.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
 

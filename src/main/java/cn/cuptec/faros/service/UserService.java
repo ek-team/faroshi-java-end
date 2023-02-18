@@ -87,13 +87,19 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     @Resource
     private WxMpTagService wxMpTagService;
-
+    @Resource
+    private PatientUserService patientUserService;
     /**
      *
      */
     public User getUserINfo(Integer uid) {
 
         User user = baseMapper.selectById(uid);
+        if(!StringUtils.isEmpty(user.getPatientId())){
+            PatientUser patientUser = patientUserService.getById(user.getPatientId());
+            user.setIdCard(patientUser.getIdCard());
+            user.setPatientName(patientUser.getName());
+        }
         String idCard = user.getIdCard();
         if (!org.apache.commons.lang3.StringUtils.isEmpty(idCard)) {
             Map<String, String> map = getAge(idCard);
