@@ -63,6 +63,9 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
      */
     @GetMapping("/getDoctorPoint")
     public RestResponse getDoctorPoint() {
+
+
+
         Page<DoctorPoint> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 

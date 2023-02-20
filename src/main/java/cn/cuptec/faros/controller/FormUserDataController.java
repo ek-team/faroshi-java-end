@@ -37,6 +37,8 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
     private FormOptionsService formOptionsService;
     @Resource
     private UpcomingService upcomingService;
+    @Resource
+    private ChatMsgService chatMsgService;
 
     /**
      * 添加表单内容
@@ -68,6 +70,9 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         Map<Integer, FormSetting> formSettingMap = formSettings.stream()
                 .collect(Collectors.toMap(FormSetting::getId, t -> t));
         for (FormUserData formUserData : formManagementData) {
+            if (param.getStr() != null) {
+                formUserData.setStr(param.getStr());
+            }
             formUserData.setGroupId(groupId);
             formUserData.setUserId(SecurityUtils.getUser().getId());
             formUserData.setCreateTime(LocalDateTime.now());
@@ -125,7 +130,12 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         followUpPlanNotice.setId(str);
         followUpPlanNotice.setForm(1);
         followUpPlanNoticeService.updateById(followUpPlanNotice);
+        ChatMsg chatMsg = new ChatMsg();
+        chatMsg.setId(param.getStr() + "");
+        chatMsg.setStr2(1 + "");
+        chatMsgService.updateById(chatMsg);
 
+        //更改消息填写表单状态
         //添加待办事项
 //        Upcoming upcoming = new Upcoming();
 //        upcoming.setContent("用户填写表单成功");
@@ -175,7 +185,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         //题目数据
         List<FormUserData> list = service.list(new QueryWrapper<FormUserData>().lambda()
                 .eq(FormUserData::getUserId, userId)
-                .eq(FormUserData::getDoctorId,SecurityUtils.getUser().getId() ));
+                .eq(FormUserData::getDoctorId, SecurityUtils.getUser().getId()));
         if (CollectionUtils.isEmpty(list)) {
             return RestResponse.ok();
         }
@@ -219,7 +229,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         List<FormUserData> list = service.list(new QueryWrapper<FormUserData>().lambda()
                 .eq(FormUserData::getUserId, userId)
                 .eq(FormUserData::getGroupId, groupId)
-                .eq(FormUserData::getDoctorId,SecurityUtils.getUser().getId() ));
+                .eq(FormUserData::getDoctorId, SecurityUtils.getUser().getId()));
 
 
         List<Integer> formIds = new ArrayList<>();

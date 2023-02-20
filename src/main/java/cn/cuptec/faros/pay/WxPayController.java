@@ -312,7 +312,7 @@ public class WxPayController {
             BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
             BigDecimal divide = refundFee1.divide(new BigDecimal(100));
             wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
-                    "点击查看详情", "pages/myOrder/myOrder");
+                    "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
         }
         //图文咨询订单
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()

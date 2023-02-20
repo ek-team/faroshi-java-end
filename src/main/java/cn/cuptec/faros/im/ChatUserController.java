@@ -53,7 +53,6 @@ public class ChatUserController {
     private PatientOtherOrderService patientOtherOrderService;
 
 
-
     /**
      * 查询聊天是否有图文咨询
      */
@@ -75,6 +74,9 @@ public class ChatUserController {
                 }
             }
         }
+        if (byId.getServiceEndTime() == null) {
+            byId.setServiceEndTime(LocalDateTime.now().minusDays(1));
+        }
         return RestResponse.ok(byId);
     }
 
@@ -86,21 +88,25 @@ public class ChatUserController {
                                  @RequestParam(value = "teamId", required = false) Integer teamId,
                                  @RequestParam(value = "userId", required = false) Integer userId,
                                  @RequestParam("hour") int hour) {
+        ChatUser result = new ChatUser();
         if (chatUserId != null) {
             //有聊天id
+            result = chatUserService.getById(chatUserId);
         } else if (teamId != null) {
             //团队聊天
             //查询医生和这个患者的 团队聊天
             ChatUser one = chatUserService.getOne(new QueryWrapper<ChatUser>().lambda()
                     .eq(ChatUser::getTeamId, teamId)
-            .eq(ChatUser::getTargetUid,userId));
-            chatUserId=one.getId();
+                    .eq(ChatUser::getTargetUid, userId));
+            chatUserId = one.getId();
+            result = one;
         } else {
             //单聊
             ChatUser one = chatUserService.getOne(new QueryWrapper<ChatUser>().lambda()
                     .eq(ChatUser::getUid, SecurityUtils.getUser().getId())
-                    .eq(ChatUser::getTargetUid,userId));
-            chatUserId=one.getId();
+                    .eq(ChatUser::getTargetUid, userId));
+            chatUserId = one.getId();
+            result = one;
         }
         ChatUser chatUser = new ChatUser();
         chatUser.setId(chatUserId);
@@ -137,7 +143,7 @@ public class ChatUserController {
 
         }
         chatUserService.updateById(chatUser);
-        return RestResponse.ok();
+        return RestResponse.ok(result);
     }
 
     /**
@@ -170,17 +176,20 @@ public class ChatUserController {
         ChatUser chatUser = chatUserService.getById(chatUserId);
         chatUser.setServiceEndTime(LocalDateTime.now().minusDays(2));
         chatUserService.updateById(chatUser);
-        //返回金额
-        PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
-                .eq(PatientOtherOrder::getId, chatUser.getPatientOtherOrderNo()));
-        Dept dept = deptService.getById(patientOtherOrder.getDeptId());
-        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
-        String result = HttpUtil.get(url);
-        //返回服务次数
-        UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
-        if (userServicePackageInfo != null) {
-            userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() - 1);
-            userServicePackageInfoService.updateById(userServicePackageInfo);
+        if (chatUser.getPatientOtherOrderStatus().equals(1)) {
+            //返回金额
+            PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
+                    .eq(PatientOtherOrder::getId, chatUser.getPatientOtherOrderNo()));
+            Dept dept = deptService.getById(patientOtherOrder.getDeptId());
+            String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+            String result = HttpUtil.get(url);
+            //返回服务次数
+            UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
+            if (userServicePackageInfo != null) {
+                userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() - 1);
+                userServicePackageInfoService.updateById(userServicePackageInfo);
+            }
+
         }
 
         return RestResponse.ok();

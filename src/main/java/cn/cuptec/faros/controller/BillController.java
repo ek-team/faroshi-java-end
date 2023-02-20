@@ -27,17 +27,18 @@ public class BillController {
     private BillService billService;
     @Resource
     private UserOrdertService userOrdertService;
+
     @PostMapping("/add")
     public RestResponse save(@RequestBody Bill bill) {
         bill.setUserId(SecurityUtils.getUser().getId());
         bill.setCreateTime(LocalDateTime.now());
         billService.save(bill);
-        UserOrder userOrder=new UserOrder();
+        UserOrder userOrder = new UserOrder();
         userOrder.setOrderNo(bill.getOrderNo());
         userOrder.setBillId(bill.getId());
         userOrdertService.update(Wrappers.<UserOrder>lambdaUpdate()
                 .eq(UserOrder::getOrderNo, bill.getOrderNo())
-                .set(UserOrder:: getBillId, bill.getId()));
+                .set(UserOrder::getBillId, bill.getId()));
         return RestResponse.ok();
     }
 
@@ -45,6 +46,12 @@ public class BillController {
     public RestResponse getByOrderNo(@RequestParam("orderNo") String orderNo) {
 
         return RestResponse.ok(billService.getOne(new QueryWrapper<Bill>().lambda().eq(Bill::getOrderNo, orderNo)));
+    }
+
+    @GetMapping("/getById")
+    public RestResponse getById(@RequestParam("id") String id) {
+
+        return RestResponse.ok(billService.getById(id));
     }
 
     @PostMapping("/updateById")

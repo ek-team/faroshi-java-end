@@ -98,7 +98,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     }
 
     public static void main(String[] args) {
-        boolean validCard = IdCardUtil.isValidCard("140428199603024132");
+        boolean validCard = IdCardUtil.isValidCard("140428199703024432");
         System.out.println(validCard);
     }
 

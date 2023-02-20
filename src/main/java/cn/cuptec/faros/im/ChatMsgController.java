@@ -144,6 +144,25 @@ public class ChatMsgController {
                             .collect(Collectors.toList());
                     List<FollowUpPlanContent> followUpPlanContents = (List<FollowUpPlanContent>) followUpPlanContentService.listByIds(followUpPlanContentIds);
                     if (!CollectionUtils.isEmpty(followUpPlanContents)) {
+                        List<Integer> formIdList = new ArrayList<>();
+                        for (FollowUpPlanContent followUpPlanContent : followUpPlanContents) {
+                            if (followUpPlanContent.getFormId() != null) {
+                                formIdList.add(followUpPlanContent.getFormId());
+                            }
+                        }
+                        if (!CollectionUtils.isEmpty(formIdList)) {
+                            List<Form> forms = (List<Form>) formService.listByIds(formIdList);
+                            Map<Integer, Form> formMap1 = forms.stream()
+                                    .collect(Collectors.toMap(Form::getId, t -> t));
+                            for (FollowUpPlanContent followUpPlanContent : followUpPlanContents) {
+                                if (followUpPlanContent.getFormId() != null) {
+                                    Form form = formMap1.get(followUpPlanContent.getFormId());
+                                    if (form != null) {
+                                        followUpPlanContent.setForm(form);
+                                    }
+                                }
+                            }
+                        }
                         Map<Integer, FollowUpPlanContent> followUpPlanContentMap = followUpPlanContents.stream()
                                 .collect(Collectors.toMap(FollowUpPlanContent::getId, t -> t));
                         for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
