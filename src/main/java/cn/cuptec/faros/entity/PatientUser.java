@@ -14,6 +14,7 @@ public class PatientUser {
     private String name;
     private String idCard;
     private String age;
-    private Integer sex; //0-男 1-女
+    private String sex; //0-男 1-女
     private Integer userId;
+    private String phone;
 }

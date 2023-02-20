@@ -148,6 +148,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         patientOtherOrderService.save(patientOtherOrder);
         //添加待办事项
         Upcoming upcoming = new Upcoming();
+        upcoming.setTeamId(patientOtherOrder.getDoctorTeamId());
+        upcoming.setChatUserId(patientOtherOrder.getChatUserId());
         upcoming.setContent("图文咨询申请");
         upcoming.setTitle("图文咨询申请");
         upcoming.setUserId(SecurityUtils.getUser().getId());
@@ -161,12 +163,21 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             upcoming.setDoctorId(doctorId);
             upcomingList.add(upcoming);
         } else {
+
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
-                    upcoming.setDoctorId(doctorTeamPeople.getUserId());
-                    upcomingList.add(upcoming);
+                    Upcoming upcoming1 = new Upcoming();
+                    upcoming1.setTeamId(patientOtherOrder.getDoctorTeamId());
+                    upcoming1.setChatUserId(patientOtherOrder.getChatUserId());
+                    upcoming1.setContent("图文咨询申请");
+                    upcoming1.setTitle("图文咨询申请");
+                    upcoming1.setUserId(SecurityUtils.getUser().getId());
+                    upcoming1.setCreateTime(LocalDateTime.now());
+                    upcoming1.setType("2");
+                    upcoming1.setDoctorId(doctorTeamPeople.getUserId());
+                    upcomingList.add(upcoming1);
                 }
 
 
@@ -206,6 +217,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         data.setOrderId(patientOtherOrder.getId());
         //添加待办事项
         Upcoming upcoming = new Upcoming();
+        upcoming.setTeamId(patientOtherOrder.getDoctorTeamId());
+        upcoming.setChatUserId(patientOtherOrder.getChatUserId());
         upcoming.setContent("图文咨询申请");
         upcoming.setTitle("图文咨询申请");
         upcoming.setUserId(SecurityUtils.getUser().getId());
@@ -219,12 +232,21 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             upcoming.setDoctorId(doctorId);
             upcomingList.add(upcoming);
         } else {
+
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
-                    upcoming.setDoctorId(doctorTeamPeople.getUserId());
-                    upcomingList.add(upcoming);
+                    Upcoming upcoming1 = new Upcoming();
+                    upcoming1.setTeamId(patientOtherOrder.getDoctorTeamId());
+                    upcoming1.setChatUserId(patientOtherOrder.getChatUserId());
+                    upcoming1.setContent("图文咨询申请");
+                    upcoming1.setTitle("图文咨询申请");
+                    upcoming1.setUserId(SecurityUtils.getUser().getId());
+                    upcoming1.setCreateTime(LocalDateTime.now());
+                    upcoming1.setType("2");
+                    upcoming1.setDoctorId(doctorTeamPeople.getUserId());
+                    upcomingList.add(upcoming1);
                 }
 
 
@@ -264,17 +286,40 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
         LocalDateTime createTime = patientOtherOrder.getCreateTime().plusHours(24);
         if (now.isBefore(createTime)) {
-            Duration duration = java.time.Duration.between(now, createTime);
-
-            patientOtherOrder.setEfficientHour(duration.toHours());
+            Duration duration = java.time.Duration.between(createTime,now);
+            String s1 = new String(duration.toString()).substring(3);// 转换成字符串类型，然后截取
+            String replace = s1.replace("H", "时");
+            String replace1 = replace.replace("M", "分");
+            String[] s = replace1.split("分");
+            patientOtherOrder.setEfficientHour(s[0]+"分");
 
         } else {
-            patientOtherOrder.setEfficientHour(0);
+            patientOtherOrder.setEfficientHour("0时");
         }
         return RestResponse.ok(patientOtherOrder);
     }
 
+    public static void main(String[] args) {
+        LocalDateTime d1 = LocalDateTime.now();
+        System.out.println(d1);
 
+
+
+        LocalDateTime d2 = LocalDateTime.now();
+         d2 = d2.plusHours(24);
+         d2 = d2.plusMinutes(5);
+        d2= d2.plusSeconds(20);
+        System.out.println(d2);
+
+        Duration sjc = Duration.between(d2,d1);// 计算时间差
+        System.out.println(sjc.toString());
+        String s1 = new String(sjc.toString()).substring(3);// 转换成字符串类型，然后截取
+        String replace = s1.replace("H", "时");
+        String replace1 = replace.replace("M", "分");
+        String[] s = replace1.split("分");
+        System.out.println(s[0]);
+
+    }
     @Override
     protected Class<DoctorPoint> getEntityClass() {
         return DoctorPoint.class;

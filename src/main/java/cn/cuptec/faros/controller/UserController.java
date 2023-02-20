@@ -17,6 +17,7 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.IdCardUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -28,6 +29,8 @@ import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +45,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("user")
 public class UserController extends AbstractBaseController<UserService, User> {
+    private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
 
     @Resource
     private DeptService deptService;
@@ -97,6 +101,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         boolean validCard = IdCardUtil.isValidCard("140428199603024132");
         System.out.println(validCard);
     }
+
     /**
      * 添加用户就诊人
      *
@@ -108,7 +113,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         patientUser.setUserId(SecurityUtils.getUser().getId());
 
         boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
-        if(!validCard){
+        if (!validCard) {
             return RestResponse.failed("身份证格式错误");
         }
         patientUserService.save(patientUser);
@@ -124,7 +129,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @PostMapping("/updatePatientUser")
     public RestResponse updatePatientUser(@RequestBody PatientUser patientUser) {
         boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
-        if(!validCard){
+        if (!validCard) {
             return RestResponse.failed("身份证格式错误");
         }
         patientUserService.updateById(patientUser);
@@ -138,7 +143,22 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @GetMapping("/listPatientUser")
     public RestResponse listPatientUser() {
-        return RestResponse.ok(patientUserService.list(new QueryWrapper<PatientUser>().lambda().eq(PatientUser::getUserId, SecurityUtils.getUser().getId())));
+        List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().lambda().eq(PatientUser::getUserId, SecurityUtils.getUser().getId()));
+        if (!CollectionUtils.isEmpty(list)) {
+            for (PatientUser patientUser : list) {
+                if (!StringUtils.isEmpty(patientUser.getIdCard())) {
+                    Map<String, String> map = getAge(patientUser.getIdCard());
+                    patientUser.setAge(map.get("birthday"));
+
+                    patientUser.setSex(map.get("sexCode"));//1-男0-女
+                }
+
+
+            }
+        }
+
+
+        return RestResponse.ok(list);
     }
 
     /**
@@ -227,10 +247,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @GetMapping("/info")
     public RestResponse<User> user_me() {
         User user = service.selectUserVoById(SecurityUtils.getUser().getId());
-        if(!StringUtils.isEmpty(user.getPatientId())){
+        if (!StringUtils.isEmpty(user.getPatientId())) {
             PatientUser patientUser = patientUserService.getById(user.getPatientId());
-            user.setIdCard(patientUser.getIdCard());
-            user.setPatientName(patientUser.getName());
+            if (patientUser != null) {
+                user.setIdCard(patientUser.getIdCard());
+                user.setPatientName(patientUser.getName());
+            }
+
         }
         //生成年龄性别
         String idCard = user.getIdCard();
@@ -263,10 +286,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @GetMapping("/infoByUid/{uid}")
     public RestResponse<User> user_me(@PathVariable int uid) {
         User user = service.getById(uid);
-        if(!StringUtils.isEmpty(user.getPatientId())){
+        if (!StringUtils.isEmpty(user.getPatientId())) {
             PatientUser patientUser = patientUserService.getById(user.getPatientId());
-            user.setIdCard(patientUser.getIdCard());
-            user.setPatientName(patientUser.getName());
+            if (patientUser != null) {
+                user.setIdCard(patientUser.getIdCard());
+                user.setPatientName(patientUser.getName());
+            }
+
         }
         String idCard = user.getIdCard();
         if (!StringUtils.isEmpty(idCard)) {
@@ -287,10 +313,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
         }
         //生成年龄性别
         User user = service.getById(uid);
-        if(!StringUtils.isEmpty(user.getPatientId())){
+        if (!StringUtils.isEmpty(user.getPatientId())) {
             PatientUser patientUser = patientUserService.getById(user.getPatientId());
-            user.setIdCard(patientUser.getIdCard());
-            user.setPatientName(patientUser.getName());
+            if (patientUser != null) {
+                user.setIdCard(patientUser.getIdCard());
+                user.setPatientName(patientUser.getName());
+            }
+
         }
         String idCard = user.getIdCard();
         if (!StringUtils.isEmpty(idCard)) {
@@ -314,10 +343,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
     public RestResponse updateById(@RequestBody @Valid User user) {
         if (user.getNickname().equals("微信用户")) {
             User user1 = new User();
-            BeanUtils.copyProperties(user, user1, "nickname","avatar");
+            BeanUtils.copyProperties(user, user1, "nickname", "avatar");
             user = user1;
         }
         user.setId(SecurityUtils.getUser().getId());
+        if (StrUtil.isNotBlank(user.getPassword())) {
+            user.setPassword(ENCODER.encode(user.getPassword()));
+        }
         return service.updateById(user) ? RestResponse.ok() : RestResponse.failed();
     }
 

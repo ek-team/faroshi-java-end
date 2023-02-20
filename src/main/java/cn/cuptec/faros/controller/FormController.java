@@ -6,6 +6,7 @@ import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ExcelUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -157,8 +158,8 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             List<User> users = (List<User>) userService.listByIds(userIds);
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
-            Map<Integer, List<FormUserData>> formUserDataMap = formUserDataList.stream()
-                    .collect(Collectors.groupingBy(FormUserData::getUserId));
+            Map<String, List<FormUserData>> formUserDataMap = formUserDataList.stream()
+                    .collect(Collectors.groupingBy(FormUserData::getGroupId));
             List<Form> formDatas = new ArrayList<>();
             for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
                 Form form = new Form();
@@ -192,20 +193,51 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         }
 
 
+        List<FormOptions> formOptions =formOptionsService.list(new QueryWrapper<FormOptions>().lambda().eq(FormOptions::getFormId, formId));
+        Map<Integer, FormOptions> formOptionsMap = formOptions.stream()
+                .collect(Collectors.toMap(FormOptions::getId, t -> t));
+        //处理答案
+        for(FormUserData formUserData:formUserDataList){
+            if(formUserData.getType().equals("2")){
+                //单选
+                FormOptions formOption = formOptionsMap.get(Integer.parseInt(formUserData.getAnswer().toString()));
+                formUserData.setAnswer(formOption.getText());
+            }
+            if(formUserData.getType().equals("6")){
+                //多选
+                String replace = formUserData.getAnswer().toString().replace("[", "");
+                String replace1 = replace.replace("]", "");
+                String replace2 = replace1.replace("\"", "");
+
+                String[] split = replace2.split(",");
+                List<String> strings = Arrays.asList(split);
+                String answer="";
+                for(String an:strings){
+                    FormOptions formOption = formOptionsMap.get(Integer.parseInt(an));
+
+                    if(StringUtils.isEmpty(answer)){
+                        answer=formOption.getText();
+                    }else {
+                        answer=answer+"/"+formOption.getText();
+                    }
+                }
+                formUserData.setAnswer(answer);
+            }
+        }
+
         List<Integer> formSettingIds = formUserDataList.stream().map(FormUserData::getFormSettingId)
                 .collect(Collectors.toList());
         List<FormSetting> formSettings = (List<FormSetting>) formSettingService.listByIds(formSettingIds);
         Map<Integer, FormSetting> formSettingMap = formSettings.stream()
                 .collect(Collectors.toMap(FormSetting::getId, t -> t));
-
         List<Integer> userIds = formUserDataList.stream().map(FormUserData::getUserId)
                 .collect(Collectors.toList());
         List<User> users = (List<User>) userService.listByIds(userIds);
         Map<Integer, User> userMap = users.stream()
                 .collect(Collectors.toMap(User::getId, t -> t));
         //根据患者分组
-        Map<Integer, List<FormUserData>> FormUserDataMap = formUserDataList.stream()
-                .collect(Collectors.groupingBy(FormUserData::getUserId));
+        Map<String, List<FormUserData>> FormUserDataMap = formUserDataList.stream()
+                .collect(Collectors.groupingBy(FormUserData::getGroupId));
         for (FormUserData formUserData : formUserDataList) {
             formUserData.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
             formUserData.setFormSettingName(formSettingMap.get(formUserData.getFormSettingId()).getName());
@@ -215,8 +247,6 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         headList.add(Lists.newArrayList("题目名称"));
         //定义数据体
         List<List<Object>> dataList = new ArrayList<>();
-
-        Map<Integer, List<FormUserData>> newFormUserDataMap = new HashMap<>();
 
         for (List<FormUserData> formUserDatas : FormUserDataMap.values()) {
 
@@ -256,14 +286,13 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                     score = formUserData.getScope() + score;
                 }
             }
-            if(index==0){
+            if (index == 0) {
                 List<Object> data = new ArrayList<>();
                 data.add("");//第一列题目名称
 
                 data.add(score + "");//分数
                 dataList.add(data);
-            }
-            else{
+            } else {
 
                 List<Object> objectList = dataList.get(dataList.size() - 1);
                 objectList.add(score);
@@ -292,17 +321,18 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
         queryWrapper.eq("status", 0);
         queryWrapper.orderByDesc("create_time");
-        IPage<Form> formIPage = service.page(page,queryWrapper);
+        IPage<Form> formIPage = service.page(page, queryWrapper);
         return RestResponse.ok(formIPage);
     }
 
     /**
      * 根据id查询详情
+     * strId: chatMsgId 随访id
      *
      * @return
      */
     @GetMapping("/getById")
-    public RestResponse getById(@RequestParam("id") Integer id) {
+    public RestResponse getById(@RequestParam(value = "patientUserId", required = false) Integer patientUserId, @RequestParam("id") Integer id, @RequestParam(value = "strId", required = false) String strId) {
         Form byId = service.getById(id);
         List<FormSetting> list = formSettingService.list(new QueryWrapper<FormSetting>().lambda().eq(FormSetting::getFormId, id));
         List<Integer> formSettingIds = list.stream().map(FormSetting::getId)
@@ -323,10 +353,17 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             byId.setFormSettings(list);
             //查询用户填写的表单数据
             //题目数据
-            List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda()
+            if (patientUserId == null) {
+                patientUserId = SecurityUtils.getUser().getId();
+            }
+            LambdaQueryWrapper<FormUserData> eq = new QueryWrapper<FormUserData>().lambda()
                     .eq(FormUserData::getFormId, id)
-                    .eq(FormUserData::getUserId, SecurityUtils.getUser().getId())
-                    .eq(FormUserData::getDoctorId, byId.getCreateUserId()));
+                    .eq(FormUserData::getUserId, patientUserId)
+                    .eq(FormUserData::getDoctorId, byId.getCreateUserId());
+            if (!StringUtils.isEmpty(strId)) {
+                eq.eq(FormUserData::getStr, strId);
+            }
+            List<FormUserData> formUserDataList = formUserDataService.list(eq);
             if (!CollectionUtils.isEmpty(formUserDataList)) {
                 Double scope = 0.0;
                 for (FormUserData formUserData : formUserDataList) {
@@ -364,7 +401,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                         .sorted(Comparator.comparing(FormUserData::getFormSettingId)).collect(Collectors.toList());
                 byId.setFormUserDataList(collect);
                 byId.setScope(scope);
-            }else{
+            } else {
                 byId.setFormUserDataList(new ArrayList<>());
             }
 

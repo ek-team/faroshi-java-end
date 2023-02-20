@@ -18,7 +18,7 @@ public class FormUserData extends Model<FormUserData> {
     private Integer id;
 
     private Integer orderId;
-    private Integer str;
+    private Integer str;//如果是随访通知 就是随访的id， 如果是单独发送表单就是chatMsgId
     private Integer userId;
     @TableField(exist = false)
     private String userName;

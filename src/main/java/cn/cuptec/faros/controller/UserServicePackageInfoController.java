@@ -38,6 +38,29 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
     private UserService userService;
     @Resource
     private PatientUserService patientUserService;
+
+    /**
+     * 判断用户是否有这个团队的免费咨询
+     */
+    @GetMapping("/checkHaveUserServicePackageINfo")
+    public RestResponse checkHaveUserServicePackageINfo(@RequestParam(value = "chatUserId", required = false) Integer chatUserId) {
+        List<UserServicePackageInfo> list = service.list(new QueryWrapper<UserServicePackageInfo>().lambda()
+                .eq(UserServicePackageInfo::getChatUserId, chatUserId)
+        );
+        if (CollectionUtils.isEmpty(list)) {
+            return RestResponse.ok(new ArrayList<>());
+        }
+        List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
+        for (UserServicePackageInfo userServicePackageInfo : list) {
+            if (!userServicePackageInfo.getTotalCount().equals(userServicePackageInfo.getUseCount())) {
+                userServicePackageInfos.add(userServicePackageInfo);
+            }
+
+
+        }
+        return RestResponse.ok(userServicePackageInfos);
+    }
+
     /**
      * 根据就诊人身份证查询用户的服务
      */
@@ -45,7 +68,7 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
     public RestResponse listByIdCard(@RequestParam(value = "idCard", required = false) String idCard) {
         List<PatientUser> patientUserList = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
                 .eq(PatientUser::getIdCard, idCard));
-        if(CollectionUtils.isEmpty(patientUserList)){
+        if (CollectionUtils.isEmpty(patientUserList)) {
             return RestResponse.ok(new ArrayList<>());
         }
         Integer userId = patientUserList.get(0).getUserId();

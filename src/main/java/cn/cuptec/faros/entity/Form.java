@@ -36,4 +36,6 @@ public class Form extends Model<Form> {
     private String userName;
     @TableField(exist = false)
     private String doctorName;
+    @TableField(exist = false)
+    private String groupId;
 }

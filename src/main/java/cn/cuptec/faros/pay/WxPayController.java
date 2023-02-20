@@ -208,11 +208,6 @@ public class WxPayController {
             patientOtherOrder.setTransactionId(transactionId);
             patientOtherOrder.setStatus(2);
             patientOtherOrderService.updateById(patientOtherOrder);
-//            Integer chatUserId = patientOtherOrder.getChatUserId();
-//            ChatUser chatUser = chatUserService.getById(chatUserId);
-//            chatUser.setServiceStartTime(LocalDateTime.now());
-//            chatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
-//            chatUserService.updateById(chatUser);
 
 
             DoctorPoint doctorPoint = new DoctorPoint();
@@ -314,7 +309,9 @@ public class WxPayController {
             User userById = userService.getById(retrieveOrder.getUserId());
             //发送公众号通知
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", orderRefundInfo.getRefundFee() + "", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
+            BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
+            BigDecimal divide = refundFee1.divide(new BigDecimal(100));
+            wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
                     "点击查看详情", "pages/myOrder/myOrder");
         }
         //图文咨询订单
@@ -326,6 +323,12 @@ public class WxPayController {
         }
         return RestResponse.ok();
 
+    }
+
+    public static void main(String[] args) {
+        BigDecimal bigDecimal = new BigDecimal(1);
+        BigDecimal divide = bigDecimal.divide(new BigDecimal(100));
+        System.out.println(divide);
     }
 
     @ApiOperation(value = "图文咨询订单申请退款")

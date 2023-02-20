@@ -6,6 +6,7 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.ChatUserVO;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.im.core.UserChannelManager;
+import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -24,6 +25,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,8 +52,10 @@ public class ChatUserController {
     @Resource
     private PatientOtherOrderService patientOtherOrderService;
 
+
+
     /**
-     * 查询聊天是否有图文咨询你
+     * 查询聊天是否有图文咨询
      */
     @GetMapping("/getChat")
     public RestResponse getChat(@RequestParam(value = "chatUserId") Integer chatUserId) {
@@ -78,13 +82,60 @@ public class ChatUserController {
      * 医生主动开启会话随访
      */
     @GetMapping("/openChat")
-    public RestResponse openChat(@RequestParam(value = "chatUserId") Integer chatUserId,
+    public RestResponse openChat(@RequestParam(value = "chatUserId", required = false) Integer chatUserId,
+                                 @RequestParam(value = "teamId", required = false) Integer teamId,
+                                 @RequestParam(value = "userId", required = false) Integer userId,
                                  @RequestParam("hour") int hour) {
-
+        if (chatUserId != null) {
+            //有聊天id
+        } else if (teamId != null) {
+            //团队聊天
+            //查询医生和这个患者的 团队聊天
+            ChatUser one = chatUserService.getOne(new QueryWrapper<ChatUser>().lambda()
+                    .eq(ChatUser::getTeamId, teamId)
+            .eq(ChatUser::getTargetUid,userId));
+            chatUserId=one.getId();
+        } else {
+            //单聊
+            ChatUser one = chatUserService.getOne(new QueryWrapper<ChatUser>().lambda()
+                    .eq(ChatUser::getUid, SecurityUtils.getUser().getId())
+                    .eq(ChatUser::getTargetUid,userId));
+            chatUserId=one.getId();
+        }
         ChatUser chatUser = new ChatUser();
         chatUser.setId(chatUserId);
         LocalDateTime localDateTime = LocalDateTime.now().plusHours(hour);
         chatUser.setServiceEndTime(localDateTime);
+
+        ChatUser byId = chatUserService.getById(chatUserId);
+        if (byId.getGroupType().equals(0)) {
+            ChatUser fromUserChat = new ChatUser();
+            fromUserChat.setUid(byId.getUid());
+            fromUserChat.setTargetUid(byId.getTargetUid());
+
+
+            ChatUser toUserChat = new ChatUser();
+            toUserChat.setUid(byId.getTargetUid());
+            toUserChat.setTargetUid(byId.getUid());
+
+            List<ChatUser> chatUsers = new ArrayList<>();
+            chatUsers.add(fromUserChat);
+            chatUsers.add(toUserChat);
+
+            chatUsers.forEach(c -> {
+                ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                if (one != null) {
+
+                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                            .eq(ChatUser::getUid, c.getUid())
+                            .eq(ChatUser::getTargetUid, c.getTargetUid())
+                            .set(ChatUser::getServiceEndTime, localDateTime)
+                    );
+                }
+            });
+
+
+        }
         chatUserService.updateById(chatUser);
         return RestResponse.ok();
     }
@@ -139,7 +190,7 @@ public class ChatUserController {
      * 用户进入聊天 开始计时 使用服务
      *
      * @return 1代表过期时间到需要填写主诉
-     *         2当前已有在申请的咨询
+     * 2当前已有在申请的咨询
      */
     @ApiOperation(value = "使用服务")
     @GetMapping("/useService")
@@ -153,8 +204,8 @@ public class ChatUserController {
             return RestResponse.ok();
         }
         //判断 当前是否有正在待接受的 咨询
-        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
-            if(chatUser.getPatientOtherOrderStatus().equals(0)){
+        if (!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())) {
+            if (chatUser.getPatientOtherOrderStatus().equals("0") || chatUser.getPatientOtherOrderStatus().equals("1")) {
                 return RestResponse.ok("2");
             }
         }
@@ -162,6 +213,11 @@ public class ChatUserController {
         return RestResponse.ok("1");
     }
 
+    public static void main(String[] args) {
+        if (!"2".equals(2) || !"2".equals(3)) {
+            System.out.println(1);
+        }
+    }
 
     @ApiOperation(value = "分页查询聊天列表")
     @PostMapping("/pageChatUsers")

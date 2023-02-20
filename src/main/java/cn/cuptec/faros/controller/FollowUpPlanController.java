@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import javax.annotation.Resource;
 import java.text.Collator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * 随访计划管理
  */
+@Slf4j
 @AllArgsConstructor
 @RestController
 @RequestMapping("/followUpPlan")
@@ -165,7 +168,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
                 LocalDateTime thisNow = LocalDateTime.now();
                 if (noticeTime.isBefore(thisNow)) {
-                    noticeTime = noticeTime.plusHours(1);
+                    noticeTime = noticeTime.plusMinutes(3);
                 }
                 java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
                 long hours = duration.toMinutes();//分钟
@@ -260,7 +263,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
                     LocalDateTime thisNow = LocalDateTime.now();
                     if (noticeTime.isBefore(thisNow)) {
-                        noticeTime = noticeTime.plusHours(1);
+                        noticeTime = noticeTime.plusMinutes(3);
                     }
                     java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
                     long hours = duration.toMinutes();//分钟
@@ -359,6 +362,23 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         return RestResponse.ok(redisConfigProperties.getPassword());
     }
 
+    public static void main(String[] args) {
+       List<FollowUpPlanContent> followUpPlanContentList=new ArrayList<>();
+       FollowUpPlanContent followUpPlanContent=new FollowUpPlanContent();
+        followUpPlanContent.setDay(LocalDateTime.now());
+        followUpPlanContentList.add(followUpPlanContent);
+
+        FollowUpPlanContent followUpPlanContent1=new FollowUpPlanContent();
+        followUpPlanContent1.setDay(LocalDateTime.now().plusHours(2));
+        followUpPlanContentList.add(followUpPlanContent1);
+        Collections.sort(followUpPlanContentList, (o1, o2) -> {
+            Collator collator = Collator.getInstance(Locale.CHINA);
+            long a1 = o1.getDay().toEpochSecond(ZoneOffset.of("+8"));
+            long a2 = o2.getDay().toEpochSecond(ZoneOffset.of("+8"));
+            return collator.compare(a1+"",a2+"");
+        });
+        System.out.println(followUpPlanContentList.get(0));
+    }
     /**
      * 编辑随访计划
      *
@@ -414,7 +434,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         if (!CollectionUtils.isEmpty(followUpPlanContentList) && !CollectionUtils.isEmpty(userIds)) {
             Collections.sort(followUpPlanContentList, (o1, o2) -> {
                 Collator collator = Collator.getInstance(Locale.CHINA);
-                return collator.compare(o1.getDay(), o2.getDay());
+                long a1 = o1.getDay().toEpochSecond(ZoneOffset.of("+8"));
+                long a2 = o2.getDay().toEpochSecond(ZoneOffset.of("+8"));
+                return collator.compare(a1+"",a2+"");
             });
             List<FollowUpPlanNotice> newFollowUpPlanNoticeList = new ArrayList<>();
             List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
@@ -435,7 +457,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         followUpPlanNoticeList.add(followUpPlanNotice);
                         LocalDateTime thisNow = LocalDateTime.now();
                         if (noticeTime.isBefore(thisNow)) {
-                            noticeTime = noticeTime.plusHours(1);
+                            noticeTime = noticeTime.plusMinutes(3);
                         }
                         java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
                         long hours = duration.toMinutes();//分钟
@@ -534,7 +556,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
                         LocalDateTime thisNow = LocalDateTime.now();
                         if (noticeTime.isBefore(thisNow)) {
-                            noticeTime = noticeTime.plusHours(1);
+                            noticeTime = noticeTime.plusMinutes(3);
                         }
                         java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
 
@@ -904,8 +926,11 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         User user = userService.getById(patientId);
         if(!com.baomidou.mybatisplus.core.toolkit.StringUtils.isEmpty(user.getPatientId())){
             PatientUser patientUser = patientUserService.getById(user.getPatientId());
-            user.setIdCard(patientUser.getIdCard());
-            user.setPatientName(patientUser.getName());
+            if(patientUser!=null){
+                user.setIdCard(patientUser.getIdCard());
+                user.setPatientName(patientUser.getName());
+            }
+
         }
         //生成年龄性别
         String idCard = user.getIdCard();

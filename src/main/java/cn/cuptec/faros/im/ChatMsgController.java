@@ -49,6 +49,8 @@ public class ChatMsgController {
     private FollowUpPlanContentService followUpPlanContentService;
     @Resource
     private FormService formService;
+    @Resource
+    private cn.cuptec.faros.service.WxMpService wxMpService;
 
     @ApiOperation(value = "查询历史记录")
     @PostMapping("/queryChatMsgHistory")
@@ -234,6 +236,19 @@ public class ChatMsgController {
 
 
         }
+        User user = userService.getById(patientOtherOrder.getUserId());
+        //发送微信模板通知用户 接受状态
+        String msg = "";
+        if (str2.equals("1")) {
+            msg = "医生已接收您的咨询";
+        } else {
+            msg = "医生已拒绝您的咨询";
+        }
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String time = df.format(now);
+        wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, msg, "/pages/news/news");
+
         return RestResponse.ok();
     }
 }

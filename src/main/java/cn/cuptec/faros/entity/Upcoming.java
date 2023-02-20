@@ -19,7 +19,8 @@ public class Upcoming extends Model<Upcoming> {
     private Integer userId;
     private Integer doctorId;
     private String title;
-
+    private Integer chatUserId;
+    private Integer teamId;
     private String content;
     private LocalDateTime createTime;
     private int redStatus=0;//0-未读 1-已读

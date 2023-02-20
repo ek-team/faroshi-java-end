@@ -1,17 +1,14 @@
 package cn.cuptec.faros.im.handler.base;
 
-import cn.cuptec.faros.entity.ChatMsg;
-import cn.cuptec.faros.entity.ChatUser;
-import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.im.core.SocketUser;
 import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.im.proto.ChatProto;
-import cn.cuptec.faros.service.ChatMsgService;
-import cn.cuptec.faros.service.ChatUserService;
-import cn.cuptec.faros.service.UniAppPushService;
-import cn.cuptec.faros.service.UserService;
+import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -28,11 +25,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
@@ -47,6 +42,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private UserService userService;
+    @Resource
+    private FormService formService;
+    @Resource
+    private UserFollowDoctorService userFollowDoctorService;
+    @Resource
+    private UserGroupService userGroupService;
+    @Resource
+    private UserGroupRelationUserService userGroupRelationUserService;
 
     @Override
     @Transactional
@@ -66,8 +69,13 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 origionMessage.setMsg("图文咨询");
                 origionMessage.setStr2("0");//0-待接收 1-接收 2-拒绝
             }
-
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
+            if (origionMessage.getMsgType().equals(ChatProto.FORM)) {
+                String formId = origionMessage.getStr1();
+                Form form = formService.getById(formId);
+                chatMsg.setForm(form);
+
+            }
             chatMsg.setMsg(origionMessage.getMsg());
             log.info("收到消息=======================" + origionMessage.toString());
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
@@ -75,6 +83,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             chatMsg.setUser(byId1);
             //判断是否是群聊
             if (origionMessage.getChatUserId() != null) {
+
                 //群发消息
                 ChatUser byId = chatUserService.getById(origionMessage.getChatUserId());
                 //推送群聊的消息给所有人
@@ -120,6 +129,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 }
                 byId.setLastChatTime(new Date());
                 chatUserService.updateById(byId);
+                //判断该患者是否在医生下面 否则添加到医生下面
+                if (!fromUser.getId().equals(byId.getTargetUid())) {//代表是医生发送消息
+                    saveUserFollowDoctor(fromUser, byId);
+                }
             } else {
                 origionMessage.setMyUserId(fromUser.getId());
                 Channel targetUserChannel = UserChannelManager.getUserChannel(origionMessage.getTargetUid());
@@ -155,13 +168,36 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
     }
 
-    public static void main(String[] args) {
-        String data = "你好中国";
-//        List<Term> segment = HanLP.segment(data);
-//        for(Term term:segment){
-//            System.out.println(term.word);
-//        }
-        System.out.println(data.indexOf("你好中国"));
+    private void saveUserFollowDoctor(User fromUser, ChatUser byId) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                List<UserGroupRelationUser> userGroupRelationUserList = new ArrayList<>();
+
+                List<UserFollowDoctor> userFollowDoctors = userFollowDoctorService.list(new QueryWrapper<UserFollowDoctor>().lambda()
+                        .eq(UserFollowDoctor::getDoctorId, fromUser.getId())
+                        .eq(UserFollowDoctor::getUserId, byId.getTargetUid()));
+
+                List<UserGroup> userGroupList = userGroupService.list(new QueryWrapper<UserGroup>().lambda()
+                        .isNull(UserGroup::getTeamId));
+                if (!CollectionUtils.isEmpty(userGroupList)) {
+
+                    List<Integer> userGroupIds = userGroupList.stream().map(UserGroup::getId)
+                            .collect(Collectors.toList());
+                    userGroupRelationUserList = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>().lambda()
+                            .in(UserGroupRelationUser::getUserGroupId, userGroupIds)
+                            .eq(UserGroupRelationUser::getUserId, byId.getTargetUid()));
+                }
+                if (CollectionUtils.isEmpty(userFollowDoctors) && CollectionUtils.isEmpty(userGroupRelationUserList)) {
+                    //添加到医生自己的患者
+                    UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
+                    userFollowDoctor.setDoctorId(fromUser.getId());
+                    userFollowDoctor.setUserId(byId.getTargetUid());
+                    userFollowDoctorService.save(userFollowDoctor);
+                }
+
+            }
+        });
     }
 
 

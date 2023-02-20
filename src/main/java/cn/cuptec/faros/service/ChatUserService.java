@@ -17,13 +17,14 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@Slf4j
 @AllArgsConstructor
 @Service
 public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
@@ -46,11 +47,15 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 .eq(ChatUser::getUid, param.getMyUserId());
         wrapper.or();
         wrapper.like(ChatUser::getUserIds, param.getMyUserId());
+        List<ChatUser> chatUsers = new ArrayList<>();
+        IPage result = new Page();
+        log.info(param.getSearchName()+"mmmmmmmmmmmmmmmmmmmmmmmmmmmm");
         if (!StringUtils.isEmpty(param.getSearchName())) {//如果是搜索昵称
+
             LambdaQueryWrapper<User> userWrapper = Wrappers.<User>lambdaQuery()
-                    .like(User::getNickname, param.getSearchName());
+                    .like(User::getPatientName, param.getSearchName());
             List<User> users = userService.list(userWrapper);
-            //根据团队名称搜索
+
             LambdaQueryWrapper<DoctorTeam> teamWrapper = Wrappers.<DoctorTeam>lambdaQuery()
                     .like(DoctorTeam::getName, param.getSearchName());
             List<DoctorTeam> doctorTeams = doctorTeamService.list(teamWrapper);
@@ -58,29 +63,76 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             if (CollectionUtils.isEmpty(users) && CollectionUtils.isEmpty(doctorTeams)) {
                 return new Page<>();
             }
+            //先搜索团队聊天
+            LambdaQueryWrapper<ChatUser> in = new QueryWrapper<ChatUser>().lambda()
+                    .eq(ChatUser::getGroupType, 1)
+                    .like(ChatUser::getUserIds, param.getMyUserId());
+            if (!CollectionUtils.isEmpty(doctorTeams)) {
+                in.eq(ChatUser::getTeamId, doctorTeams.get(0).getId());
+                List<ChatUser> list = list(in);
+                if (!CollectionUtils.isEmpty(list)) {
+                    chatUsers.addAll(list);
+                }
+            }
+
+            //搜索单聊
+            LambdaQueryWrapper<ChatUser> dan = new QueryWrapper<ChatUser>().lambda()
+                    .eq(ChatUser::getGroupType, 0)
+                    .eq(ChatUser::getUid, param.getMyUserId());
             if (!CollectionUtils.isEmpty(users)) {
                 List<Integer> userIds = users.stream().map(User::getId)
                         .collect(Collectors.toList());
-                wrapper.and(wq0 -> wq0.in(ChatUser::getTargetUid, userIds).or().
-                        like(ChatUser::getUserIds, userIds.get(0))
-
-                );
-
+                dan.and(wq0 -> wq0.or().in(ChatUser::getTargetUid, userIds));
             }
-            if (!CollectionUtils.isEmpty(doctorTeams)) {
-
-                //团队搜索条件
-                List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
-                        .collect(Collectors.toList());
-                wrapper.and(wq0 -> wq0.like(ChatUser::getTeamId, teamIds.get(0))
-                );
-
+            List<ChatUser> list1 = list(dan);
+            if (!CollectionUtils.isEmpty(list1)) {
+                chatUsers.addAll(list1);
             }
+//            if (!CollectionUtils.isEmpty(users)) {
+//                List<Integer> userIds = users.stream().map(User::getId)
+//                        .collect(Collectors.toList());
+//                baseMapper.searchChatUser(userIds, param.getMyUserId());
+//            }
 
+
+//            LambdaQueryWrapper<User> userWrapper = Wrappers.<User>lambdaQuery()
+//                    .like(User::getNickname, param.getSearchName());
+//            List<User> users = userService.list(userWrapper);
+//            //根据团队名称搜索
+//            LambdaQueryWrapper<DoctorTeam> teamWrapper = Wrappers.<DoctorTeam>lambdaQuery()
+//                    .like(DoctorTeam::getName, param.getSearchName());
+//            List<DoctorTeam> doctorTeams = doctorTeamService.list(teamWrapper);
+//
+//            if (CollectionUtils.isEmpty(users) && CollectionUtils.isEmpty(doctorTeams)) {
+//                return new Page<>();
+//            }
+//            if (!CollectionUtils.isEmpty(users)) {
+//                List<Integer> userIds = users.stream().map(User::getId)
+//                        .collect(Collectors.toList());
+//                wrapper.and(wq0 -> wq0.in(ChatUser::getTargetUid, userIds).or().
+//                        like(ChatUser::getUserIds, userIds.get(0))
+//
+//                );
+//
+//            }
+//            if (!CollectionUtils.isEmpty(doctorTeams)) {
+//
+//                //团队搜索条件
+//                List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
+//                        .collect(Collectors.toList());
+//                wrapper.and(wq0 -> wq0.like(ChatUser::getTeamId, teamIds.get(0))
+//                );
+//
+//            }
+            result.setTotal(chatUsers.size());
+            result.setRecords(chatUsers);
+
+        } else {
+            wrapper.orderByDesc(ChatUser::getLastChatTime);
+            result = page(page, wrapper);
+            chatUsers = result.getRecords();
         }
-        wrapper.orderByDesc(ChatUser::getLastChatTime);
-        IPage result = page(page, wrapper);
-        List<ChatUser> chatUsers = result.getRecords();
+        log.info(chatUsers.size()+"ddddddddd");
         if (CollectionUtils.isEmpty(chatUsers)) {
             return result;
         }
@@ -103,7 +155,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .in(DoctorTeamPeople::getTeamId, teamIds));
             Map<Integer, User> userMap = new HashMap<>();
-            List<Integer> userIds=new ArrayList<>();
+            List<Integer> userIds = new ArrayList<>();
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());

@@ -47,5 +47,5 @@ public class PatientOtherOrder {
     @TableField(exist = false)
     private User user;
     @TableField(exist = false)
-    private long efficientHour;//有效小时
+    private String efficientHour;//有效小时
 }
