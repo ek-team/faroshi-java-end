@@ -51,10 +51,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         Integer formId = formManagementData.get(0).getFormId();
         Form byId = formService.getById(formId);
 
-        service.remove(new QueryWrapper<FormUserData>().lambda()
-                .eq(FormUserData::getFormId, formManagementData.get(0).getFormId())
-                .eq(FormUserData::getDoctorId, byId.getCreateUserId())
-                .eq(FormUserData::getUserId, SecurityUtils.getUser().getId()));
+
         List<Integer> formSettingId = formManagementData.stream().map(FormUserData::getFormSettingId)
                 .collect(Collectors.toList());
         List<FormSetting> formSettings = (List<FormSetting>) formSettingService.listByIds(formSettingId);

@@ -65,7 +65,6 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     public RestResponse getDoctorPoint() {
 
 
-
         Page<DoctorPoint> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
@@ -188,6 +187,11 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         }
         upcomingService.saveBatch(upcomingList);
         RestResponse restResponse = wxPayFarosService.unifiedOtherOrder(patientOtherOrder.getOrderNo());
+
+        //添加到redis 超过24小时如果医生没有接受则退款 返回使用次数
+        String keyRedis = String.valueOf(StrUtil.format("{}{}", "patientOrder:", patientOtherOrder.getId()));
+        redisTemplate.opsForValue().set(keyRedis, patientOtherOrder.getId(), 24, TimeUnit.HOURS);//设置过期时间
+
         return restResponse;
     }
 
@@ -289,12 +293,12 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
         LocalDateTime createTime = patientOtherOrder.getCreateTime().plusHours(24);
         if (now.isBefore(createTime)) {
-            Duration duration = java.time.Duration.between(createTime,now);
+            Duration duration = java.time.Duration.between(createTime, now);
             String s1 = new String(duration.toString()).substring(3);// 转换成字符串类型，然后截取
             String replace = s1.replace("H", "时");
             String replace1 = replace.replace("M", "分");
             String[] s = replace1.split("分");
-            patientOtherOrder.setEfficientHour(s[0]+"分");
+            patientOtherOrder.setEfficientHour(s[0] + "分");
 
         } else {
             patientOtherOrder.setEfficientHour("0时");
@@ -307,14 +311,13 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         System.out.println(d1);
 
 
-
         LocalDateTime d2 = LocalDateTime.now();
-         d2 = d2.plusHours(24);
-         d2 = d2.plusMinutes(5);
-        d2= d2.plusSeconds(20);
+        d2 = d2.plusHours(24);
+        d2 = d2.plusMinutes(5);
+        d2 = d2.plusSeconds(20);
         System.out.println(d2);
 
-        Duration sjc = Duration.between(d2,d1);// 计算时间差
+        Duration sjc = Duration.between(d2, d1);// 计算时间差
         System.out.println(sjc.toString());
         String s1 = new String(sjc.toString()).substring(3);// 转换成字符串类型，然后截取
         String replace = s1.replace("H", "时");
@@ -323,6 +326,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         System.out.println(s[0]);
 
     }
+
     @Override
     protected Class<DoctorPoint> getEntityClass() {
         return DoctorPoint.class;
