@@ -267,6 +267,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     }
                     java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
                     long hours = duration.toMinutes();//分钟
+                    log.info("添加随访计划redis时间"+hours+"========"+noticeTime+"===="+thisNow);
                     String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
                     redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
 
