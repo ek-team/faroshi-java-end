@@ -1,6 +1,7 @@
 package cn.cuptec.faros.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
@@ -23,4 +24,6 @@ public class DoctorPoint extends Model<DoctorPoint> {
     private LocalDateTime createTime;
     private Integer withdrawStatus;//提现状态 1-待提现0-已提现
     private String orderNo;
+    @TableField(exist = false)
+    private String doctorTeamName;
 }

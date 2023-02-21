@@ -267,7 +267,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     }
                     java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
                     long hours = duration.toMinutes();//分钟
-                    log.info("添加随访计划redis时间"+hours+"========"+noticeTime+"===="+thisNow);
+                    log.info("添加随访计划redis时间" + hours + "========" + noticeTime + "====" + thisNow);
                     String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
                     redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
 
@@ -364,22 +364,23 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     }
 
     public static void main(String[] args) {
-       List<FollowUpPlanContent> followUpPlanContentList=new ArrayList<>();
-       FollowUpPlanContent followUpPlanContent=new FollowUpPlanContent();
+        List<FollowUpPlanContent> followUpPlanContentList = new ArrayList<>();
+        FollowUpPlanContent followUpPlanContent = new FollowUpPlanContent();
         followUpPlanContent.setDay(LocalDateTime.now());
         followUpPlanContentList.add(followUpPlanContent);
 
-        FollowUpPlanContent followUpPlanContent1=new FollowUpPlanContent();
+        FollowUpPlanContent followUpPlanContent1 = new FollowUpPlanContent();
         followUpPlanContent1.setDay(LocalDateTime.now().plusHours(2));
         followUpPlanContentList.add(followUpPlanContent1);
         Collections.sort(followUpPlanContentList, (o1, o2) -> {
             Collator collator = Collator.getInstance(Locale.CHINA);
             long a1 = o1.getDay().toEpochSecond(ZoneOffset.of("+8"));
             long a2 = o2.getDay().toEpochSecond(ZoneOffset.of("+8"));
-            return collator.compare(a1+"",a2+"");
+            return collator.compare(a1 + "", a2 + "");
         });
         System.out.println(followUpPlanContentList.get(0));
     }
+
     /**
      * 编辑随访计划
      *
@@ -437,7 +438,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 Collator collator = Collator.getInstance(Locale.CHINA);
                 long a1 = o1.getDay().toEpochSecond(ZoneOffset.of("+8"));
                 long a2 = o2.getDay().toEpochSecond(ZoneOffset.of("+8"));
-                return collator.compare(a1+"",a2+"");
+                return collator.compare(a1 + "", a2 + "");
             });
             List<FollowUpPlanNotice> newFollowUpPlanNoticeList = new ArrayList<>();
             List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
@@ -754,11 +755,12 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         //查询计划推送次数
         List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
                 .lambda()
-                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds));
+                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds)
+                .in(FollowUpPlanNoticeCount::getPatientUserId, userIds));
         Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
             followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
-                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
+                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getPatientUserId, t -> t));
 
 
         }
@@ -767,7 +769,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             followUpPlanNotice.setFollowUpPlan(followUpPlanMap.get(followUpPlanNotice.getFollowUpPlanId()));
             followUpPlanNotice.setUser(userMap.get(followUpPlanNotice.getPatientUserId()));
             followUpPlanNotice.setFollowUpPlanContent(followUpPlanContentMap.get(followUpPlanNotice.getFollowUpPlanContentId()));
-            FollowUpPlanNoticeCount followUpPlanNoticeCount = followUpPlanNoticeCountMap.get(followUpPlanNotice.getFollowUpPlanId());
+            FollowUpPlanNoticeCount followUpPlanNoticeCount = followUpPlanNoticeCountMap.get(followUpPlanNotice.getPatientUserId());
             if (followUpPlanNoticeCount != null) {
                 followUpPlanNotice.setTotalPush(followUpPlanNoticeCount.getTotalPush());
                 followUpPlanNotice.setPush(followUpPlanNoticeCount.getPush());
@@ -846,7 +848,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         //查询计划推送次数
         List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
                 .lambda()
-                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds));
+                .in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds)
+                .in(FollowUpPlanNoticeCount::getPatientUserId, userIds));
         Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
             followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
@@ -925,9 +928,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @GetMapping("/getPatientDetail")
     public RestResponse getPatientDetail(@RequestParam("patientId") Integer patientId) {
         User user = userService.getById(patientId);
-        if(!com.baomidou.mybatisplus.core.toolkit.StringUtils.isEmpty(user.getPatientId())){
+        if (!com.baomidou.mybatisplus.core.toolkit.StringUtils.isEmpty(user.getPatientId())) {
             PatientUser patientUser = patientUserService.getById(user.getPatientId());
-            if(patientUser!=null){
+            if (patientUser != null) {
                 user.setIdCard(patientUser.getIdCard());
                 user.setPatientName(patientUser.getName());
             }
@@ -1048,7 +1051,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     .in(UserGroupRelationUser::getUserGroupId, userGroupIds));
             if (!CollectionUtils.isEmpty(userGroupRelationUsers)) {
                 user.setUserGroupName(userGroupService.getById(userGroupRelationUsers.get(0).getUserGroupId()).getName());
-                user.setUserGroupId(userGroupService.getById(userGroupRelationUsers.get(0).getUserGroupId()).getId()+"");
+                user.setUserGroupId(userGroupService.getById(userGroupRelationUsers.get(0).getUserGroupId()).getId() + "");
 
             }
         }

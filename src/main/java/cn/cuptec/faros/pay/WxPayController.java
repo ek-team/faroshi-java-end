@@ -248,6 +248,7 @@ public class WxPayController {
         if (amount > userOrder.getPayment().doubleValue()) {
             return RestResponse.failed("金额不能大于实际付款金额");
         }
+
         //添加退款记录
         OrderRefundInfo orderRefunds = new OrderRefundInfo();
         orderRefunds.setOrderId(retrieveOrder.getOrderId());
@@ -302,10 +303,17 @@ public class WxPayController {
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getOrderId, outRefundNo));
             if (refundStatus.equals("SUCCESS")) {
+                if(retrieveOrder!=null){
+                    //修改订单的实际回收价
+                    retrieveOrder.setRetrieveAmount(orderRefundInfo.getRefundFee());
 
-                retrieveOrder.setStatus(5);
-                retrieveOrderService.updateById(retrieveOrder);
+                    retrieveOrder.setStatus(5);
+                    retrieveOrderService.updateById(retrieveOrder);
+
+                }
+
             }
+
             User userById = userService.getById(retrieveOrder.getUserId());
             //发送公众号通知
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

@@ -10,9 +10,11 @@ import cn.cuptec.faros.pay.PayResultData;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jdk.nashorn.internal.ir.LiteralNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,10 +25,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 医生积分管理
@@ -64,13 +65,35 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     @GetMapping("/getDoctorPoint")
     public RestResponse getDoctorPoint() {
 
-
+        //查询当前医生所在的团队
         Page<DoctorPoint> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-
         queryWrapper.eq("doctor_user_id", SecurityUtils.getUser().getId());
+        List<DoctorTeam> doctorTeams = new ArrayList<>();
+        List<DoctorTeamPeople> doctorTeamPeoples = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        if (!CollectionUtils.isEmpty(doctorTeamPeoples)) {
+            List<Integer> teamIds = doctorTeamPeoples.stream().map(DoctorTeamPeople::getTeamId)
+                    .collect(Collectors.toList());
+            doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+            queryWrapper.or();
+            queryWrapper.in("doctor_team_id", teamIds);
+        }
+
+
         queryWrapper.orderByDesc("create_time", "withdraw_status");
         IPage<DoctorPoint> doctorPointIPage = service.page(page, queryWrapper);
+        List<DoctorPoint> records = doctorPointIPage.getRecords();
+        if (!CollectionUtils.isEmpty(records) && !CollectionUtils.isEmpty(doctorTeams)) {
+            Map<Integer, DoctorTeam> doctorMap = doctorTeams.stream()
+                    .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+            for (DoctorPoint doctorPoint : records) {
+                DoctorTeam doctorTeam = doctorMap.get(doctorPoint.getDoctorTeamId());
+                if (doctorTeam != null) {
+                    doctorPoint.setDoctorTeamName(doctorTeam.getName());
+                }
+            }
+        }
         return RestResponse.ok(doctorPointIPage);
     }
 
@@ -81,16 +104,26 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
      */
     @GetMapping("/getDoctorTotalPoint")
     public RestResponse getDoctorTotalPoint() {
+        List<DoctorTeamPeople> doctorTeamPeoples = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        LambdaQueryWrapper<DoctorPoint> eq = new QueryWrapper<DoctorPoint>().lambda()
+                .eq(DoctorPoint::getDoctorUserId, SecurityUtils.getUser().getId());
+
+        if (!CollectionUtils.isEmpty(doctorTeamPeoples)) {
+            List<Integer> teamIds = doctorTeamPeoples.stream().map(DoctorTeamPeople::getTeamId)
+                    .collect(Collectors.toList());
+            eq.or();
+            eq.in(DoctorPoint::getDoctorTeamId, teamIds);
+        }
+
+
         DoctorPointCountResult result = new DoctorPointCountResult();
-        result.setTotalPoint(service.count(new QueryWrapper<DoctorPoint>().lambda()
-                .eq(DoctorPoint::getDoctorUserId, SecurityUtils.getUser().getId())
+        result.setTotalPoint(service.count(eq
         ));
-        result.setWithdraw(service.count(new QueryWrapper<DoctorPoint>().lambda()
-                .eq(DoctorPoint::getDoctorUserId, SecurityUtils.getUser().getId())
-                .eq(DoctorPoint::getWithdrawStatus, 0)));
-        result.setPendingWithdraw(service.count(new QueryWrapper<DoctorPoint>().lambda()
-                .eq(DoctorPoint::getDoctorUserId, SecurityUtils.getUser().getId())
-                .eq(DoctorPoint::getWithdrawStatus, 1)));
+        eq.eq(DoctorPoint::getWithdrawStatus, 0);
+        result.setWithdraw(service.count(eq));
+        eq.eq(DoctorPoint::getWithdrawStatus, 1);
+        result.setPendingWithdraw(service.count(eq));
         return RestResponse.ok(result);
     }
 

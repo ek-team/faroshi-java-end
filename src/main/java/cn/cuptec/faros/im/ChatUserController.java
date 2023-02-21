@@ -175,7 +175,39 @@ public class ChatUserController {
 
         ChatUser chatUser = chatUserService.getById(chatUserId);
         chatUser.setServiceEndTime(LocalDateTime.now().minusDays(2));
+        chatUser.setPatientOtherOrderStatus("3");
         chatUserService.updateById(chatUser);
+        if (chatUser.getGroupType().equals(0)) {
+            ChatUser fromUserChat = new ChatUser();
+            fromUserChat.setUid(chatUser.getUid());
+            fromUserChat.setTargetUid(chatUser.getTargetUid());
+
+
+            ChatUser toUserChat = new ChatUser();
+            toUserChat.setUid(chatUser.getTargetUid());
+            toUserChat.setTargetUid(chatUser.getUid());
+
+            List<ChatUser> chatUsers = new ArrayList<>();
+            chatUsers.add(fromUserChat);
+            chatUsers.add(toUserChat);
+
+            chatUsers.forEach(c -> {
+                ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                if (one != null) {
+
+                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                            .eq(ChatUser::getUid, c.getUid())
+                            .eq(ChatUser::getTargetUid, c.getTargetUid())
+                            .set(ChatUser::getServiceEndTime, LocalDateTime.now().minusDays(2))
+                            .set(ChatUser::getPatientOtherOrderStatus, 3)
+                    );
+                }
+            });
+
+
+        }
+
+
         if (chatUser.getPatientOtherOrderStatus().equals(1)) {
             //返回金额
             PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()

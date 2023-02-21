@@ -74,50 +74,56 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             formUserData.setUserId(SecurityUtils.getUser().getId());
             formUserData.setCreateTime(LocalDateTime.now());
             formUserData.setDoctorId(byId.getCreateUserId());
-            formUserData.setAnswer(formUserData.getAnswer().toString());
+            String answer="";
+            if (formUserData.getAnswer() != null) {
+                formUserData.setAnswer(formUserData.getAnswer().toString());
+                 answer = (String) formUserData.getAnswer();
+            }
             //计算分数
-            String answer = (String) formUserData.getAnswer();
             String type = formUserData.getType();
             Double scope = 0.0;
             FormSetting formSetting = formSettingMap.get(formUserData.getFormSettingId());
             List<FormOptions> formOptionsList = formSetting.getFormOptionsList();
-            if (type.equals("1")) {//1-输入框
-                for (FormOptions formOption : formOptionsList) {
-                    if (answer.equals(formOption.getText())) {
-                        scope = scope + formOption.getScore();
+            if (!CollectionUtils.isEmpty(formOptionsList)) {
+                if (type.equals("1")) {//1-输入框
+                    for (FormOptions formOption : formOptionsList) {
+                        if (answer.equals(formOption.getText())) {
+                            scope = scope + formOption.getScore();
+                        }
                     }
-                }
 
-            } else if (type.equals("2")) {// 2-单选框
-                for (FormOptions formOption : formOptionsList) {
-                    if (answer.equals(formOption.getId() + "")) {
-                        scope = scope + formOption.getScore();
+                } else if (type.equals("2")) {// 2-单选框
+                    for (FormOptions formOption : formOptionsList) {
+                        if (answer.equals(formOption.getId() + "")) {
+                            scope = scope + formOption.getScore();
+                        }
                     }
-                }
-            } else if (type.equals("3")) {//3-多行入框
-                for (FormOptions formOption : formOptionsList) {
-                    if (answer.equals(formOption.getText())) {
-                        scope = scope + formOption.getScore();
+                } else if (type.equals("3")) {//3-多行入框
+                    for (FormOptions formOption : formOptionsList) {
+                        if (answer.equals(formOption.getText())) {
+                            scope = scope + formOption.getScore();
+                        }
                     }
-                }
-            } else if (type.equals("4")) {//4文本
+                } else if (type.equals("4")) {//4文本
 
-            } else if (type.equals("5")) {//5图片
+                } else if (type.equals("5")) {//5图片
 
-            } else if (type.equals("6")) {// 6 -多选框
-                for (FormOptions formOption : formOptionsList) {
-                    String replace = answer.replace("[", "");
-                    String replace1 = replace.replace("]", "");
-                    String replace2 = replace1.replace("\"", "");
+                } else if (type.equals("6")) {// 6 -多选框
+                    for (FormOptions formOption : formOptionsList) {
+                        String replace = answer.replace("[", "");
+                        String replace1 = replace.replace("]", "");
+                        String replace2 = replace1.replace("\"", "");
 
-                    String[] split = replace2.split(",");
-                    List<String> strings = Arrays.asList(split);
-                    log.info(strings.toString() + "多选多选多选多选多选多选多选多选多选");
-                    if (strings.indexOf(formOption.getId() + "") != -1) {
-                        scope = scope + formOption.getScore();
+                        String[] split = replace2.split(",");
+                        List<String> strings = Arrays.asList(split);
+                        log.info(strings.toString() + "多选多选多选多选多选多选多选多选多选");
+                        if (strings.indexOf(formOption.getId() + "") != -1) {
+                            scope = scope + formOption.getScore();
+                        }
                     }
                 }
             }
+
             formUserData.setScope(scope);
         }
         service.saveBatch(formManagementData);
