@@ -37,9 +37,10 @@ public class ChatProto {
 
     //音频消息
     public static final String VIDEO = "VIDEO";
-
+    //音频消息
+    public static final String VIDEO_URL = "VIDEO_URL";
     //转发消息
-    public static final String FORWARD = "FORWARD";
+    public static final String FORWARD = "FORWARFD";
     //音频已读
     public static final String REQUEST_VIDEO_READ = "REQUEST_VIDEO_READ";
     public static final String RESPONSE_VIDEO_READ = "RESPONSE_VIDEO_READ"; //聊天已读
