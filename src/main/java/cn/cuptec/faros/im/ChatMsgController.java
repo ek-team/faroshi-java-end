@@ -4,6 +4,8 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.SocketUser;
+import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.http.HttpUtil;
@@ -51,9 +53,10 @@ public class ChatMsgController {
     private FormService formService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+
     @ApiOperation(value = "查询历史记录")
     @GetMapping("/testRead")
-    public void  tesetRead(@RequestParam("chatUserId") Integer chatUserId){
+    public void tesetRead(@RequestParam("chatUserId") Integer chatUserId) {
         List<ChatMsg> chatMsgs = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getChatUserId, chatUserId));
         if (!CollectionUtils.isEmpty(chatMsgs)) {
             List<ChatMsg> updateChatMsg = new ArrayList<>();
@@ -230,6 +233,47 @@ public class ChatMsgController {
 
         log.info("获取聊天记录结束===============================");
         return RestResponse.ok(resultPage);
+    }
+
+    /**
+     *
+     */
+    @GetMapping("/readMsg")
+    public RestResponse readMsg(@RequestParam(value = "chatUSerId",required = false) String chatUserId,
+                                @RequestParam(value = "targetUid",required = false) Integer targetUid
+            , @RequestParam(value = "myUserId",required = false) Integer myUserId) {
+
+        if (StringUtils.isEmpty(chatUserId)) {
+
+            chatMsgService.setReaded(myUserId, targetUid);
+
+        } else {
+            List<ChatMsg> chatMsgs = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda()
+                    .eq(ChatMsg::getChatUserId, chatUserId)
+                    .notLike(ChatMsg::getReadUserIds, myUserId));
+            if (!CollectionUtils.isEmpty(chatMsgs)) {
+                List<ChatMsg> updateChatMsg = new ArrayList<>();
+                for (ChatMsg chatMsg : chatMsgs) {
+                    String readUserIds = chatMsg.getReadUserIds();
+                    if (StringUtils.isEmpty(readUserIds)) {
+                        readUserIds = myUserId + "";
+                        chatMsg.setReadUserIds(readUserIds);
+                        updateChatMsg.add(chatMsg);
+                    } else {
+                        if (readUserIds.indexOf(myUserId + "") < 0) {
+                            readUserIds = readUserIds + "," + myUserId;
+                            chatMsg.setReadUserIds(readUserIds);
+                            updateChatMsg.add(chatMsg);
+                        }
+                    }
+
+                }
+                if (!CollectionUtils.isEmpty(updateChatMsg)) {
+                    chatMsgService.updateBatchById(updateChatMsg);
+                }
+            }
+        }
+        return RestResponse.ok();
     }
 
     /**

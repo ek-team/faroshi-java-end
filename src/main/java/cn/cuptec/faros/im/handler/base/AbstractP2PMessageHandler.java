@@ -130,7 +130,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 byId.setLastChatTime(new Date());
                 chatUserService.updateById(byId);
                 //判断该患者是否在医生下面 否则添加到医生下面
-                log.info("代表是医生发送消息"+fromUser.getId()+"llll"+byId.getTargetUid());
+                log.info("代表是医生发送消息" + fromUser.getId() + "llll" + byId.getTargetUid());
                 if (!fromUser.getId().equals(byId.getTargetUid())) {//代表是医生发送消息
                     log.info("代表是医生发送消息");
                     saveUserFollowDoctor(fromUser, byId);
@@ -157,7 +157,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                 } else {
                     uniAppPushService.send("法罗适", origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
+                    User user = userService.getById(origionMessage.getTargetUid());
+                    if (!StringUtils.isEmpty(user.getMpOpenId())) {
+                        LocalDateTime now = LocalDateTime.now();
+                        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        String time = df.format(now);
+                        wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
 
+                    }
                 }
             }
 
@@ -174,7 +181,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
             @Override
             public void run() {
-               // List<UserGroupRelationUser> userGroupRelationUserList = new ArrayList<>();
+                // List<UserGroupRelationUser> userGroupRelationUserList = new ArrayList<>();
 
                 List<UserFollowDoctor> userFollowDoctors = userFollowDoctorService.list(new QueryWrapper<UserFollowDoctor>().lambda()
                         .eq(UserFollowDoctor::getDoctorId, fromUser.getId())

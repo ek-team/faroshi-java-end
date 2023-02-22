@@ -5,6 +5,7 @@ import cn.cuptec.faros.common.utils.StringUtils;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.AddUserToGroupParam;
+import cn.cuptec.faros.dto.MoveUserToGroupDto;
 import cn.cuptec.faros.dto.PageResult;
 import cn.cuptec.faros.dto.SearchUserGroupDto;
 import cn.cuptec.faros.entity.*;
@@ -96,6 +97,45 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
     }
 
     /**
+     * 检查患者是否再其他分组
+     * 返回 不存在的用户id
+     */
+    @GetMapping("/checkGroupHavePatient")
+    private List<Integer> checkGroupHavePatient(@RequestParam("groupId") Integer groupId, @RequestParam("patientIds") List<Integer> patientIds, @RequestParam("teamId") Integer teamId, @RequestParam("doctorId") Integer doctorId) {
+        LambdaQueryWrapper<UserGroup> userGroupLambdaQueryWrapper = new QueryWrapper<UserGroup>().lambda();
+        if (teamId != null) {
+            userGroupLambdaQueryWrapper.eq(UserGroup::getTeamId, teamId);
+        } else {
+            userGroupLambdaQueryWrapper.isNull(UserGroup::getTeamId);
+            userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId, doctorId);
+        }
+        userGroupLambdaQueryWrapper.ne(UserGroup::getId, groupId);
+        List<UserGroup> userGroups = service.list(userGroupLambdaQueryWrapper);
+        if (CollectionUtils.isEmpty(userGroups)) {
+            return patientIds;
+        }
+        List<Integer> groupIds = userGroups.stream().map(UserGroup::getId)
+                .collect(Collectors.toList());
+
+        List<UserGroupRelationUser> list = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>()
+                .lambda().in(UserGroupRelationUser::getUserGroupId, groupIds)
+                .in(UserGroupRelationUser::getUserId, patientIds));
+        if (CollectionUtils.isEmpty(list)) {
+            return patientIds;
+        }
+        List<Integer> queryUserIds = list.stream().map(UserGroupRelationUser::getUserId)
+                .collect(Collectors.toList());
+        List<Integer> result = new ArrayList<>();
+        for (Integer patientId : patientIds) {
+            if (queryUserIds.indexOf(patientId) < 0) {
+                result.add(patientId);
+            }
+        }
+
+        return result;
+    }
+
+    /**
      * 查询用户所在分组
      */
     @GetMapping("/getUserOnGroup")
@@ -174,7 +214,11 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
             List<Integer> userIds = list.stream().map(UserGroupRelationUser::getUserId)
                     .collect(Collectors.toList());
             List<UserFollowDoctor> userFollowDoctors = new ArrayList<>();
+
+            userIds = checkGroupHavePatient(byId.getId(), userIds, byId.getTeamId(), SecurityUtils.getUser().getId());
             if (byId.getTeamId() != null) {
+
+
                 for (Integer userId : userIds) {
                     UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
                     userFollowDoctor.setTeamId(byId.getTeamId());
@@ -233,28 +277,35 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
     public RestResponse deleteById(@RequestParam("id") Integer id) {
         List<UserGroupRelationUser> list = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>().lambda()
                 .eq(UserGroupRelationUser::getUserGroupId, id));
+        if (!CollectionUtils.isEmpty(list)) {
+            UserGroup userGroup = service.getById(id);
+            List<Integer> userIds = list.stream().map(UserGroupRelationUser::getUserId)
+                    .collect(Collectors.toList());
+            List<UserFollowDoctor> userFollowDoctors = new ArrayList<>();
 
-        UserGroup userGroup = service.getById(id);
-        List<UserFollowDoctor> userFollowDoctors = new ArrayList<>();
+            userIds = checkGroupHavePatient(id, userIds, userGroup.getTeamId(), SecurityUtils.getUser().getId());
 
-        if (userGroup.getTeamId() == null) {
-            //个人分组
-            for (UserGroupRelationUser userGroupRelationUser : list) {
-                UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
-                userFollowDoctor.setDoctorId(userGroup.getCreateUserId());
-                userFollowDoctor.setUserId(userGroupRelationUser.getUserId());
-                userFollowDoctors.add(userFollowDoctor);
+            if (userGroup.getTeamId() == null) {
+                //个人分组
+                for (Integer userId : userIds) {
+                    UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
+                    userFollowDoctor.setDoctorId(userGroup.getCreateUserId());
+                    userFollowDoctor.setUserId(userId);
+                    userFollowDoctors.add(userFollowDoctor);
+                }
+            } else {
+                //团队分组
+                for (Integer userId : userIds) {
+                    UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
+                    userFollowDoctor.setTeamId(userGroup.getTeamId());
+                    userFollowDoctor.setUserId(userId);
+                    userFollowDoctors.add(userFollowDoctor);
+                }
             }
-        } else {
-            //团队分组
-            for (UserGroupRelationUser userGroupRelationUser : list) {
-                UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
-                userFollowDoctor.setTeamId(userGroup.getTeamId());
-                userFollowDoctor.setUserId(userGroupRelationUser.getUserId());
-                userFollowDoctors.add(userFollowDoctor);
-            }
+            userFollowDoctorService.saveBatch(userFollowDoctors);
+
         }
-        userFollowDoctorService.saveBatch(userFollowDoctors);
+
         service.removeById(id);
         userGroupRelationUserService.remove(new QueryWrapper<UserGroupRelationUser>().lambda()
                 .eq(UserGroupRelationUser::getUserGroupId, id));
@@ -302,12 +353,13 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
         if (userGroup.getTeamId() == null) {
             //团队分组
             userFollowDoctorService.remove(new QueryWrapper<UserFollowDoctor>().lambda()
-                    .eq(UserFollowDoctor::getTeamId, userGroup.getTeamId())
+                    .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId())
                     .in(UserFollowDoctor::getUserId, userIds));
+
         } else {
             //个人分组
             userFollowDoctorService.remove(new QueryWrapper<UserFollowDoctor>().lambda()
-                    .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId())
+                    .eq(UserFollowDoctor::getTeamId, userGroup.getTeamId())
                     .in(UserFollowDoctor::getUserId, userIds));
         }
 
@@ -318,40 +370,47 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
     /**
      * 移动患者到分组
      */
-    @GetMapping("/moveUserToGroup")
-    public RestResponse moveUserToGroup(@RequestParam("userId") Integer userId, @RequestParam("targetGroupId") Integer targetGroupId
-    ) {
+    @PostMapping("/moveUserToGroup")
+    public RestResponse moveUserToGroup(@RequestBody MoveUserToGroupDto moveUserToGroupDto) {
         log.info("移动患者到分组");
-        List<UserGroup> userGroupList = service.list(new QueryWrapper<UserGroup>().lambda()
-                .eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId()));  //医生所创建的分组
-        if (!CollectionUtils.isEmpty(userGroupList)) {
-            List<Integer> userGroupIds = userGroupList.stream().map(UserGroup::getId)
-                    .collect(Collectors.toList());
-            userGroupRelationUserService.remove(new QueryWrapper<UserGroupRelationUser>().lambda()
-                    .eq(UserGroupRelationUser::getUserId, userId)
-                    .in(UserGroupRelationUser::getUserGroupId, userGroupIds));
-        }
-        if (targetGroupId.equals(-1)) {
-            //移到未分组
+        List<Integer> groupIds = moveUserToGroupDto.getGroupIds();
+        Integer userId = moveUserToGroupDto.getUserId();
 
-            UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
-            userFollowDoctor.setUserId(userId);
-            userFollowDoctor.setDoctorId(SecurityUtils.getUser().getId());
-            userFollowDoctorService.save(userFollowDoctor);
-        } else {
-            //移动到别的分组
-            //添加到新的分组
+        if (CollectionUtils.isEmpty(groupIds)) {
+            return RestResponse.ok();
+        }
+        List<UserGroupRelationUser> userGroupRelationUserList = new ArrayList<>();
+        for (Integer groupId : groupIds) {
             UserGroupRelationUser userGroupRelationUser = new UserGroupRelationUser();
+            userGroupRelationUser.setUserGroupId(groupId);
             userGroupRelationUser.setUserId(userId);
-            userGroupRelationUser.setUserGroupId(targetGroupId);
-            userGroupRelationUserService.save(userGroupRelationUser);
+            userGroupRelationUserList.add(userGroupRelationUser);
         }
+        userGroupRelationUserService.saveBatch(userGroupRelationUserList);
 
+
+        List<UserGroup> userGroups = (List<UserGroup>) service.listByIds(groupIds);
+        for (UserGroup userGroup : userGroups) {
+            if (userGroup.getTeamId() == null) {
+                //个人分组
+                userFollowDoctorService.remove(new QueryWrapper<UserFollowDoctor>().lambda()
+                        .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId())
+                        .in(UserFollowDoctor::getUserId, userId));
+
+            } else {
+                //团队分组
+                userFollowDoctorService.remove(new QueryWrapper<UserFollowDoctor>().lambda()
+                        .eq(UserFollowDoctor::getTeamId, userGroup.getTeamId())
+                        .in(UserFollowDoctor::getUserId, userId));
+            }
+
+        }
         return RestResponse.ok();
     }
 
     /**
      * 移除患者该分组
+     * 没调用
      *
      * @return
      */
@@ -503,14 +562,22 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
             userGroup.setCount(count);
         }
         //查询未分组数量
+
+        QueryWrapper<UserFollowDoctor> wrapper = new QueryWrapper<>();
+        wrapper.select("DISTINCT user_id")
+                .lambda();
+
         LambdaQueryWrapper<UserFollowDoctor> eq = new QueryWrapper<UserFollowDoctor>().lambda();
         if (teamId != null) {
-            eq.eq(UserFollowDoctor::getTeamId, teamId);
+            // wrapper.eq(UserFollowDoctor::getTeamId, teamId);
+
+            wrapper.eq("team_id", teamId);
         } else {
-            eq.eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
+            wrapper.eq("doctor_id", SecurityUtils.getUser().getId());
+            // wrapper.eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
         }
 
-        int count = userFollowDoctorService.count(eq);
+        int count = userFollowDoctorService.count(wrapper);
 
         UserGroup userGroup = new UserGroup();
         userGroup.setCount(count);

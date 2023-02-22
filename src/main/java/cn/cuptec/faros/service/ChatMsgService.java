@@ -22,6 +22,7 @@ public class ChatMsgService extends ServiceImpl<ChatMsgMapper, ChatMsg> {
                 .set(ChatMsg::getReadStatus, 1)
                 .eq(ChatMsg::getToUid, uid)
                 .eq(ChatMsg::getFromUid, targetUid)
+                .eq(ChatMsg::getReadStatus, 0)
         );
     }
 }

@@ -43,7 +43,9 @@ public class ReadHandler extends AbstractMessageHandler {
             chatMsgService.setReaded(userInfo.getUserInfo().getId(), origionMsg.getTargetUid());
 
         } else {
-            List<ChatMsg> chatMsgs = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getChatUserId, chatUserId));
+            List<ChatMsg> chatMsgs = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda()
+                    .eq(ChatMsg::getChatUserId, chatUserId)
+            .notLike(ChatMsg::getReadUserIds,userInfo.getUserInfo().getId()));
             if (!CollectionUtils.isEmpty(chatMsgs)) {
                 List<ChatMsg> updateChatMsg = new ArrayList<>();
                 for (ChatMsg chatMsg : chatMsgs) {
@@ -53,7 +55,7 @@ public class ReadHandler extends AbstractMessageHandler {
                         chatMsg.setReadUserIds(readUserIds);
                         updateChatMsg.add(chatMsg);
                     } else {
-                        if (readUserIds.indexOf(userInfo.getUserInfo().getId() + "") <= 0) {
+                        if (readUserIds.indexOf(userInfo.getUserInfo().getId() + "") < 0) {
                             readUserIds = readUserIds + "," + userInfo.getUserInfo().getId();
                             chatMsg.setReadUserIds(readUserIds);
                             updateChatMsg.add(chatMsg);
