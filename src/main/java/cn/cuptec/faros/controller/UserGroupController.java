@@ -47,6 +47,76 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
     private UserDoctorRelationService userDoctorRelationService;
     @Resource
     private DoctorTeamPeopleService doctorTeamPeopleService;
+    @Resource
+    private PatientRelationTeamService patientRelationTeamService;
+
+    /**
+     * 查询个人详情所能移动到的分组
+     */
+    @GetMapping("/getUserMoveGroup")
+    public RestResponse getUserMoveGroup(@RequestParam("userId") Integer userId) {
+        //查询个人分组
+        LambdaQueryWrapper<UserGroup> userGroupLambdaQueryWrapper = new QueryWrapper<UserGroup>().lambda();
+
+        userGroupLambdaQueryWrapper.isNull(UserGroup::getTeamId);
+        userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId());
+
+        userGroupLambdaQueryWrapper.orderByDesc(UserGroup::getSort);
+        List<UserGroup> userGroups = service.list(userGroupLambdaQueryWrapper);
+        if (CollectionUtils.isEmpty(userGroups)) {
+            userGroups = new ArrayList<>();
+        }
+        //查询患者所在的团队分组
+        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));//查询医生所在的团队
+        if (CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+            return RestResponse.ok(userGroups);
+        }
+        List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
+                .collect(Collectors.toList());
+
+        List<PatientRelationTeam> patientRelationTeamList = patientRelationTeamService.list(new QueryWrapper<PatientRelationTeam>().lambda()
+                .eq(PatientRelationTeam::getPatientId, userId)
+                .in(PatientRelationTeam::getTeamId, teamIds));
+        if (CollectionUtils.isEmpty(patientRelationTeamList)) {
+            return RestResponse.ok(userGroups);
+        }
+
+        List<Integer> teamIdList = patientRelationTeamList.stream().map(PatientRelationTeam::getTeamId)
+                .collect(Collectors.toList());
+        //查询团队下的分组
+        List<UserGroup> list = service.list(new QueryWrapper<UserGroup>().lambda()
+                .in(UserGroup::getTeamId, teamIdList)
+                .eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId()));
+        if (!CollectionUtils.isEmpty(list)) {
+            userGroups.addAll(list);
+        }
+
+        return RestResponse.ok(userGroups);
+    }
+
+    /**
+     * 查询用户所在分组
+     */
+    @GetMapping("/getUserOnGroup")
+    public RestResponse getUserOnGroup(@RequestParam("userId") Integer userId) {
+        List<UserGroupRelationUser> list = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>()
+                .lambda()
+                .eq(UserGroupRelationUser::getUserId, userId));
+        if (CollectionUtils.isEmpty(list)) {
+            return RestResponse.ok();
+        }
+        List<Integer> groupIds = list.stream().map(UserGroupRelationUser::getUserGroupId)
+                .collect(Collectors.toList());
+        List<UserGroup> userGroups = (List<UserGroup>) service.listByIds(groupIds);
+        for (UserGroup userGroup : userGroups) {
+            int count = userGroupRelationUserService.count(new QueryWrapper<UserGroupRelationUser>().lambda()
+                    .eq(UserGroupRelationUser::getUserGroupId, userGroup.getId()));
+            userGroup.setCount(count);
+        }
+        return RestResponse.ok(userGroups);
+    }
+
 
     /**
      * 添加患者分组
@@ -422,7 +492,7 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
             userGroupLambdaQueryWrapper.eq(UserGroup::getTeamId, teamId);
         } else {
             userGroupLambdaQueryWrapper.isNull(UserGroup::getTeamId);
-            userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId,SecurityUtils.getUser().getId());
+            userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId());
         }
         userGroupLambdaQueryWrapper.orderByDesc(UserGroup::getSort);
         List<UserGroup> userGroups = service.list(userGroupLambdaQueryWrapper);
@@ -474,6 +544,13 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
                 .collect(Collectors.toList());
 
         return RestResponse.ok(userService.listByIds(userIds));
+    }
+
+    @GetMapping("/getAllPatient")
+    public RestResponse getAllPatient() {
+
+
+        return RestResponse.ok();
     }
 
     /**

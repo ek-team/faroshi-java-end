@@ -75,7 +75,8 @@ public class WxPayController {
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private PatientUserService patientUserService;
-
+    @Resource
+    private PatientRelationTeamService patientRelationTeamService;
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -149,11 +150,24 @@ public class WxPayController {
                 userFollowDoctor.setUserId(userOrder.getUserId());
                 userFollowDoctorService.save(userFollowDoctor);
             }
+            //患者和团队的关系
+            patientRelationTeamService.remove(new QueryWrapper<PatientRelationTeam>().lambda()
+                    .eq(PatientRelationTeam::getPatientId, userOrder.getUserId())
+                    .eq(PatientRelationTeam::getTeamId, doctorTeamId));
+            PatientRelationTeam patientRelationTeam= new  PatientRelationTeam();
+
+            patientRelationTeam.setPatientId(userOrder.getUserId());
+            patientRelationTeam.setTeamId(doctorTeamId);
+            patientRelationTeamService.save(patientRelationTeam);
             //添加医生和患者的关系
             List<UserDoctorRelation> userDoctorRelationList = new ArrayList<>();
             userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
                     .eq(UserDoctorRelation::getUserId, userOrder.getUserId())
                     .in(UserDoctorRelation::getDoctorId, userIds));
+
+
+
+
             for (Integer doctorId : userIds) {
                 UserDoctorRelation userDoctorRelation = new UserDoctorRelation();
                 userDoctorRelation.setDoctorId(doctorId);
@@ -161,6 +175,7 @@ public class WxPayController {
                 userDoctorRelationList.add(userDoctorRelation);
             }
             userDoctorRelationService.saveBatch(userDoctorRelationList);
+
             userIds.add(userOrder.getUserId());
             ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId());
 
