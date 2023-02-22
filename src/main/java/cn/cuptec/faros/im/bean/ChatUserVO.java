@@ -14,6 +14,7 @@ public class ChatUserVO implements Comparable<ChatUserVO> {
      * 用户id
      */
     private Integer targetUid;
+    private String chatDesc;
     private Integer patientUid;
     private Integer chatUserId;//群聊id
     private Integer groupType = 0;//0-单聊 1-群聊

@@ -130,7 +130,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 byId.setLastChatTime(new Date());
                 chatUserService.updateById(byId);
                 //判断该患者是否在医生下面 否则添加到医生下面
+                log.info("代表是医生发送消息"+fromUser.getId()+"llll"+byId.getTargetUid());
                 if (!fromUser.getId().equals(byId.getTargetUid())) {//代表是医生发送消息
+                    log.info("代表是医生发送消息");
                     saveUserFollowDoctor(fromUser, byId);
                 }
             } else {
@@ -172,23 +174,23 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                List<UserGroupRelationUser> userGroupRelationUserList = new ArrayList<>();
+               // List<UserGroupRelationUser> userGroupRelationUserList = new ArrayList<>();
 
                 List<UserFollowDoctor> userFollowDoctors = userFollowDoctorService.list(new QueryWrapper<UserFollowDoctor>().lambda()
                         .eq(UserFollowDoctor::getDoctorId, fromUser.getId())
                         .eq(UserFollowDoctor::getUserId, byId.getTargetUid()));
-
-                List<UserGroup> userGroupList = userGroupService.list(new QueryWrapper<UserGroup>().lambda()
-                        .isNull(UserGroup::getTeamId));
-                if (!CollectionUtils.isEmpty(userGroupList)) {
-
-                    List<Integer> userGroupIds = userGroupList.stream().map(UserGroup::getId)
-                            .collect(Collectors.toList());
-                    userGroupRelationUserList = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>().lambda()
-                            .in(UserGroupRelationUser::getUserGroupId, userGroupIds)
-                            .eq(UserGroupRelationUser::getUserId, byId.getTargetUid()));
-                }
-                if (CollectionUtils.isEmpty(userFollowDoctors) && CollectionUtils.isEmpty(userGroupRelationUserList)) {
+//
+//                List<UserGroup> userGroupList = userGroupService.list(new QueryWrapper<UserGroup>().lambda()
+//                        .isNull(UserGroup::getTeamId));
+//                if (!CollectionUtils.isEmpty(userGroupList)) {
+//
+//                    List<Integer> userGroupIds = userGroupList.stream().map(UserGroup::getId)
+//                            .collect(Collectors.toList());
+//                    userGroupRelationUserList = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>().lambda()
+//                            .in(UserGroupRelationUser::getUserGroupId, userGroupIds)
+//                            .eq(UserGroupRelationUser::getUserId, byId.getTargetUid()));
+//                }
+                if (CollectionUtils.isEmpty(userFollowDoctors)) {
                     //添加到医生自己的患者
                     UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
                     userFollowDoctor.setDoctorId(fromUser.getId());

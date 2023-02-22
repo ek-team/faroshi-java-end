@@ -112,7 +112,7 @@ public class ChatUserController {
         chatUser.setId(chatUserId);
         LocalDateTime localDateTime = LocalDateTime.now().plusHours(hour);
         chatUser.setServiceEndTime(localDateTime);
-
+        chatUser.setChatDesc("随访");
         ChatUser byId = chatUserService.getById(chatUserId);
         if (byId.getGroupType().equals(0)) {
             ChatUser fromUserChat = new ChatUser();
@@ -136,6 +136,7 @@ public class ChatUserController {
                             .eq(ChatUser::getUid, c.getUid())
                             .eq(ChatUser::getTargetUid, c.getTargetUid())
                             .set(ChatUser::getServiceEndTime, localDateTime)
+                            .set(ChatUser::getChatDesc, "随访")
                     );
                 }
             });

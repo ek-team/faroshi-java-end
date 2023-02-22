@@ -341,12 +341,17 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updateById")
     public RestResponse updateById(@RequestBody @Valid User user) {
-        if (user.getNickname().equals("微信用户")) {
-            User user1 = new User();
-            BeanUtils.copyProperties(user, user1, "nickname", "avatar");
-            user = user1;
+        if(!StringUtils.isEmpty(user.getNickname())){
+            if (user.getNickname().equals("微信用户")) {
+                User user1 = new User();
+                BeanUtils.copyProperties(user, user1, "nickname", "avatar");
+                user = user1;
+            }
         }
-        user.setId(SecurityUtils.getUser().getId());
+        if(user.getId()==null){
+            user.setId(SecurityUtils.getUser().getId());
+
+        }
         if (StrUtil.isNotBlank(user.getPassword())) {
             user.setPassword(ENCODER.encode(user.getPassword()));
         }

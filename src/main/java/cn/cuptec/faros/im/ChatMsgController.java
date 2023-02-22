@@ -51,6 +51,32 @@ public class ChatMsgController {
     private FormService formService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+    @ApiOperation(value = "查询历史记录")
+    @GetMapping("/testRead")
+    public void  tesetRead(@RequestParam("chatUserId") Integer chatUserId){
+        List<ChatMsg> chatMsgs = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getChatUserId, chatUserId));
+        if (!CollectionUtils.isEmpty(chatMsgs)) {
+            List<ChatMsg> updateChatMsg = new ArrayList<>();
+            for (ChatMsg chatMsg : chatMsgs) {
+                String readUserIds = chatMsg.getReadUserIds();
+                if (StringUtils.isEmpty(readUserIds)) {
+                    readUserIds = 2277 + "";
+                    chatMsg.setReadUserIds(readUserIds);
+                    updateChatMsg.add(chatMsg);
+                } else {
+                    if (readUserIds.indexOf("2277") <= 0) {
+                        readUserIds = readUserIds + "," + 2277;
+                        chatMsg.setReadUserIds(readUserIds);
+                        updateChatMsg.add(chatMsg);
+                    }
+                }
+
+            }
+            if (!CollectionUtils.isEmpty(updateChatMsg)) {
+                chatMsgService.updateBatchById(updateChatMsg);
+            }
+        }
+    }
 
     @ApiOperation(value = "查询历史记录")
     @PostMapping("/queryChatMsgHistory")

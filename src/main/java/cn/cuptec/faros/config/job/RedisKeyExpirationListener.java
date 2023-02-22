@@ -101,6 +101,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                 doctorUser = users.get(0);
                 //发送公众号随访计划提醒
                 wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", doctorUser.getNickname(), doctorUser.getHospitalName(), "/pages/news/news");
+
                 //生成聊天记录
                 List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
                         .eq(ChatUser::getUid, patientUser.getId())
@@ -130,7 +131,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                 String[] str = body.split(":");
                 String patientOrderId = str[1];
                 PatientOtherOrder patientOtherOrder = patientOtherOrderService.getById(patientOrderId);
-                if (StringUtils.isEmpty(patientOtherOrder.getAcceptStatus())) {
+                if (patientOtherOrder.getAcceptStatus().equals("0")) {
                     //代表医生没有接受或者拒绝
                     if (patientOtherOrder.getAmount() != null) {
                         Dept dept = deptService.getById(patientOtherOrder.getDeptId());

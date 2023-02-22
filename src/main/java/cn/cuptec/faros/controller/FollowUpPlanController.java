@@ -222,7 +222,17 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         List<FollowUpPlanNotice> followUpPlanNoticeList = new ArrayList<>();
         List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(followUpPlanContentList) && !CollectionUtils.isEmpty(userIds)) {
-
+            Integer teamId = followUpPlan.getTeamId();
+            Map<Integer, ChatUser> chatUserMap = new HashMap<>();
+            if (teamId != null) {
+                List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
+                        .eq(ChatUser::getTeamId, teamId)
+                        .in(ChatUser::getTargetUid, userIds));
+                if (!CollectionUtils.isEmpty(chatUsers)) {
+                    chatUserMap = chatUsers.stream()
+                            .collect(Collectors.toMap(ChatUser::getTargetUid, t -> t));
+                }
+            }
             List<Integer> countUserIds = new ArrayList<>();
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
 
@@ -231,6 +241,11 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     LocalDateTime pushDay = followUpPlanContent.getDay();
 
                     FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
+                    ChatUser chatUser = chatUserMap.get(userId);
+                    if (chatUser != null) {
+                        followUpPlanNotice.setChatUserId(chatUser.getId());
+                    }
+
                     followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                     followUpPlanNotice.setPatientUserId(userId);
                     followUpPlanNotice.setNoticeTime(pushDay);
@@ -444,6 +459,19 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
             List<Integer> countUserIds = new ArrayList<>();
 
+
+            Integer teamId = followUpPlan.getTeamId();
+            Map<Integer, ChatUser> chatUserMap = new HashMap<>();
+            if (teamId != null) {
+                List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
+                        .eq(ChatUser::getTeamId, teamId)
+                        .in(ChatUser::getTargetUid, userIds));
+                if (!CollectionUtils.isEmpty(chatUsers)) {
+                    chatUserMap = chatUsers.stream()
+                            .collect(Collectors.toMap(ChatUser::getTargetUid, t -> t));
+                }
+            }
+
             if (CollectionUtils.isEmpty(followUpPlanNoticeList)) {
                 //如果记录是空就全部添加
                 for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
@@ -451,6 +479,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         //随访计划记录
                         LocalDateTime noticeTime = followUpPlanContent.getDay();
                         FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
+                        ChatUser chatUser = chatUserMap.get(userId);
+                        if (chatUser != null) {
+                            followUpPlanNotice.setChatUserId(chatUser.getId());
+                        }
                         followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                         followUpPlanNotice.setPatientUserId(userId);
                         followUpPlanNotice.setNoticeTime(noticeTime);
@@ -499,6 +531,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                             LocalDateTime noticeTime = followUpPlanContent.getDay();
 
                             FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
+                            ChatUser chatUser = chatUserMap.get(userId);
+                            if (chatUser != null) {
+                                followUpPlanNotice.setChatUserId(chatUser.getId());
+                            }
                             followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                             followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
                             followUpPlanNotice.setPatientUserId(userId);
@@ -526,6 +562,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                                 LocalDateTime noticeTime = followUpPlanContent.getDay();
 
                                 FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
+                                ChatUser chatUser = chatUserMap.get(userId);
+                                if (chatUser != null) {
+                                    followUpPlanNotice.setChatUserId(chatUser.getId());
+                                }
                                 followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                                 followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
                                 followUpPlanNotice.setPatientUserId(userId);

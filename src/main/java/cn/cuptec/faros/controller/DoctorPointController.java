@@ -8,12 +8,15 @@ import cn.cuptec.faros.dto.DoctorPointCountResult;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.pay.PayResultData;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.netty.util.collection.CharCollections;
 import jdk.nashorn.internal.ir.LiteralNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +76,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         List<DoctorTeamPeople> doctorTeamPeoples = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                 .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
         if (!CollectionUtils.isEmpty(doctorTeamPeoples)) {
+
             List<Integer> teamIds = doctorTeamPeoples.stream().map(DoctorTeamPeople::getTeamId)
                     .collect(Collectors.toList());
             doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
@@ -118,12 +122,23 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
 
         DoctorPointCountResult result = new DoctorPointCountResult();
-        result.setTotalPoint(service.count(eq
-        ));
-        eq.eq(DoctorPoint::getWithdrawStatus, 0);
-        result.setWithdraw(service.count(eq));
-        eq.eq(DoctorPoint::getWithdrawStatus, 1);
-        result.setPendingWithdraw(service.count(eq));
+        List<DoctorPoint> list = service.list(eq);
+        Double totalPoint = 0.0;
+        Double pendingWithdraw = 0.0;
+        Double withdraw = 0.0;
+        if (!CollectionUtils.isEmpty(list)) {
+            for (DoctorPoint doctorPoint : list) {
+                totalPoint = doctorPoint.getPoint() + totalPoint;
+                if (doctorPoint.getWithdrawStatus().equals(1)) {
+                    pendingWithdraw = pendingWithdraw + doctorPoint.getPoint();
+                } else {
+                    withdraw = withdraw + doctorPoint.getPoint();
+                }
+            }
+        }
+        result.setTotalPoint(totalPoint);
+        result.setWithdraw(withdraw);
+        result.setPendingWithdraw(pendingWithdraw);
         return RestResponse.ok(result);
     }
 
@@ -162,6 +177,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         patientOtherOrder.setCreateTime(LocalDateTime.now());
         patientOtherOrder.setStatus(1);
         patientOtherOrder.setType(1);
+        patientOtherOrder.setAcceptStatus("0");
         patientOtherOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
         if (patientOtherOrder.getDoctorId() != null) {
             User doctorUser = userService.getById(patientOtherOrder.getDoctorId());
@@ -224,8 +240,51 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         //添加到redis 超过24小时如果医生没有接受则退款 返回使用次数
         String keyRedis = String.valueOf(StrUtil.format("{}{}", "patientOrder:", patientOtherOrder.getId()));
         redisTemplate.opsForValue().set(keyRedis, patientOtherOrder.getId(), 24, TimeUnit.HOURS);//设置过期时间
+        //修改聊天状态为咨询
+        Integer chatUserId = patientOtherOrder.getChatUserId();
+        updateChatDesc(chatUserId);
 
         return restResponse;
+    }
+
+    private void updateChatDesc(Integer chatUserId) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                ChatUser chatUser = chatUserService.getById(chatUserId);
+                if (chatUser.getGroupType().equals(0)) {
+                    ChatUser fromUserChat = new ChatUser();
+                    fromUserChat.setUid(chatUser.getUid());
+                    fromUserChat.setTargetUid(chatUser.getTargetUid());
+
+
+                    ChatUser toUserChat = new ChatUser();
+                    toUserChat.setUid(chatUser.getTargetUid());
+                    toUserChat.setTargetUid(chatUser.getUid());
+
+                    List<ChatUser> chatUsers = new ArrayList<>();
+                    chatUsers.add(fromUserChat);
+                    chatUsers.add(toUserChat);
+
+                    chatUsers.forEach(c -> {
+                        ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                        if (one != null) {
+
+                            chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                    .eq(ChatUser::getUid, c.getUid())
+                                    .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                    .set(ChatUser::getChatDesc, "咨询")
+
+                            );
+                        }
+                    });
+                } else {
+                    chatUser.setChatDesc("咨询");
+                    chatUserService.updateById(chatUser);
+                }
+
+            }
+        });
     }
 
     @PostMapping("/addPatientOtherOrder1")
@@ -234,6 +293,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         patientOtherOrder.setCreateTime(LocalDateTime.now());
         patientOtherOrder.setStatus(1);
         patientOtherOrder.setType(1);
+        patientOtherOrder.setAcceptStatus("0");
         patientOtherOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
         if (patientOtherOrder.getDoctorId() != null) {
             User doctorUser = userService.getById(patientOtherOrder.getDoctorId());
@@ -297,7 +357,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         String keyRedis = String.valueOf(StrUtil.format("{}{}", "patientOrder:", patientOtherOrder.getId()));
         redisTemplate.opsForValue().set(keyRedis, patientOtherOrder.getId(), 24, TimeUnit.HOURS);//设置过期时间
 
-
+        updateChatDesc(patientOtherOrder.getChatUserId());
         return RestResponse.ok(data);
     }
 

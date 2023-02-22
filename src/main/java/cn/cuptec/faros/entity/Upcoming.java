@@ -27,4 +27,6 @@ public class Upcoming extends Model<Upcoming> {
     @TableField(exist = false)
     private User user;
     private String type;//待办类型1-新增患者 2-图文咨询 3-新消息
+    @TableField(exist = false)
+    private ChatUser chatUser;
 }

@@ -79,9 +79,8 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
      * @return
      */
     @GetMapping("/getServiceDetail")
-    public RestResponse getServiceDetail(@RequestParam("id") Integer id) {
+    public RestResponse getServiceDetail(@RequestParam("id") String id) {
         DoctorUserAction byId = service.getById(id);
-
         return RestResponse.ok(byId);
     }
 

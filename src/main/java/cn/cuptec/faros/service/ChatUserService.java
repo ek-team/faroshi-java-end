@@ -24,6 +24,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
 @Slf4j
 @AllArgsConstructor
 @Service
@@ -49,7 +50,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         wrapper.like(ChatUser::getUserIds, param.getMyUserId());
         List<ChatUser> chatUsers = new ArrayList<>();
         IPage result = new Page();
-        log.info(param.getSearchName()+"mmmmmmmmmmmmmmmmmmmmmmmmmmmm");
+        log.info(param.getSearchName() + "mmmmmmmmmmmmmmmmmmmmmmmmmmmm");
         if (!StringUtils.isEmpty(param.getSearchName())) {//如果是搜索昵称
 
             LambdaQueryWrapper<User> userWrapper = Wrappers.<User>lambdaQuery()
@@ -132,7 +133,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             result = page(page, wrapper);
             chatUsers = result.getRecords();
         }
-        log.info(chatUsers.size()+"ddddddddd");
+        log.info(chatUsers.size() + "ddddddddd");
         if (CollectionUtils.isEmpty(chatUsers)) {
             return result;
         }
@@ -188,7 +189,11 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     chatUserVO.setNickname(doctorTeam.getName());
                     User user = userMap.get(chatUser.getTargetUid());
                     if (user != null) {
-                        chatUserVO.setPatientName(user.getPatientName());
+                        String patientName = user.getPatientName();
+                        if (!StringUtils.isEmpty(chatUser.getChatDesc())) {
+                            patientName = patientName + "[" + chatUser.getChatDesc() + "]";
+                        }
+                        chatUserVO.setPatientName(patientName);
                         chatUserVO.setPatientAvatar(user.getAvatar());
                     }
                     chatUserVO.setGroupType(1);
@@ -231,7 +236,13 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     tenantUser -> {
                         ChatUserVO chatUserVO = new ChatUserVO();
                         chatUserVO.setTargetUid(tenantUser.getId());
-                        chatUserVO.setPatientName(tenantUser.getPatientName());
+                        String patientName = tenantUser.getPatientName();
+                        if (!StringUtils.isEmpty(chatUserMap.get(tenantUser.getId()).getChatDesc())) {
+                            patientName = patientName + "[" + chatUserMap.get(tenantUser.getId()).getChatDesc() + "]";
+                        }
+                        chatUserVO.setPatientName(patientName);
+
+                        chatUserVO.setPatientName(patientName);
                         chatUserVO.setAvatar(tenantUser.getAvatar());
                         chatUserVO.setPatientAvatar(tenantUser.getAvatar());
                         chatUserVO.setNickname(tenantUser.getNickname());

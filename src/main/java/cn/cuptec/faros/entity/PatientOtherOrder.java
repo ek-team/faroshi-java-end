@@ -39,7 +39,7 @@ public class PatientOtherOrder {
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
     @Queryable(queryLogical = QueryLogical.EQUAL)
-    private String acceptStatus;
+    private String acceptStatus;//0-待接收 1-接收 2-拒绝
     private String orderNo;
     private Integer userServiceId;
     @TableField(exist = false)

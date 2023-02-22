@@ -4,6 +4,7 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.service.ChatUserService;
 import cn.cuptec.faros.service.UpcomingService;
 import cn.cuptec.faros.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -28,7 +29,8 @@ public class UpcomingController extends AbstractBaseController<UpcomingService, 
 
     @Resource
     private UserService userService;
-
+    @Resource
+    private ChatUserService chatUserService;
     /**
      * 分页查询待办事项
      */
@@ -44,8 +46,15 @@ public class UpcomingController extends AbstractBaseController<UpcomingService, 
             List<User> users = (List<User>) userService.listByIds(userIds);
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
+
+            List<Integer> chatUserIds = records.stream().map(Upcoming::getChatUserId)
+                    .collect(Collectors.toList());
+            List<ChatUser> chatUsers = (List<ChatUser>) chatUserService.listByIds(chatUserIds);
+            Map<Integer, ChatUser> chatMap = chatUsers.stream()
+                    .collect(Collectors.toMap(ChatUser::getId, t -> t));
             for (Upcoming upcoming : records) {
                 upcoming.setUser(userMap.get(upcoming.getUserId()));
+                upcoming.setChatUser(chatMap.get(upcoming.getChatUserId()));
             }
             page1.setRecords(records);
         }

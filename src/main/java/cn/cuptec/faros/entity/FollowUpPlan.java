@@ -28,6 +28,7 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     private Integer lastPushHour;//后续推送时
     private Integer lastPushMinute;//后续推送分
     private Integer patientUserCount;//患者数量
+    private Integer teamId;//团队id
     @TableField(exist = false)
     private List<FollowUpPlanContent> followUpPlanContentList;//随访计划内容
     @TableField(exist = false)

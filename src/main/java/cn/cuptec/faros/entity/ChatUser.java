@@ -24,6 +24,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
     //@TableId(type = IdType.INPUT)
 
     private Integer uid;
+    private String chatDesc;//咨询还是随访
     private String userIds;//群聊用户id
     private Integer groupType;//0-单聊 1-群聊
     private Integer teamId;//团队id

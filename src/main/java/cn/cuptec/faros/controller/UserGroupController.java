@@ -422,6 +422,7 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
             userGroupLambdaQueryWrapper.eq(UserGroup::getTeamId, teamId);
         } else {
             userGroupLambdaQueryWrapper.isNull(UserGroup::getTeamId);
+            userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId,SecurityUtils.getUser().getId());
         }
         userGroupLambdaQueryWrapper.orderByDesc(UserGroup::getSort);
         List<UserGroup> userGroups = service.list(userGroupLambdaQueryWrapper);

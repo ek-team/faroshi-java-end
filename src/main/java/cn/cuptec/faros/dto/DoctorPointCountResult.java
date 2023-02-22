@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class DoctorPointCountResult {
-    private Integer totalPoint;//总积分
-    private Integer pendingWithdraw;//待提现
-    private Integer withdraw;//已提现
+    private Double totalPoint;//总积分
+    private Double pendingWithdraw;//待提现
+    private Double withdraw;//已提现
 }
