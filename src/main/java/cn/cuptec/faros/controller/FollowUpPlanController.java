@@ -686,11 +686,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
      */
     @GetMapping("/getPatientUserByDoctor")
     public RestResponse getPatientUserByDoctor() {
-        log.info("查詢醫生綁定的患者");
 
         List<UserDoctorRelation> list = userDoctorRelationService.list(new QueryWrapper<UserDoctorRelation>().lambda()
                 .eq(UserDoctorRelation::getDoctorId, SecurityUtils.getUser().getId()));
-        log.info("查詢醫生綁定的患者" + list.size());
         if (CollectionUtils.isEmpty(list)) {
             return RestResponse.ok();
         }
