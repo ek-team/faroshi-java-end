@@ -26,6 +26,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -123,22 +125,22 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
         DoctorPointCountResult result = new DoctorPointCountResult();
         List<DoctorPoint> list = service.list(eq);
-        Double totalPoint = 0.0;
-        Double pendingWithdraw = 0.0;
-        Double withdraw = 0.0;
+        BigDecimal totalPoint = new BigDecimal(0.0);
+        BigDecimal pendingWithdraw = new BigDecimal(0.0);
+        BigDecimal withdraw = new BigDecimal(0.0);
         if (!CollectionUtils.isEmpty(list)) {
             for (DoctorPoint doctorPoint : list) {
-                totalPoint = doctorPoint.getPoint() + totalPoint;
+                totalPoint = new BigDecimal(doctorPoint.getPoint()).add(totalPoint);
                 if (doctorPoint.getWithdrawStatus().equals(1)) {
-                    pendingWithdraw = pendingWithdraw + doctorPoint.getPoint();
+                    pendingWithdraw = pendingWithdraw.add(new BigDecimal(doctorPoint.getPoint()));
                 } else {
-                    withdraw = withdraw + doctorPoint.getPoint();
+                    withdraw = withdraw.add(new BigDecimal(doctorPoint.getPoint()));
                 }
             }
         }
-        result.setTotalPoint(totalPoint);
-        result.setWithdraw(withdraw);
-        result.setPendingWithdraw(pendingWithdraw);
+        result.setTotalPoint(totalPoint.setScale(2, RoundingMode.HALF_UP));
+        result.setWithdraw(withdraw.setScale(2, RoundingMode.HALF_UP));
+        result.setPendingWithdraw(pendingWithdraw.setScale(2, RoundingMode.HALF_UP));
         return RestResponse.ok(result);
     }
 
@@ -151,7 +153,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         if (patientOtherOrder.getDoctorId() != null) {
             //查询医生图文咨询申请价格
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId()));
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
+                    .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1));
             if (one != null) {
                 return RestResponse.ok(one);
             }

@@ -33,6 +33,7 @@ public class RedisListenerConfig {
     private final  FollowUpPlanNoticeCountService followUpPlanNoticeCountService;
     private final PatientOtherOrderService patientOtherOrderService;
     private final  DeptService deptService;
+    private final   DoctorTeamService doctorTeamService;
     @Bean
     RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
@@ -40,7 +41,7 @@ public class RedisListenerConfig {
         container.addMessageListener(new RedisKeyExpirationListener(redisTemplate, redisConfigProperties,
                 userOrdertService, chatUserService,followUpPlanNoticeService,
                 wxMpService,userService,hospitalInfoService,chatMsgService,
-                followUpPlanNoticeCountService,patientOtherOrderService,deptService), new PatternTopic(StrUtil.format("__keyevent@{}__:expired", redisConfigProperties.getDatabase())));
+                followUpPlanNoticeCountService,patientOtherOrderService,deptService,doctorTeamService), new PatternTopic(StrUtil.format("__keyevent@{}__:expired", redisConfigProperties.getDatabase())));
         return container;
     }
 }

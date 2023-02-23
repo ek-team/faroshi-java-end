@@ -68,7 +68,7 @@ public class ChatServer extends BaseServer {
                 @Override
                 public void run() {
                     //logger.info("扫描关闭失效的连接");
-                    UserChannelManager.scanNotActiveChannel();
+                    //UserChannelManager.scanNotActiveChannel();
                 }
             }, 3, 60, TimeUnit.SECONDS);
 

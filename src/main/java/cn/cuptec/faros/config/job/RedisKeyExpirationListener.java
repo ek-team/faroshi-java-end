@@ -46,6 +46,7 @@ public class RedisKeyExpirationListener implements MessageListener {
     private HospitalInfoService hospitalInfoService;
     private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;
     private DeptService deptService;
+    private DoctorTeamService doctorTeamService;
     public static final String URL = "/pages/orderConfirm/orderConfirm?id=";
 
     public RedisKeyExpirationListener(RedisTemplate<String, String> redisTemplate,
@@ -59,7 +60,8 @@ public class RedisKeyExpirationListener implements MessageListener {
                                       ChatMsgService chatMsgService,
                                       FollowUpPlanNoticeCountService followUpPlanNoticeCountService,
                                       PatientOtherOrderService patientOtherOrderService,
-                                      DeptService deptService
+                                      DeptService deptService,
+                                      DoctorTeamService doctorTeamService
     ) {
         this.redisTemplate = redisTemplate;
         this.redisConfigProperties = redisConfigProperties;
@@ -73,6 +75,7 @@ public class RedisKeyExpirationListener implements MessageListener {
         this.followUpPlanNoticeCountService = followUpPlanNoticeCountService;
         this.patientOtherOrderService = patientOtherOrderService;
         this.deptService = deptService;
+        this.doctorTeamService = doctorTeamService;
     }
 
     @Override
@@ -95,30 +98,63 @@ public class RedisKeyExpirationListener implements MessageListener {
                 followUpPlanNoticeService.updateById(followUpPlanNotice);
                 User patientUser = userService.getById(followUpPlanNotice.getPatientUserId());
                 User doctorUser = userService.getById(followUpPlanNotice.getDoctorId());
+
+
+                //查询当前医生和患者所在的团队
+                List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
+                        .eq(ChatUser::getTargetUid, followUpPlanNotice.getPatientUserId())
+                        .like(ChatUser::getUserIds, followUpPlanNotice.getDoctorId() + "")
+                        .eq(ChatUser::getGroupType, 1)
+                        .isNotNull(ChatUser::getTeamId));
                 List<User> users = new ArrayList<>();
                 users.add(doctorUser);
                 hospitalInfoService.getHospitalByUser(users);
                 doctorUser = users.get(0);
-                //发送公众号随访计划提醒
-                wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", doctorUser.getNickname(), doctorUser.getHospitalName(), "/pages/news/news");
+                if (!CollectionUtils.isEmpty(chatUsers)) {
+                    ChatUser chatUser = chatUsers.get(0);
+                    ChatMsg chatMsg = new ChatMsg();
+                    chatMsg.setChatUserId(chatUser.getId());
+                    chatMsg.setFromUid(doctorUser.getId());
 
-                //生成聊天记录
-                List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
-                        .eq(ChatUser::getUid, patientUser.getId())
-                        .eq(ChatUser::getTargetUid, doctorUser.getId()));
-                if (CollectionUtils.isEmpty(list)) {
-                    //创建聊天对象
-                    chatUserService.saveOrUpdateChatUser(doctorUser.getId(), patientUser.getId(), "随访计划提醒");
+//                    chatMsg.setToUid(patientUser.getId());
+                    chatMsg.setMsg("随访计划提醒");
+                    chatMsg.setCreateTime(new Date());
+                    chatMsg.setMsgType(ChatProto.FOLLOW_UP_PLAN);
+                    chatMsg.setStr1(followUpPlanNoticeId);
+                    chatMsg.setReadStatus(0);
+                    chatMsg.setReadUserIds(followUpPlanNotice.getDoctorId() + "");
+                    chatMsgService.save(chatMsg);
+                    chatUser.setLastChatTime(new Date());
+                    chatUser.setLastMsg("随访计划");
+                    chatUserService.updateById(chatUser);
+                    DoctorTeam byId = doctorTeamService.getById(chatUser.getTeamId());
+                    wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", byId.getName()+"的随访", doctorUser.getHospitalName(), "/pages/news/news");
+
+                } else {
+
+
+                    //发送公众号随访计划提醒
+                    wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", doctorUser.getNickname(), doctorUser.getHospitalName(), "/pages/news/news");
+
+                    //生成聊天记录
+                    List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
+                            .eq(ChatUser::getUid, patientUser.getId())
+                            .eq(ChatUser::getTargetUid, doctorUser.getId()));
+                    if (CollectionUtils.isEmpty(list)) {
+                        //创建聊天对象
+                        chatUserService.saveOrUpdateChatUser(doctorUser.getId(), patientUser.getId(), "随访计划提醒");
+                    }
+                    ChatMsg chatMsg = new ChatMsg();
+                    chatMsg.setFromUid(doctorUser.getId());
+                    chatMsg.setToUid(patientUser.getId());
+                    chatMsg.setMsg("随访计划提醒");
+                    chatMsg.setCreateTime(new Date());
+                    chatMsg.setMsgType(ChatProto.FOLLOW_UP_PLAN);
+                    chatMsg.setStr1(followUpPlanNoticeId);
+                    chatMsg.setReadStatus(0);
+                    chatMsgService.save(chatMsg);
                 }
-                ChatMsg chatMsg = new ChatMsg();
-                chatMsg.setFromUid(doctorUser.getId());
-                chatMsg.setToUid(patientUser.getId());
-                chatMsg.setMsg("随访计划提醒");
-                chatMsg.setCreateTime(new Date());
-                chatMsg.setMsgType(ChatProto.FOLLOW_UP_PLAN);
-                chatMsg.setStr1(followUpPlanNoticeId);
-                chatMsg.setReadStatus(0);
-                chatMsgService.save(chatMsg);
+
 
                 //修改发送次数
                 FollowUpPlanNoticeCount one = followUpPlanNoticeCountService.getOne(new QueryWrapper<FollowUpPlanNoticeCount>()

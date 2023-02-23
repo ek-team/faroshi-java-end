@@ -79,6 +79,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     private UserGroupService userGroupService;
     @Resource
     private DoctorUserRemarkService doctorUserRemarkService;
+    @Resource
+    private UserDoctorRelationService userDoctorRelationService;
 
     /**
      * 查询随访计划模板
@@ -684,24 +686,26 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
      */
     @GetMapping("/getPatientUserByDoctor")
     public RestResponse getPatientUserByDoctor() {
-        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
-                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        log.info("查詢醫生綁定的患者");
 
-        LambdaQueryWrapper<UserFollowDoctor> wapper = new QueryWrapper<UserFollowDoctor>().lambda()
-                .eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
-        if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
-            List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
-                    .collect(Collectors.toList());
-            wapper.or();
-            wapper.in(UserFollowDoctor::getTeamId, teamIds);
-        }
-        List<UserFollowDoctor> list = userFollowDoctorService.list(wapper);
+        List<UserDoctorRelation> list = userDoctorRelationService.list(new QueryWrapper<UserDoctorRelation>().lambda()
+                .eq(UserDoctorRelation::getDoctorId, SecurityUtils.getUser().getId()));
+        log.info("查詢醫生綁定的患者" + list.size());
         if (CollectionUtils.isEmpty(list)) {
             return RestResponse.ok();
         }
-        List<Integer> userIds = list.stream().map(UserFollowDoctor::getUserId)
+        List<Integer> userIds = list.stream().map(UserDoctorRelation::getUserId)
                 .collect(Collectors.toList());
-        return RestResponse.ok(userService.listByIds(userIds));
+        List<User> users = (List<User>) userService.listByIds(userIds);
+        if (!CollectionUtils.isEmpty(users)) {
+            for (User user : users) {
+                user.setNickname(user.getPatientName());
+
+            }
+
+
+        }
+        return RestResponse.ok(users);
     }
 
     /**

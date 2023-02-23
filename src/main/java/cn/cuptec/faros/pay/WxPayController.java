@@ -77,6 +77,7 @@ public class WxPayController {
     private PatientUserService patientUserService;
     @Resource
     private PatientRelationTeamService patientRelationTeamService;
+
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -154,7 +155,7 @@ public class WxPayController {
             patientRelationTeamService.remove(new QueryWrapper<PatientRelationTeam>().lambda()
                     .eq(PatientRelationTeam::getPatientId, userOrder.getUserId())
                     .eq(PatientRelationTeam::getTeamId, doctorTeamId));
-            PatientRelationTeam patientRelationTeam= new  PatientRelationTeam();
+            PatientRelationTeam patientRelationTeam = new PatientRelationTeam();
 
             patientRelationTeam.setPatientId(userOrder.getUserId());
             patientRelationTeam.setTeamId(doctorTeamId);
@@ -164,8 +165,6 @@ public class WxPayController {
             userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
                     .eq(UserDoctorRelation::getUserId, userOrder.getUserId())
                     .in(UserDoctorRelation::getDoctorId, userIds));
-
-
 
 
             for (Integer doctorId : userIds) {
@@ -229,7 +228,7 @@ public class WxPayController {
             doctorPoint.setPoint(patientOtherOrder.getAmount());
             doctorPoint.setDoctorTeamId(patientOtherOrder.getDoctorTeamId());
             doctorPoint.setDoctorUserId(patientOtherOrder.getDoctorId());
-            doctorPoint.setPointDesc("图文咨询积分");
+            doctorPoint.setPointDesc("图文咨询");
             doctorPoint.setWithdrawStatus(1);
             doctorPoint.setCreateTime(LocalDateTime.now());
             doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
@@ -318,24 +317,25 @@ public class WxPayController {
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getOrderId, outRefundNo));
             if (refundStatus.equals("SUCCESS")) {
-                if(retrieveOrder!=null){
+                BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
+                BigDecimal divide = refundFee1.divide(new BigDecimal(100));
+                if (retrieveOrder != null) {
                     //修改订单的实际回收价
-                    retrieveOrder.setRetrieveAmount(orderRefundInfo.getRefundFee());
+                    retrieveOrder.setRetrieveAmount(divide);
 
                     retrieveOrder.setStatus(5);
                     retrieveOrderService.updateById(retrieveOrder);
 
                 }
+                User userById = userService.getById(retrieveOrder.getUserId());
+                //发送公众号通知
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
+                        "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
 
             }
 
-            User userById = userService.getById(retrieveOrder.getUserId());
-            //发送公众号通知
-            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
-            BigDecimal divide = refundFee1.divide(new BigDecimal(100));
-            wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
-                    "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
         }
         //图文咨询订单
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
