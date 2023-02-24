@@ -230,6 +230,7 @@ public class WxPayController {
             doctorPoint.setDoctorUserId(patientOtherOrder.getDoctorId());
             doctorPoint.setPointDesc("图文咨询");
             doctorPoint.setWithdrawStatus(1);
+            doctorPoint.setPatientId(patientOtherOrder.getUserId());
             doctorPoint.setCreateTime(LocalDateTime.now());
             doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
             doctorPointService.save(doctorPoint);

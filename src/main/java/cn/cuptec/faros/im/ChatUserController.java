@@ -209,21 +209,21 @@ public class ChatUserController {
         }
 
 
-        if (chatUser.getPatientOtherOrderStatus().equals(1)) {
-            //返回金额
-            PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
-                    .eq(PatientOtherOrder::getId, chatUser.getPatientOtherOrderNo()));
-            Dept dept = deptService.getById(patientOtherOrder.getDeptId());
-            String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
-            String result = HttpUtil.get(url);
-            //返回服务次数
-            UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
-            if (userServicePackageInfo != null) {
-                userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() - 1);
-                userServicePackageInfoService.updateById(userServicePackageInfo);
-            }
-
-        }
+//        if (chatUser.getPatientOtherOrderStatus().equals(1)) {
+//            //返回金额
+//            PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
+//                    .eq(PatientOtherOrder::getId, chatUser.getPatientOtherOrderNo()));
+//            Dept dept = deptService.getById(patientOtherOrder.getDeptId());
+//            String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+//            String result = HttpUtil.get(url);
+//            //返回服务次数
+//            UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
+//            if (userServicePackageInfo != null) {
+//                userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() - 1);
+//                userServicePackageInfoService.updateById(userServicePackageInfo);
+//            }
+//
+//        }
 
         return RestResponse.ok();
     }
@@ -371,13 +371,21 @@ public class ChatUserController {
             wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, "医生已接收您的咨询", "/pages/news/news");
 
         } else {
+            //发送公众号消息提醒患者
+            Integer userId = byId.getFromUid();//用户id
+            User user = userService.getById(userId);
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String time = df.format(now);
+            wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, "医生拒绝了您的咨询", "/pages/news/news");
+
             //退款
             PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
-                    .eq(PatientOtherOrder::getOrderNo, orderNo));
+                    .eq(PatientOtherOrder::getId, orderNo));
 
-            if (patientOtherOrder.getStatus().equals(2)) {
+            if (patientOtherOrder != null && patientOtherOrder.getStatus().equals(2)) {
                 Dept dept = deptService.getById(patientOtherOrder.getDeptId());
-                String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + orderNo + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+                String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
                 String result = HttpUtil.get(url);
             }
         }

@@ -128,7 +128,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     chatUser.setLastMsg("随访计划");
                     chatUserService.updateById(chatUser);
                     DoctorTeam byId = doctorTeamService.getById(chatUser.getTeamId());
-                    wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", byId.getName()+"的随访", doctorUser.getHospitalName(), "/pages/news/news");
+                    wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", byId.getName() + "的随访", doctorUser.getHospitalName(), "/pages/news/news");
 
                 } else {
 

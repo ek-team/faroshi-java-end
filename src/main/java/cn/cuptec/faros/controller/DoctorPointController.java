@@ -93,11 +93,20 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         if (!CollectionUtils.isEmpty(records) && !CollectionUtils.isEmpty(doctorTeams)) {
             Map<Integer, DoctorTeam> doctorMap = doctorTeams.stream()
                     .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+
+            //查询患者名字
+            List<Integer> patientIds = records.stream().map(DoctorPoint::getPatientId)
+                    .collect(Collectors.toList());
+
+            List<User> users = (List<User>) userService.listByIds(patientIds);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
             for (DoctorPoint doctorPoint : records) {
                 DoctorTeam doctorTeam = doctorMap.get(doctorPoint.getDoctorTeamId());
                 if (doctorTeam != null) {
                     doctorPoint.setDoctorTeamName(doctorTeam.getName());
                 }
+                doctorPoint.setPatientName(userMap.get(doctorPoint.getPatientId()).getPatientName());
             }
         }
         return RestResponse.ok(doctorPointIPage);

@@ -23,7 +23,10 @@ public class DoctorPoint extends Model<DoctorPoint> {
     private Integer doctorTeamId;
     private LocalDateTime createTime;
     private Integer withdrawStatus;//提现状态 1-待提现0-已提现
+    private Integer patientId;//患者id
     private String orderNo;
     @TableField(exist = false)
     private String doctorTeamName;
+    @TableField(exist = false)
+    private String patientName;
 }
