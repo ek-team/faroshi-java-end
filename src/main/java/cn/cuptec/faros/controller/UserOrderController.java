@@ -229,6 +229,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     servicePack.setServicePackProductPics(new ArrayList<>());
                 }
                 userOrder.setServicePack(servicePack);
+                //重新组装订单号
+                String orderNo = userOrder.getOrderNo();
+                LocalDateTime createTime = userOrder.getCreateTime();
+
+                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() +"-"+ orderNo);
+
             }
         }
 
@@ -300,13 +306,14 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         return RestResponse.ok(saleSpecGroup);
     }
+
     /**
      * 根据订单id生成分享图片
      */
     @GetMapping("/shareOrder")
     public RestResponse shareOrder(@RequestParam("orderNo") String orderNo) {
         //生成一个图片返回
-        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" +orderNo;
+        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" + orderNo;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -343,6 +350,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         return RestResponse.ok(resultStr);
 
     }
+
     /**
      * 生成订单
      */
@@ -832,6 +840,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
             for (UserOrder userOrder : userOrders) {
                 userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
+                String orderNo = userOrder.getOrderNo();
+                LocalDateTime createTime = userOrder.getCreateTime();
+
+                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth()+"-" + orderNo);
+
             }
 
 
