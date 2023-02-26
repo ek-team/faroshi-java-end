@@ -246,11 +246,14 @@ public class ChatUserController {
             return RestResponse.ok();
         }
         //判断 当前是否有正在待接受的 咨询
-        if (!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())) {
-            if (chatUser.getPatientOtherOrderStatus().equals("0") || chatUser.getPatientOtherOrderStatus().equals("1")) {
-                return RestResponse.ok("2");
+        if(chatUser.getServiceEndTime().isAfter(LocalDateTime.now())){
+            if ( !StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())) {
+                if (chatUser.getPatientOtherOrderStatus().equals("0") || chatUser.getPatientOtherOrderStatus().equals("1")) {
+                    return RestResponse.ok("2");
+                }
             }
         }
+
 
         return RestResponse.ok("1");
     }
@@ -264,7 +267,9 @@ public class ChatUserController {
     @ApiOperation(value = "分页查询聊天列表")
     @PostMapping("/pageChatUsers")
     public RestResponse pageChatUsers(@RequestBody SocketFrameTextMessage param) {
-        param.setMyUserId(SecurityUtils.getUser().getId());
+        if(param.getMyUserId()==null){
+            param.setMyUserId(SecurityUtils.getUser().getId());
+        }
         //获取聊天用户列表
         IPage<ChatUserVO> iPage = chatUserService.pageChatUsers(param);
         List<ChatUserVO> records = iPage.getRecords();

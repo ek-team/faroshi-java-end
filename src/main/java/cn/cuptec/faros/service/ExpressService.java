@@ -10,6 +10,7 @@ import cn.cuptec.faros.mapper.ExpressMapper;
 import cn.cuptec.faros.vo.MapExpressTrackVo;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -19,7 +20,7 @@ import org.springframework.util.Assert;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
-
+@Slf4j
 @Service
 public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
 
@@ -109,6 +110,7 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
         try {
             HttpResponse response = HttpUtils.doGet("https://poll.kuaidi100.com", "/poll/query.do", "get", new HashMap<>(), paramMap);
             String expressResult = EntityUtils.toString(response.getEntity()); //输出json
+            log.info(expressResult+"ppppppppppppppppppppppppppppppp");
             MapExpressTrackVo expressTrackVo = JSON.parseObject(expressResult, MapExpressTrackVo.class);
             if (expressTrackVo.getStatus() == 200){
                 return expressTrackVo;
@@ -123,4 +125,31 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
         }
     }
 
+    public static void main(String[] args) {
+        MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
+        expressParam.setCom("shunfeng");
+        expressParam.setNum("SF1416769162853");
+        String expressParamStr = JSON.toJSONString(expressParam);
+        String signOrigion = expressParamStr + key + customer;
+        String sign = DigestUtils.md5Hex(signOrigion).toUpperCase();
+
+        String url = "https://poll.kuaidi100.com/poll/maptrack.do?customer=" + customer + "&sign= " + sign + "&param=" + expressParamStr;
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("customer", customer);
+        paramMap.put("sign", sign);
+        paramMap.put("param", expressParamStr);
+
+        HttpResponse response = null;
+        try {
+            response = HttpUtils.doGet("https://poll.kuaidi100.com", "/poll/query.do", "post", new HashMap<>(), paramMap);
+            String expressResult = EntityUtils.toString(response.getEntity()); //输出json
+            log.info(expressResult+"ppppppppppppppppppppppppppppppp");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
 }

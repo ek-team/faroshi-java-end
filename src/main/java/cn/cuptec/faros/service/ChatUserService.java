@@ -64,7 +64,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             if (CollectionUtils.isEmpty(users) && CollectionUtils.isEmpty(doctorTeams)) {
                 return new Page<>();
             }
-            //先搜索团队聊天
+            //先搜索团队名字
             LambdaQueryWrapper<ChatUser> in = new QueryWrapper<ChatUser>().lambda()
                     .eq(ChatUser::getGroupType, 1)
                     .like(ChatUser::getUserIds, param.getMyUserId());
@@ -88,6 +88,19 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             List<ChatUser> list1 = list(dan);
             if (!CollectionUtils.isEmpty(list1)) {
                 chatUsers.addAll(list1);
+            }
+            //搜索群聊
+            LambdaQueryWrapper<ChatUser> qun = new QueryWrapper<ChatUser>().lambda()
+                    .eq(ChatUser::getGroupType, 1)
+                    .like(ChatUser::getUserIds, param.getMyUserId());
+            if (!CollectionUtils.isEmpty(users)) {
+                List<Integer> userIds = users.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                qun.and(wq0 -> wq0.or().in(ChatUser::getTargetUid, userIds));
+            }
+            List<ChatUser> list2 = list(qun);
+            if (!CollectionUtils.isEmpty(list2)) {
+                chatUsers.addAll(list2);
             }
 //            if (!CollectionUtils.isEmpty(users)) {
 //                List<Integer> userIds = users.stream().map(User::getId)
