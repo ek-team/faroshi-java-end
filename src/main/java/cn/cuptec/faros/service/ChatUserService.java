@@ -103,7 +103,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 chatUsers.addAll(list2);
             }
             if (!CollectionUtils.isEmpty(chatUsers)) {
-                List<String> Ids = new ArrayList<>();//用来临时存储person的id
+                List<String> Ids = new ArrayList<>();//
 
 
                 chatUsers = chatUsers.stream().filter(// 过滤去重
@@ -114,42 +114,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                         }
                 ).collect(Collectors.toList());
             }
-//            if (!CollectionUtils.isEmpty(users)) {
-//                List<Integer> userIds = users.stream().map(User::getId)
-//                        .collect(Collectors.toList());
-//                baseMapper.searchChatUser(userIds, param.getMyUserId());
-//            }
 
-
-//            LambdaQueryWrapper<User> userWrapper = Wrappers.<User>lambdaQuery()
-//                    .like(User::getNickname, param.getSearchName());
-//            List<User> users = userService.list(userWrapper);
-//            //根据团队名称搜索
-//            LambdaQueryWrapper<DoctorTeam> teamWrapper = Wrappers.<DoctorTeam>lambdaQuery()
-//                    .like(DoctorTeam::getName, param.getSearchName());
-//            List<DoctorTeam> doctorTeams = doctorTeamService.list(teamWrapper);
-//
-//            if (CollectionUtils.isEmpty(users) && CollectionUtils.isEmpty(doctorTeams)) {
-//                return new Page<>();
-//            }
-//            if (!CollectionUtils.isEmpty(users)) {
-//                List<Integer> userIds = users.stream().map(User::getId)
-//                        .collect(Collectors.toList());
-//                wrapper.and(wq0 -> wq0.in(ChatUser::getTargetUid, userIds).or().
-//                        like(ChatUser::getUserIds, userIds.get(0))
-//
-//                );
-//
-//            }
-//            if (!CollectionUtils.isEmpty(doctorTeams)) {
-//
-//                //团队搜索条件
-//                List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
-//                        .collect(Collectors.toList());
-//                wrapper.and(wq0 -> wq0.like(ChatUser::getTeamId, teamIds.get(0))
-//                );
-//
-//            }
             result.setTotal(chatUsers.size());
             result.setRecords(chatUsers);
 
