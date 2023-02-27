@@ -246,7 +246,7 @@ public class ChatUserController {
             return RestResponse.ok();
         }
         //判断 当前是否有正在待接受的 咨询
-        if(chatUser.getServiceEndTime().isAfter(LocalDateTime.now())){
+        if(chatUser.getServiceStartTime() != null && chatUser.getServiceEndTime().isAfter(LocalDateTime.now())){
             if ( !StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())) {
                 if (chatUser.getPatientOtherOrderStatus().equals("0") || chatUser.getPatientOtherOrderStatus().equals("1")) {
                     return RestResponse.ok("2");

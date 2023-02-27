@@ -102,6 +102,18 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             if (!CollectionUtils.isEmpty(list2)) {
                 chatUsers.addAll(list2);
             }
+            if (!CollectionUtils.isEmpty(chatUsers)) {
+                List<String> Ids = new ArrayList<>();//用来临时存储person的id
+
+
+                chatUsers = chatUsers.stream().filter(// 过滤去重
+                        v -> {
+                            boolean flag = !Ids.contains(v.getId() + "");
+                            Ids.add(v.getId() + "");
+                            return flag;
+                        }
+                ).collect(Collectors.toList());
+            }
 //            if (!CollectionUtils.isEmpty(users)) {
 //                List<Integer> userIds = users.stream().map(User::getId)
 //                        .collect(Collectors.toList());
