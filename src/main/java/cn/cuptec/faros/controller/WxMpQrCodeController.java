@@ -34,7 +34,7 @@ public class WxMpQrCodeController {
     private ServicePackService servicePackService;
 
     /**
-     * 关注公众号的二维码 永久二维码
+     * 关注公众号的二维码 临时二维码 场景值 是服务包id
      *
      * @param servicePackId 服务包id
      * @return 二维码url
@@ -48,6 +48,28 @@ public class WxMpQrCodeController {
 
         sb.append(CommonConstants.VALUE_SEPARATOR);
         sb.append(token);
+        sb.append(CommonConstants.VALUE_SEPARATOR);
+        sb.append("servicePack");
+        WxMpQrCodeTicket wxMpQrCodeTicket = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodeCreateTmpTicket(sb.toString(),259200);
+        String qrCodePictureUrl = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodePictureUrl(wxMpQrCodeTicket.getTicket());
+        return RestResponse.ok(qrCodePictureUrl);
+    }
+    /**
+     * 关注公众号的二维码 临时二维码 场景值 是医生id
+     *
+     * @return 二维码url
+     * @throws WxErrorException
+     */
+    @GetMapping("/doctorSubscribeQrCode")
+    public RestResponse doctorSubscribeQrCode(@RequestParam("doctorId") int doctorId,@RequestParam(value = "token",required = false) String token) throws WxErrorException {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(doctorId);
+
+        sb.append(CommonConstants.VALUE_SEPARATOR);
+        sb.append(token);
+        sb.append(CommonConstants.VALUE_SEPARATOR);
+        sb.append("addPatient");
         WxMpQrCodeTicket wxMpQrCodeTicket = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodeCreateTmpTicket(sb.toString(),259200);
         String qrCodePictureUrl = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodePictureUrl(wxMpQrCodeTicket.getTicket());
         return RestResponse.ok(qrCodePictureUrl);

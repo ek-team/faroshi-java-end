@@ -7,7 +7,9 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.constrants.CommonConstants;
 import cn.cuptec.faros.common.constrants.QrCodeConstants;
 import cn.cuptec.faros.common.exception.InnerException;
+import cn.cuptec.faros.common.utils.QrCodeUtil;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.config.wx.WxMaConfiguration;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
@@ -16,13 +18,17 @@ import cn.cuptec.faros.dto.UserPwdDTO;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.IdCardUtil;
+import cn.cuptec.faros.util.UploadFileUtils;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.model.PutObjectResult;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
@@ -34,19 +40,26 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Slf4j
 @RestController
 @RequestMapping("user")
 public class UserController extends AbstractBaseController<UserService, User> {
     private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
-
+    private final OssProperties ossProperties;
     @Resource
     private DeptService deptService;
 
@@ -62,6 +75,57 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private DoctorTeamService doctorTeamService;
     @Resource
     private PatientUserService patientUserService;
+
+
+    /**
+     * 获取医生个人二维码 患者扫码 添加
+     */
+    @GetMapping("/getDoctorQrCode")
+    public RestResponse getDoctorQrCode() {
+        User user = service.getById(SecurityUtils.getUser().getId());
+        if (!StringUtils.isEmpty(user.getQrCode())) {
+            return RestResponse.ok(user.getQrCode());
+        }
+        //生成一个图片返回
+        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?doctorId=" + SecurityUtils.getUser().getId();
+        BufferedImage png = null;
+        try {
+            png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String name = "";
+        //转换上传到oss
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        ImageOutputStream imOut = null;
+        try {
+            imOut = ImageIO.createImageOutputStream(bs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            ImageIO.write(png, "png", imOut);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        InputStream inputStream = new ByteArrayInputStream(bs.toByteArray());
+        try {
+            OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
+            Random random = new Random();
+            name = random.nextInt(10000) + System.currentTimeMillis() + "_YES.png";
+            // 上传文件
+            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(), "poster/" + name, inputStream);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
+        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
+        user.setQrCode(resultStr);
+        service.updateById(user);
+        return RestResponse.ok(resultStr);
+
+    }
 
     /**
      * 初始化小程序openid
@@ -341,14 +405,14 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updateById")
     public RestResponse updateById(@RequestBody @Valid User user) {
-        if(!StringUtils.isEmpty(user.getNickname())){
+        if (!StringUtils.isEmpty(user.getNickname())) {
             if (user.getNickname().equals("微信用户")) {
                 User user1 = new User();
                 BeanUtils.copyProperties(user, user1, "nickname", "avatar");
                 user = user1;
             }
         }
-        if(user.getId()==null){
+        if (user.getId() == null) {
             user.setId(SecurityUtils.getUser().getId());
 
         }

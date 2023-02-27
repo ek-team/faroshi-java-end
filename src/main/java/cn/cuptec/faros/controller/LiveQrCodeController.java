@@ -47,6 +47,7 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
     @Resource
     private WxMpService wxMpService;
 
+
     @GetMapping("/dispatcher/{id}")
     public void dispatcher(@PathVariable String id) throws IOException {
         service.dispatcher(id);

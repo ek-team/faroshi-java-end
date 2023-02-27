@@ -46,12 +46,25 @@ public class WxScanService {
         String event = wxMessage.getEvent();
         // TODO 此处简单处理场景
         String[] split = wxMessageEventKey.split(";");
-        Integer servicePackId = Integer.parseInt(split[0]);
-        String token = split[1];
-        log.info("场景值：" + wxMessageEventKey + "=====" + event);
-        log.info("服务包id：" + servicePackId + "=====" + event);
+        ServicePack byId = null;
+        String token = "";
+        if (split[2].equals("servicePack")) {
+            Integer servicePackId = Integer.parseInt(split[0]);
+            token = split[1];
+            log.info("场景值：" + wxMessageEventKey + "=====" + event);
+            log.info("服务包id：" + servicePackId + "=====" + event);
+
+            byId = servicePackService.getById(servicePackId);
+        }
+        Integer doctorId = null;
+        User doctor = null;
+        if (split[2].equals("addPatient")) {
+            token = split[1];
+            doctorId = Integer.parseInt(split[0]);
+            doctor = userService.getById(doctorId);
+
+        }
         // 获取微信用户基本信息
-        ServicePack byId = servicePackService.getById(servicePackId);
         WxMpUser userWxInfo = null;
         try {
             userWxInfo = weixinService.getUserService()
@@ -96,9 +109,19 @@ public class WxScanService {
 
                 //wxMpTagService.batchTaggings(userRoles, user.getId());
             }
-            wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适",
-                    "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePackId + "&token=" + token);
+            if (byId != null) {
+                wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适",
+                        "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + byId.getId() + "&token=" + token);
 
+            }
+            if (doctor != null) {
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String time = df.format(now);
+                wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctor.getNickname(), time,
+                        "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + doctor.getId() + "&token=" + token);
+
+            }
         }
 
         if ("subscribe".equals(event)) {//关注消息

@@ -313,4 +313,27 @@ public class WxMpService {
         sendTemplateMsg(openId, templateId, url, dataList);
     }
 
+    /**
+     * 患者添加医生
+     */
+    public void patientAddDoctor(String openId, String first, String keyword1,
+                              String keyword2, String remark, String url) {
+        String templateId = "Y3MxxxKiLCCqf6D2qn1nJwYOlKU2pf2_zFy0cz_YEcs";
+
+        List<WxMpTemplateData> dataList = new ArrayList<>();
+        WxMpTemplateData wxMpTemplateData = new WxMpTemplateData();
+        wxMpTemplateData.setName("first");
+        wxMpTemplateData.setValue(first);
+        dataList.add(wxMpTemplateData);
+        WxMpTemplateData wxMpTemplateData1 = new WxMpTemplateData();
+        wxMpTemplateData1.setName("keyword1");
+        wxMpTemplateData1.setValue(keyword1);
+        dataList.add(wxMpTemplateData1);
+        WxMpTemplateData wxMpTemplateData2 = new WxMpTemplateData();
+        wxMpTemplateData2.setName("keyword2");
+        wxMpTemplateData2.setValue(keyword2);
+        dataList.add(wxMpTemplateData2);
+        dataList.add(new WxMpTemplateData("remark", "点击完善信息", "#FF0000"));
+        sendTemplateMsg(openId, templateId, url, dataList);
+    }
 }

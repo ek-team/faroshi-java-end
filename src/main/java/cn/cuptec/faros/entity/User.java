@@ -27,6 +27,7 @@ public class User extends Model<User> {
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String phone;
     private String cid;//APP消息推送 cid
+    private String qrCode;//医生个人二维码 患者扫码添加
     @JSONField(serialize = false)
     private String password;
     private String token;
