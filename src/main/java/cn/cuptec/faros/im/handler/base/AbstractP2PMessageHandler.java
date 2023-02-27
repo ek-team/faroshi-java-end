@@ -111,6 +111,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     }
 
                 }
+                //判断是否是患者发送消息
+                if (fromUser.getId().equals(byId.getTargetUid())) {
+                    byId.setChatCount(byId.getChatCount() - 1);
+                }
                 //更新群聊 聊天时间和 最后聊天内容
                 byId.setLastChatTime(new Date());
                 if (origionMessage.getMsgType().equals(ChatProto.MESSAGE_PIC)) {

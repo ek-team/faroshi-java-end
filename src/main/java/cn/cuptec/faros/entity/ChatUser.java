@@ -35,12 +35,12 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
     //@TableId(type = IdType.INPUT)
     @TableField
     private Integer targetUid;
-    private String  patientOtherOrderNo;//图文咨询订单id
+    private String patientOtherOrderNo;//图文咨询订单id
     /**
      * 对话是否已关闭
      */
     private int isClosed;
-   private String patientOtherOrderStatus;//图文咨询状态//0-待接收 1-接收 2-拒绝 3-结束
+    private String patientOtherOrderStatus;//图文咨询状态//0-待接收 1-接收 2-拒绝 3-结束
     /**
      * 最后一条消息
      */
@@ -50,7 +50,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
      * 最后聊天时间
      */
     private Date lastChatTime;
-
+    private Integer chatCount = 9;//医生未接受消息的时候 可以再发送9条消息
     private String remark;
     private LocalDateTime serviceStartTime;//服务开始时间
     private LocalDateTime serviceEndTime;//服务结束时间
@@ -70,6 +70,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
     private String avatar;
     @TableField(exist = false)
     private int status;//1-有效 2-无效
+
     @Override
     public int compareTo(ChatUser o) {
         return o.lastChatTime.compareTo(this.lastChatTime);//根据时间降序

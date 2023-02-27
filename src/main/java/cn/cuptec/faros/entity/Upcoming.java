@@ -18,6 +18,7 @@ public class Upcoming extends Model<Upcoming> {
 
     private Integer userId;
     private Integer doctorId;
+    private Integer orderId;//图文咨询订单id
     private String title;
     private Integer chatUserId;
     private Integer teamId;

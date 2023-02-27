@@ -211,6 +211,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         patientOtherOrderService.save(patientOtherOrder);
         //添加待办事项
         Upcoming upcoming = new Upcoming();
+        upcoming.setOrderId(patientOtherOrder.getId());
         upcoming.setTeamId(patientOtherOrder.getDoctorTeamId());
         upcoming.setChatUserId(patientOtherOrder.getChatUserId());
         upcoming.setContent("图文咨询申请");
@@ -232,6 +233,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
                     Upcoming upcoming1 = new Upcoming();
+                    upcoming1.setOrderId(patientOtherOrder.getId());
                     upcoming1.setTeamId(patientOtherOrder.getDoctorTeamId());
                     upcoming1.setChatUserId(patientOtherOrder.getChatUserId());
                     upcoming1.setContent("图文咨询申请");
@@ -286,12 +288,14 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                                     .eq(ChatUser::getUid, c.getUid())
                                     .eq(ChatUser::getTargetUid, c.getTargetUid())
                                     .set(ChatUser::getChatDesc, "咨询")
+                                    .set(ChatUser::getChatCount, 9)
 
                             );
                         }
                     });
                 } else {
                     chatUser.setChatDesc("咨询");
+                    chatUser.setChatCount(9);
                     chatUserService.updateById(chatUser);
                 }
 
@@ -333,6 +337,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         upcoming.setChatUserId(patientOtherOrder.getChatUserId());
         upcoming.setContent("图文咨询申请");
         upcoming.setTitle("图文咨询申请");
+        upcoming.setOrderId(patientOtherOrder.getId());
         upcoming.setUserId(SecurityUtils.getUser().getId());
         Integer doctorId = patientOtherOrder.getDoctorId();
 
@@ -350,6 +355,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
                     Upcoming upcoming1 = new Upcoming();
+                    upcoming1.setOrderId(patientOtherOrder.getId());
                     upcoming1.setTeamId(patientOtherOrder.getDoctorTeamId());
                     upcoming1.setChatUserId(patientOtherOrder.getChatUserId());
                     upcoming1.setContent("图文咨询申请");
