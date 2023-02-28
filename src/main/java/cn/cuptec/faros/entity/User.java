@@ -5,6 +5,7 @@ import cn.cuptec.faros.common.enums.QueryLogical;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -62,6 +63,10 @@ public class User extends Model<User> {
     private String remarks;
 
     private String realName;
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    private LocalDateTime operationTime;//手术时间
+    private String operationName;//手术名字
+    private Double weight;      // 体重
 
     private String avatar;
     private String hospitalId;//医院id

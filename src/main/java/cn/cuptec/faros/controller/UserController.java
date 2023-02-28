@@ -126,7 +126,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
         BufferedImage png = null;
         try {
-            png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
+            png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
         } catch (IOException e) {
             e.printStackTrace();
         }

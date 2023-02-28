@@ -555,5 +555,64 @@ public class QrCodeUtil {
             return null;
         }
     }
+    public static BufferedImage doctorImage(OutputStream outputStream,  String logoFileUrl, String qrUrl, int qrCodeSize) {
+        try {
+            MultiFormatWriter multiFormatWriter = new MultiFormatWriter();
+            // 参数顺序分别为：编码内容，编码类型，生成图片宽度，生成图片高度，设置参数
+            BitMatrix bm = multiFormatWriter.encode(qrUrl, BarcodeFormat.QR_CODE, qrCodeSize, qrCodeSize, hints);
+            BufferedImage image = new BufferedImage(qrCodeSize, qrCodeSize, BufferedImage.TYPE_INT_RGB);
+
+            // 开始利用二维码数据创建Bitmap图片，分别设为黑（0xFFFFFFFF）白（0xFF000000）两色
+            for (int x = 0; x < qrCodeSize; x++) {
+                for (int y = 0; y < qrCodeSize; y++) {
+                    image.setRGB(x, y, bm.get(x, y) ? QRCOLOR : BGWHITE);
+                }
+            }
+
+            int width = image.getWidth();
+            int height = image.getHeight();
+            System.out.println(width);
+            System.out.println(height);
+            // 构建绘图对象
+            Graphics2D g = image.createGraphics();
+            if (!StringUtils.isEmpty(logoFileUrl)) {
+                // 读取Logo图片
+                BufferedImage logo = ImageIO.read(new URL(logoFileUrl));
+                // 开始绘制logo图片
+                g.drawImage(logo, width * 2 / 5, height * 2 / 5, width * 2 / 10, height * 2 / 10, null);
+                g.dispose();
+                logo.flush();
+            }
+            // 新的图片，把带logo的二维码下面加上文字
+            BufferedImage outImage = new BufferedImage(qrCodeSize, qrCodeSize + 45, BufferedImage.TYPE_4BYTE_ABGR);
+            Graphics2D outg = outImage.createGraphics();
+            // 画二维码到新的面板
+            outg.drawImage(image, 0, 0, image.getWidth(), image.getHeight(), null);
+            // 画文字到新的面板
+            outg.setColor(Color.BLACK);
+            outg.setFont(new Font("宋体", Font.BOLD, 22)); // 字体、字型、字号
+
+
+            BufferedImage outImage1 = new BufferedImage(387, qrCodeSize + 183, BufferedImage.TYPE_4BYTE_ABGR);
+            Graphics2D outg1 = outImage1.createGraphics();
+            outg1.drawImage(outImage, 50, 70, outImage.getWidth(), outImage.getHeight(), null);
+            outg1.setColor(Color.BLACK);
+            outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
+            outg1.drawString("微信扫码添加好友", 100, 409);
+
+            outg1.dispose();
+            outImage1.flush();
+            outImage = outImage1;
+            outg.dispose();
+            outImage.flush();
+            image = outImage;
+            image.flush();
+            //ImageIO.write(image, "png", outputStream); // TODO
+            return outImage1;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
 }

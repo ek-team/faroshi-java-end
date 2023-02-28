@@ -122,7 +122,7 @@ public class WxScanService {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String time = df.format(now);
                 wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctor.getNickname(), time,
-                        "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + doctor.getId() + "&token=" + token);
+                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token="+ token);
 
 
 

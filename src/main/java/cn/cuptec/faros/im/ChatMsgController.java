@@ -239,10 +239,10 @@ public class ChatMsgController {
      *
      */
     @GetMapping("/readMsg")
-    public RestResponse readMsg(@RequestParam(value = "chatUSerId",required = false) String chatUserId,
-                                @RequestParam(value = "targetUid",required = false) Integer targetUid
-            , @RequestParam(value = "myUserId",required = false) Integer myUserId) {
-
+    public RestResponse readMsg(@RequestParam(value = "chatUSerId", required = false) String chatUserId,
+                                @RequestParam(value = "targetUid", required = false) Integer targetUid
+            , @RequestParam(value = "myUserId", required = false) Integer myUserId) {
+        myUserId = SecurityUtils.getUser().getId();
         if (StringUtils.isEmpty(chatUserId)) {
 
             chatMsgService.setReaded(myUserId, targetUid);
@@ -307,12 +307,40 @@ public class ChatMsgController {
                 userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);
                 userServicePackageInfoService.updateById(userServicePackageInfo);
 
-                updateChatUser.setServiceStartTime(LocalDateTime.now());
-                updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
-                chatUserService.updateById(updateChatUser);
+
+            }
+
+            if (byId.getGroupType().equals(0)) {
+                ChatUser fromUserChat = new ChatUser();
+                fromUserChat.setUid(byId.getUid());
+                fromUserChat.setTargetUid(byId.getTargetUid());
+
+
+                ChatUser toUserChat = new ChatUser();
+                toUserChat.setUid(byId.getTargetUid());
+                toUserChat.setTargetUid(byId.getUid());
+
+                List<ChatUser> chatUsers = new ArrayList<>();
+                chatUsers.add(fromUserChat);
+                chatUsers.add(toUserChat);
+
+                chatUsers.forEach(c -> {
+                    ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                    if (one != null) {
+
+                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, c.getUid())
+                                .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
+
+                        );
+                    }
+                });
+
+
             } else {
                 updateChatUser.setServiceStartTime(LocalDateTime.now());
-                updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(patientOtherOrder.getHour()));
+                updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
                 chatUserService.updateById(updateChatUser);
             }
         } else {//拒绝
