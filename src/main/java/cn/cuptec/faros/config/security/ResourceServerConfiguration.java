@@ -94,7 +94,6 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/plan/listByxtUserId/**",
                         "/evaluationRecords/getEvaluationRecords",
                         "/evaluationRecords/addEvaluationRecords",
-                        "/palnUser/saveBatch",
                         "/liveQrCode/getLiveQrCodeUrl",
                         "/evaluationRecords/listGroupByPhoneAndIdCard",
                         "/subPlan/update",
@@ -151,7 +150,9 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/purchase/order/user/orderDetailByOrderNo",
                         "/followUpPlan/testRedis",
                         "/form/exportFormUserData",
-                        "/userGroup/checkGroupHavePatient"
+                        "/userGroup/checkGroupHavePatient",
+                        "/planUserTrainRecord/save",
+                        "/insertTemplate/insert"
 
                 )
                 .permitAll()

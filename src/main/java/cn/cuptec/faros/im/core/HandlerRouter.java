@@ -48,8 +48,8 @@ public class HandlerRouter extends ChannelInboundHandlerAdapter {
             // 判断Channel是否读空闲, 读空闲时移除Channel
             if (evnet.state().equals(IdleState.READER_IDLE)) {
                 final String remoteAddress = NettyUtil.parseChannelRemoteAddr(ctx.channel());
-                log.warn("NETTY SERVER PIPELINE: IDLE exception [{}]", remoteAddress);
-                UserChannelManager.removeChannel(ctx.channel());
+                log.warn("判断Channel是否读空闲, 读空闲时移除Channel");
+                //UserChannelManager.removeChannel(ctx.channel());
 
                 //todo 广播用户数量改变
             }
@@ -59,7 +59,7 @@ public class HandlerRouter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        //log.info("todo 广播用户数量改变");
+        log.info("todo 广播用户数量改变");
         UserChannelManager.removeChannel(ctx.channel());
         //todo 广播用户数量改变
         super.channelUnregistered(ctx);
@@ -67,7 +67,7 @@ public class HandlerRouter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        log.error("connection error and close the channel", cause);
+        log.info("todo 广播用户数量改变=====");
         UserChannelManager.removeChannel(ctx.channel());
         //todo 广播用户数量改变
     }

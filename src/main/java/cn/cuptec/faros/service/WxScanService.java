@@ -9,6 +9,7 @@ import cn.cuptec.faros.config.wx.builder.TextBuilder;
 import cn.cuptec.faros.controller.WxMpMenuController;
 import cn.cuptec.faros.entity.*;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,8 @@ public class WxScanService {
     private ServicePackService servicePackService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+    @Resource
+    private ChatUserService chatUserService;
 
     public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context, WxMpService weixinService, WxSessionManager sessionManager) {
         String wxMessageEventKey = WxUtil.getWxMessageEventKey(wxMessage.getEventKey());
@@ -120,6 +123,8 @@ public class WxScanService {
                 String time = df.format(now);
                 wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctor.getNickname(), time,
                         "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + doctor.getId() + "&token=" + token);
+
+
 
             }
         }

@@ -560,6 +560,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
                 List<ServicePackageInfo> servicePackageInfos1 = servicePackageInfoMap.get(userOrder.getServicePackId());
                 userOrder.setServicePackageInfos(servicePackageInfos1);
+                //重新组装订单号
+                String orderNo = userOrder.getOrderNo();
+                LocalDateTime createTime = userOrder.getCreateTime();
+
+                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() +"-"+ orderNo);
+
             }
         }
         return RestResponse.ok(iPage);
@@ -623,6 +629,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         userOrder.setServicePack(servicePack);
         userOrder.setDoctorTeamName(doctorTeamService.getById(userOrder.getDoctorTeamId()).getName());
+        //重新组装订单号
+        String orderNo = userOrder.getOrderNo();
+        LocalDateTime createTime = userOrder.getCreateTime();
+
+        userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() +"-"+ orderNo);
+
         return RestResponse.ok(userOrder);
     }
 

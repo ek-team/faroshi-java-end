@@ -75,7 +75,43 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private DoctorTeamService doctorTeamService;
     @Resource
     private PatientUserService patientUserService;
+    @Resource
+    private ChatUserService chatUserService;
+    @Resource
+    private UserFollowDoctorService userFollowDoctorService;
+    @Resource
+    private UserDoctorRelationService userDoctorRelationService;
 
+    /**
+     * 患者添加医生好友
+     */
+    @GetMapping("/addPatientDoctorGroup")
+    public RestResponse addPatientDoctorGroup(@RequestParam("doctorId") Integer doctorId) {
+
+        //添加患者和医生的好友
+
+        chatUserService.saveOrUpdateChatUser(doctorId, SecurityUtils.getUser().getId(), "");
+
+        UserFollowDoctor userFollowDoctor = userFollowDoctorService.getOne(new QueryWrapper<UserFollowDoctor>().lambda()
+                .eq(UserFollowDoctor::getDoctorId, doctorId)
+                .eq(UserFollowDoctor::getUserId, SecurityUtils.getUser().getId()));
+        if (userFollowDoctor == null) {
+            userFollowDoctor = new UserFollowDoctor();
+            userFollowDoctor.setDoctorId(doctorId);
+            userFollowDoctor.setUserId(SecurityUtils.getUser().getId());
+            userFollowDoctorService.save(userFollowDoctor);
+        }
+        UserDoctorRelation userDoctorRelation = userDoctorRelationService.getOne(new QueryWrapper<UserDoctorRelation>().lambda()
+                .eq(UserDoctorRelation::getDoctorId, doctorId)
+                .eq(UserDoctorRelation::getUserId, SecurityUtils.getUser().getId()));
+        if (userDoctorRelation == null) {
+            userDoctorRelation = new UserDoctorRelation();
+            userDoctorRelation.setUserId(SecurityUtils.getUser().getId());
+            userDoctorRelation.setDoctorId(doctorId);
+            userDoctorRelationService.save(userDoctorRelation);
+        }
+        return RestResponse.ok();
+    }
 
     /**
      * 获取医生个人二维码 患者扫码 添加
@@ -87,7 +123,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
             return RestResponse.ok(user.getQrCode());
         }
         //生成一个图片返回
-        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?doctorId=" + SecurityUtils.getUser().getId();
+        String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
         BufferedImage png = null;
         try {
             png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
