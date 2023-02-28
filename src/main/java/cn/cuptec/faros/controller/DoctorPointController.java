@@ -196,7 +196,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             patientOtherOrder.setDeptId(doctorUser.getDeptId());
             //查询医生图文咨询申请价格
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId()));
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
+                    .isNull(DoctorUserAction::getTeamId));
             patientOtherOrder.setAmount(one.getPrice());
             patientOtherOrder.setHour(one.getHour());
         } else {
