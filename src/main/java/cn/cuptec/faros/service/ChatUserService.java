@@ -273,7 +273,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
     /**
      * 添加关系好友
      */
-    public void saveOrUpdateChatUser(Integer fromUserId, Integer targetUid, String msg) {
+    public ChatUser saveOrUpdateChatUser(Integer fromUserId, Integer targetUid, String msg) {
         ChatUser fromUserChat = new ChatUser();
         fromUserChat.setUid(fromUserId);
         fromUserChat.setTargetUid(targetUid);
@@ -308,6 +308,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 save(chatUser);
             }
         });
+        return fromUserChat;
     }
 
 

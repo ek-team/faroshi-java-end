@@ -226,7 +226,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         fromUserChat.setLastChatTime(new Date());
         fromUserChat.setLastMsg(chatMsg.getMsg());
         if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
-            fromUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
+            if(!StringUtils.isEmpty(origionMessage.getStr1())){
+                fromUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
+
+            }
             fromUserChat.setPatientOtherOrderStatus("0");
             fromUserChat.setMsgId(chatMsg.getId());
         }
@@ -237,7 +240,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         toUserChat.setLastChatTime(new Date());
         toUserChat.setLastMsg(chatMsg.getMsg());
         if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
-            toUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
+            if(!StringUtils.isEmpty(origionMessage.getStr1())) {
+                toUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
+            }
             toUserChat.setPatientOtherOrderStatus("0");
             toUserChat.setMsgId(chatMsg.getId());
         }

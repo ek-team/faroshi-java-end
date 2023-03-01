@@ -102,9 +102,13 @@ public class ChatUserController {
             result = one;
         } else {
             //单聊
+            log.info("患者用户id" + userId);
             ChatUser one = chatUserService.getOne(new QueryWrapper<ChatUser>().lambda()
                     .eq(ChatUser::getUid, SecurityUtils.getUser().getId())
                     .eq(ChatUser::getTargetUid, userId));
+            if (one == null) {
+                one = chatUserService.saveOrUpdateChatUser(SecurityUtils.getUser().getId(), userId, "");
+            }
             chatUserId = one.getId();
             result = one;
         }
@@ -246,8 +250,8 @@ public class ChatUserController {
             return RestResponse.ok();
         }
         //判断 当前是否有正在待接受的 咨询
-        if(chatUser.getServiceStartTime() != null && chatUser.getServiceEndTime().isAfter(LocalDateTime.now())){
-            if ( !StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())) {
+        if (chatUser.getServiceStartTime() != null && chatUser.getServiceEndTime().isAfter(LocalDateTime.now())) {
+            if (!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())) {
                 if (chatUser.getPatientOtherOrderStatus().equals("0") || chatUser.getPatientOtherOrderStatus().equals("1")) {
                     return RestResponse.ok("2");
                 }
@@ -267,7 +271,7 @@ public class ChatUserController {
     @ApiOperation(value = "分页查询聊天列表")
     @PostMapping("/pageChatUsers")
     public RestResponse pageChatUsers(@RequestBody SocketFrameTextMessage param) {
-        if(param.getMyUserId()==null){
+        if (param.getMyUserId() == null) {
             param.setMyUserId(SecurityUtils.getUser().getId());
         }
         //获取聊天用户列表

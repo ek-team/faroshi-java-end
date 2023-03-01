@@ -257,12 +257,12 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         redisTemplate.opsForValue().set(keyRedis, patientOtherOrder.getId(), 24, TimeUnit.HOURS);//设置过期时间
         //修改聊天状态为咨询
         Integer chatUserId = patientOtherOrder.getChatUserId();
-        updateChatDesc(chatUserId);
+        updateChatDesc(chatUserId,patientOtherOrder.getId());
 
         return restResponse;
     }
 
-    private void updateChatDesc(Integer chatUserId) {
+    private void updateChatDesc(Integer chatUserId,Integer id) {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
             @Override
             public void run() {
@@ -291,6 +291,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                                     .set(ChatUser::getChatDesc, "咨询")
                                     .set(ChatUser::getPatientOtherOrderStatus, "0")
                                     .set(ChatUser::getChatCount, 9)
+                                    .set(ChatUser::getPatientOtherOrderNo, id+"")
 
                             );
                         }
@@ -299,6 +300,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     chatUser.setChatDesc("咨询");
                     chatUser.setChatCount(9);
                     chatUser.setPatientOtherOrderStatus("0");
+                    chatUser.setPatientOtherOrderNo(id+"");
                     chatUserService.updateById(chatUser);
                 }
 
@@ -378,7 +380,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         String keyRedis = String.valueOf(StrUtil.format("{}{}", "patientOrder:", patientOtherOrder.getId()));
         redisTemplate.opsForValue().set(keyRedis, patientOtherOrder.getId(), 24, TimeUnit.HOURS);//设置过期时间
 
-        updateChatDesc(patientOtherOrder.getChatUserId());
+        updateChatDesc(patientOtherOrder.getChatUserId(),patientOtherOrder.getId());
         return RestResponse.ok(data);
     }
 

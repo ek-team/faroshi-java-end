@@ -638,11 +638,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         return RestResponse.ok(userOrder);
     }
 
+    public static void main(String[] args) {
+        System.out.println("KF2023228-1630542643203145728".split("-")[1]);
+    }
     /**
      * 查询订单详细信息
      */
     @GetMapping("/user/orderDetailByOrderNo")
     public RestResponse orderDetailByOrderNo(@RequestParam("orderNo") String orderNo) {
+        String[] split = orderNo.split("-");
+        orderNo=split[1];
         UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda()
                 .eq(UserOrder::getOrderNo, orderNo));
         //就诊人
