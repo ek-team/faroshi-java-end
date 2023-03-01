@@ -10,6 +10,7 @@ import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyResult;
 import com.github.binarywang.wxpay.bean.request.WxPayRefundRequest;
@@ -87,7 +88,7 @@ public class WxPayController {
     @GetMapping("/unifiedOrder")
     public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo, @RequestParam(value = "tradeType", required = false) String tradeType) {
         String[] split = orderNo.split("-");
-        orderNo=split[1];
+        orderNo = split[1];
         return wxPayFarosService.unifiedOrder(orderNo, tradeType);
 
     }
@@ -235,6 +236,46 @@ public class WxPayController {
             doctorPoint.setCreateTime(LocalDateTime.now());
             doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
             doctorPointService.save(doctorPoint);
+
+
+            ChatUser chatUser = chatUserService.getById(patientOtherOrder.getChatUserId());
+            if (chatUser.getGroupType().equals(0)) {
+                ChatUser fromUserChat = new ChatUser();
+                fromUserChat.setUid(chatUser.getUid());
+                fromUserChat.setTargetUid(chatUser.getTargetUid());
+
+
+                ChatUser toUserChat = new ChatUser();
+                toUserChat.setUid(chatUser.getTargetUid());
+                toUserChat.setTargetUid(chatUser.getUid());
+
+                List<ChatUser> chatUsers = new ArrayList<>();
+                chatUsers.add(fromUserChat);
+                chatUsers.add(toUserChat);
+
+                chatUsers.forEach(c -> {
+                    ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                    if (one != null) {
+
+                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, c.getUid())
+                                .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                .set(ChatUser::getChatDesc, "咨询")
+                                .set(ChatUser::getPatientOtherOrderStatus, "0")
+                                .set(ChatUser::getChatCount, 9)
+                                .set(ChatUser::getPatientOtherOrderNo, patientOtherOrder.getId() + "")
+
+                        );
+                    }
+                });
+            } else {
+                chatUser.setChatDesc("咨询");
+                chatUser.setChatCount(9);
+                chatUser.setPatientOtherOrderStatus("0");
+                chatUser.setPatientOtherOrderNo(patientOtherOrder.getId() + "");
+                chatUserService.updateById(chatUser);
+            }
+
         }
 
         return RestResponse.ok();
