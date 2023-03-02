@@ -1,19 +1,33 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.common.utils.QrCodeUtil;
+import cn.cuptec.faros.common.utils.http.ServletUtils;
 import cn.cuptec.faros.config.datascope.DataScope;
+import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.BindDiseasesParam;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.UploadFileUtils;
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.model.PutObjectResult;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.AllArgsConstructor;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * 医生团队管理
  */
+@AllArgsConstructor
 @RestController
 @RequestMapping("/doctorTeam")
 public class DoctorTeamController extends AbstractBaseController<DoctorTeamService, DoctorTeam> {
@@ -34,6 +49,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     private DiseasesService diseasesService;
     @Resource
     private HospitalInfoService hospitalInfoService;
+    private final OssProperties ossProperties;
 
     /**
      * 添加医生团队
@@ -48,6 +64,45 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         doctorTeam.setDeptId(byId.getDeptId());
         doctorTeam.setCreateTime(LocalDateTime.now());
         service.save(doctorTeam);
+        //生成一个图片返回
+        String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + doctorTeam.getId()+"-";
+        BufferedImage png = null;
+        try {
+            png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String name = "";
+        //转换上传到oss
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        ImageOutputStream imOut = null;
+        try {
+            imOut = ImageIO.createImageOutputStream(bs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            ImageIO.write(png, "png", imOut);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        InputStream inputStream = new ByteArrayInputStream(bs.toByteArray());
+        try {
+            OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
+            Random random = new Random();
+            name = random.nextInt(10000) + System.currentTimeMillis() + "_YES.png";
+            // 上传文件
+            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(), "poster/" + name, inputStream);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
+        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
+        doctorTeam.setQrCode(resultStr);
+        service.updateById(doctorTeam);
+
+
         List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeam.getDoctorTeamPeopleList();
         if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
             for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {

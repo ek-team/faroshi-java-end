@@ -55,45 +55,60 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
      * 查询个人详情所能移动到的分组
      */
     @GetMapping("/getUserMoveGroup")
-    public RestResponse getUserMoveGroup(@RequestParam("userId") Integer userId) {
-        //查询个人分组
+    public RestResponse getUserMoveGroup(@RequestParam("userId") Integer userId, @RequestParam(value = "teamId", required = false) Integer teamId) {
         LambdaQueryWrapper<UserGroup> userGroupLambdaQueryWrapper = new QueryWrapper<UserGroup>().lambda();
 
-        userGroupLambdaQueryWrapper.isNull(UserGroup::getTeamId);
-        userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId());
+        if (teamId != null) {
+            userGroupLambdaQueryWrapper.eq(UserGroup::getTeamId, teamId);
 
-        userGroupLambdaQueryWrapper.orderByDesc(UserGroup::getSort);
+        } else {
+            userGroupLambdaQueryWrapper.isNull(UserGroup::getTeamId);
+            userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId());
+
+        }
         List<UserGroup> userGroups = service.list(userGroupLambdaQueryWrapper);
         if (CollectionUtils.isEmpty(userGroups)) {
             userGroups = new ArrayList<>();
         }
-        //查询患者所在的团队分组
-        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
-                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));//查询医生所在的团队
-        if (CollectionUtils.isEmpty(doctorTeamPeopleList)) {
-            return RestResponse.ok(userGroups);
-        }
-        List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
-                .collect(Collectors.toList());
-
-        List<PatientRelationTeam> patientRelationTeamList = patientRelationTeamService.list(new QueryWrapper<PatientRelationTeam>().lambda()
-                .eq(PatientRelationTeam::getPatientId, userId)
-                .in(PatientRelationTeam::getTeamId, teamIds));
-        if (CollectionUtils.isEmpty(patientRelationTeamList)) {
-            return RestResponse.ok(userGroups);
-        }
-
-        List<Integer> teamIdList = patientRelationTeamList.stream().map(PatientRelationTeam::getTeamId)
-                .collect(Collectors.toList());
-        //查询团队下的分组
-        List<UserGroup> list = service.list(new QueryWrapper<UserGroup>().lambda()
-                .in(UserGroup::getTeamId, teamIdList)
-                .eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId()));
-        if (!CollectionUtils.isEmpty(list)) {
-            userGroups.addAll(list);
-        }
-
         return RestResponse.ok(userGroups);
+        //查询个人分组
+//        LambdaQueryWrapper<UserGroup> userGroupLambdaQueryWrapper = new QueryWrapper<UserGroup>().lambda();
+//
+//        userGroupLambdaQueryWrapper.isNull(UserGroup::getTeamId);
+//        userGroupLambdaQueryWrapper.eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId());
+//
+//        userGroupLambdaQueryWrapper.orderByDesc(UserGroup::getSort);
+//        List<UserGroup> userGroups = service.list(userGroupLambdaQueryWrapper);
+//        if (CollectionUtils.isEmpty(userGroups)) {
+//            userGroups = new ArrayList<>();
+//        }
+//        //查询患者所在的团队分组
+//        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+//                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));//查询医生所在的团队
+//        if (CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+//            return RestResponse.ok(userGroups);
+//        }
+//        List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
+//                .collect(Collectors.toList());
+//
+//        List<PatientRelationTeam> patientRelationTeamList = patientRelationTeamService.list(new QueryWrapper<PatientRelationTeam>().lambda()
+//                .eq(PatientRelationTeam::getPatientId, userId)
+//                .in(PatientRelationTeam::getTeamId, teamIds));
+//        if (CollectionUtils.isEmpty(patientRelationTeamList)) {
+//            return RestResponse.ok(userGroups);
+//        }
+//
+//        List<Integer> teamIdList = patientRelationTeamList.stream().map(PatientRelationTeam::getTeamId)
+//                .collect(Collectors.toList());
+//        //查询团队下的分组
+//        List<UserGroup> list = service.list(new QueryWrapper<UserGroup>().lambda()
+//                .in(UserGroup::getTeamId, teamIdList)
+//                .eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId()));
+//        if (!CollectionUtils.isEmpty(list)) {
+//            userGroups.addAll(list);
+//        }
+//
+//        return RestResponse.ok(userGroups);
     }
 
     /**
@@ -140,20 +155,43 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
      */
     @GetMapping("/getUserOnGroup")
     public RestResponse getUserOnGroup(@RequestParam("userId") Integer userId) {
+        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>()
+                .lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        LambdaQueryWrapper<UserGroup> wrapper = new QueryWrapper<UserGroup>()
+                .lambda()
+                .eq(UserGroup::getCreateUserId, SecurityUtils.getUser().getId());
+
+        if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+            List<Integer> teamIdList = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
+                    .collect(Collectors.toList());
+            wrapper.or();
+            wrapper.eq(UserGroup::getTeamId,teamIdList);
+
+        }
+
+
+        List<UserGroup> userGroupList = service.list(wrapper);
+
+
+        if (CollectionUtils.isEmpty(userGroupList)) {
+            return RestResponse.ok(new ArrayList<>());
+        }
+        List<Integer> groupIds = userGroupList.stream().map(UserGroup::getId)
+                .collect(Collectors.toList());
+
         List<UserGroupRelationUser> list = userGroupRelationUserService.list(new QueryWrapper<UserGroupRelationUser>()
                 .lambda()
-                .eq(UserGroupRelationUser::getUserId, userId));
+                .eq(UserGroupRelationUser::getUserId, userId)
+                .in(UserGroupRelationUser::getUserGroupId, groupIds)
+        );
         if (CollectionUtils.isEmpty(list)) {
-            return RestResponse.ok();
+            return RestResponse.ok(new ArrayList<>());
         }
-        List<Integer> groupIds = list.stream().map(UserGroupRelationUser::getUserGroupId)
+        List<Integer> groupIdList = list.stream().map(UserGroupRelationUser::getUserGroupId)
                 .collect(Collectors.toList());
-        List<UserGroup> userGroups = (List<UserGroup>) service.listByIds(groupIds);
-        for (UserGroup userGroup : userGroups) {
-            int count = userGroupRelationUserService.count(new QueryWrapper<UserGroupRelationUser>().lambda()
-                    .eq(UserGroupRelationUser::getUserGroupId, userGroup.getId()));
-            userGroup.setCount(count);
-        }
+        List<UserGroup> userGroups = (List<UserGroup>) service.listByIds(groupIdList);
+
         return RestResponse.ok(userGroups);
     }
 
@@ -557,8 +595,11 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
         List<UserGroup> userGroups = service.list(userGroupLambdaQueryWrapper);
 
         for (UserGroup userGroup : userGroups) {
-            int count = userGroupRelationUserService.count(new QueryWrapper<UserGroupRelationUser>().lambda()
-                    .eq(UserGroupRelationUser::getUserGroupId, userGroup.getId()));
+            QueryWrapper<UserGroupRelationUser> wrapper = new QueryWrapper<>();
+            wrapper.select("DISTINCT user_id")
+                    .lambda();
+            wrapper.eq("user_group_id", userGroup.getId());
+            int count = userGroupRelationUserService.count(wrapper);
             userGroup.setCount(count);
         }
         //查询未分组数量

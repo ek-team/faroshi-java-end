@@ -197,6 +197,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             //查询医生图文咨询申请价格
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
                     .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
+                    .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
                     .isNull(DoctorUserAction::getTeamId));
             patientOtherOrder.setAmount(one.getPrice());
             patientOtherOrder.setHour(one.getHour());
@@ -208,6 +209,24 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
             patientOtherOrder.setAmount(one.getPrice());
             patientOtherOrder.setHour(one.getHour());
+
+            //处理新的图文咨询 后加入团队的医生也可以看到
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                List<Integer> doctorIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                ChatUser chatUser = chatUserService.getById(patientOtherOrder.getChatUserId());
+                String userIds = chatUser.getUserIds();
+                for (Integer doctorId : doctorIds) {
+                    if (userIds.indexOf(doctorId + "") < 0) {
+                        userIds = userIds + "," + doctorId;
+                    }
+                }
+                chatUser.setUserIds(userIds);
+                chatUserService.updateById(chatUser);
+            }
+
         }
         patientOtherOrderService.save(patientOtherOrder);
         //添加待办事项
@@ -262,7 +281,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         return restResponse;
     }
 
-    private void updateChatDesc(Integer chatUserId,Integer id) {
+    private void updateChatDesc(Integer chatUserId, Integer id) {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
             @Override
             public void run() {
@@ -319,17 +338,30 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             patientOtherOrder.setDeptId(doctorUser.getDeptId());
             //查询医生图文咨询申请价格
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId()));
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
+                    .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
+                    .isNull(DoctorUserAction::getTeamId));
             patientOtherOrder.setAmount(one.getPrice());
             patientOtherOrder.setHour(one.getHour());
         } else {
             DoctorTeam doctorTeam = doctorTeamService.getById(patientOtherOrder.getDoctorTeamId());
             patientOtherOrder.setDeptId(doctorTeam.getDeptId());
-//            //查询团队图文咨询申请价格
-//            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-//                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
-//            patientOtherOrder.setAmount(one.getPrice());
-//            patientOtherOrder.setHour(one.getHour());
+            //处理新的图文咨询 后加入团队的医生也可以看到
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                List<Integer> doctorIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                ChatUser chatUser = chatUserService.getById(patientOtherOrder.getChatUserId());
+                String userIds = chatUser.getUserIds();
+                for (Integer doctorId : doctorIds) {
+                    if (userIds.indexOf(doctorId + "") < 0) {
+                        userIds = userIds + "," + doctorId;
+                    }
+                }
+                chatUser.setUserIds(userIds);
+                chatUserService.updateById(chatUser);
+            }
         }
         patientOtherOrderService.save(patientOtherOrder);
         PayResultData data = new PayResultData();
@@ -378,7 +410,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         String keyRedis = String.valueOf(StrUtil.format("{}{}", "patientOrder:", patientOtherOrder.getId()));
         redisTemplate.opsForValue().set(keyRedis, patientOtherOrder.getId(), 24, TimeUnit.HOURS);//设置过期时间
 
-        updateChatDesc(patientOtherOrder.getChatUserId(),patientOtherOrder.getId());
+        updateChatDesc(patientOtherOrder.getChatUserId(), patientOtherOrder.getId());
         return RestResponse.ok(data);
     }
 

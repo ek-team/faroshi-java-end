@@ -14,6 +14,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.config.wx.WxMaConfiguration;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.ChangeDoctorDTO;
+import cn.cuptec.faros.dto.DoctorQrCodeDto;
 import cn.cuptec.faros.dto.UserPwdDTO;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
@@ -82,84 +83,166 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @Resource
     private UserDoctorRelationService userDoctorRelationService;
 
+    @Resource
+    private PatientRelationTeamService patientRelationTeamService;
+
     /**
      * 患者添加医生好友
      */
     @GetMapping("/addPatientDoctorGroup")
-    public RestResponse addPatientDoctorGroup(@RequestParam("doctorId") Integer doctorId) {
+    public RestResponse addPatientDoctorGroup(@RequestParam("doctorId") String doctorId) {
 
         //添加患者和医生的好友
+        if (doctorId.indexOf("-") < 0) {
+            //个人二维码
+            chatUserService.saveOrUpdateChatUser(Integer.parseInt(doctorId), SecurityUtils.getUser().getId(), "");
 
-        chatUserService.saveOrUpdateChatUser(doctorId, SecurityUtils.getUser().getId(), "");
+            UserFollowDoctor userFollowDoctor = userFollowDoctorService.getOne(new QueryWrapper<UserFollowDoctor>().lambda()
+                    .eq(UserFollowDoctor::getDoctorId, doctorId)
+                    .eq(UserFollowDoctor::getUserId, SecurityUtils.getUser().getId()));
+            if (userFollowDoctor == null) {
+                userFollowDoctor = new UserFollowDoctor();
+                userFollowDoctor.setDoctorId(Integer.parseInt(doctorId));
+                userFollowDoctor.setUserId(SecurityUtils.getUser().getId());
+                userFollowDoctorService.save(userFollowDoctor);
+            }
+            UserDoctorRelation userDoctorRelation = userDoctorRelationService.getOne(new QueryWrapper<UserDoctorRelation>().lambda()
+                    .eq(UserDoctorRelation::getDoctorId, doctorId)
+                    .eq(UserDoctorRelation::getUserId, SecurityUtils.getUser().getId()));
+            if (userDoctorRelation == null) {
+                userDoctorRelation = new UserDoctorRelation();
+                userDoctorRelation.setUserId(SecurityUtils.getUser().getId());
+                userDoctorRelation.setDoctorId(Integer.parseInt(doctorId));
+                userDoctorRelationService.save(userDoctorRelation);
+            }
+        } else {
+            Integer userId = SecurityUtils.getUser().getId();
+            //团队二维码
+            String[] split = doctorId.split("-");
+            Integer teamId = Integer.parseInt(split[0]);
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, teamId));
 
-        UserFollowDoctor userFollowDoctor = userFollowDoctorService.getOne(new QueryWrapper<UserFollowDoctor>().lambda()
-                .eq(UserFollowDoctor::getDoctorId, doctorId)
-                .eq(UserFollowDoctor::getUserId, SecurityUtils.getUser().getId()));
-        if (userFollowDoctor == null) {
-            userFollowDoctor = new UserFollowDoctor();
-            userFollowDoctor.setDoctorId(doctorId);
-            userFollowDoctor.setUserId(SecurityUtils.getUser().getId());
-            userFollowDoctorService.save(userFollowDoctor);
+            List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                    .collect(Collectors.toList());
+
+            List<UserFollowDoctor> one = userFollowDoctorService.list(new QueryWrapper<UserFollowDoctor>().lambda()
+                    .eq(UserFollowDoctor::getUserId, userId)
+                    .in(UserFollowDoctor::getTeamId, teamId));
+            if (CollectionUtils.isEmpty(one)) {
+                //添加医生团队的好友关系
+                UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
+                userFollowDoctor.setTeamId(teamId);
+                userFollowDoctor.setUserId(userId);
+                userFollowDoctorService.save(userFollowDoctor);
+            }
+            //患者和团队的关系
+            patientRelationTeamService.remove(new QueryWrapper<PatientRelationTeam>().lambda()
+                    .eq(PatientRelationTeam::getPatientId, userId)
+                    .eq(PatientRelationTeam::getTeamId, teamId));
+            PatientRelationTeam patientRelationTeam = new PatientRelationTeam();
+
+            patientRelationTeam.setPatientId(userId);
+            patientRelationTeam.setTeamId(teamId);
+            patientRelationTeamService.save(patientRelationTeam);
+            //添加医生和患者的关系
+            List<UserDoctorRelation> userDoctorRelationList = new ArrayList<>();
+            userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
+                    .eq(UserDoctorRelation::getUserId, userId)
+                    .in(UserDoctorRelation::getDoctorId, userIds));
+
+
+            for (Integer doctorId1 : userIds) {
+                UserDoctorRelation userDoctorRelation = new UserDoctorRelation();
+                userDoctorRelation.setDoctorId(doctorId1);
+                userDoctorRelation.setUserId(userId);
+                userDoctorRelationList.add(userDoctorRelation);
+            }
+            userDoctorRelationService.saveBatch(userDoctorRelationList);
+
+            userIds.add(userId);
+            ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, teamId, userId);
+
+
         }
-        UserDoctorRelation userDoctorRelation = userDoctorRelationService.getOne(new QueryWrapper<UserDoctorRelation>().lambda()
-                .eq(UserDoctorRelation::getDoctorId, doctorId)
-                .eq(UserDoctorRelation::getUserId, SecurityUtils.getUser().getId()));
-        if (userDoctorRelation == null) {
-            userDoctorRelation = new UserDoctorRelation();
-            userDoctorRelation.setUserId(SecurityUtils.getUser().getId());
-            userDoctorRelation.setDoctorId(doctorId);
-            userDoctorRelationService.save(userDoctorRelation);
-        }
+
         return RestResponse.ok();
     }
 
     /**
-     * 获取医生个人二维码 患者扫码 添加
+     * 获取医生个人二维码 和医生所在团队二维码 患者扫码 添加
      */
     @GetMapping("/getDoctorQrCode")
     public RestResponse getDoctorQrCode() {
+        List<DoctorQrCodeDto> doctorQrCodeDtoList = new ArrayList<>();
+
+
         User user = service.getById(SecurityUtils.getUser().getId());
         if (!StringUtils.isEmpty(user.getQrCode())) {
-            return RestResponse.ok(user.getQrCode());
-        }
-        //生成一个图片返回
-        String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
-        BufferedImage png = null;
-        try {
-            png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String name = "";
-        //转换上传到oss
-        ByteArrayOutputStream bs = new ByteArrayOutputStream();
-        ImageOutputStream imOut = null;
-        try {
-            imOut = ImageIO.createImageOutputStream(bs);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            ImageIO.write(png, "png", imOut);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        InputStream inputStream = new ByteArrayInputStream(bs.toByteArray());
-        try {
-            OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
-            Random random = new Random();
-            name = random.nextInt(10000) + System.currentTimeMillis() + "_YES.png";
-            // 上传文件
-            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(), "poster/" + name, inputStream);
+            DoctorQrCodeDto doctorQrCodeDto = new DoctorQrCodeDto();
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            doctorQrCodeDto.setQrCode(user.getQrCode());
+            doctorQrCodeDto.setName(user.getNickname());
+            doctorQrCodeDtoList.add(doctorQrCodeDto);
+        } else {
+            DoctorQrCodeDto doctorQrCodeDto = new DoctorQrCodeDto();
+
+            //生成一个图片返回
+            String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
+            BufferedImage png = null;
+            try {
+                png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String name = "";
+            //转换上传到oss
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            ImageOutputStream imOut = null;
+            try {
+                imOut = ImageIO.createImageOutputStream(bs);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                ImageIO.write(png, "png", imOut);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            InputStream inputStream = new ByteArrayInputStream(bs.toByteArray());
+            try {
+                OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
+                Random random = new Random();
+                name = random.nextInt(10000) + System.currentTimeMillis() + "_YES.png";
+                // 上传文件
+                PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(), "poster/" + name, inputStream);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
+            String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
+            user.setQrCode(resultStr);
+            service.updateById(user);
+
+            doctorQrCodeDto.setQrCode(user.getQrCode());
+            doctorQrCodeDto.setName(user.getNickname());
+            doctorQrCodeDtoList.add(doctorQrCodeDto);
         }
-        //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
-        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
-        user.setQrCode(resultStr);
-        service.updateById(user);
-        return RestResponse.ok(resultStr);
+        List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+            List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
+                    .collect(Collectors.toList());
+            List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+            for (DoctorTeam doctorTeam : doctorTeams) {
+                DoctorQrCodeDto doctorQrCodeDto = new DoctorQrCodeDto();
+                doctorQrCodeDto.setQrCode(doctorTeam.getQrCode());
+                doctorQrCodeDto.setName(doctorTeam.getName());
+                doctorQrCodeDtoList.add(doctorQrCodeDto);
+            }
+        }
+        return RestResponse.ok(doctorQrCodeDtoList);
 
     }
 

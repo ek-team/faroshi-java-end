@@ -61,15 +61,25 @@ public class WxMpQrCodeController {
      * @throws WxErrorException
      */
     @GetMapping("/doctorSubscribeQrCode")
-    public RestResponse doctorSubscribeQrCode(@RequestParam("doctorId") int doctorId,@RequestParam(value = "token",required = false) String token) throws WxErrorException {
-
+    public RestResponse doctorSubscribeQrCode(@RequestParam("doctorId") String doctorId,@RequestParam(value = "token",required = false) String token) throws WxErrorException {
         StringBuilder sb = new StringBuilder();
-        sb.append(doctorId);
 
-        sb.append(CommonConstants.VALUE_SEPARATOR);
-        sb.append(token);
-        sb.append(CommonConstants.VALUE_SEPARATOR);
-        sb.append("addPatient");
+        if (doctorId.indexOf("-") < 0) {
+            sb.append(doctorId);
+
+            sb.append(CommonConstants.VALUE_SEPARATOR);
+            sb.append(token);
+            sb.append(CommonConstants.VALUE_SEPARATOR);
+            sb.append("addPatient");
+        }else {
+            sb.append(doctorId);
+
+            sb.append(CommonConstants.VALUE_SEPARATOR);
+            sb.append(token);
+            sb.append(CommonConstants.VALUE_SEPARATOR);
+            sb.append("addTeam");
+        }
+
         WxMpQrCodeTicket wxMpQrCodeTicket = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodeCreateTmpTicket(sb.toString(),259200);
         String qrCodePictureUrl = WxMpConfiguration.getWxMpService().getQrcodeService().qrCodePictureUrl(wxMpQrCodeTicket.getTicket());
         return RestResponse.ok(qrCodePictureUrl);

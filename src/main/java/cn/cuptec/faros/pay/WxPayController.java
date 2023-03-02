@@ -143,11 +143,11 @@ public class WxPayController {
             List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                     .collect(Collectors.toList());
 
-            UserFollowDoctor one = userFollowDoctorService.getOne(new QueryWrapper<UserFollowDoctor>().lambda()
+            List<UserFollowDoctor> one = userFollowDoctorService.list(new QueryWrapper<UserFollowDoctor>().lambda()
                     .eq(UserFollowDoctor::getUserId, userOrder.getUserId())
                     .in(UserFollowDoctor::getTeamId, doctorTeamId));
-            if (one == null) {
-                //添加医生和团队的好友关系
+            if (CollectionUtils.isEmpty(one)) {
+                //添加医生团队的好友关系
                 UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
                 userFollowDoctor.setTeamId(doctorTeamId);
                 userFollowDoctor.setUserId(userOrder.getUserId());

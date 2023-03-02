@@ -42,7 +42,8 @@ public class WxScanService {
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
-    private ChatUserService chatUserService;
+    private DoctorTeamService doctorTeamService;
+
 
     public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context, WxMpService weixinService, WxSessionManager sessionManager) {
         String wxMessageEventKey = WxUtil.getWxMessageEventKey(wxMessage.getEventKey());
@@ -65,6 +66,14 @@ public class WxScanService {
             token = split[1];
             doctorId = Integer.parseInt(split[0]);
             doctor = userService.getById(doctorId);
+
+        }
+        Integer teamId = null;
+        DoctorTeam doctorTeam = null;
+        if (split[2].equals("addTeam")) {
+            token = split[1];
+            teamId = Integer.parseInt(split[0]);
+            doctorTeam = doctorTeamService.getById(teamId);
 
         }
         // 获取微信用户基本信息
@@ -122,10 +131,14 @@ public class WxScanService {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String time = df.format(now);
                 wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctor.getNickname(), time,
-                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token="+ token);
-
-
-
+                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token);
+            }
+            if (doctorTeam != null) {
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String time = df.format(now);
+                wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctorTeam.getName(), time,
+                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token);
             }
         }
 

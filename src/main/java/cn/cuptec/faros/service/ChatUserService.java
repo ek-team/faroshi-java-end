@@ -329,15 +329,32 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         wrapper.like(ChatUser::getUserIds, patientUserId);
         List<ChatUser> list = list(wrapper);
         if (!CollectionUtils.isEmpty(list)) {
-            return list.get(0);
+            ChatUser chatUser = list.get(0);
+            //处理新的图文咨询 后加入团队的医生也可以看到
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .eq(DoctorTeamPeople::getTeamId, doctorTeamId));
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                List<Integer> doctorIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                String userIdStr = chatUser.getUserIds();
+                for (Integer doctorId : doctorIds) {
+                    if (userIdStr.indexOf(doctorId + "") < 0) {
+                        userIdStr = userIds + "," + doctorId;
+                    }
+                }
+                chatUser.setUserIds(userIdStr);
+                updateById(chatUser);
+                return chatUser;
+            }
         }
-        ChatUser chatUser = new ChatUser();
-        chatUser.setUserIds(chatUserId);
-        chatUser.setGroupType(1);
-        chatUser.setLastChatTime(new Date());
-        chatUser.setTeamId(doctorTeamId);
-        chatUser.setTargetUid(patientUserId);
-        save(chatUser);
-        return chatUser;
+            ChatUser chatUser1 = new ChatUser();
+            chatUser1.setUserIds(chatUserId);
+            chatUser1.setGroupType(1);
+            chatUser1.setLastChatTime(new Date());
+            chatUser1.setTeamId(doctorTeamId);
+            chatUser1.setTargetUid(patientUserId);
+            save(chatUser1);
+            return chatUser1;
+        }
+
     }
-}
