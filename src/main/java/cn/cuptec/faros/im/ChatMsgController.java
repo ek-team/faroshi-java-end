@@ -331,6 +331,7 @@ public class ChatMsgController {
                         chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
                                 .eq(ChatUser::getUid, c.getUid())
                                 .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                .set(ChatUser::getPatientOtherOrderStatus, str2)
                                 .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
 
                         );
@@ -340,6 +341,7 @@ public class ChatMsgController {
 
             } else {
                 updateChatUser.setServiceStartTime(LocalDateTime.now());
+                updateChatUser.setPatientOtherOrderStatus(str2);
                 updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
                 chatUserService.updateById(updateChatUser);
             }
@@ -350,7 +352,35 @@ public class ChatMsgController {
                 String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
                 String result = HttpUtil.get(url);
             }
+            if (byId.getGroupType().equals(0)) {
+                ChatUser fromUserChat = new ChatUser();
+                fromUserChat.setUid(byId.getUid());
+                fromUserChat.setTargetUid(byId.getTargetUid());
 
+
+                ChatUser toUserChat = new ChatUser();
+                toUserChat.setUid(byId.getTargetUid());
+                toUserChat.setTargetUid(byId.getUid());
+
+                List<ChatUser> chatUsers = new ArrayList<>();
+                chatUsers.add(fromUserChat);
+                chatUsers.add(toUserChat);
+
+                chatUsers.forEach(c -> {
+                    ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                    if (one != null) {
+
+                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, c.getUid())
+                                .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                .set(ChatUser::getPatientOtherOrderStatus, str2)
+
+                        );
+                    }
+                });
+
+
+            }
 
         }
         User user = userService.getById(patientOtherOrder.getUserId());

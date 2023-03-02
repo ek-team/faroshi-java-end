@@ -7,6 +7,7 @@ import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.bean.template.WxMpTemplateData;
 import org.springframework.data.redis.connection.Message;
@@ -47,6 +48,7 @@ public class RedisKeyExpirationListener implements MessageListener {
     private FollowUpPlanNoticeCountService followUpPlanNoticeCountService;
     private DeptService deptService;
     private DoctorTeamService doctorTeamService;
+    private DoctorPointService doctorPointService;
     public static final String URL = "/pages/orderConfirm/orderConfirm?id=";
 
     public RedisKeyExpirationListener(RedisTemplate<String, String> redisTemplate,
@@ -61,7 +63,8 @@ public class RedisKeyExpirationListener implements MessageListener {
                                       FollowUpPlanNoticeCountService followUpPlanNoticeCountService,
                                       PatientOtherOrderService patientOtherOrderService,
                                       DeptService deptService,
-                                      DoctorTeamService doctorTeamService
+                                      DoctorTeamService doctorTeamService,
+                                      DoctorPointService doctorPointService
     ) {
         this.redisTemplate = redisTemplate;
         this.redisConfigProperties = redisConfigProperties;
@@ -76,6 +79,7 @@ public class RedisKeyExpirationListener implements MessageListener {
         this.patientOtherOrderService = patientOtherOrderService;
         this.deptService = deptService;
         this.doctorTeamService = doctorTeamService;
+        this.doctorPointService = doctorPointService;
     }
 
     @Override
@@ -174,7 +178,41 @@ public class RedisKeyExpirationListener implements MessageListener {
                         String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
                         String result = HttpUtil.get(url);
                     }
+                    //更改医生积分
+                    doctorPointService.remove(new QueryWrapper<DoctorPoint>().lambda()
+                            .eq(DoctorPoint::getOrderNo, patientOtherOrder.getOrderNo()));
 
+                    ChatUser byId = chatUserService.getById(patientOtherOrder.getChatUserId());
+                    if (byId.getGroupType().equals(0)) {
+                        ChatUser fromUserChat = new ChatUser();
+                        fromUserChat.setUid(byId.getUid());
+                        fromUserChat.setTargetUid(byId.getTargetUid());
+
+
+                        ChatUser toUserChat = new ChatUser();
+                        toUserChat.setUid(byId.getTargetUid());
+                        toUserChat.setTargetUid(byId.getUid());
+
+                        List<ChatUser> chatUsers = new ArrayList<>();
+                        chatUsers.add(fromUserChat);
+                        chatUsers.add(toUserChat);
+
+                        chatUsers.forEach(c -> {
+                            ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                            if (one != null) {
+
+                                chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                        .eq(ChatUser::getUid, c.getUid())
+                                        .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                        .set(ChatUser::getPatientOtherOrderStatus, 2)
+                                        .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
+
+                                );
+                            }
+                        });
+
+
+                    }
                 }
 
             }

@@ -184,6 +184,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 //        return RestResponse.ok();
 //    }
 //
+
     /**
      * 添加随访计划
      *
@@ -243,15 +244,18 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     Integer number = followUpPlanContent.getNumber();
                     Integer numberType = followUpPlanContent.getNumberType();
                     Integer hour = followUpPlanContent.getHour();
-                    LocalDateTime pushDay=LocalDateTime.now();
-                    if(!numberType.equals(1)){
-                        LocalDate date=LocalDate.now();
-                        if(numberType.equals(2)){
-                            date.plusDays(number);
-                        }else if(numberType.equals(3)){
-                            date.plusWeeks(number);
-                        }else if(numberType.equals(5)){
-                            date.plusYears(number);
+                    LocalDateTime pushDay = LocalDateTime.now().plusMinutes(2);
+                    if (!numberType.equals(1)) {
+                        LocalDate date = LocalDate.now();
+                        if (numberType.equals(2)) {
+                            date = date.plusDays(number);
+                        } else if (numberType.equals(3)) {
+                            date =  date.plusWeeks(number);
+                        } else if (numberType.equals(4)) {
+                            date =date.plusMonths(number);
+                        }
+                        else if (numberType.equals(5)) {
+                            date = date.plusYears(number);
                         }
                         pushDay = date.atTime(hour, 0);
                     }
@@ -381,10 +385,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     }
 
     public static void main(String[] args) {
-        LocalDate date=LocalDate.now();
-        LocalDateTime localDateTime = date.atTime(02, 0);
-        System.out.println(localDateTime);
+        LocalDate date = LocalDate.now();
+        System.out.println(date.plusDays(1));
     }
+
     /**
      * 测试redis通知
      *
@@ -409,7 +413,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     public RestResponse updateById(@RequestBody FollowUpPlan followUpPlan) {
 
 
-
         List<FollowUpPlanContent> followUpPlanContentList = followUpPlan.getFollowUpPlanContentList();
 
         if (!CollectionUtils.isEmpty(followUpPlanContentList)) {
@@ -431,7 +434,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             if (!CollectionUtils.isEmpty(saveFollowUpPlanContentList)) {
                 followUpPlanContentService.saveBatch(saveFollowUpPlanContentList);
             }
-        }else {
+        } else {
             followUpPlanContentService.remove(new QueryWrapper<FollowUpPlanContent>().lambda()
                     .eq(FollowUpPlanContent::getFollowUpPlanId, followUpPlan.getId()));
         }
@@ -482,15 +485,18 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         Integer number = followUpPlanContent.getNumber();
                         Integer numberType = followUpPlanContent.getNumberType();
                         Integer hour = followUpPlanContent.getHour();
-                        LocalDateTime noticeTime=LocalDateTime.now();
-                        if(!numberType.equals(1)){
-                            LocalDate date=LocalDate.now();
-                            if(numberType.equals(2)){
-                                date.plusDays(number);
-                            }else if(numberType.equals(3)){
-                                date.plusWeeks(number);
-                            }else if(numberType.equals(5)){
-                                date.plusYears(number);
+                        LocalDateTime noticeTime = LocalDateTime.now().plusMinutes(2);
+                        if (!numberType.equals(1)) {
+                            LocalDate date = LocalDate.now();
+                            if (numberType.equals(2)) {
+                                date = date.plusDays(number);
+                            } else if (numberType.equals(3)) {
+                                date =  date.plusWeeks(number);
+                            } else if (numberType.equals(4)) {
+                                date =date.plusMonths(number);
+                            }
+                            else if (numberType.equals(5)) {
+                                date = date.plusYears(number);
                             }
                             noticeTime = date.atTime(hour, 0);
                         }
@@ -538,7 +544,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         .collect(Collectors.toList());//之前计划的患者
 
 
-
                 for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
                     for (Integer userId : userIds) {
                         if (!patientUserIds.contains(userId)) {//处理有新增患者 给新的患者添加通知记录
@@ -546,15 +551,18 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                             Integer number = followUpPlanContent.getNumber();
                             Integer numberType = followUpPlanContent.getNumberType();
                             Integer hour = followUpPlanContent.getHour();
-                            LocalDateTime noticeTime=LocalDateTime.now();
-                            if(!numberType.equals(1)){
-                                LocalDate date=LocalDate.now();
-                                if(numberType.equals(2)){
-                                    date.plusDays(number);
-                                }else if(numberType.equals(3)){
-                                    date.plusWeeks(number);
-                                }else if(numberType.equals(5)){
-                                    date.plusYears(number);
+                            LocalDateTime noticeTime = LocalDateTime.now().plusMinutes(2);
+                            if (!numberType.equals(1)) {
+                                LocalDate date = LocalDate.now();
+                                if (numberType.equals(2)) {
+                                    date = date.plusDays(number);
+                                } else if (numberType.equals(3)) {
+                                    date =  date.plusWeeks(number);
+                                } else if (numberType.equals(4)) {
+                                    date =date.plusMonths(number);
+                                }
+                                else if (numberType.equals(5)) {
+                                    date = date.plusYears(number);
                                 }
                                 noticeTime = date.atTime(hour, 0);
                             }
@@ -586,20 +594,23 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                             }
                         }
                         //处理新增计划给老的患者添加记录
-                        if (followUpPlanContent.getAddStatus() .equals(1)) {
+                        if (followUpPlanContent.getAddStatus().equals(1)) {
                             if (patientUserIds.contains(userId)) {
-                                LocalDateTime noticeTime=LocalDateTime.now();
+                                LocalDateTime noticeTime = LocalDateTime.now().plusMinutes(2);
                                 Integer number = followUpPlanContent.getNumber();
                                 Integer numberType = followUpPlanContent.getNumberType();
                                 Integer hour = followUpPlanContent.getHour();
-                                if(!numberType.equals(1)){
-                                    LocalDate date=LocalDate.now();
-                                    if(numberType.equals(2)){
-                                        date.plusDays(number);
-                                    }else if(numberType.equals(3)){
-                                        date.plusWeeks(number);
-                                    }else if(numberType.equals(5)){
-                                        date.plusYears(number);
+                                if (!numberType.equals(1)) {
+                                    LocalDate date = LocalDate.now();
+                                    if (numberType.equals(2)) {
+                                        date = date.plusDays(number);
+                                    } else if (numberType.equals(3)) {
+                                        date =  date.plusWeeks(number);
+                                    } else if (numberType.equals(4)) {
+                                        date =date.plusMonths(number);
+                                    }
+                                    else if (numberType.equals(5)) {
+                                        date = date.plusYears(number);
                                     }
                                     noticeTime = date.atTime(hour, 0);
                                 }
@@ -843,8 +854,14 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 .in(FollowUpPlanNoticeCount::getPatientUserId, userIds));
         Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
-            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
-                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getPatientUserId, t -> t));
+            for (FollowUpPlanNoticeCount followUpPlanNoticeCount : followUpPlanNoticeCounts) {
+                FollowUpPlanNoticeCount followUpPlanNoticeCount1 = followUpPlanNoticeCountMap.get(followUpPlanNoticeCount.getPatientUserId());
+                if (followUpPlanNoticeCount1 == null) {
+                    followUpPlanNoticeCountMap.put(followUpPlanNoticeCount.getPatientUserId(), followUpPlanNoticeCount);
+                }
+            }
+//            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+//                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getPatientUserId, t -> t));
 
 
         }
@@ -936,8 +953,15 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 .in(FollowUpPlanNoticeCount::getPatientUserId, userIds));
         Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
-            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
-                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
+
+            for (FollowUpPlanNoticeCount followUpPlanNoticeCount : followUpPlanNoticeCounts) {
+                FollowUpPlanNoticeCount followUpPlanNoticeCount1 = followUpPlanNoticeCountMap.get(followUpPlanNoticeCount.getPatientUserId());
+                if (followUpPlanNoticeCount1 == null) {
+                    followUpPlanNoticeCountMap.put(followUpPlanNoticeCount.getPatientUserId(), followUpPlanNoticeCount);
+                }
+            }
+//            followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+//                    .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
 
 
         }

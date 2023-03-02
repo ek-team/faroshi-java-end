@@ -19,8 +19,7 @@ public class FollowUpPlanContent extends Model<FollowUpPlanContent> {
     private Integer id;
     private Integer followUpPlanId;//随访计划id
     private String notice;//提醒消息
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime day;
+
     private Integer dayAfter;
     private Integer number;//数字几天几周后
     private Integer numberType;//1=立即提醒，2-天，3-周，4-月，5-年
