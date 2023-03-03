@@ -100,7 +100,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         } else {
                             uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
                             User user = userService.getById(userId);
-                            if (!StringUtils.isEmpty(user.getMpOpenId())) {
+                            if (user!=null && !StringUtils.isEmpty(user.getMpOpenId())) {
                                 LocalDateTime now = LocalDateTime.now();
                                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                                 String time = df.format(now);
@@ -134,9 +134,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 byId.setLastChatTime(new Date());
                 chatUserService.updateById(byId);
                 //判断该患者是否在医生下面 否则添加到医生下面
-                log.info("代表是医生发送消息" + fromUser.getId() + "llll" + byId.getTargetUid());
                 if (!fromUser.getId().equals(byId.getTargetUid())) {//代表是医生发送消息
-                    log.info("代表是医生发送消息");
                     saveUserFollowDoctor(fromUser, byId);
                 }
             } else {

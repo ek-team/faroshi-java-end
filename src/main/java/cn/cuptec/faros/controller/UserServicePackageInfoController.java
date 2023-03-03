@@ -110,6 +110,7 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
                 eq.ne(UserServicePackageInfo::getUseCount, 0);
             }
         }
+        eq.orderByDesc(UserServicePackageInfo::getCreateTime);
         List<UserServicePackageInfo> list = service.list(eq);
         if (!CollectionUtils.isEmpty(list)) {
             List<Integer> ids = list.stream().map(UserServicePackageInfo::getServicePackageInfoId)

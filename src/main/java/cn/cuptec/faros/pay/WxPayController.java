@@ -192,7 +192,7 @@ public class WxPayController {
                 }
             }
             userOrder.setChatUserId(chatUser.getId());
-            userOrdertService.updateById(userOrder);
+
             //添加用户自己的服务
             Integer servicePackId = userOrder.getServicePackId();
 
@@ -212,7 +212,10 @@ public class WxPayController {
                     userServicePackageInfos.add(userServicePackageInfo);
                 }
                 userServicePackageInfoService.saveBatch(userServicePackageInfos);
+                userOrder.setUserServicePackageInfoId(userServicePackageInfos.get(0).getId());
             }
+
+            userOrdertService.updateById(userOrder);
         }
         //图文咨询订单处理
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()

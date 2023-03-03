@@ -449,6 +449,9 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         } else {
             patientOtherOrder.setEfficientHour("0时");
         }
+        String efficientHour = patientOtherOrder.getEfficientHour();
+        String replace = efficientHour.replace("-", "");
+        patientOtherOrder.setEfficientHour(replace);
         return RestResponse.ok(patientOtherOrder);
     }
 
@@ -469,7 +472,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         String replace = s1.replace("H", "时");
         String replace1 = replace.replace("M", "分");
         String[] s = replace1.split("分");
-        System.out.println(s[0]);
+        String replace111 = s[0].replace("-", "");
+        System.out.println(replace111);
 
     }
 

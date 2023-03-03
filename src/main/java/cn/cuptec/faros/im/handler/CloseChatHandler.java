@@ -20,12 +20,10 @@ public class CloseChatHandler extends AbstractMessageHandler {
     @Override
     public void handle(Channel channel, SocketFrameTextMessage origionMsg) {
         log.info("发送退出消息发送退出消息发送退出消息发送退出消息发送退出消息");
-        try {
-            Thread.sleep(9000);
+
+            //Thread.sleep(9000);
             UserChannelManager.removeChannel(channel);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
     }
 
 
