@@ -118,8 +118,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
         } else {
             Integer userId = SecurityUtils.getUser().getId();
             //团队二维码
+            log.info("团队id//////////////////////////"+doctorId);
             String[] split = doctorId.split("-");
             Integer teamId = Integer.parseInt(split[0]);
+            log.info("团队id================"+teamId);
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, teamId));
 

@@ -51,6 +51,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     @Resource
     private UserGroupRelationUserService userGroupRelationUserService;
 
+
     @Override
     @Transactional
     public void handle(Channel channel, SocketFrameTextMessage origionMessage) {
@@ -78,9 +79,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             }
             chatMsg.setMsg(origionMessage.getMsg());
             log.info("收到消息=======================" + origionMessage.toString());
-            channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
             User byId1 = userService.getById(chatMsg.getFromUid());
             chatMsg.setUser(byId1);
+            if (origionMessage.getMsgType().equals(ChatProto.FORM)) {
+                Form form = formService.getById(origionMessage.getStr1());
+                chatMsg.setForm(form);
+            }
+            channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
+
             //判断是否是群聊
             if (origionMessage.getChatUserId() != null) {
 
@@ -90,8 +96,11 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 String data = byId.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
                 for (String userId : allUserIds) {
+                    String replace = userId.replace("[", "");
+                    userId = replace.replace("]", "");
                     if (!userId.equals(fromUser.getId() + "")) {
-                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
+
+                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId.trim()));
                         //2.向目标用户发送新消息提醒
                         SocketFrameTextMessage targetUserMessage
                                 = SocketFrameTextMessage.newGroupMessageTip(origionMessage.getChatUserId(), JSON.toJSONString(chatMsg));
@@ -100,7 +109,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         } else {
                             uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
                             User user = userService.getById(userId);
-                            if (user!=null && !StringUtils.isEmpty(user.getMpOpenId())) {
+                            if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {
                                 LocalDateTime now = LocalDateTime.now();
                                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                                 String time = df.format(now);
@@ -113,7 +122,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 }
                 //判断是否是患者发送消息
                 if (fromUser.getId().equals(byId.getTargetUid())) {
-                    byId.setChatCount(byId.getChatCount() - 1);
+                    if (!byId.getChatCount().equals(0)) {
+                        byId.setChatCount(byId.getChatCount() - 1);
+                    }
+
                 }
                 //更新群聊 聊天时间和 最后聊天内容
                 byId.setLastChatTime(new Date());
@@ -224,7 +236,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         fromUserChat.setLastChatTime(new Date());
         fromUserChat.setLastMsg(chatMsg.getMsg());
         if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
-            if(!StringUtils.isEmpty(origionMessage.getStr1())){
+            if (!StringUtils.isEmpty(origionMessage.getStr1())) {
                 fromUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
 
             }
@@ -238,7 +250,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         toUserChat.setLastChatTime(new Date());
         toUserChat.setLastMsg(chatMsg.getMsg());
         if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
-            if(!StringUtils.isEmpty(origionMessage.getStr1())) {
+            if (!StringUtils.isEmpty(origionMessage.getStr1())) {
                 toUserChat.setPatientOtherOrderNo(origionMessage.getStr1());
             }
             toUserChat.setPatientOtherOrderStatus("0");
@@ -251,11 +263,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         chatUsers.forEach(chatUser -> {
             ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, chatUser.getTargetUid()).eq(ChatUser::getUid, chatUser.getUid()));
             if (one != null) {
-
+                if (!one.getChatCount().equals(0)) {
+                    one.setChatCount(one.getChatCount() - 1);
+                }
                 chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
                         .eq(ChatUser::getUid, chatUser.getUid())
                         .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
                         .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
+                        .set(ChatUser::getChatCount, one.getChatCount())
                         .set(ChatUser::getLastMsg, chatMsg.getMsg()));
 
 

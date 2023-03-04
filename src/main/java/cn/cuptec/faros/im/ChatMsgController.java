@@ -53,6 +53,10 @@ public class ChatMsgController {
     private FormService formService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+    @Resource
+    private DoctorTeamService doctorTeamService;
+    @Resource
+    private DoctorPointService doctorPointService;
 
     @ApiOperation(value = "查询历史记录")
     @GetMapping("/testRead")
@@ -302,6 +306,25 @@ public class ChatMsgController {
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
 
         if (str2.equals("1")) {
+            //添加医生积分 判断是否是抢单模式
+            if (patientOtherOrder.getDoctorTeamId() != null) {
+                Integer doctorTeamId = patientOtherOrder.getDoctorTeamId();
+                DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
+                if (doctorTeam.getModel().equals(1)) {
+                    DoctorPoint doctorPoint = new DoctorPoint();
+                    doctorPoint.setPoint(patientOtherOrder.getAmount());
+                    doctorPoint.setDoctorUserId(SecurityUtils.getUser().getId());
+                    doctorPoint.setPointDesc("图文咨询");
+                    doctorPoint.setWithdrawStatus(1);
+                    doctorPoint.setPatientId(patientOtherOrder.getUserId());
+                    doctorPoint.setCreateTime(LocalDateTime.now());
+                    doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
+                    doctorPointService.save(doctorPoint);
+
+                }
+            }
+
+
             //接收
             if (userServicePackageInfo != null) {
                 userServicePackageInfo.setUseCount(userServicePackageInfo.getUseCount() + 1);

@@ -21,6 +21,7 @@ public class DoctorPoint extends Model<DoctorPoint> {
     private Double point; //单位 元
     private Integer doctorUserId;
     private Integer doctorTeamId;
+    private Integer leaderId;//队长id
     private LocalDateTime createTime;
     private Integer withdrawStatus;//提现状态 1-待提现0-已提现
     private Integer patientId;//患者id

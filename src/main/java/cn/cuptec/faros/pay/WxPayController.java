@@ -69,7 +69,7 @@ public class WxPayController {
     @Resource
     private DoctorPointService doctorPointService;//医生积分
     @Resource
-    private ChatMsgService chatMsgService;
+    private DoctorTeamService doctorTeamService;
     @Resource
     private DiseasesService diseasesService;
     @Resource
@@ -228,17 +228,38 @@ public class WxPayController {
             patientOtherOrder.setStatus(2);
             patientOtherOrderService.updateById(patientOtherOrder);
 
+            //判断是 个人咨询还是团队咨询
+            if (patientOtherOrder.getDoctorId() != null) {
+                DoctorPoint doctorPoint = new DoctorPoint();
+                doctorPoint.setPoint(patientOtherOrder.getAmount());
+                doctorPoint.setDoctorUserId(patientOtherOrder.getDoctorId());
+                doctorPoint.setPointDesc("图文咨询");
+                doctorPoint.setWithdrawStatus(1);
+                doctorPoint.setPatientId(patientOtherOrder.getUserId());
+                doctorPoint.setCreateTime(LocalDateTime.now());
+                doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
+                doctorPointService.save(doctorPoint);
+            } else {
+                //团队咨询
+                //判断是是抢单模式还是 非抢单模式
+                Integer doctorTeamId = patientOtherOrder.getDoctorTeamId();
+                DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
+                if (doctorTeam.getModel().equals(2)) {
+                    //非抢单模式
+                    DoctorPoint doctorPoint = new DoctorPoint();
+                    doctorPoint.setPoint(patientOtherOrder.getAmount());
+                    doctorPoint.setDoctorTeamId(patientOtherOrder.getDoctorTeamId());
+                    doctorPoint.setLeaderId(doctorTeam.getLeaderId());
+                    doctorPoint.setDoctorUserId(doctorTeam.getLeaderId());
+                    doctorPoint.setPointDesc("图文咨询");
+                    doctorPoint.setWithdrawStatus(1);
+                    doctorPoint.setPatientId(patientOtherOrder.getUserId());
+                    doctorPoint.setCreateTime(LocalDateTime.now());
+                    doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
+                    doctorPointService.save(doctorPoint);
 
-            DoctorPoint doctorPoint = new DoctorPoint();
-            doctorPoint.setPoint(patientOtherOrder.getAmount());
-            doctorPoint.setDoctorTeamId(patientOtherOrder.getDoctorTeamId());
-            doctorPoint.setDoctorUserId(patientOtherOrder.getDoctorId());
-            doctorPoint.setPointDesc("图文咨询");
-            doctorPoint.setWithdrawStatus(1);
-            doctorPoint.setPatientId(patientOtherOrder.getUserId());
-            doctorPoint.setCreateTime(LocalDateTime.now());
-            doctorPoint.setOrderNo(patientOtherOrder.getOrderNo());
-            doctorPointService.save(doctorPoint);
+                }
+            }
 
 
             ChatUser chatUser = chatUserService.getById(patientOtherOrder.getChatUserId());

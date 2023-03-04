@@ -6,11 +6,12 @@ import com.alibaba.fastjson.annotation.JSONField;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
-
+@Slf4j
 @Data
 public class SocketFrameTextMessage {
 
@@ -228,6 +229,7 @@ public class SocketFrameTextMessage {
     }
 
     public static SocketFrameTextMessage responseMessage(ChatMsg chatMsg) {
+        log.info("返回数据格式"+chatMsg.toString());
         SocketFrameTextMessage message = new SocketFrameTextMessage();
         message.msgType = ChatProto.RESPONSE_MESSAGE;
         message.time = new Date();
