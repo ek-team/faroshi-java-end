@@ -7,4 +7,5 @@ import lombok.Data;
 public class DoctorQrCodeDto {
     private String name;
     private String qrCode;
+    private String hospitalName;
 }

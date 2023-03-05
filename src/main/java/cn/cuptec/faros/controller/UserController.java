@@ -118,10 +118,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
         } else {
             Integer userId = SecurityUtils.getUser().getId();
             //团队二维码
-            log.info("团队id//////////////////////////"+doctorId);
+            log.info("团队id//////////////////////////" + doctorId);
             String[] split = doctorId.split("-");
             Integer teamId = Integer.parseInt(split[0]);
-            log.info("团队id================"+teamId);
+            log.info("团队id================" + teamId);
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, teamId));
 
@@ -237,12 +237,30 @@ public class UserController extends AbstractBaseController<UserService, User> {
             List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
                     .collect(Collectors.toList());
             List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
-            for (DoctorTeam doctorTeam : doctorTeams) {
-                DoctorQrCodeDto doctorQrCodeDto = new DoctorQrCodeDto();
-                doctorQrCodeDto.setQrCode(doctorTeam.getQrCode());
-                doctorQrCodeDto.setName(doctorTeam.getName());
-                doctorQrCodeDtoList.add(doctorQrCodeDto);
+            if (!CollectionUtils.isEmpty(doctorTeams)) {
+                List<Integer> hospitalIds = doctorTeams.stream().map(DoctorTeam::getHospitalId)
+                        .collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(hospitalIds)) {
+                    List<HospitalInfo> hospitalInfos = (List<HospitalInfo>) hospitalInfoService.listByIds(hospitalIds);
+                    Map<Integer, HospitalInfo> hospitalInfoMap = hospitalInfos.stream()
+                            .collect(Collectors.toMap(HospitalInfo::getId, t -> t));
+                    for (DoctorTeam doctorTeam : doctorTeams) {
+                        HospitalInfo hospitalInfo = hospitalInfoMap.get(doctorTeam.getHospitalId());
+                        if (hospitalInfo != null) {
+                            doctorTeam.setHospitalName(hospitalInfo.getName());
+
+                        }
+                    }
+                }
+                for (DoctorTeam doctorTeam : doctorTeams) {
+                    DoctorQrCodeDto doctorQrCodeDto = new DoctorQrCodeDto();
+                    doctorQrCodeDto.setQrCode(doctorTeam.getQrCode());
+                    doctorQrCodeDto.setName(doctorTeam.getName());
+                    doctorQrCodeDto.setHospitalName(doctorTeam.getHospitalName());
+                    doctorQrCodeDtoList.add(doctorQrCodeDto);
+                }
             }
+
         }
         return RestResponse.ok(doctorQrCodeDtoList);
 

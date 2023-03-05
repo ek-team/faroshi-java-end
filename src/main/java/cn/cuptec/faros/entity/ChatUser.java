@@ -29,6 +29,8 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
     private Integer groupType;//0-单聊 1-群聊
     private Integer teamId;//团队id
     private String msgId;
+    private Integer receiverId;//图文咨询接收人id
+    private Integer receiverStatus=0;//接收完之后是否回话 0-未回 1-已回
     /**
      * 聊天对象用户id
      */

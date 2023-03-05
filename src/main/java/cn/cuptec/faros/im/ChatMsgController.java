@@ -355,6 +355,7 @@ public class ChatMsgController {
                                 .eq(ChatUser::getUid, c.getUid())
                                 .eq(ChatUser::getTargetUid, c.getTargetUid())
                                 .set(ChatUser::getPatientOtherOrderStatus, str2)
+                                .set(ChatUser::getReceiverId, SecurityUtils.getUser().getId())
                                 .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
 
                         );
@@ -365,6 +366,7 @@ public class ChatMsgController {
             } else {
                 updateChatUser.setServiceStartTime(LocalDateTime.now());
                 updateChatUser.setPatientOtherOrderStatus(str2);
+                updateChatUser.setReceiverId(SecurityUtils.getUser().getId());
                 updateChatUser.setServiceEndTime(LocalDateTime.now().plusHours(24));
                 chatUserService.updateById(updateChatUser);
             }

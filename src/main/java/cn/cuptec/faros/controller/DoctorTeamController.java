@@ -145,7 +145,42 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         if (byId.getStatus().equals(2)) {
             doctorTeam.setStatus(0);
         }
+        //生成一个图片返回
+        String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + doctorTeam.getId() + "-";
+        BufferedImage png = null;
+        try {
+            png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String name = "";
+        //转换上传到oss
+        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+        ImageOutputStream imOut = null;
+        try {
+            imOut = ImageIO.createImageOutputStream(bs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            ImageIO.write(png, "png", imOut);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        InputStream inputStream = new ByteArrayInputStream(bs.toByteArray());
+        try {
+            OSS ossClient = UploadFileUtils.getOssClient(ossProperties);
+            Random random = new Random();
+            name = random.nextInt(10000) + System.currentTimeMillis() + "_YES.png";
+            // 上传文件
+            PutObjectResult putResult = ossClient.putObject(ossProperties.getBucket(), "poster/" + name, inputStream);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
+        String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
+        doctorTeam.setQrCode(resultStr);
         service.updateById(doctorTeam);
         doctorTeamPeopleService.remove(new QueryWrapper<DoctorTeamPeople>().lambda().eq(DoctorTeamPeople::getTeamId, doctorTeam.getId()));
         List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeam.getDoctorTeamPeopleList();

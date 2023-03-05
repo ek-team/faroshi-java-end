@@ -270,6 +270,186 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         return result;
     }
 
+    public int pageWaitChatUsersCount(SocketFrameTextMessage param) {
+
+        int count = count(new QueryWrapper<ChatUser>().lambda()
+                .eq(ChatUser::getReceiverId, param.getMyUserId())
+                .eq(ChatUser::getReceiverStatus, 0));
+
+        LambdaQueryWrapper<ChatUser> wrapper = Wrappers.<ChatUser>lambdaQuery();
+
+        wrapper.and(wq0 -> wq0.eq(ChatUser::getUid, param.getMyUserId())
+                .or().like(ChatUser::getUserIds, param.getMyUserId()));
+        wrapper.eq(ChatUser::getPatientOtherOrderStatus, 0);
+        int count1 = count(wrapper);
+
+        return count + count1;
+    }
+
+    public List<ChatUserVO> pageWaitChatUsers(SocketFrameTextMessage param) {
+        List<ChatUserVO> chatUserVos = new ArrayList<>();
+
+        List<ChatUser> chatUsers = list(new QueryWrapper<ChatUser>().lambda()
+                .eq(ChatUser::getReceiverId, param.getMyUserId())
+                .eq(ChatUser::getReceiverStatus, 0));
+        if (CollectionUtils.isEmpty(chatUsers)) {
+            chatUsers = new ArrayList<>();
+        }
+        LambdaQueryWrapper<ChatUser> wrapper = Wrappers.<ChatUser>lambdaQuery();
+
+        wrapper.and(wq0 -> wq0.eq(ChatUser::getUid, param.getMyUserId())
+                .or().like(ChatUser::getUserIds, param.getMyUserId()));
+        wrapper.eq(ChatUser::getPatientOtherOrderStatus, 0);
+        List<ChatUser> list = list(wrapper);
+        if (!CollectionUtils.isEmpty(list)) {
+            chatUsers.addAll(list);
+        }
+
+        if (CollectionUtils.isEmpty(chatUsers)) {
+            return chatUserVos;
+        }
+        List<Integer> targetUids = new ArrayList<>();
+        List<Integer> teamIds = new ArrayList<>();
+        List<Integer> patientUserIds = new ArrayList<>();
+        for (ChatUser chatUser : chatUsers) {
+            if (chatUser.getGroupType() == 0) {
+                targetUids.add(chatUser.getTargetUid());
+            } else {
+                teamIds.add(chatUser.getTeamId());
+                patientUserIds.add(chatUser.getTargetUid());
+            }
+
+        }
+        if (!CollectionUtils.isEmpty(teamIds)) {
+            //处理群聊消息
+            List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+            //查询所有人员头像
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .in(DoctorTeamPeople::getTeamId, teamIds));
+            Map<Integer, User> userMap = new HashMap<>();
+            List<Integer> userIds = new ArrayList<>();
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+                userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+
+
+                for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
+                    if (userMap.get(doctorTeamPeople.getUserId()) != null) {
+                        doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+                    }
+
+                }
+                Map<Integer, List<DoctorTeamPeople>> doctorTeamPeopleMap = doctorTeamPeopleList.stream()
+                        .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
+                for (DoctorTeam doctorTeam : doctorTeams) {
+                    doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
+                }
+            }
+            userIds.addAll(patientUserIds);
+            List<User> users = (List<User>) userService.listByIds(userIds);
+            userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+            Map<Integer, DoctorTeam> doctorTeamMap = doctorTeams.stream()
+                    .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+            for (ChatUser chatUser : chatUsers) {
+                if (chatUser.getGroupType().equals(1)) {
+                    ChatUserVO chatUserVO = new ChatUserVO();
+                    DoctorTeam doctorTeam = doctorTeamMap.get(chatUser.getTeamId());
+                    List<DoctorTeamPeople> doctorTeamPeopleList1 = doctorTeam.getDoctorTeamPeopleList();
+                    chatUserVO.setDoctorTeamPeopleList(doctorTeamPeopleList1);
+                    chatUserVO.setNickname(doctorTeam.getName());
+                    User user = userMap.get(chatUser.getTargetUid());
+                    if (user != null) {
+                        String patientName = user.getPatientName();
+                        if (!StringUtils.isEmpty(chatUser.getChatDesc())) {
+                            patientName = patientName + "[" + chatUser.getChatDesc() + "]";
+                        }
+                        chatUserVO.setPatientName(patientName);
+                        chatUserVO.setPatientAvatar(user.getAvatar());
+                    }
+                    chatUserVO.setGroupType(1);
+
+                    chatUserVO.setChatUserId(chatUser.getId());
+                    chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
+                    chatUserVO.setServiceStartTime(chatUser.getServiceStartTime());
+                    chatUserVO.setTargetUid(chatUser.getTargetUid());
+                    // 最后聊天时间和内容
+
+                    chatUserVO.setLastChatTime(chatUser.getLastChatTime());
+                    chatUserVO.setLastMsg(chatUser.getLastMsg());
+                    chatUserVos.add(chatUserVO);
+
+                    // 是否有新消息
+                    int count =
+                            chatMsgService.count(
+                                    Wrappers.<ChatMsg>lambdaQuery()
+                                            .eq(ChatMsg::getChatUserId, chatUser.getId())
+                                            .notLike(ChatMsg::getReadUserIds, param.getMyUserId()));
+                    chatUserVO.setHasNewMsg(count);
+                }
+            }
+        }
+
+        if (targetUids.size() > 0) {
+
+            List<User> users = (List<User>) userService.listByIds(targetUids);
+            List<ChatUser> chatUsersList = new ArrayList<>();
+            for (ChatUser chatUser : chatUsers) {
+                if (chatUser.getGroupType() == 0) {
+                    chatUsersList.add(chatUser);
+                }
+            }
+            // 根据获取的用户信息构造ChatUserVO
+            Map<Integer, ChatUser> chatUserMap = chatUsersList.stream()
+                    .collect(Collectors.toMap(ChatUser::getTargetUid, t -> t));
+
+            users.forEach(
+                    tenantUser -> {
+                        ChatUserVO chatUserVO = new ChatUserVO();
+                        chatUserVO.setTargetUid(tenantUser.getId());
+                        String patientName = tenantUser.getPatientName();
+                        if (!StringUtils.isEmpty(chatUserMap.get(tenantUser.getId()).getChatDesc())) {
+                            patientName = patientName + "[" + chatUserMap.get(tenantUser.getId()).getChatDesc() + "]";
+                        }
+                        chatUserVO.setPatientName(patientName);
+
+                        chatUserVO.setPatientName(patientName);
+                        chatUserVO.setAvatar(tenantUser.getAvatar());
+                        chatUserVO.setPatientAvatar(tenantUser.getAvatar());
+                        chatUserVO.setNickname(tenantUser.getNickname());
+                        chatUserVO.setServiceEndTime(chatUserMap.get(tenantUser.getId()).getServiceEndTime());
+                        chatUserVO.setServiceStartTime(chatUserMap.get(tenantUser.getId()).getServiceStartTime());
+                        chatUserVO.setRemark(chatUserMap.get(tenantUser.getId()).getRemark());
+                        chatUserVO.setClearTime(chatUserMap.get(tenantUser.getId()).getClearTime());
+                        chatUserVO.setChatUserId(chatUserMap.get(tenantUser.getId()).getId());
+                        // 最后聊天时间和内容
+                        ChatUser user =
+                                chatUsersList.stream()
+                                        .filter(chatUser -> chatUser.getTargetUid().equals(chatUserVO.getTargetUid()))
+                                        .findFirst()
+                                        .get();
+                        chatUserVO.setIsClosed(user.getIsClosed());
+                        chatUserVO.setLastChatTime(user.getLastChatTime());
+                        chatUserVO.setLastMsg(user.getLastMsg());
+                        chatUserVos.add(chatUserVO);
+
+                        // 是否有新消息
+                        int count =
+                                chatMsgService.count(
+                                        Wrappers.<ChatMsg>lambdaQuery()
+                                                .eq(ChatMsg::getFromUid, tenantUser.getId())
+                                                .eq(ChatMsg::getToUid, param.getMyUserId())
+                                                .eq(ChatMsg::getReadStatus, 0));
+
+                        chatUserVO.setHasNewMsg(count);
+                    }
+            );
+
+        }
+        Collections.sort(chatUserVos);
+        return chatUserVos;
+    }
+
     /**
      * 添加关系好友
      */
@@ -347,14 +527,14 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 return chatUser;
             }
         }
-            ChatUser chatUser1 = new ChatUser();
-            chatUser1.setUserIds(chatUserId);
-            chatUser1.setGroupType(1);
-            chatUser1.setLastChatTime(new Date());
-            chatUser1.setTeamId(doctorTeamId);
-            chatUser1.setTargetUid(patientUserId);
-            save(chatUser1);
-            return chatUser1;
-        }
-
+        ChatUser chatUser1 = new ChatUser();
+        chatUser1.setUserIds(chatUserId);
+        chatUser1.setGroupType(1);
+        chatUser1.setLastChatTime(new Date());
+        chatUser1.setTeamId(doctorTeamId);
+        chatUser1.setTargetUid(patientUserId);
+        save(chatUser1);
+        return chatUser1;
     }
+
+}

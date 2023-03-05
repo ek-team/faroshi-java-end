@@ -126,6 +126,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         byId.setChatCount(byId.getChatCount() - 1);
                     }
 
+                } else {
+                    //医生发送消息 设置接收状态为已回
+                    byId.setReceiverStatus(1);
                 }
                 //更新群聊 聊天时间和 最后聊天内容
                 byId.setLastChatTime(new Date());
@@ -142,8 +145,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     byId.setPatientOtherOrderNo(origionMessage.getStr1());
                     byId.setPatientOtherOrderStatus("0");
                     byId.setMsgId(chatMsg.getId());
+                    byId.setReceiverStatus(0);
                 }
                 byId.setLastChatTime(new Date());
+
                 chatUserService.updateById(byId);
                 //判断该患者是否在医生下面 否则添加到医生下面
                 if (!fromUser.getId().equals(byId.getTargetUid())) {//代表是医生发送消息
@@ -180,6 +185,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
                     }
                 }
+
+                //处理 图文咨询 发送 修改 接收状态
+                updateChatReceiverStatus(origionMessage, fromUser);
             }
 
 
@@ -189,6 +197,30 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.error("消息发送失败", origionMessage))));
         }
 
+    }
+
+    private void updateChatReceiverStatus(SocketFrameTextMessage origionMessage, User fromUser) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                if (origionMessage.getType() != null && origionMessage.getType().equals(1)) {
+                    //代表示医生发送的消息 修改 接收回复状态 为1
+                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                            .eq(ChatUser::getUid, fromUser.getId())
+                            .eq(ChatUser::getTargetUid, origionMessage.getTargetUid())
+                            .set(ChatUser::getReceiverStatus, 1)
+                    );
+                }
+                if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
+                    //代表是图文咨询修改  接收回复状态为0
+                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                            .eq(ChatUser::getUid, origionMessage.getTargetUid())
+                            .eq(ChatUser::getTargetUid, fromUser.getId())
+                            .set(ChatUser::getReceiverStatus, 0)
+                    );
+                }
+            }
+        });
     }
 
     private void saveUserFollowDoctor(User fromUser, ChatUser byId) {
@@ -266,12 +298,23 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (!one.getChatCount().equals(0)) {
                     one.setChatCount(one.getChatCount() - 1);
                 }
-                chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
-                        .eq(ChatUser::getUid, chatUser.getUid())
-                        .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
-                        .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
-                        .set(ChatUser::getChatCount, one.getChatCount())
-                        .set(ChatUser::getLastMsg, chatMsg.getMsg()));
+                if (origionMessage.getType() != null && origionMessage.getType().equals(1) && chatUser.getUid().equals(fromUser.getId())) {
+
+                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                            .eq(ChatUser::getUid, chatUser.getUid())
+                            .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
+                            .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
+                            .set(ChatUser::getChatCount, one.getChatCount())
+                            .set(ChatUser::getReceiverStatus, 1)
+                            .set(ChatUser::getLastMsg, chatMsg.getMsg()));
+                } else {
+                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                            .eq(ChatUser::getUid, chatUser.getUid())
+                            .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
+                            .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
+                            .set(ChatUser::getChatCount, one.getChatCount())
+                            .set(ChatUser::getLastMsg, chatMsg.getMsg()));
+                }
 
 
             } else {

@@ -26,7 +26,6 @@ public class ChatMsg extends Model<ChatMsg> {
      * INQUIRY-问诊单
      */
     private String msgType;
-
     /**
      * 发送者id
      */

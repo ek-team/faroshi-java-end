@@ -10,13 +10,13 @@ import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.text.Collator;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -74,10 +74,10 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             formUserData.setUserId(SecurityUtils.getUser().getId());
             formUserData.setCreateTime(LocalDateTime.now());
             formUserData.setDoctorId(byId.getCreateUserId());
-            String answer="";
+            String answer = "";
             if (formUserData.getAnswer() != null) {
                 formUserData.setAnswer(formUserData.getAnswer().toString());
-                 answer = (String) formUserData.getAnswer();
+                answer = (String) formUserData.getAnswer();
             }
             //计算分数
             String type = formUserData.getType();
@@ -137,7 +137,24 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         chatMsg.setId(param.getStr() + "");
         chatMsg.setStr2(1 + "");
         chatMsgService.updateById(chatMsg);
+        //默认再给医生发送一条信息 告诉医生 患者填写表单成功
+        ChatMsg byId1 = chatMsgService.getById(chatMsg.getId());
+        if (byId1 != null) {
+            ChatMsg newChatMsg = new ChatMsg();
+            BeanUtils.copyProperties(byId1, newChatMsg, "id");
+            newChatMsg.setFromUid(SecurityUtils.getUser().getId());
+            if (byId1.getChatUserId() == null) {
+                newChatMsg.setToUid(byId1.getFromUid());
+            }
+            ZoneId zoneId = ZoneId.systemDefault();
+            LocalDateTime localDateTime = LocalDateTime.now().plusMinutes(1);
+            ZonedDateTime zdt = localDateTime.atZone(zoneId);
 
+            Date date = Date.from(zdt.toInstant());
+            newChatMsg.setCreateTime(date);
+            newChatMsg.setStr3(chatMsg.getId());
+            chatMsgService.save(newChatMsg);
+        }
         //更改消息填写表单状态
         //添加待办事项
 //        Upcoming upcoming = new Upcoming();

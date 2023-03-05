@@ -229,7 +229,6 @@ public class SocketFrameTextMessage {
     }
 
     public static SocketFrameTextMessage responseMessage(ChatMsg chatMsg) {
-        log.info("返回数据格式"+chatMsg.toString());
         SocketFrameTextMessage message = new SocketFrameTextMessage();
         message.msgType = ChatProto.RESPONSE_MESSAGE;
         message.time = new Date();

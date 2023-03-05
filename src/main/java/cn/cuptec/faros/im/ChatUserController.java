@@ -52,6 +52,38 @@ public class ChatUserController {
     @Resource
     private PatientOtherOrderService patientOtherOrderService;
 
+    /**
+     * 分页查询医生待处理业务
+     */
+    @ApiOperation(value = "分页查询医生待处理业务")
+    @PostMapping("/pageWaitChatUsers")
+    public RestResponse pageWaitChatUsers(@RequestBody SocketFrameTextMessage param) {
+        if (param.getMyUserId() == null) {
+            param.setMyUserId(SecurityUtils.getUser().getId());
+        }
+        List<ChatUserVO> records = chatUserService.pageWaitChatUsers(param);
+        if (CollectionUtils.isEmpty(records)) {
+            records = new ArrayList<>();
+            return RestResponse.ok(records);
+        }
+        //返回请求结果
+        return RestResponse.ok(records);
+    }
+
+    /**
+     * 分页查询医生待处理业务数量
+     */
+    @ApiOperation(value = "分页查询医生待处理业务数量")
+    @PostMapping("/pageWaitChatUsersCount")
+    public RestResponse pageWaitChatUsersCount(@RequestBody SocketFrameTextMessage param) {
+        if (param.getMyUserId() == null) {
+            param.setMyUserId(SecurityUtils.getUser().getId());
+        }
+
+        //返回请求结果
+        return RestResponse.ok(chatUserService.pageWaitChatUsersCount(param));
+    }
+
 
     /**
      * 查询聊天是否有图文咨询

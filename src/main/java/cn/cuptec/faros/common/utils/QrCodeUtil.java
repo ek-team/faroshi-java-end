@@ -598,7 +598,6 @@ public class QrCodeUtil {
             outg1.drawImage(outImage, 50, 70, outImage.getWidth(), outImage.getHeight(), null);
             outg1.setColor(Color.BLACK);
             outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-            outg1.drawString("微信扫码添加好友", 100, 409);
 
             outg1.dispose();
             outImage1.flush();
