@@ -64,6 +64,17 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
     }
 
     /**
+     * 关闭服务
+     *
+     * @return
+     */
+    @GetMapping("/closeService")
+    public RestResponse closeService(@RequestParam("id") String id) {
+        service.removeById(id);
+        return RestResponse.ok();
+    }
+
+    /**
      * 修改服务
      *
      * @return
