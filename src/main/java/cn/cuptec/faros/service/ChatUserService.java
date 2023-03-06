@@ -308,6 +308,15 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         if (CollectionUtils.isEmpty(chatUsers)) {
             return chatUserVos;
         }
+        List<String> Ids = new ArrayList<>();//
+
+        chatUsers = chatUsers.stream().filter(// 过滤去重
+                v -> {
+                    boolean flag = !Ids.contains(v.getId() + "");
+                    Ids.add(v.getId() + "");
+                    return flag;
+                }
+        ).collect(Collectors.toList());
         List<Integer> targetUids = new ArrayList<>();
         List<Integer> teamIds = new ArrayList<>();
         List<Integer> patientUserIds = new ArrayList<>();

@@ -556,6 +556,7 @@ public class QrCodeUtil {
         }
     }
     public static BufferedImage doctorImage(OutputStream outputStream,  String logoFileUrl, String qrUrl, int qrCodeSize) {
+        logoFileUrl="http://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20191129103524.jpg";
         try {
             MultiFormatWriter multiFormatWriter = new MultiFormatWriter();
             // 参数顺序分别为：编码内容，编码类型，生成图片宽度，生成图片高度，设置参数
@@ -593,21 +594,21 @@ public class QrCodeUtil {
             outg.setFont(new Font("宋体", Font.BOLD, 22)); // 字体、字型、字号
 
 
-            BufferedImage outImage1 = new BufferedImage(387, qrCodeSize + 183, BufferedImage.TYPE_4BYTE_ABGR);
-            Graphics2D outg1 = outImage1.createGraphics();
-            outg1.drawImage(outImage, 50, 70, outImage.getWidth(), outImage.getHeight(), null);
-            outg1.setColor(Color.BLACK);
-            outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-
-            outg1.dispose();
-            outImage1.flush();
-            outImage = outImage1;
+//            BufferedImage outImage1 = new BufferedImage(387, qrCodeSize + 183, BufferedImage.TYPE_4BYTE_ABGR);
+//            Graphics2D outg1 = outImage1.createGraphics();
+//            outg1.drawImage(outImage, 50, 70, outImage.getWidth(), outImage.getHeight(), null);
+//            outg1.setColor(Color.BLACK);
+//            outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
+//
+//            outg1.dispose();
+//            outImage1.flush();
+//            outImage = outImage1;
             outg.dispose();
             outImage.flush();
             image = outImage;
             image.flush();
             //ImageIO.write(image, "png", outputStream); // TODO
-            return outImage1;
+            return outImage;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

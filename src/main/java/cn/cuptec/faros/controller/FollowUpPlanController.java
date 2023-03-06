@@ -725,7 +725,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         List<User> users = (List<User>) userService.listByIds(userIds);
         if (!CollectionUtils.isEmpty(users)) {
             for (User user : users) {
-                user.setNickname(user.getPatientName());
+                if (!StringUtils.isEmpty(user.getPatientName())) {
+                    user.setNickname(user.getPatientName());
+                }
 
             }
 

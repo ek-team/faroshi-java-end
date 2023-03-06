@@ -95,31 +95,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 //推送群聊的消息给所有人
                 String data = byId.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
-                for (String userId : allUserIds) {
-                    String replace = userId.replace("[", "");
-                    userId = replace.replace("]", "");
-                    if (!userId.equals(fromUser.getId() + "")) {
-
-                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId.trim()));
-                        //2.向目标用户发送新消息提醒
-                        SocketFrameTextMessage targetUserMessage
-                                = SocketFrameTextMessage.newGroupMessageTip(origionMessage.getChatUserId(), JSON.toJSONString(chatMsg));
-                        if (targetUserChannel != null) {
-                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                        } else {
-                            uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
-                            User user = userService.getById(userId);
-                            if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {
-                                LocalDateTime now = LocalDateTime.now();
-                                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                                String time = df.format(now);
-                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
-
-                            }
-                        }
-                    }
-
-                }
+                sendNotic(chatMsg, fromUser, origionMessage, allUserIds);
                 //判断是否是患者发送消息
                 if (fromUser.getId().equals(byId.getTargetUid())) {
                     if (!byId.getChatCount().equals(0)) {
@@ -198,6 +174,40 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         }
 
     }
+
+    private void sendNotic(ChatMsg chatMsg, User fromUser, SocketFrameTextMessage origionMessage, List<String> allUserIds) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                for (String userId : allUserIds) {
+                    String replace = userId.replace("[", "");
+                    userId = replace.replace("]", "");
+                    if (!userId.equals(fromUser.getId() + "")) {
+
+                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId.trim()));
+                        //2.向目标用户发送新消息提醒
+                        SocketFrameTextMessage targetUserMessage
+                                = SocketFrameTextMessage.newGroupMessageTip(origionMessage.getChatUserId(), JSON.toJSONString(chatMsg));
+                        if (targetUserChannel != null) {
+                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                        } else {
+                            uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
+                            User user = userService.getById(userId);
+                            if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {
+                                LocalDateTime now = LocalDateTime.now();
+                                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                                String time = df.format(now);
+                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
+
+                            }
+                        }
+                    }
+
+                }
+            }
+        });
+    }
+
 
     private void updateChatReceiverStatus(SocketFrameTextMessage origionMessage, User fromUser) {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {

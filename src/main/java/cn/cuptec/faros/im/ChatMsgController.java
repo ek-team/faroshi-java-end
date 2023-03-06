@@ -57,6 +57,8 @@ public class ChatMsgController {
     private DoctorTeamService doctorTeamService;
     @Resource
     private DoctorPointService doctorPointService;
+    @Resource
+    private UpcomingService upcomingService;
 
     @ApiOperation(value = "查询历史记录")
     @GetMapping("/testRead")
@@ -306,6 +308,8 @@ public class ChatMsgController {
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
 
         if (str2.equals("1")) {
+
+
             //添加医生积分 判断是否是抢单模式
             if (patientOtherOrder.getDoctorTeamId() != null) {
                 Integer doctorTeamId = patientOtherOrder.getDoctorTeamId();
@@ -420,7 +424,12 @@ public class ChatMsgController {
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String time = df.format(now);
         wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, msg, "/pages/news/news");
+        //修改代办事项状态
+        upcomingService.update(Wrappers.<Upcoming>lambdaUpdate()
+                .eq(Upcoming::getOrderId, patientOtherOrder.getId())
+                .set(Upcoming::getRedStatus, 1)
 
+        );
         return RestResponse.ok();
     }
 }
