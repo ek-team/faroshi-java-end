@@ -575,6 +575,18 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return RestResponse.ok();
     }
 
+    @SysLog("医生账号注册")
+    @PostMapping("/register")
+    public RestResponse<User> register(@RequestBody User user) {
+        Role role = new Role();
+        role.setId(20);
+        Role[] roles = new Role[]{role};
+        user.setRoles(roles);
+        user.setLockFlag("0");
+        service.save(user);
+        return RestResponse.ok();
+    }
+
     @SysLog("查询医生")
     @GetMapping("/manage/queryDoctor")
     public RestResponse<IPage<User>> queryDoctor() {

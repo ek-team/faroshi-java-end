@@ -152,7 +152,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/form/exportFormUserData",
                         "/userGroup/checkGroupHavePatient",
                         "/planUserTrainRecord/save",
-                        "/insertTemplate/insert"
+                        "/insertTemplate/insert",
+                        "/user/register"
 
                 )
                 .permitAll()
