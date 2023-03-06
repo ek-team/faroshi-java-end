@@ -9,6 +9,7 @@ import cn.cuptec.faros.util.ExcelUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import org.springframework.util.CollectionUtils;
@@ -193,17 +194,17 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         }
 
 
-        List<FormOptions> formOptions =formOptionsService.list(new QueryWrapper<FormOptions>().lambda().eq(FormOptions::getFormId, formId));
+        List<FormOptions> formOptions = formOptionsService.list(new QueryWrapper<FormOptions>().lambda().eq(FormOptions::getFormId, formId));
         Map<Integer, FormOptions> formOptionsMap = formOptions.stream()
                 .collect(Collectors.toMap(FormOptions::getId, t -> t));
         //处理答案
-        for(FormUserData formUserData:formUserDataList){
-            if(formUserData.getType().equals("2")){
+        for (FormUserData formUserData : formUserDataList) {
+            if (formUserData.getType().equals("2")) {
                 //单选
                 FormOptions formOption = formOptionsMap.get(Integer.parseInt(formUserData.getAnswer().toString()));
                 formUserData.setAnswer(formOption.getText());
             }
-            if(formUserData.getType().equals("6")){
+            if (formUserData.getType().equals("6")) {
                 //多选
                 String replace = formUserData.getAnswer().toString().replace("[", "");
                 String replace1 = replace.replace("]", "");
@@ -211,14 +212,14 @@ public class FormController extends AbstractBaseController<FormService, Form> {
 
                 String[] split = replace2.split(",");
                 List<String> strings = Arrays.asList(split);
-                String answer="";
-                for(String an:strings){
+                String answer = "";
+                for (String an : strings) {
                     FormOptions formOption = formOptionsMap.get(Integer.parseInt(an));
 
-                    if(StringUtils.isEmpty(answer)){
-                        answer=formOption.getText();
-                    }else {
-                        answer=answer+"/"+formOption.getText();
+                    if (StringUtils.isEmpty(answer)) {
+                        answer = formOption.getText();
+                    } else {
+                        answer = answer + "/" + formOption.getText();
                     }
                 }
                 formUserData.setAnswer(answer);
@@ -310,18 +311,25 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     }
 
     /**
-     * 分页查询自己创建的表单
+     * 分页查询自己创建的表单 和部门下的表单
      *
      * @return
      */
     @GetMapping("/pageMyScoped")
     public RestResponse pageMyScoped() {
+        User byId = userService.getById(SecurityUtils.getUser().getId());
+        List<Integer> deptIds = new ArrayList<>();
+        deptIds.add(1);
+        deptIds.add(byId.getDeptId());
         Page<Form> page = getPage();
-        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-        queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
-        queryWrapper.eq("status", 0);
-        queryWrapper.orderByDesc("create_time");
-        IPage<Form> formIPage = service.page(page, queryWrapper);
+        LambdaQueryWrapper<Form> wrapper = Wrappers.<Form>lambdaQuery();
+
+        wrapper.and(wq0 -> wq0.eq(Form::getCreateUserId, SecurityUtils.getUser().getId())
+                .or().in(Form::getDeptId, deptIds));
+        wrapper.eq(Form::getStatus, 0);
+
+        wrapper.orderByDesc(Form::getCreateTime);
+        IPage<Form> formIPage = service.page(page, wrapper);
         return RestResponse.ok(formIPage);
     }
 

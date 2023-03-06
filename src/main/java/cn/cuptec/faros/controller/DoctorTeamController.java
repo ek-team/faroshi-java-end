@@ -135,6 +135,20 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     }
 
     /**
+     * 判断医生是否是队长
+     *
+     * @return
+     */
+    @GetMapping("/checkLeader")
+    public RestResponse checkLeader(@RequestParam("teamId") int teamId, @RequestParam("doctorId") int doctorId) {
+        DoctorTeam doctorTeam = service.getById(teamId);
+        if (doctorTeam.getLeaderId().equals(doctorId)) {
+            return RestResponse.ok(true);
+        }
+        return RestResponse.ok(false);
+    }
+
+    /**
      * 编辑医生团队
      *
      * @return

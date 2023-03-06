@@ -75,24 +75,30 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         queryWrapper.eq("doctor_user_id", SecurityUtils.getUser().getId());
         List<DoctorTeam> doctorTeams = new ArrayList<>();
-        List<DoctorTeamPeople> doctorTeamPeoples = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
-                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
-        if (!CollectionUtils.isEmpty(doctorTeamPeoples)) {
-
-            List<Integer> teamIds = doctorTeamPeoples.stream().map(DoctorTeamPeople::getTeamId)
-                    .collect(Collectors.toList());
-            doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
-            queryWrapper.or();
-            queryWrapper.in("doctor_team_id", teamIds);
-        }
 
 
         queryWrapper.orderByDesc("create_time", "withdraw_status");
         IPage<DoctorPoint> doctorPointIPage = service.page(page, queryWrapper);
+
         List<DoctorPoint> records = doctorPointIPage.getRecords();
-        if (!CollectionUtils.isEmpty(records) && !CollectionUtils.isEmpty(doctorTeams)) {
-            Map<Integer, DoctorTeam> doctorMap = doctorTeams.stream()
-                    .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+        if (!CollectionUtils.isEmpty(records)) {
+            List<Integer> doctorTeamIds = new ArrayList<>();
+            for (DoctorPoint doctorPoint : records) {
+                if (doctorPoint.getDoctorTeamId() != null) {
+                    doctorTeamIds.add(doctorPoint.getDoctorTeamId());
+                }
+            }
+            if (!CollectionUtils.isEmpty(doctorTeamIds)) {
+                doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(doctorTeamIds);
+            }
+        }
+        if (!CollectionUtils.isEmpty(records)) {
+            Map<Integer, DoctorTeam> doctorMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(doctorTeams)) {
+                doctorMap = doctorTeams.stream()
+                        .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+            }
+
 
             //查询患者名字
             List<Integer> patientIds = records.stream().map(DoctorPoint::getPatientId)
@@ -119,18 +125,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
      */
     @GetMapping("/getDoctorTotalPoint")
     public RestResponse getDoctorTotalPoint() {
-        List<DoctorTeamPeople> doctorTeamPeoples = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
-                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
         LambdaQueryWrapper<DoctorPoint> eq = new QueryWrapper<DoctorPoint>().lambda()
                 .eq(DoctorPoint::getDoctorUserId, SecurityUtils.getUser().getId());
-
-        if (!CollectionUtils.isEmpty(doctorTeamPeoples)) {
-            List<Integer> teamIds = doctorTeamPeoples.stream().map(DoctorTeamPeople::getTeamId)
-                    .collect(Collectors.toList());
-            eq.or();
-            eq.in(DoctorPoint::getDoctorTeamId, teamIds);
-        }
-
 
         DoctorPointCountResult result = new DoctorPointCountResult();
         List<DoctorPoint> list = service.list(eq);
@@ -200,7 +196,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
                     .isNull(DoctorUserAction::getTeamId));
             patientOtherOrder.setAmount(one.getPrice());
-            patientOtherOrder.setHour(one.getHour());
+            patientOtherOrder.setHour(24);
         } else {
             DoctorTeam doctorTeam = doctorTeamService.getById(patientOtherOrder.getDoctorTeamId());
             patientOtherOrder.setDeptId(doctorTeam.getDeptId());
@@ -208,7 +204,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
                     .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
             patientOtherOrder.setAmount(one.getPrice());
-            patientOtherOrder.setHour(one.getHour());
+            patientOtherOrder.setHour(24);
 
             //处理新的图文咨询 后加入团队的医生也可以看到
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
@@ -342,7 +338,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
                     .isNull(DoctorUserAction::getTeamId));
             patientOtherOrder.setAmount(one.getPrice());
-            patientOtherOrder.setHour(one.getHour());
+            patientOtherOrder.setHour(24);
         } else {
             DoctorTeam doctorTeam = doctorTeamService.getById(patientOtherOrder.getDoctorTeamId());
             patientOtherOrder.setDeptId(doctorTeam.getDeptId());

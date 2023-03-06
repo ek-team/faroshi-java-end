@@ -76,6 +76,7 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
 
     /**
      * 查询服务详情
+     *
      * @return
      */
     @GetMapping("/getServiceDetail")
@@ -86,14 +87,15 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
 
     /**
      * 查询医生团队服务详情
+     *
      * @return
      */
     @GetMapping("/getTeamServiceDetail")
     public RestResponse getTeamServiceDetail(@RequestParam("teamId") Integer teamId) {
         DoctorUserAction byId = service.getOne(new QueryWrapper<DoctorUserAction>()
                 .lambda().eq(DoctorUserAction::getTeamId, teamId));
-        if(byId==null){
-            byId=new DoctorUserAction();
+        if (byId == null) {
+            byId = new DoctorUserAction();
             byId.setHour(0);
             byId.setCount(0);
             byId.setPrice(0.0);
@@ -101,6 +103,7 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
         }
         return RestResponse.ok(byId);
     }
+
     @Override
     protected Class<DoctorUserAction> getEntityClass() {
         return DoctorUserAction.class;
