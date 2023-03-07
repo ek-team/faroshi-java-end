@@ -311,7 +311,7 @@ public class ChatMsgController {
 
 
             //添加医生积分 判断是否是抢单模式
-            if (patientOtherOrder.getDoctorTeamId() != null) {
+            if (patientOtherOrder.getDoctorTeamId() != null && patientOtherOrder.getAmount() != null) {
                 Integer doctorTeamId = patientOtherOrder.getDoctorTeamId();
                 DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
                 if (doctorTeam.getModel().equals(1)) {

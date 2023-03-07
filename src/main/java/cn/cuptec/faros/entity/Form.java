@@ -38,4 +38,5 @@ public class Form extends Model<Form> {
     private String doctorName;
     @TableField(exist = false)
     private String groupId;
+    private Integer platform; //1-后台创建
 }

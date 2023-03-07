@@ -136,7 +136,6 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     public RestResponse pageScoped() {
         Page<Form> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-
         IPage<Form> formIPage = service.pageScoped(page, queryWrapper);
         return RestResponse.ok(formIPage);
     }
@@ -325,7 +324,9 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         LambdaQueryWrapper<Form> wrapper = Wrappers.<Form>lambdaQuery();
 
         wrapper.and(wq0 -> wq0.eq(Form::getCreateUserId, SecurityUtils.getUser().getId())
-                .or().in(Form::getDeptId, deptIds));
+                );
+        wrapper.or(wq0 -> wq0.in(Form::getDeptId, deptIds).eq(Form::getPlatform,1));
+
         wrapper.eq(Form::getStatus, 0);
 
         wrapper.orderByDesc(Form::getCreateTime);
