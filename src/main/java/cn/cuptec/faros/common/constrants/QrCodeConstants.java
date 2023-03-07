@@ -14,7 +14,7 @@ public interface QrCodeConstants {
 
     String DEVICE_BIND_USER_URL = "http://pharos.ewj100.com/index.html#/ucenter/userBind";
     //注册设备用户页面
-    String REGISTER_PLAN_USER_URL = "http://pharos.ewj100.com/index.html#/nali/register";
+    String REGISTER_PLAN_USER_URL = "https://pharos3.ewj100.com/index.html#/nali/register";
     //气动设备训练记录页面
     String PNEUMATIC_Record_PAGE_URL ="https://pharos.ewj100.com/record.html#/ucenter/equipmentTraining/index";
 
