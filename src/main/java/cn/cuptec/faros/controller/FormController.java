@@ -324,10 +324,9 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         LambdaQueryWrapper<Form> wrapper = Wrappers.<Form>lambdaQuery();
 
         wrapper.and(wq0 -> wq0.eq(Form::getCreateUserId, SecurityUtils.getUser().getId())
-                );
-        wrapper.or(wq0 -> wq0.in(Form::getDeptId, deptIds).eq(Form::getPlatform,1));
-
-        wrapper.eq(Form::getStatus, 0);
+                .eq(Form::getStatus, 0));
+        wrapper.or(wq0 -> wq0.in(Form::getDeptId, deptIds).eq(Form::getPlatform, 1)
+                .eq(Form::getStatus, 0));
 
         wrapper.orderByDesc(Form::getCreateTime);
         IPage<Form> formIPage = service.page(page, wrapper);

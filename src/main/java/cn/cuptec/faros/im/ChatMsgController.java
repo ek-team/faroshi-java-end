@@ -354,12 +354,17 @@ public class ChatMsgController {
                 chatUsers.forEach(c -> {
                     ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
                     if (one != null) {
-
+                        User byId1 = userService.getById(c.getUid());
+                        Integer receiverId = 0;
+                        if (!StringUtils.isEmpty(byId1.getPassword())) {
+                            //代表是医生
+                            receiverId = c.getUid();
+                        }
                         chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
                                 .eq(ChatUser::getUid, c.getUid())
                                 .eq(ChatUser::getTargetUid, c.getTargetUid())
                                 .set(ChatUser::getPatientOtherOrderStatus, str2)
-                                .set(ChatUser::getReceiverId, SecurityUtils.getUser().getId())
+                                .set(ChatUser::getReceiverId, receiverId)
                                 .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
 
                         );

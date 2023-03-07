@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -83,7 +84,7 @@ public class UserOrder {
     private String receiverDetailAddress;
     //期望送货时间
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
-    private LocalDateTime deliveryDate;
+    private LocalDate deliveryDate;
     //发货地址
     private String deliveryAddress;
 
