@@ -182,9 +182,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 for (String userId : allUserIds) {
                     String replace = userId.replace("[", "");
                     userId = replace.replace("]", "");
+                    userId = userId.trim();
                     if (!userId.equals(fromUser.getId() + "")) {
 
-                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId.trim()));
+                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
                         //2.向目标用户发送新消息提醒
                         SocketFrameTextMessage targetUserMessage
                                 = SocketFrameTextMessage.newGroupMessageTip(origionMessage.getChatUserId(), JSON.toJSONString(chatMsg));
