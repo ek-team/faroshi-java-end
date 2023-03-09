@@ -43,7 +43,7 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         ProductStock one = productStockService.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel, 1));
         List<DeviceScanSignLog> list = service.list(new QueryWrapper<DeviceScanSignLog>().select("`user_id`,`create_time`,`id`").lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).orderByDesc(DeviceScanSignLog::getCreateTime));
         if (CollUtil.isNotEmpty(list)) {
-            List<Integer> names = new ArrayList<>();
+            List<String> names = new ArrayList<>();
             List<DeviceScanSignLog> deviceScanSignLogs = list.stream().filter(// 过滤去重
                     v -> {
                         boolean flag = !names.contains(v.getUserId());
@@ -51,10 +51,10 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
                         return flag;
                     }
             ).collect(Collectors.toList());
-            List<Integer> userIds = deviceScanSignLogs.stream().map(DeviceScanSignLog::getUserId).collect(Collectors.toList());
+            List<String> userIds = deviceScanSignLogs.stream().map(DeviceScanSignLog::getUserId).collect(Collectors.toList());
             tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, userIds).orderByDesc(TbTrainUser::getUpdateDate));
             //根据时间排序
-            Map<Integer, DeviceScanSignLog> map = deviceScanSignLogs.stream()
+            Map<String, DeviceScanSignLog> map = deviceScanSignLogs.stream()
                     .collect(Collectors.toMap(DeviceScanSignLog::getUserId, t -> t));
             if (!CollectionUtils.isEmpty(tbTrainUsers)) {
                 for (TbTrainUser tbTrainUser : tbTrainUsers) {
@@ -116,7 +116,7 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(userId);
+        deviceScanSignLog.setUserId(userId+"");
 
         deviceScanSignLog.setMacAddress(macAddress);
 
@@ -137,12 +137,27 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(userId);
+        deviceScanSignLog.setUserId(userId+"");
 
         deviceScanSignLog.setMacAddress(macAddress);
 
 
         return RestResponse.ok(service.save(deviceScanSignLog));
+
+    }
+    @GetMapping("/getByMacAdd")
+    public List<TbTrainUser> getByMacAdd(@RequestParam("macAddress") String macAddress) {
+
+        List<DeviceScanSignLog> list = service.list(new QueryWrapper<DeviceScanSignLog>().lambda()
+                .eq(DeviceScanSignLog::getMacAddress, macAddress));
+        if(!CollectionUtils.isEmpty(list)){
+            List<String> userIds = list.stream().map(DeviceScanSignLog::getUserId)
+                    .collect(Collectors.toList());
+            List<TbTrainUser> list1 = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+                    .in(TbTrainUser::getUserId, userIds));
+            return list1;
+        }
+        return new ArrayList<>();
 
     }
 
@@ -151,7 +166,7 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         List<DeviceScanSignLog> deviceScanSignLogs = service.list(queryWrapper);
         if (!CollectionUtils.isEmpty(deviceScanSignLogs)) {
-            List<Integer> userIds = deviceScanSignLogs.stream().map(DeviceScanSignLog::getUserId).collect(Collectors.toList());
+            List<String> userIds = deviceScanSignLogs.stream().map(DeviceScanSignLog::getUserId).collect(Collectors.toList());
             List<User> users = (List<User>) userService.listByIds(userIds);
             Map<Integer, User> map = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));

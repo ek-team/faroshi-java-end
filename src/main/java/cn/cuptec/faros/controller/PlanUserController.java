@@ -345,7 +345,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
             DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-            deviceScanSignLog.setUserId(SecurityUtils.getUser().getId());
+            deviceScanSignLog.setUserId(SecurityUtils.getUser().getId()+"");
 
             deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
 
@@ -368,7 +368,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(SecurityUtils.getUser().getId());
+        deviceScanSignLog.setUserId(SecurityUtils.getUser().getId()+"");
 
         deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
 

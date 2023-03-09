@@ -153,7 +153,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/userGroup/checkGroupHavePatient",
                         "/planUserTrainRecord/save",
                         "/insertTemplate/insert",
-                        "/user/register"
+                        "/user/register",
+                        "/deviceScanSignLog/getByMacAdd"
 
                 )
                 .permitAll()

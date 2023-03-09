@@ -40,11 +40,27 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
 
     @Resource
     private PlanUserTrainRecordService planUserTrainRecordService;
+    @Resource
+    private DeviceScanSignLogService deviceScanSignLogService;
+
+
 
     @Transactional(rollbackFor = Exception.class)
     public void bindSystemUserId(long uid) {
         Integer userId = SecurityUtils.getUser().getId();
         TbTrainUser one = getInfoByUXtUserId(userId);
+        TbTrainUser tbTrainUser = getOne(new QueryWrapper<TbTrainUser>().lambda()
+                .eq(TbTrainUser::getUserId, uid));
+        deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
+        DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
+
+        deviceScanSignLog.setUserId(uid+"");
+
+        deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
+
+
+        deviceScanSignLogService.save(deviceScanSignLog);
+
         User user = userService.getById(userId);
         if (user != null) {
 
@@ -115,7 +131,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
     }
 
 
-    public TbTrainUser getInfoByPhoneAndIdCard(String phone, String idCard,String xtUserId) {
+    public TbTrainUser getInfoByPhoneAndIdCard(String phone, String idCard, String xtUserId) {
 
         LambdaQueryWrapper<TbTrainUser> queryWrapper = new LambdaQueryWrapper<>();
         if (!StringUtils.isEmpty(phone)) {

@@ -19,7 +19,7 @@ public class DeviceScanSignLog implements Serializable {
     private Integer id;
 
 
-    private Integer userId;
+    private String userId;
     @TableField(exist = false)
     private String userName;
     /**
