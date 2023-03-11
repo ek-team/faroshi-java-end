@@ -39,8 +39,9 @@ public class WxPayFarosService {
             return RestResponse.failed("订单已支付");
         }
         Dept dept = deptService.getById(userOrder.getDeptId());
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
 
-        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
+        //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);
         PayResult wenXinInfo = JSONObject.parseObject(result, PayResult.class);
         return RestResponse.ok(wenXinInfo.getData());
@@ -54,8 +55,9 @@ public class WxPayFarosService {
         }
         Dept dept = deptService.getById(patientOtherOrder.getDeptId());
         User user = userService.getById(SecurityUtils.getUser().getId());
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue()+ "&tradeType=JSAPI";
 
-        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue()+ "&tradeType=JSAPI";
+        //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue()+ "&tradeType=JSAPI";
         String result = HttpUtil.get(url);
         PayResult wenXinInfo = JSONObject.parseObject(result, PayResult.class);
         PayResultData data = wenXinInfo.getData();
@@ -63,11 +65,5 @@ public class WxPayFarosService {
         return RestResponse.ok(data);
     }
 
-    public static void main(String[] args) {
-        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=1610097301647261696&openId=oA1V45fmdi2v4xhPHfE8NCywNQpM&subMchId=1634891163&payment=1";
-        String result = HttpUtil.get(url);
-        PayResult wenXinInfo = JSONObject.parseObject(result, PayResult.class);
-        System.out.println(result + "============");
-        System.out.println(wenXinInfo.getData().toString() + "============");
-    }
+
 }

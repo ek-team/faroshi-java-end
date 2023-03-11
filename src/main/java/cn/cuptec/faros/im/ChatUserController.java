@@ -105,6 +105,14 @@ public class ChatUserController {
                     byId.setPatientOtherOrderStatus("3");
                 }
             }
+            if (byId.getPatientOtherOrderStatus().equals("4")) {
+                //代表是会话随访
+                if (byId.getServiceEndTime().isBefore(LocalDateTime.now())) {
+                    byId.setPatientOtherOrderStatus("3");
+                }
+
+            }
+
         }
         if (byId.getServiceEndTime() == null) {
             byId.setServiceEndTime(LocalDateTime.now().minusDays(1));
@@ -149,6 +157,7 @@ public class ChatUserController {
         LocalDateTime localDateTime = LocalDateTime.now().plusHours(hour);
         chatUser.setServiceEndTime(localDateTime);
         chatUser.setChatDesc("随访");
+        chatUser.setPatientOtherOrderStatus("4");//会话随访
         ChatUser byId = chatUserService.getById(chatUserId);
         if (byId.getGroupType().equals(0)) {
             ChatUser fromUserChat = new ChatUser();
@@ -173,6 +182,7 @@ public class ChatUserController {
                             .eq(ChatUser::getTargetUid, c.getTargetUid())
                             .set(ChatUser::getServiceEndTime, localDateTime)
                             .set(ChatUser::getChatDesc, "随访")
+                            .set(ChatUser::getPatientOtherOrderStatus, "4")
                     );
                 }
             });

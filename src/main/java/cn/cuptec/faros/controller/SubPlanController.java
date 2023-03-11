@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
@@ -49,8 +50,8 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
             if (i == 0) {
                 System.out.println(step);
             } else {
-                step=step+stepllll;
-                System.out.println( step);
+                step = step + stepllll;
+                System.out.println(step);
 
             }
 
@@ -69,7 +70,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         if (isInt(week)) {
             return week.intValue();
         }
-        return week.intValue()+1;
+        return week.intValue() + 1;
     }
 
     public static boolean isInt(double a) {
@@ -81,6 +82,24 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
             return false;
     }
 
+    @GetMapping("/addInitSubPlanTest")
+    public RestResponse addInitSubPlanTest() {
+        Page<TbSubPlan> page = new Page<>();
+        page.setSize(1);
+        page.setCurrent(1);
+        QueryWrapper queryWrapper = new QueryWrapper<TbSubPlan>();
+        queryWrapper.eq("user_id", "1630011645376417792");
+        queryWrapper.orderByAsc("version");
+        IPage page1 = service.page(page, queryWrapper);
+        List<TbSubPlan> subPlans = page1.getRecords();
+        Integer version = 1;
+        if (!CollectionUtils.isEmpty(subPlans)) {
+            version = subPlans.get(0).getVersion() + 1;
+        }
+        System.out.println(version);
+        return RestResponse.ok();
+    }
+
     /**
      * 添加初始计划
      *
@@ -88,6 +107,20 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
      */
     @PostMapping("/addInitSubPlan")
     public RestResponse addInitSubPlan(@RequestBody TbSubPlan subPlanEntity) {
+        Long userId = subPlanEntity.getUserId();
+        Page<TbSubPlan> page = new Page<>();
+        page.setSize(1);
+        page.setCurrent(1);
+        QueryWrapper queryWrapper = new QueryWrapper<TbSubPlan>();
+        queryWrapper.eq("user_id", userId);
+        queryWrapper.orderByDesc("version");
+        IPage page1 = service.page(page, queryWrapper);
+        List<TbSubPlan> subPlans = page1.getRecords();
+        Integer version = 1;
+        if (!CollectionUtils.isEmpty(subPlans)) {
+            version = subPlans.get(0).getVersion() + 1;
+        }
+
         Date startDate = subPlanEntity.getStartDate();
         Date endDate = subPlanEntity.getEndDate();
         Integer startLoad = subPlanEntity.getLoad();
@@ -109,7 +142,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         if (weeks == 0) {
             weeks = 1;
         }
-        Integer weekLOad = load / weeks;
+        Integer weekLOad = load / weeks;//要改
         Integer loadData = startLoad;
         Integer startDay = 0;
         Integer endDay = 7;
@@ -122,14 +155,14 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
                 if (i == 0) {
                     tbSubPlan.setTrainStep(trainStep);
                 } else {
-                    if (i == weeks - 1) {
-                        tbSubPlan.setTrainStep(200);
-
-                    }else {
-                        trainStep=trainStep+step;
-                        tbSubPlan.setTrainStep(trainStep);
-                    }
-
+//                    if (i == weeks - 1) {
+//                        tbSubPlan.setTrainStep(200);
+//
+//                    } else {
+//                        trainStep = trainStep + step;
+//                        tbSubPlan.setTrainStep(trainStep);
+//                    }
+                    tbSubPlan.setTrainStep(((i + 1) * 200 + (weeks - (i + 1)) * trainStep)/weeks);
 
                 }
                 tbSubPlan.setPlanId(tbPlan.getPlanId());
@@ -139,15 +172,16 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
                 tbSubPlan.setInitStart(1);
                 tbSubPlan.setUpdateDate(new Date());
                 tbSubPlan.setKeyId(idUtil.nextId());
-
+                tbSubPlan.setVersion(version);
                 tbSubPlan.setUserId(subPlanEntity.getUserId());
-                if (i == weeks - 1) {
-                    tbSubPlan.setLoad(endLoad);
-                }else {
-                    tbSubPlan.setLoad(loadData);
-                    loadData = loadData + weekLOad;
-                }
-
+//                if (i == weeks - 1) {
+//                    tbSubPlan.setLoad(endLoad);
+//                } else {
+//                    tbSubPlan.setLoad(loadData);
+//                    loadData = loadData + weekLOad;
+//                }
+                int weekLoad = (((i + 1) * endLoad) + (weeks - (i + 1)) * startLoad) / weeks;
+                tbSubPlan.setLoad(weekLoad);
                 if (i == 0) {
                     tbSubPlan.setStartDate(addAndSubtractDaysByGetTime(startDate, startDay));
                     tbSubPlan.setEndDate(addAndSubtractDaysByGetTime(startDate, endDay));
@@ -174,6 +208,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
             subPlanEntity.setDayNum(1);
             subPlanEntity.setCreateDate(new Date());
             subPlanEntity.setInitStart(1);
+            subPlanEntity.setVersion(version);
             subPlanEntity.setUpdateDate(new Date());
             subPlanEntity.setKeyId(idUtil.nextId());
             tbSubPlans.add(subPlanEntity);
@@ -182,8 +217,10 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         service.saveBatch(tbSubPlans);
         return RestResponse.ok();
     }
+
     @PostMapping("/update")
     public RestResponse<TbSubPlan> update(@RequestBody List<TbSubPlan> subPlanEntity) {
+
         Date sortEndDate = null;
         Integer version = 1;
         for (TbSubPlan tbSubPlan : subPlanEntity) {
@@ -449,12 +486,12 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
     }
 
     @GetMapping("/getOneByIdCard")
-    public RestResponse<List<TbSubPlan>> getOneByIdCard(@RequestParam(value = "idCard",required = false) String idCard,@RequestParam(value = "xtUserId" ,required = false) String xtUserId) {
+    public RestResponse<List<TbSubPlan>> getOneByIdCard(@RequestParam(value = "idCard", required = false) String idCard, @RequestParam(value = "xtUserId", required = false) String xtUserId) {
 
         LambdaQueryWrapper<TbTrainUser> eq = new QueryWrapper<TbTrainUser>().lambda();
-        if(!StringUtils.isEmpty(idCard)){
+        if (!StringUtils.isEmpty(idCard)) {
             eq.eq(TbTrainUser::getIdCard, idCard);
-        }else if(!StringUtils.isEmpty(xtUserId)){
+        } else if (!StringUtils.isEmpty(xtUserId)) {
             eq.eq(TbTrainUser::getXtUserId, xtUserId);
         }
 

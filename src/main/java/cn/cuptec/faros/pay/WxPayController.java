@@ -332,7 +332,7 @@ public class WxPayController {
 
         //添加退款记录
         OrderRefundInfo orderRefunds = new OrderRefundInfo();
-        orderRefunds.setOrderId(retrieveOrder.getOrderId());
+        orderRefunds.setOrderId(retrieveOrder.getOrderNo());
         orderRefunds.setRefundReason(refundReson);
         orderRefunds.setRefundFee(new BigDecimal(amount).multiply(new BigDecimal(100)));
         orderRefunds.setCreateId(SecurityUtils.getUser().getId());
@@ -345,7 +345,9 @@ public class WxPayController {
 
 
         Dept dept = deptService.getById(userOrder.getDeptId());
-        String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder?orderNo=" + retrieveOrder.getOrderNo() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
+
+        //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
         String result = HttpUtil.get(url);
         retrieveOrder.setStatus(4);
         retrieveOrderService.updateById(retrieveOrder);
@@ -382,7 +384,7 @@ public class WxPayController {
             orderRefundInfo.setRefundStatus(2);
             orderRefundInfoService.updateById(orderRefundInfo);
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                    .eq(RetrieveOrder::getOrderId, outRefundNo));
+                    .eq(RetrieveOrder::getOrderNo, outRefundNo));
             if (refundStatus.equals("SUCCESS")) {
                 BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
                 BigDecimal divide = refundFee1.divide(new BigDecimal(100));

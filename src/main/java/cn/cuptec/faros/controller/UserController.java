@@ -589,7 +589,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @SysLog("查询医生")
     @GetMapping("/manage/queryDoctor")
-    public RestResponse<IPage<User>> queryDoctor() {
+    public RestResponse<IPage<User>> queryDoctor(@RequestParam(required = false, value = "nickname") String nickname) {
         //获取当前用户的部门
         User user = service.getById(SecurityUtils.getUser().getId());
         if (user == null || user.getDeptId() == null) {
@@ -601,6 +601,9 @@ public class UserController extends AbstractBaseController<UserService, User> {
         roleIds.add(20);
         if (SecurityUtils.getUser().getId() != 114) {
             queryWrapper.eq("user.dept_id", user.getDeptId());
+        }
+        if (!StringUtils.isEmpty(nickname)) {
+            queryWrapper.like("user.nickname", nickname);
         }
         IPage<User> data = service.queryUserByRole(roleIds, queryWrapper, page);
         //查询医生所属团队

@@ -42,7 +42,7 @@ public class ChatUser extends Model<ChatUser> implements Comparable<ChatUser> {
      * 对话是否已关闭
      */
     private int isClosed;
-    private String patientOtherOrderStatus;//图文咨询状态//0-待接收 1-接收 2-拒绝 3-结束
+    private String patientOtherOrderStatus;//图文咨询状态//0-待接收 1-接收 2-拒绝 3-结束 4会话随访
     /**
      * 最后一条消息
      */
