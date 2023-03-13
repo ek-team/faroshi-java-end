@@ -193,6 +193,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                         } else {
                             uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
+
                             User user = userService.getById(userId);
                             if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {
                                 LocalDateTime now = LocalDateTime.now();

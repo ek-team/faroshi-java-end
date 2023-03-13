@@ -30,7 +30,7 @@ public class UniAppPushService {
 
     public void send(String title, String body, String userId, String url) {
         User user = userService.getById(userId);
-        if (user != null && StringUtils.isEmpty(user.getCid())) {
+        if (user == null || StringUtils.isEmpty(user.getCid())) {
             return;
         }
         PushApi pushApi = PushApiInit.getPushApi();
