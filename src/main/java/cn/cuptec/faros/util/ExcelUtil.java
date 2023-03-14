@@ -191,6 +191,6 @@ public class ExcelUtil {
     }
     public static void writefFormExcel(HttpServletResponse response, List<List<Object>> dataList, String fileName, String sheetName,List<List<String>> headList ) throws Exception {
 
-        EasyExcel.write(getOutputStream("fileName",response)).head(headList).sheet("用户信息").doWrite(dataList);
+        EasyExcel.write(getOutputStream(fileName,response)).head(headList).sheet("题目数据").doWrite(dataList);
     }
 }

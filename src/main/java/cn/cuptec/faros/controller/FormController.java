@@ -195,7 +195,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
         if (CollectionUtils.isEmpty(formUserDataList)) {
             return RestResponse.ok();
         }
-
+        Form form = service.getById(formId);
 
         List<FormOptions> formOptions = formOptionsService.list(new QueryWrapper<FormOptions>().lambda().eq(FormOptions::getFormId, formId));
         Map<Integer, FormOptions> formOptionsMap = formOptions.stream()
@@ -304,7 +304,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             index++;
         }
         try {
-            ExcelUtil.writefFormExcel(response, dataList, "cFileName", "form", headList);
+            ExcelUtil.writefFormExcel(response, dataList, form.getTitle(), "form", headList);
 
         } catch (Exception e) {
             e.printStackTrace();
