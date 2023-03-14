@@ -50,7 +50,8 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         List<FormUserData> formManagementData = param.getFormManagementDatas();
         Integer formId = formManagementData.get(0).getFormId();
         Form byId = formService.getById(formId);
-
+        ChatMsg byId1 = chatMsgService.getById(param.getStr() + "");
+        FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeService.getById(param.getStr());
 
         List<Integer> formSettingId = formManagementData.stream().map(FormUserData::getFormSettingId)
                 .collect(Collectors.toList());
@@ -73,7 +74,15 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             formUserData.setGroupId(groupId);
             formUserData.setUserId(SecurityUtils.getUser().getId());
             formUserData.setCreateTime(LocalDateTime.now());
-            formUserData.setDoctorId(byId.getCreateUserId());
+            if (byId1 != null) {
+                formUserData.setDoctorId(byId1.getFromUid());
+
+            } else if (followUpPlanNotice != null) {
+                formUserData.setDoctorId(followUpPlanNotice.getDoctorId());
+            } else {
+                formUserData.setDoctorId(byId.getCreateUserId());
+
+            }
             String answer = "";
             if (formUserData.getAnswer() != null) {
                 formUserData.setAnswer(formUserData.getAnswer().toString());
@@ -88,20 +97,27 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
                 if (type.equals("1")) {//1-输入框
                     for (FormOptions formOption : formOptionsList) {
                         if (answer.equals(formOption.getText())) {
-                            scope = scope + formOption.getScore();
+                            if (formOption.getScore() != null) {
+                                scope = scope + formOption.getScore();
+                            }
                         }
                     }
 
                 } else if (type.equals("2")) {// 2-单选框
                     for (FormOptions formOption : formOptionsList) {
                         if (answer.equals(formOption.getId() + "")) {
-                            scope = scope + formOption.getScore();
+                            if (formOption.getScore() != null) {
+                                scope = scope + formOption.getScore();
+                            }
                         }
                     }
                 } else if (type.equals("3")) {//3-多行入框
                     for (FormOptions formOption : formOptionsList) {
                         if (answer.equals(formOption.getText())) {
-                            scope = scope + formOption.getScore();
+                            if (formOption.getScore() != null) {
+                                scope = scope + formOption.getScore();
+
+                            }
                         }
                     }
                 } else if (type.equals("4")) {//4文本
@@ -118,7 +134,9 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
                         List<String> strings = Arrays.asList(split);
                         log.info(strings.toString() + "多选多选多选多选多选多选多选多选多选");
                         if (strings.indexOf(formOption.getId() + "") != -1) {
-                            scope = scope + formOption.getScore();
+                            if (formOption.getScore() != null) {
+                                scope = scope + formOption.getScore();
+                            }
                         }
                     }
                 }
@@ -129,16 +147,15 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         service.saveBatch(formManagementData);
         //更改通知的状态
         Integer str = formManagementData.get(0).getStr();
-        FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
-        followUpPlanNotice.setId(str);
-        followUpPlanNotice.setForm(1);
-        followUpPlanNoticeService.updateById(followUpPlanNotice);
+        FollowUpPlanNotice updateFollowUpPlanNotice = new FollowUpPlanNotice();
+        updateFollowUpPlanNotice.setId(str);
+        updateFollowUpPlanNotice.setForm(1);
+        followUpPlanNoticeService.updateById(updateFollowUpPlanNotice);
         ChatMsg chatMsg = new ChatMsg();
         chatMsg.setId(param.getStr() + "");
         chatMsg.setStr2(1 + "");
         chatMsgService.updateById(chatMsg);
         //默认再给医生发送一条信息 告诉医生 患者填写表单成功
-        ChatMsg byId1 = chatMsgService.getById(chatMsg.getId());
         if (byId1 != null) {
             ChatMsg newChatMsg = new ChatMsg();
             BeanUtils.copyProperties(byId1, newChatMsg, "id");

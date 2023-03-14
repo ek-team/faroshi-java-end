@@ -38,6 +38,10 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     private UserService userService;
     @Resource
     private FormUserDataService formUserDataService;
+    @Resource
+    private ChatMsgService chatMsgService;
+    @Resource
+    private FollowUpPlanNoticeService followUpPlanNoticeService;
 
     /**
      * 添加
@@ -342,6 +346,8 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     @GetMapping("/getById")
     public RestResponse getById(@RequestParam(value = "patientUserId", required = false) Integer patientUserId, @RequestParam("id") Integer id, @RequestParam(value = "strId", required = false) String strId) {
         Form byId = service.getById(id);
+        ChatMsg byId1 = chatMsgService.getById(strId);
+        FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeService.getById(strId);
         List<FormSetting> list = formSettingService.list(new QueryWrapper<FormSetting>().lambda().eq(FormSetting::getFormId, id));
         List<Integer> formSettingIds = list.stream().map(FormSetting::getId)
                 .collect(Collectors.toList());
@@ -364,10 +370,17 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             if (patientUserId == null) {
                 patientUserId = SecurityUtils.getUser().getId();
             }
+            Integer doctorId = byId.getCreateUserId();
+            if (byId1 != null) {
+                doctorId = byId1.getFromUid();
+
+            } else if (followUpPlanNotice != null) {
+                doctorId = followUpPlanNotice.getDoctorId();
+            }
             LambdaQueryWrapper<FormUserData> eq = new QueryWrapper<FormUserData>().lambda()
                     .eq(FormUserData::getFormId, id)
                     .eq(FormUserData::getUserId, patientUserId)
-                    .eq(FormUserData::getDoctorId, byId.getCreateUserId());
+                    .eq(FormUserData::getDoctorId, doctorId);
             if (!StringUtils.isEmpty(strId)) {
                 eq.eq(FormUserData::getStr, strId);
             }

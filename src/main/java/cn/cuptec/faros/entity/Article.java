@@ -12,6 +12,8 @@ import lombok.Data;
 public class Article {
     @TableId(type = IdType.AUTO)
     private int id;
+    private Integer createUserId;
+    private Integer deptId;
     private String video;
     private String content;
     private String picture;
