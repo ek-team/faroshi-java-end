@@ -233,7 +233,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 String orderNo = userOrder.getOrderNo();
                 LocalDateTime createTime = userOrder.getCreateTime();
 
-                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() +"-"+ orderNo);
+                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
 
             }
         }
@@ -302,7 +302,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         StringBuilder::append)
                 .toString();
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
-                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds)
+                .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
 
         return RestResponse.ok(saleSpecGroup);
     }
@@ -386,7 +387,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         StringBuilder::append)
                 .toString();
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
-                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds)
+                .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
         List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
         if (!CollectionUtils.isEmpty(saleSpecDescs)) {
             String saleSpecId = "";
@@ -491,7 +493,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         StringBuilder::append)
                 .toString();
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
-                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds));
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, querySaleSpecIds)
+                .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
         List<SaleSpecDesc> saleSpecDescs = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
         if (!CollectionUtils.isEmpty(saleSpecDescs)) {
             String saleSpecId = "";
@@ -564,7 +567,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 String orderNo = userOrder.getOrderNo();
                 LocalDateTime createTime = userOrder.getCreateTime();
 
-                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() +"-"+ orderNo);
+                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
 
             }
         }
@@ -633,7 +636,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         String orderNo = userOrder.getOrderNo();
         LocalDateTime createTime = userOrder.getCreateTime();
 
-        userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() +"-"+ orderNo);
+        userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
 
         return RestResponse.ok(userOrder);
     }
@@ -641,13 +644,14 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     public static void main(String[] args) {
         System.out.println("KF2023228-1630542643203145728".split("-")[1]);
     }
+
     /**
      * 查询订单详细信息
      */
     @GetMapping("/user/orderDetailByOrderNo")
     public RestResponse orderDetailByOrderNo(@RequestParam("orderNo") String orderNo) {
         String[] split = orderNo.split("-");
-        orderNo=split[1];
+        orderNo = split[1];
         UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda()
                 .eq(UserOrder::getOrderNo, orderNo));
         //就诊人
@@ -860,7 +864,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 String orderNo = userOrder.getOrderNo();
                 LocalDateTime createTime = userOrder.getCreateTime();
 
-                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth()+"-" + orderNo);
+                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
 
             }
 
