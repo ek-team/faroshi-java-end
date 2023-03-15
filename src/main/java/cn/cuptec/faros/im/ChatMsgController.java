@@ -437,4 +437,35 @@ public class ChatMsgController {
         );
         return RestResponse.ok();
     }
+
+    /**
+     * 查询 聊天的所有图片
+     */
+    @GetMapping("/queryAllMsgIMage")
+    public RestResponse queryAllMsgIMage(
+            @RequestParam("msgId") Integer msgId) {
+        ChatMsg chatMsg = chatMsgService.getById(msgId);
+        List<ChatMsg> chatMsgs = new ArrayList<>();
+        if (chatMsg.getChatUserId() == null) {
+            //单聊
+            chatMsgs = chatMsgService.list(Wrappers.<ChatMsg>lambdaQuery()
+                    .nested(query -> query.eq(ChatMsg::getToUid, chatMsg.getFromUid()).eq(ChatMsg::getFromUid, chatMsg.getToUid()).eq(ChatMsg::getMsgType, ChatProto.MESSAGE_PIC))
+                    .or(query -> query.eq(ChatMsg::getToUid, chatMsg.getToUid()).eq(ChatMsg::getFromUid, chatMsg.getFromUid()).eq(ChatMsg::getMsgType, ChatProto.MESSAGE_PIC))
+                    .orderByDesc(ChatMsg::getCreateTime)
+            );
+        } else {
+            //群聊
+            //查询群聊
+            chatMsgs = chatMsgService.list(Wrappers.<ChatMsg>lambdaQuery()
+                    .nested(query -> query.eq(ChatMsg::getChatUserId, chatMsg.getChatUserId()).eq(ChatMsg::getMsgType, ChatProto.MESSAGE_PIC))
+                    .orderByDesc(ChatMsg::getCreateTime));
+        }
+        List<String> images = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(chatMsgs)) {
+            images = chatMsgs.stream().map(ChatMsg::getUrl)
+                    .collect(Collectors.toList());
+        }
+        return RestResponse.ok(images);
+    }
+
 }
