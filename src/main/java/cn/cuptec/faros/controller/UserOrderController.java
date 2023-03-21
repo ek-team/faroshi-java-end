@@ -653,7 +653,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        System.out.println("asd-1630542643203145728".split("-").length==1);
+        System.out.println("asd-1630542643203145728".split("-").length == 1);
     }
 
     /**
@@ -765,8 +765,18 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 }
                 List<String> orderNos = deliveryMoBans.stream().map(DeliveryMoBan::getOrderNo)
                         .collect(Collectors.toList());
+                List<String> orderNos1 = new ArrayList<>();
+                for (String orderNo : orderNos) {
+                    String[] split = orderNo.split("-");
+                    if (split.length == 1) {
+                        orderNo = split[0];
+                    } else {
+                        orderNo = split[1];
+                    }
+                    orderNos1.add(orderNo);
+                }
                 List<UserOrder> userOrders = service.list(new QueryWrapper<UserOrder>().lambda()
-                        .in(UserOrder::getOrderNo, orderNos)
+                        .in(UserOrder::getOrderNo, orderNos1)
                         .eq(UserOrder::getStatus, 2));
                 if (!CollectionUtils.isEmpty(userOrders)) {
 
@@ -888,15 +898,18 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             String cFileName = null;
             try {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                DateTimeFormatter df1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 cFileName = URLEncoder.encode("order", "UTF-8");
                 List<UserOrderExcel> userOrderExcels = new ArrayList<>();
                 for (UserOrder userOrder : userOrders) {
                     UserOrderExcel userOrderExcel = new UserOrderExcel();
                     userOrderExcel.setOrderNo(userOrder.getOrderNo());
                     userOrderExcel.setUserName(userOrder.getPatientUserName());
+                    userOrderExcel.setPatientUserName(userOrder.getPatientUserName());
                     userOrderExcel.setPayment(userOrder.getPayment().toString());
                     userOrderExcel.setPatientUserIdCard(userOrder.getPatientUserIdCard());
                     userOrderExcel.setDoctorTeamName(userOrder.getDoctorTeamName());
+                    userOrderExcel.setSpec(userOrder.getSaleSpecId());
                     if (userOrder.getPayTime() != null) {
                         userOrderExcel.setPayTime(df.format(userOrder.getPayTime()));
 
@@ -906,7 +919,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     }
                     userOrderExcel.setHospitalName(userOrder.getHospitalName());
                     if (userOrder.getDeliveryDate() != null) {
-                        userOrderExcel.setDeliveryDate(df.format(userOrder.getDeliveryDate()));
+                        log.info(userOrder.getDeliveryDate() + "");
+                        userOrderExcel.setDeliveryDate(df1.format(userOrder.getDeliveryDate()));
                     } else {
                         userOrderExcel.setDeliveryDate("");
 
@@ -933,7 +947,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                             break; //可选
                     }
                     userOrderExcel.setStatus(status);
-                    userOrderExcel.setServicePackName(userOrder.getServicePack().getName());
+                    if (userOrder.getServicePack() != null) {
+                        userOrderExcel.setServicePackName(userOrder.getServicePack().getName());
+
+                    } else {
+                        userOrderExcel.setServicePackName("");
+
+                    }
                     userOrderExcel.setCreateTime(df.format(userOrder.getCreateTime()));
                     userOrderExcels.add(userOrderExcel);
                 }

@@ -11,12 +11,16 @@ import lombok.Data;
 public class DeliveryMoBan extends BaseRowModel {
 
     @ColumnWidth(0)
-    @ExcelProperty(value = "订单号", index = 0)
+    @ExcelProperty(value = "id", index = 0)
+    private String id;
+
+    @ColumnWidth(10)
+    @ExcelProperty(value = "订单号", index = 1)
     private String orderNo;
     @ColumnWidth(10)
-    @ExcelProperty(value = "快递公司", index = 1)
+    @ExcelProperty(value = "快递公司", index = 2)
     private String name;
     @ColumnWidth(10)
-    @ExcelProperty(value = "快递单号", index = 2)
+    @ExcelProperty(value = "快递单号", index = 3)
     private String deliverySn;//
 }

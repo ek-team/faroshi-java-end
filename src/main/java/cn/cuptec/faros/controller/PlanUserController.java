@@ -335,6 +335,12 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             }
             service.updateBatchById(list);
             if (tbTrainUser.getAccountStatus().equals(0)) {//新账号
+                for (TbTrainUser tbTrainUser1 : list) {
+                    tbTrainUser1.setIdCard("被覆盖" + tbTrainUser1.getIdCard());
+                }
+                service.updateBatchById(list);
+
+
                 List<TbTrainUser> xtUserId = service.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, id));
                 if (!CollectionUtils.isEmpty(xtUserId)) {
                     //将所有绑定的XtuserId 修改为null
@@ -361,7 +367,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, userId));
             DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-            deviceScanSignLog.setUserId(userId+"");
+            deviceScanSignLog.setUserId(userId + "");
 
             deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
 
@@ -386,7 +392,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, userId));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(userId+"");
+        deviceScanSignLog.setUserId(userId + "");
 
         deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
 
@@ -492,7 +498,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @GetMapping("/getByPhoneAndIdCard")
     public RestResponse getByPhoneAndIdCard(@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard) {
 
-        return RestResponse.ok(service.getInfoByPhoneAndIdCard(phone, idCard,null));
+        return RestResponse.ok(service.getInfoByPhoneAndIdCard(phone, idCard, null));
     }
 
 
@@ -540,9 +546,6 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     protected Class<TbTrainUser> getEntityClass() {
         return TbTrainUser.class;
     }
-
-
-
 
 
     /**
