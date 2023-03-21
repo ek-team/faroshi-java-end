@@ -48,33 +48,42 @@ public class WxScanService {
     public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context, WxMpService weixinService, WxSessionManager sessionManager) {
         String wxMessageEventKey = WxUtil.getWxMessageEventKey(wxMessage.getEventKey());
         String event = wxMessage.getEvent();
+        log.info("扫码消息:" + event);
+        log.info("扫码消息====:" + wxMessageEventKey);
         // TODO 此处简单处理场景
         String[] split = wxMessageEventKey.split(";");
         ServicePack byId = null;
         String token = "";
-        if (split[2].equals("servicePack")) {
-            Integer servicePackId = Integer.parseInt(split[0]);
-            token = split[1];
-            log.info("场景值：" + wxMessageEventKey + "=====" + event);
-            log.info("服务包id：" + servicePackId + "=====" + event);
+        if (split.length >= 3) {
+            if (split[2].equals("servicePack")) {
+                Integer servicePackId = Integer.parseInt(split[0]);
+                token = split[1];
+                log.info("场景值：" + wxMessageEventKey + "=====" + event);
+                log.info("服务包id：" + servicePackId + "=====" + event);
 
-            byId = servicePackService.getById(servicePackId);
+                byId = servicePackService.getById(servicePackId);
+            }
         }
+
         Integer doctorId = null;
         User doctor = null;
-        if (split[2].equals("addPatient")) {
-            token = split[1];
-            doctorId = Integer.parseInt(split[0]);
-            doctor = userService.getById(doctorId);
+        if (split.length >= 3) {
+            if (split[2].equals("addPatient")) {
+                token = split[1];
+                doctorId = Integer.parseInt(split[0]);
+                doctor = userService.getById(doctorId);
 
+            }
         }
         Integer teamId = null;
         DoctorTeam doctorTeam = null;
-        if (split[2].equals("addTeam")) {
-            token = split[1];
-            teamId = Integer.parseInt(split[0]);
-            doctorTeam = doctorTeamService.getById(teamId);
+        if (split.length >= 3) {
+            if (split[2].equals("addTeam")) {
+                token = split[1];
+                teamId = Integer.parseInt(split[0]);
+                doctorTeam = doctorTeamService.getById(teamId);
 
+            }
         }
         // 获取微信用户基本信息
         WxMpUser userWxInfo = null;

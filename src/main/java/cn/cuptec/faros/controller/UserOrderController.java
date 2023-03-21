@@ -653,7 +653,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        System.out.println("KF2023228-1630542643203145728".split("-")[1]);
+        System.out.println("asd-1630542643203145728".split("-").length==1);
     }
 
     /**
@@ -662,7 +662,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/user/orderDetailByOrderNo")
     public RestResponse orderDetailByOrderNo(@RequestParam("orderNo") String orderNo) {
         String[] split = orderNo.split("-");
-        orderNo = split[1];
+        if (split.length == 1) {
+            orderNo = split[0];
+        } else {
+            orderNo = split[1];
+        }
+
         UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda()
                 .eq(UserOrder::getOrderNo, orderNo));
         //就诊人
