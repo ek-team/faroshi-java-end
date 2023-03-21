@@ -63,15 +63,14 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private final OssProperties ossProperties;
     @Resource
     private DeptService deptService;
-
+    @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
     @Resource
     private UserRoleService userRoleService;
 
     @Resource
     private HospitalInfoService hospitalInfoService;
 
-    @Resource
-    private DoctorTeamPeopleService doctorTeamPeopleService;
     @Resource
     private DoctorTeamService doctorTeamService;
     @Resource
@@ -655,6 +654,8 @@ public class UserController extends AbstractBaseController<UserService, User> {
     public RestResponse userDel(@PathVariable Integer id) {
         User user = new User();
         user.setId(id);
+        doctorTeamPeopleService.remove(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, id));
         return service.deleteUserById(user) ? RestResponse.ok(DATA_DELETE_SUCCESS) : RestResponse.failed(DATA_DELETE_FAILED);
     }
 
