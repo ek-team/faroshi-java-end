@@ -81,7 +81,7 @@ public class RetrieveOrder {
 
     //确认收款时间
     private Date confirmRevMoneyTime;
-    //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成
+    //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成 6-退款待审核  7-退款拒绝
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
     private Integer kuAiDiStatus;

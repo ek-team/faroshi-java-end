@@ -22,7 +22,8 @@ import java.util.List;
 public class User extends Model<User> {
 
     private static final long serialVersionUID = 1L;
-
+    private String macAdd;
+    private Integer productStockId;
     @TableId(type = IdType.AUTO)
     private Integer id;
     @Queryable(queryLogical = QueryLogical.LIKE)

@@ -170,7 +170,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                    @RequestParam(value = "startTime", required = false) String startTime,
                                    @RequestParam(value = "endTime", required = false) String endTime,
                                    @RequestParam(value = "nickname", required = false) String nickname,
-                                   @RequestParam(value = "receiverPhone", required = false) String receiverPhone) {
+                                   @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
+                                   @RequestParam(value = "toSort", required = false) String toSort) {
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
@@ -190,6 +191,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
             queryWrapper.le("user_order.create_time", endTime);
             queryWrapper.ge("user_order.create_time", startTime);
+        }
+        if (!StringUtils.isEmpty(toSort)) {
+            if (toSort.equals("DESC")) {
+                queryWrapper.orderByDesc("delivery_date");
+
+            } else {
+                queryWrapper.orderByAsc("delivery_date");
+
+            }
+
         }
         IPage<UserOrder> pageScoped = service.pageScoped(page, queryWrapper);
         if (CollUtil.isNotEmpty(pageScoped.getRecords())) {

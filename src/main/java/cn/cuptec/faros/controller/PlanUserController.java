@@ -296,14 +296,21 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         if (!IdCardUtil.isValidCard(tbTrainUser.getIdCard())) {
             return RestResponse.failed("身份证有误");
         }
+        Integer id;
+        if (SecurityUtils.getUser() == null) {
+            id = tbTrainUser.getXtUserId();
+        } else {
+            id = SecurityUtils.getUser().getId();
+        }
 
-        Integer id = SecurityUtils.getUser().getId();
         List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().
                 lambda().eq(ProductStock::getMacAddress, tbTrainUser.getMacAdd()).eq(ProductStock::getDel, 1));
 
         User user = new User();
         user.setId(id);
+        user.setMacAdd(tbTrainUser.getMacAdd());
         if (!CollectionUtils.isEmpty(productStocks)) {
+            user.setProductStockId(productStocks.get(0).getId());
             tbTrainUser.setRegisterProductSn(productStocks.get(0).getProductSn());
         }
 
@@ -321,13 +328,21 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         List<TbTrainUser> list = service.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, tbTrainUser.getIdCard()));
         if (!CollectionUtils.isEmpty(list)) {
             if (tbTrainUser.getAccountStatus() == null) {
-                return RestResponse.failed("1235"); //提示用户身份证已存在 使用新账号还是旧账号
+                return RestResponse.ok("1235", list.get(0)); //提示用户身份证已存在 使用新账号还是旧账号
             }
             for (TbTrainUser tbTrainUser1 : list) {
                 tbTrainUser1.setXtUserId(null);
             }
             service.updateBatchById(list);
             if (tbTrainUser.getAccountStatus().equals(0)) {//新账号
+                List<TbTrainUser> xtUserId = service.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, id));
+                if (!CollectionUtils.isEmpty(xtUserId)) {
+                    //将所有绑定的XtuserId 修改为null
+                    for (TbTrainUser tbTrainUser1 : xtUserId) {
+                        tbTrainUser1.setXtUserId(null);
+                    }
+                    service.updateBatchById(xtUserId);
+                }
                 tbTrainUser.setCreateDate(new Date());
                 tbTrainUser.setUpdateDate(new Date());
                 service.save(tbTrainUser);
@@ -337,22 +352,23 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
                 TbTrainUser tbTrainUser1 = list.get(0);
                 tbTrainUser1.setMacAdd(tbTrainUser.getMacAdd());
                 tbTrainUser1.setRegisterProductSn(tbTrainUser.getRegisterProductSn());
-                tbTrainUser1.setXtUserId(SecurityUtils.getUser().getId());
+                tbTrainUser1.setXtUserId(id);
                 service.updateById(tbTrainUser1);
+                tbTrainUser = tbTrainUser1;
             }
 
             //添加到扫描列表
-            deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
+            deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, userId));
             DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-            deviceScanSignLog.setUserId(SecurityUtils.getUser().getId()+"");
+            deviceScanSignLog.setUserId(userId+"");
 
             deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
 
             deviceScanSignLogService.save(deviceScanSignLog);
-            return RestResponse.ok();
+            return RestResponse.ok(tbTrainUser);
         }
-        List<TbTrainUser> xtUserId = service.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, SecurityUtils.getUser().getId()));
+        List<TbTrainUser> xtUserId = service.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, id));
         if (!CollectionUtils.isEmpty(xtUserId)) {
             //将所有绑定的XtuserId 修改为null
             for (TbTrainUser tbTrainUser1 : xtUserId) {
@@ -363,17 +379,19 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         tbTrainUser.setCreateDate(new Date());
         tbTrainUser.setUpdateDate(new Date());
         service.save(tbTrainUser);
+        List<TbTrainUser> userBeanList = new ArrayList<>();
+        userBeanList.add(tbTrainUser);
 
         //添加到扫描列表
-        deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
+        deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, userId));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(SecurityUtils.getUser().getId()+"");
+        deviceScanSignLog.setUserId(userId+"");
 
         deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
 
         deviceScanSignLogService.save(deviceScanSignLog);
-        return RestResponse.ok();
+        return RestResponse.ok(tbTrainUser);
     }
 
 
