@@ -51,7 +51,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         TbTrainUser one = getInfoByUXtUserId(userId);
         TbTrainUser tbTrainUser = getOne(new QueryWrapper<TbTrainUser>().lambda()
                 .eq(TbTrainUser::getUserId, uid));
-        deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
+        deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, uid));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
         deviceScanSignLog.setUserId(uid+"");
