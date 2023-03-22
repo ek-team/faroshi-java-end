@@ -23,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+
 @Slf4j
 @RestController
 @RequestMapping("/deviceScanSignLog")
@@ -107,16 +108,16 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
 
     @PostMapping("/save")
     public RestResponse save(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) Integer userId) {
-        log.info("进入====================保存扫描设备:{}",macAddress);
+        log.info("进入====================保存扫描设备:{}", macAddress);
         if (userId == null) {
             userId = SecurityUtils.getUser().getId();
         }
-        log.info("保存扫描设备:{}",macAddress);
-        log.info("保存扫描设备:{}",userId);
+        log.info("保存扫描设备:{}", macAddress);
+        log.info("保存扫描设备:{}", userId);
         service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(userId+"");
+        deviceScanSignLog.setUserId(userId + "");
 
         deviceScanSignLog.setMacAddress(macAddress);
 
@@ -137,7 +138,7 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(userId+"");
+        deviceScanSignLog.setUserId(userId + "");
 
         deviceScanSignLog.setMacAddress(macAddress);
 
@@ -145,17 +146,21 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         return RestResponse.ok(service.save(deviceScanSignLog));
 
     }
+
     @GetMapping("/getByMacAdd")
     public List<TbTrainUser> getByMacAdd(@RequestParam("macAddress") String macAddress) {
 
         List<DeviceScanSignLog> list = service.list(new QueryWrapper<DeviceScanSignLog>().lambda()
                 .eq(DeviceScanSignLog::getMacAddress, macAddress));
-        if(!CollectionUtils.isEmpty(list)){
+        if (!CollectionUtils.isEmpty(list)) {
             List<String> userIds = list.stream().map(DeviceScanSignLog::getUserId)
                     .collect(Collectors.toList());
             List<TbTrainUser> list1 = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
                     .in(TbTrainUser::getUserId, userIds));
-            return list1;
+            list1.sort((t1, t2) -> t2.getCreateDate().compareTo(t1.getCreateDate()));
+            List<TbTrainUser> result = new ArrayList<>();
+            result.add(list1.get(0));
+            return result;
         }
         return new ArrayList<>();
 
@@ -167,13 +172,14 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         List<DeviceScanSignLog> deviceScanSignLogs = service.list(queryWrapper);
         if (!CollectionUtils.isEmpty(deviceScanSignLogs)) {
             List<String> userIds = deviceScanSignLogs.stream().map(DeviceScanSignLog::getUserId).collect(Collectors.toList());
-            List<User> users = (List<User>) userService.listByIds(userIds);
-            Map<Integer, User> map = users.stream()
-                    .collect(Collectors.toMap(User::getId, t -> t));
+            List<TbTrainUser> users = planUserService.list(new QueryWrapper<TbTrainUser>()
+                    .lambda().in(TbTrainUser::getUserId, userIds));
+            Map<String, TbTrainUser> map = users.stream()
+                    .collect(Collectors.toMap(TbTrainUser::getUserId, t -> t));
             for (DeviceScanSignLog deviceScanSignLog : deviceScanSignLogs) {
-                User user = map.get(deviceScanSignLog.getUserId());
-                if(user!=null){
-                    deviceScanSignLog.setUserName(user.getNickname());
+                TbTrainUser user = map.get(deviceScanSignLog.getUserId());
+                if (user != null) {
+                    deviceScanSignLog.setUserName(user.getName());
 
                 }
             }
