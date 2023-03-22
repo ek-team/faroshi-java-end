@@ -503,7 +503,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
 
     @PutMapping("/bindSystemUserId")
-    public RestResponse bindSystemUserId(@RequestParam long uid,@RequestParam(value = "macAdd",required = false) String macAdd) {
+    public RestResponse bindSystemUserId(@RequestParam long uid,@RequestParam(value = "macAddress",required = false) String macAdd) {
+        log.info("bindSystemUserId======="+macAdd);
         service.bindSystemUserId(uid,macAdd);
 //        System.out.println("zxczxczxc");
         return RestResponse.ok();
