@@ -44,9 +44,8 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
     private DeviceScanSignLogService deviceScanSignLogService;
 
 
-
     @Transactional(rollbackFor = Exception.class)
-    public void bindSystemUserId(long uid) {
+    public void bindSystemUserId(long uid, String macAdd) {
         Integer userId = SecurityUtils.getUser().getId();
         TbTrainUser one = getInfoByUXtUserId(userId);
         TbTrainUser tbTrainUser = getOne(new QueryWrapper<TbTrainUser>().lambda()
@@ -54,9 +53,9 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, tbTrainUser.getMacAdd()).eq(DeviceScanSignLog::getUserId, uid));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
-        deviceScanSignLog.setUserId(uid+"");
+        deviceScanSignLog.setUserId(uid + "");
 
-        deviceScanSignLog.setMacAddress(tbTrainUser.getMacAdd());
+        deviceScanSignLog.setMacAddress(macAdd);
 
 
         deviceScanSignLogService.save(deviceScanSignLog);
