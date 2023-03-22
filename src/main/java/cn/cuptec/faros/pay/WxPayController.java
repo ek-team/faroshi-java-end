@@ -78,6 +78,8 @@ public class WxPayController {
     private PatientUserService patientUserService;
     @Resource
     private PatientRelationTeamService patientRelationTeamService;
+    @Resource
+    private ServicePackService servicePackService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -123,6 +125,21 @@ public class WxPayController {
             //发送公众号通知
             wxMpService.paySuccessNotice(userById.getMpOpenId(), "您的订单已支付成功!请耐心等待发货", userOrder.getOrderNo(), userOrder.getPayment().toString(),
                     "点击查看详情", "pages/myOrder/myOrder");
+
+            //发送公众号通知业务员
+            ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+            String keyword1 = "";
+            if (servicePack != null) {
+                keyword1 = servicePack.getName() + "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
+            } else {
+                keyword1 = "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
+            }
+            User clerkUser = userService.getById(2312);
+            if (clerkUser != null) {
+                wxMpService.paySuccessNotice(clerkUser.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, 1 + "",
+                        "请不要点击该消息，只作为通知", "pages/myOrder/myOrder");
+            }
+
             Integer patientUserId = userOrder.getPatientUserId();
             PatientUser byId = patientUserService.getById(patientUserId);
             if (byId != null) {

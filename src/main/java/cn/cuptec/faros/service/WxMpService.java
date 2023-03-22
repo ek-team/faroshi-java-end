@@ -1,5 +1,6 @@
 package cn.cuptec.faros.service;
 
+import cn.cuptec.faros.common.utils.StringUtils;
 import cn.cuptec.faros.config.wx.WxMpConfiguration;
 
 import cn.hutool.core.collection.CollUtil;
@@ -133,7 +134,9 @@ public class WxMpService {
     public void paySuccessNotice(String openId, String first, String keyword1,
                               String keyword2, String remark, String url) {
         String templateId = "mzXslzSjZiMhCQJ6MQi_bcDJOVbDLl6sfLn6u_0gocI";
-
+        if(StringUtils.isEmpty(remark)){
+            remark="点击查看详情";
+        }
         List<WxMpTemplateData> dataList = new ArrayList<>();
         WxMpTemplateData wxMpTemplateData = new WxMpTemplateData();
         wxMpTemplateData.setName("first");
@@ -147,7 +150,7 @@ public class WxMpService {
         wxMpTemplateData2.setName("keyword2");
         wxMpTemplateData2.setValue(keyword2);
         dataList.add(wxMpTemplateData2);
-        dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
+        dataList.add(new WxMpTemplateData("remark", remark, "#FF0000"));
         sendTemplateMsg(openId, templateId, url, dataList);
     }
     //发货通知
