@@ -53,4 +53,7 @@ public class UserOrderExcel {
     @ColumnWidth(10)
     @ExcelProperty(value = "规格", index = 14)
     private String spec;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "收货人手机号", index = 15)
+    private String phone;//
 }

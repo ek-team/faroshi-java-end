@@ -699,28 +699,17 @@ public class UserController extends AbstractBaseController<UserService, User> {
         if (deptId == null) {
             return RestResponse.failed("没有查询到当前登录用户所属部门");
         }
-        //获取子部门
-        List<Dept> childrenDepts = deptService.list(new QueryWrapper<Dept>().lambda().eq(Dept::getParentId, deptId));
-        List<Integer> depIds = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(childrenDepts)) {
-            depIds = childrenDepts.stream().map(Dept::getId)
-                    .collect(Collectors.toList());
-        }
-        depIds.add(deptId);
-        if (user.getNickname().equals("管理员")) {
-            List<User> list = service.list(new QueryWrapper<User>().lambda().isNotNull(User::getDeptId));
-            return RestResponse.ok(list);
-        } else {
-            List<User> list = service.list(new QueryWrapper<User>().lambda().in(User::getDeptId, depIds));
-            return RestResponse.ok(list);
-        }
+
+        List<User> list = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18));
+        return RestResponse.ok(list);
+
 
     }
 
     @GetMapping("manage/salesmanListByDep")
     public RestResponse salesmanListByDep(@RequestParam("deptId") Integer deptId) {
 
-        return RestResponse.ok(userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(17, 18)));
+        return RestResponse.ok(userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18)));
     }
 
     @PreAuthorize("@pms.hasPermission('user_manage')")

@@ -69,6 +69,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     private ServicePackDiseasesService servicePackDiseasesService;
     @Resource
     private DiseasesService diseasesService;
+    @Resource
+    private UserQrCodeService userQrCodeService;
 
     /**
      * 设备二维码绑定服务包
@@ -466,6 +468,67 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         IPage<ServicePack> servicePackIPage = service.pageScoped(page, queryWrapper);
 
         return RestResponse.ok(servicePackIPage);
+    }
+
+    /**
+     * 服务包列表查询不分页
+     *
+     * @return
+     */
+    @GetMapping("/listScoped")
+    public RestResponse listScoped() {
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+
+        List<ServicePack> servicePackIPage = service.listScoped(queryWrapper);
+
+        return RestResponse.ok(servicePackIPage);
+    }
+
+    /**
+     * 业务员和服务包绑定
+     */
+    @PostMapping("/bindServicePack")
+    public RestResponse bindServicePack(@RequestBody UserQrCodeParam userQrCodeParam) {
+        userQrCodeService.remove(new QueryWrapper<UserQrCode>().lambda()
+                .eq(UserQrCode::getUserId, userQrCodeParam.getUserId()));
+        List<String> qrCodeIds = userQrCodeParam.getQrCodeIds();
+        String userId = userQrCodeParam.getUserId();
+        if (CollectionUtils.isEmpty(qrCodeIds)) {
+            return RestResponse.ok();
+        }
+        List<UserQrCode> userQrCodeList = new ArrayList<>();
+        for (String qrCodeId : qrCodeIds) {
+            UserQrCode userQrCode = new UserQrCode();
+            userQrCode.setUserId(userId);
+            userQrCode.setQrCodeId(qrCodeId);
+            userQrCodeList.add(userQrCode);
+        }
+        userQrCodeService.saveBatch(userQrCodeList);
+        return RestResponse.ok();
+    }
+
+    /**
+     * 查询业务员已绑定的服务包
+     */
+    @GetMapping("/queryBndServicePack")
+    public RestResponse queryBndServicePack(@RequestParam("userId") Integer userId) {
+        List<UserQrCode> userQrCodeList = userQrCodeService.list(new QueryWrapper<UserQrCode>().lambda()
+                .eq(UserQrCode::getUserId, userId));
+        if (!CollectionUtils.isEmpty(userQrCodeList)) {
+            List<String> qrCodeIds = userQrCodeList.stream().map(UserQrCode::getQrCodeId)
+                    .collect(Collectors.toList());
+            List<ServicePack> servicePacks = (List<ServicePack>) service.listByIds(qrCodeIds);
+            Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
+                    .collect(Collectors.toMap(ServicePack::getId, t -> t));
+            for (UserQrCode userQrCode : userQrCodeList) {
+                ServicePack servicePack = servicePackMap.get(Integer.parseInt(userQrCode.getQrCodeId()));
+                if (servicePack != null) {
+                    userQrCode.setServicePackName(servicePack.getName());
+                }
+            }
+        }
+
+        return RestResponse.ok(userQrCodeList);
     }
 
     /**

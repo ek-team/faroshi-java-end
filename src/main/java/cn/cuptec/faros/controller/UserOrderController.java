@@ -903,6 +903,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 List<UserOrderExcel> userOrderExcels = new ArrayList<>();
                 for (UserOrder userOrder : userOrders) {
                     UserOrderExcel userOrderExcel = new UserOrderExcel();
+                    userOrderExcel.setPhone(userOrder.getReceiverPhone());
                     userOrderExcel.setOrderNo(userOrder.getOrderNo());
                     userOrderExcel.setUserName(userOrder.getPatientUserName());
                     userOrderExcel.setPatientUserName(userOrder.getPatientUserName());

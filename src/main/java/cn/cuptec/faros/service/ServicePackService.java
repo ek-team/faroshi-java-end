@@ -11,11 +11,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ServicePackService extends ServiceImpl<ServicePackMapper, ServicePack> {
     public IPage<ServicePack> pageScoped(IPage<ServicePack> page, Wrapper<ServicePack> queryWrapper) {
         DataScope dataScope = new DataScope();
         dataScope.setIsOnly(true);
         return baseMapper.pageScoped(page, queryWrapper, dataScope);
+    }
+
+    public List<ServicePack> listScoped( Wrapper<ServicePack> queryWrapper) {
+        DataScope dataScope = new DataScope();
+        dataScope.setIsOnly(true);
+        return baseMapper.listScoped( queryWrapper, dataScope);
     }
 }
