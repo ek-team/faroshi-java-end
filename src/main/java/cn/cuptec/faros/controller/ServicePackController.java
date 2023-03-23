@@ -496,6 +496,11 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         if (CollectionUtils.isEmpty(qrCodeIds)) {
             return RestResponse.ok();
         }
+        if (StringUtils.isEmpty(userId)) {
+            return RestResponse.ok();
+        }
+        qrCodeIds = qrCodeIds.stream().distinct().collect(Collectors.toList());
+
         List<UserQrCode> userQrCodeList = new ArrayList<>();
         for (String qrCodeId : qrCodeIds) {
             UserQrCode userQrCode = new UserQrCode();
