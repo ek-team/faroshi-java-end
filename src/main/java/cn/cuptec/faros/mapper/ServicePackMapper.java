@@ -21,7 +21,7 @@ public interface ServicePackMapper extends BaseMapper<ServicePack> {
     IPage<ServicePack> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 
 
-    @Select("SELECT service_pack.name,service_pack.dept_id " +
+    @Select("SELECT service_pack.name,service_pack.id,service_pack.dept_id " +
             " FROM service_pack " +
             "LEFT JOIN dept ON service_pack.dept_id = dept.id " +
             "${ew.customSqlSegment} ORDER BY service_pack.create_time DESC")
