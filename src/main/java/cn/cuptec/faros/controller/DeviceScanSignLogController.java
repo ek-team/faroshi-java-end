@@ -147,6 +147,21 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
 
     }
 
+
+    @GetMapping("/saveOther")
+    public RestResponse saveOther(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) Integer userId) {
+        service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, userId));
+        DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
+
+        deviceScanSignLog.setUserId(userId + "");
+
+        deviceScanSignLog.setMacAddress(macAddress);
+
+
+        return RestResponse.ok(service.save(deviceScanSignLog));
+
+    }
+
     @GetMapping("/getByMacAdd")
     public List<TbTrainUser> getByMacAdd(@RequestParam("macAddress") String macAddress) {
 

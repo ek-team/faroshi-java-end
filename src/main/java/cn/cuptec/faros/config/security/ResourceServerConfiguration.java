@@ -155,7 +155,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/insertTemplate/insert",
                         "/user/register",
                         "/deviceScanSignLog/getByMacAdd",
-                        "/palnUser/newSaveBatch"
+                        "/palnUser/newSaveBatch",
+                        "/deviceScanSignLog/saveOther"
 
                 )
                 .permitAll()
