@@ -63,7 +63,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         entity.setSaleSpecId(entity.getSaleSpecId());
 
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
-                .eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds()));
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
+                .eq(SaleSpecGroup::getServicePackId,userOrder.getServicePackId()));
         if(saleSpecGroup.getRecoveryPrice()!=null){
             entity.setRetrieveAmount(new BigDecimal(saleSpecGroup.getRecoveryPrice()));//回收价格
         }
