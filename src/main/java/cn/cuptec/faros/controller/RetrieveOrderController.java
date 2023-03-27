@@ -487,14 +487,15 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             LocalDateTime now = LocalDateTime.now();
             java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
             day = duration.toDays();
-
+            userOrder.setUseDay(day.intValue());
+            userOrdertService.updateById(userOrder);
         }
 
         XiaDanParam xiaDanParam = new Gson().fromJson(post, XiaDanParam.class);
-        log.info("自动下单回调参数"+post);
-        log.info("自动下单回调参数"+xiaDanParam.getData().toString());
-        log.info("自动下单回调参数"+xiaDanParam.toString());
-        log.info("自动下单回调参数"+xiaDanParam.getData().getTaskId());
+        log.info("自动下单回调参数" + post);
+        log.info("自动下单回调参数" + xiaDanParam.getData().toString());
+        log.info("自动下单回调参数" + xiaDanParam.toString());
+        log.info("自动下单回调参数" + xiaDanParam.getData().getTaskId());
         if (xiaDanParam.getCode() == 200 && xiaDanParam.getMessage().equals("success")) {
             RetrieveOrder retrieveOrder = new RetrieveOrder();
             retrieveOrder.setRentDay(day.intValue());

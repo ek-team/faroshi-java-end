@@ -8,6 +8,7 @@ import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.vo.ProductStockInfoVo;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -126,8 +127,14 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
     public RestResponse pageScopedByDep(@RequestParam("search") String search, @RequestParam(required = false, value = "productSn") String productSn, @RequestParam(required = false, value = "hospitalInfo") String hospitalInfo, @RequestParam("sort") String sort, @RequestParam(value = "productId", required = false) String productId
             , @RequestParam(value = "status", required = false) Integer status) {
 
-        RestResponse restResponse = sysUserController.listByDep();
-        if (restResponse.isOk()) {
+        User user = userService.getById(SecurityUtils.getUser().getId());
+        Integer deptId = user.getDeptId();
+        if (deptId == null) {
+            return RestResponse.failed("没有查询到当前登录用户所属部门");
+        }
+
+        List<User> users = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18,7,17));
+
             //判断搜索条件是 手机号还是昵称 或者是 mac地址
             String nickname = null;
             String phone = null;
@@ -141,7 +148,6 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
                     nickname = search;
                 }
             }
-            List<User> users = (List<User>) restResponse.getData();
             List<Integer> uids = new ArrayList<>();
             QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
@@ -218,8 +224,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
                 iPage.setRecords(records);
             }
             return RestResponse.ok(iPage);
-        }
-        return RestResponse.failed("该登录用户没查询到所属部门");
+
     }
 
     /**

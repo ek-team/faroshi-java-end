@@ -231,6 +231,20 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
 
             for (UserOrder userOrder : records) {
+                //回收时间
+                if (!userOrder.getStatus().equals(5)) {
+                    //计算使用天数
+                    Date deliveryTime = userOrder.getDeliveryTime();
+                    if (deliveryTime != null) {
+                        LocalDateTime now = LocalDateTime.now();
+                        ZoneId zoneId = ZoneId.systemDefault();
+                        LocalDateTime deliveryTimeLo = deliveryTime.toInstant().atZone(zoneId).toLocalDateTime();
+                        java.time.Duration duration = java.time.Duration.between(deliveryTimeLo, now);
+                        Long l = duration.toDays();
+                        userOrder.setUseDay(l.intValue());
+                    }
+                }
+
                 ServicePack servicePack = servicePackMap.get(userOrder.getServicePackId());
                 if (servicePack == null) {
                     servicePack = new ServicePack();
@@ -653,7 +667,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        System.out.println("asd-1630542643203145728".split("-").length == 1);
+        System.out.println(null+"");
     }
 
     /**
@@ -903,6 +917,30 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 List<UserOrderExcel> userOrderExcels = new ArrayList<>();
                 for (UserOrder userOrder : userOrders) {
                     UserOrderExcel userOrderExcel = new UserOrderExcel();
+                    userOrderExcel.setProductSn1(userOrder.getProductSn1());
+                    userOrderExcel.setProductSn2(userOrder.getProductSn2());
+                    userOrderExcel.setProductSn3(userOrder.getProductSn3());
+
+                    //回收时间
+                    if (!userOrder.getStatus().equals(5)) {
+                        //计算使用天数
+                        Date deliveryTime = userOrder.getDeliveryTime();
+                        if (deliveryTime != null) {
+                            LocalDateTime now = LocalDateTime.now();
+                            ZoneId zoneId = ZoneId.systemDefault();
+                            LocalDateTime deliveryTimeLo = deliveryTime.toInstant().atZone(zoneId).toLocalDateTime();
+                            java.time.Duration duration = java.time.Duration.between(deliveryTimeLo, now);
+                            Long l = duration.toDays();
+                            userOrder.setUseDay(l.intValue());
+                        }
+                    }
+                    userOrderExcel.setUseDay(userOrder.getUseDay() + "");
+                    if (userOrder.getActualRetrieveAmount() != null) {
+                        userOrderExcel.setActualRetrieveAmount(userOrder.getActualRetrieveAmount() + "");
+                    } else {
+                        userOrderExcel.setActualRetrieveAmount("");
+
+                    }
                     userOrderExcel.setPhone(userOrder.getReceiverPhone());
                     userOrderExcel.setOrderNo(userOrder.getOrderNo());
                     userOrderExcel.setUserName(userOrder.getPatientUserName());

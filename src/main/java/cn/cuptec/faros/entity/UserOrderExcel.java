@@ -56,4 +56,19 @@ public class UserOrderExcel {
     @ColumnWidth(10)
     @ExcelProperty(value = "收货人手机号", index = 15)
     private String phone;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "用户使用天数", index = 16)
+    private String useDay;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "实际回收价格", index = 17)
+    private String actualRetrieveAmount;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "设备序列号1", index = 18)
+    private String productSn1;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "设备序列号2", index = 19)
+    private String productSn2;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "设备序列号3", index = 20)
+    private String productSn3;//
 }

@@ -411,7 +411,10 @@ public class WxPayController {
 
                     retrieveOrder.setStatus(5);
                     retrieveOrderService.updateById(retrieveOrder);
-
+                    UserOrder userOrder = new UserOrder();
+                    userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
+                    userOrder.setActualRetrieveAmount(divide);
+                    userOrdertService.updateById(userOrder);
                 }
                 User userById = userService.getById(retrieveOrder.getUserId());
                 //发送公众号通知

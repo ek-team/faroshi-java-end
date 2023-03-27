@@ -130,4 +130,12 @@ public class UserOrder {
     private LocalDateTime revTime;
     //产品图片
     private String productPic;
+
+    private Integer useDay;//使用天数
+
+    //实际回收价格
+    private BigDecimal actualRetrieveAmount;
+    private String productSn1;//设备序列号1
+    private String productSn2;//设备序列号2
+    private String productSn3;//设备序列号3
 }
