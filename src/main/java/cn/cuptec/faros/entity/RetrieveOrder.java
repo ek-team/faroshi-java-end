@@ -25,6 +25,7 @@ public class RetrieveOrder {
     private String deliveryPhone;//发货人手机号
     private String deliveryAddress;//发货人地址
     private String orderId;
+    private String userOrderNo; //对应的订单号
     private String naLiOrderId;
     private String orderNo;
     private Integer rentDay;//实际租用天数

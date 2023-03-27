@@ -171,7 +171,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                    @RequestParam(value = "endTime", required = false) String endTime,
                                    @RequestParam(value = "nickname", required = false) String nickname,
                                    @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
-                                   @RequestParam(value = "toSort", required = false) String toSort) {
+                                   @RequestParam(value = "toSort", required = false) String toSort,
+                                   @RequestParam(value = "userOrderNo", required = false) String userOrderNo,
+                                   @RequestParam(value = "productSn1", required = false) String productSn1,
+                                   @RequestParam(value = "productSn1", required = false) String productSn2,
+                                   @RequestParam(value = "productSn1", required = false) String productSn3) {
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
@@ -182,6 +186,18 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         if (!StringUtils.isEmpty(receiverPhone)) {
             queryWrapper.eq("user_order.receiver_phone", receiverPhone);
+        }
+        if (!StringUtils.isEmpty(userOrderNo)) {
+            queryWrapper.like("user_order.order_no", userOrderNo);
+        }
+        if (!StringUtils.isEmpty(productSn1)) {
+            queryWrapper.like("user_order.product_sn1", productSn1);
+        }
+        if (!StringUtils.isEmpty(productSn2)) {
+            queryWrapper.like("user_order.product_sn2", productSn2);
+        }
+        if (!StringUtils.isEmpty(productSn3)) {
+            queryWrapper.like("user_order.product_sn3", productSn3);
         }
         if (!StringUtils.isEmpty(startTime)) {
             if (StringUtils.isEmpty(endTime)) {
@@ -667,7 +683,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        System.out.println(null+"");
+        System.out.println(null + "");
     }
 
     /**

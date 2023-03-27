@@ -27,6 +27,7 @@ public class ProductStock {
     @NotNull(message = "产品不能为空")
     //产品id
     private Integer productId;
+    private Integer tag;//设备标签
     private String ipAdd;
     private String currentUserId;
     private String productDeviceType;

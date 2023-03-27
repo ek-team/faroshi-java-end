@@ -40,69 +40,84 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
 
     @GetMapping("/list")
     public RestResponse list(@RequestParam("macAddress") String macAddress) {
-        List<TbTrainUser> tbTrainUsers = CollUtil.toList();
-        ProductStock one = productStockService.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel, 1));
-        List<DeviceScanSignLog> list = service.list(new QueryWrapper<DeviceScanSignLog>().select("`user_id`,`create_time`,`id`").lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).orderByDesc(DeviceScanSignLog::getCreateTime));
-        if (CollUtil.isNotEmpty(list)) {
-            List<String> names = new ArrayList<>();
-            List<DeviceScanSignLog> deviceScanSignLogs = list.stream().filter(// 过滤去重
-                    v -> {
-                        boolean flag = !names.contains(v.getUserId());
-                        names.add(v.getUserId());
-                        return flag;
-                    }
-            ).collect(Collectors.toList());
-            List<String> userIds = deviceScanSignLogs.stream().map(DeviceScanSignLog::getUserId).collect(Collectors.toList());
-            tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, userIds).orderByDesc(TbTrainUser::getUpdateDate));
-            //根据时间排序
-            Map<String, DeviceScanSignLog> map = deviceScanSignLogs.stream()
-                    .collect(Collectors.toMap(DeviceScanSignLog::getUserId, t -> t));
-            if (!CollectionUtils.isEmpty(tbTrainUsers)) {
-                for (TbTrainUser tbTrainUser : tbTrainUsers) {
-                    tbTrainUser.setCreateDate(map.get(tbTrainUser.getXtUserId()).getCreateTime());
-                }
-            }
-            tbTrainUsers.sort((t1, t2) -> t2.getCreateDate().compareTo(t1.getCreateDate()));
-        } else {
-            return RestResponse.ok(tbTrainUsers);
+        List<TbTrainUser> result = new ArrayList<>();
+
+        List<DeviceScanSignLog> list = service.list(new QueryWrapper<DeviceScanSignLog>().lambda()
+                .eq(DeviceScanSignLog::getMacAddress, macAddress));
+        if (!CollectionUtils.isEmpty(list)) {
+            List<String> userIds = list.stream().map(DeviceScanSignLog::getUserId)
+                    .collect(Collectors.toList());
+            List<TbTrainUser> list1 = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+                    .in(TbTrainUser::getUserId, userIds));
+            list1.sort((t1, t2) -> t2.getCreateDate().compareTo(t1.getCreateDate()));
+            result.add(list1.get(0));
+            RestResponse.ok(result);
         }
-        //判断设备是否绑定身份证
-        if (one != null) {
-            List<NaLiUserInfo> naLiUserInfos = naLiUserInfoService.list(new QueryWrapper<NaLiUserInfo>().lambda().eq(NaLiUserInfo::getProductSn, one.getProductSn()).orderByDesc(NaLiUserInfo::getCreateTime));
-            if (!CollectionUtils.isEmpty(naLiUserInfos)) {
-                NaLiUserInfo naLiUserInfo = naLiUserInfos.get(0);
-                //家庭版设备
-                //取出最后一个登陆用户
+        return RestResponse.ok(result);
 
-                TbTrainUser tbTrainUser = tbTrainUsers.get(0);
-                if (StringUtils.isEmpty(tbTrainUser.getIdCard())) {
-                    //用户没绑定身份证
-                    TbTrainUser tbTrainUser1 = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, naLiUserInfo.getIdCard()));
-                    if (tbTrainUser1 != null) {
-                        tbTrainUser1.setIdCard("");
-                        planUserService.updateById(tbTrainUser1);
-                    }
-
-                    LambdaUpdateWrapper wrapper = new UpdateWrapper<TbTrainUser>().lambda()
-                            .set(TbTrainUser::getIdCard, naLiUserInfo.getIdCard())
-                            .eq(TbTrainUser::getUserId, tbTrainUsers.get(0).getUserId());
-                    planUserService.update(wrapper);
-                    List<TbTrainUser> result = new ArrayList<>();
-                    result.add(tbTrainUsers.get(0));
-                    return RestResponse.ok(result);
-                } else {
-
-                }
-                List<TbTrainUser> result = new ArrayList<>();
-                result.add(tbTrainUsers.get(0));
-                return RestResponse.ok(result);
-            } else {
-                //医用版设备
-                return RestResponse.ok(tbTrainUsers);
-            }
-        } else {
-            return RestResponse.ok(tbTrainUsers);
-        }
+//        List<TbTrainUser> tbTrainUsers = CollUtil.toList();
+//        ProductStock one = productStockService.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel, 1));
+//        List<DeviceScanSignLog> list = service.list(new QueryWrapper<DeviceScanSignLog>().select("`user_id`,`create_time`,`id`").lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).orderByDesc(DeviceScanSignLog::getCreateTime));
+//        if (CollUtil.isNotEmpty(list)) {
+//            List<String> names = new ArrayList<>();
+//            List<DeviceScanSignLog> deviceScanSignLogs = list.stream().filter(// 过滤去重
+//                    v -> {
+//                        boolean flag = !names.contains(v.getUserId());
+//                        names.add(v.getUserId());
+//                        return flag;
+//                    }
+//            ).collect(Collectors.toList());
+//            List<String> userIds = deviceScanSignLogs.stream().map(DeviceScanSignLog::getUserId).collect(Collectors.toList());
+//            tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, userIds).orderByDesc(TbTrainUser::getUpdateDate));
+//            //根据时间排序
+//            Map<String, DeviceScanSignLog> map = deviceScanSignLogs.stream()
+//                    .collect(Collectors.toMap(DeviceScanSignLog::getUserId, t -> t));
+//            if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+//                for (TbTrainUser tbTrainUser : tbTrainUsers) {
+//                    tbTrainUser.setCreateDate(map.get(tbTrainUser.getXtUserId()).getCreateTime());
+//                }
+//            }
+//            tbTrainUsers.sort((t1, t2) -> t2.getCreateDate().compareTo(t1.getCreateDate()));
+//        } else {
+//            return RestResponse.ok(tbTrainUsers);
+//        }
+//        //判断设备是否绑定身份证
+//        if (one != null) {
+//            List<NaLiUserInfo> naLiUserInfos = naLiUserInfoService.list(new QueryWrapper<NaLiUserInfo>().lambda().eq(NaLiUserInfo::getProductSn, one.getProductSn()).orderByDesc(NaLiUserInfo::getCreateTime));
+//            if (!CollectionUtils.isEmpty(naLiUserInfos)) {
+//                NaLiUserInfo naLiUserInfo = naLiUserInfos.get(0);
+//                //家庭版设备
+//                //取出最后一个登陆用户
+//
+//                TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+//                if (StringUtils.isEmpty(tbTrainUser.getIdCard())) {
+//                    //用户没绑定身份证
+//                    TbTrainUser tbTrainUser1 = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, naLiUserInfo.getIdCard()));
+//                    if (tbTrainUser1 != null) {
+//                        tbTrainUser1.setIdCard("");
+//                        planUserService.updateById(tbTrainUser1);
+//                    }
+//
+//                    LambdaUpdateWrapper wrapper = new UpdateWrapper<TbTrainUser>().lambda()
+//                            .set(TbTrainUser::getIdCard, naLiUserInfo.getIdCard())
+//                            .eq(TbTrainUser::getUserId, tbTrainUsers.get(0).getUserId());
+//                    planUserService.update(wrapper);
+//                    List<TbTrainUser> result = new ArrayList<>();
+//                    result.add(tbTrainUsers.get(0));
+//                    return RestResponse.ok(result);
+//                } else {
+//
+//                }
+//                List<TbTrainUser> result = new ArrayList<>();
+//                result.add(tbTrainUsers.get(0));
+//                return RestResponse.ok(result);
+//            } else {
+//                //医用版设备
+//                return RestResponse.ok(tbTrainUsers);
+//            }
+//        } else {
+//            return RestResponse.ok(tbTrainUsers);
+//        }
 
     }
 

@@ -21,6 +21,7 @@ public class ServicePack extends Model<ServicePack> {
 
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
+    private Double weight;//物品重量
     private String mpQrCode; //公众号二维码 永久
     private Integer buy; //是否是购买 1
     private Integer rent; //是否是租用 1

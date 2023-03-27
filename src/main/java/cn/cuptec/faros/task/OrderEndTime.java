@@ -29,7 +29,6 @@ import java.util.Queue;
  * @Date 2021/8/5 17:35
  */
 @Slf4j
-@RestController
 @Component
 public class OrderEndTime {
 

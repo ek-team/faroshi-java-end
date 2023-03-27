@@ -6,6 +6,7 @@ import cn.cuptec.faros.entity.Address;
 import cn.cuptec.faros.entity.ChatUser;
 import cn.cuptec.faros.service.AddressService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,6 +71,23 @@ public class AddressController {
     @GetMapping("/getById")
     public RestResponse getById(@RequestParam("id") Integer id) {
         return RestResponse.ok(addressService.getById(id));
+
+    }
+
+    /**
+     * 查询用户默认收货地址
+     *
+     * @return
+     */
+    @GetMapping("/getDefalut")
+    public RestResponse getDefalut() {
+        List<Address> list = addressService.list(new QueryWrapper<Address>().lambda()
+                .eq(Address::getPatientId, SecurityUtils.getUser().getId())
+                .eq(Address::getIsDefault, 1));
+        if (CollectionUtils.isEmpty(list)) {
+            return RestResponse.ok();
+        }
+        return RestResponse.ok(list.get(0));
 
     }
 }

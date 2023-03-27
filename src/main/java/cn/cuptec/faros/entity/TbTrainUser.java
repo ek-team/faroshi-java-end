@@ -24,6 +24,8 @@ import java.util.Date;
 public class TbTrainUser {
     private static final long serialVersionUID = 1L;
 
+    private String doctorTeam;
+    private int doctorTeamId;
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     @Queryable(queryLogical = QueryLogical.EQUAL)

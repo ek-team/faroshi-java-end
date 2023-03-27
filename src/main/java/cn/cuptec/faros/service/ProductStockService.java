@@ -422,7 +422,7 @@ public class ProductStockService extends ServiceImpl<ProductStockMapper, Product
     }
 
     public ProductStock getByMac(String macAddress) {
-        return this.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).last(" limit 1"));
+        return this.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel,1).last(" limit 1"));
 
     }
 }

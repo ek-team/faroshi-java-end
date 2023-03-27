@@ -396,7 +396,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
     @GetMapping("/getByMacAddress")
     public RestResponse getByMacAddress(@RequestParam("macAddress") String macAddress) {
 
-        return RestResponse.ok(service.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress)));
+        return RestResponse.ok(service.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel,1)));
     }
 
     @PutMapping("/updateById")

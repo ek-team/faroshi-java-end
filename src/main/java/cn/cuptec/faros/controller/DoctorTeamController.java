@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -49,6 +50,12 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     private DiseasesService diseasesService;
     @Resource
     private HospitalInfoService hospitalInfoService;
+    @Resource
+    private ProductStockService productStockService;
+    @Resource
+    private ServicePackService servicePackService;
+    @Resource
+    private ServicePackageInfoService servicePackageInfoService;
     private final OssProperties ossProperties;
 
     /**
@@ -381,6 +388,77 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
 
         return RestResponse.ok(doctorTeams);
     }
+
+    /**
+     * 查询设备绑定团队
+     *
+     * @return
+     */
+    @GetMapping("/getByMacAdd")
+    public RestResponse getByMacAdd(@RequestParam("macAdd") String macAdd) {
+        ProductStock byMac = productStockService.getByMac(macAdd);
+        Integer servicePackId = byMac.getServicePackId();
+        if (servicePackId == null) {
+            return RestResponse.ok();
+        }
+        //查询服务信息
+        List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>()
+                .lambda().eq(ServicePackageInfo::getServicePackageId, servicePackId));
+        //查询服务的医生团队
+        List<DoctorTeam> doctorTeams = new ArrayList<>();
+        List<Integer> teamIds = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(servicePackageInfos)) {
+
+            for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
+                String doctorTeamId = servicePackageInfo.getDoctorTeamId();
+                List<Integer> teamId = new ArrayList<>();
+                if (!StringUtils.isEmpty(doctorTeamId)) {
+                    String[] split = doctorTeamId.split(",");
+                    for (int i = 0; i < split.length; i++) {
+                        String n = split[i];
+                        teamIds.add(Integer.parseInt(n));
+                        teamId.add(Integer.parseInt(n));
+                    }
+                }
+                servicePackageInfo.setDoctorTeamIds(teamId);
+            }
+            if (!CollectionUtils.isEmpty(teamIds)) {
+                doctorTeams = (List<DoctorTeam>) service.listByIds(teamIds);
+
+            }
+
+        }
+        if(!CollectionUtils.isEmpty(doctorTeams)){
+
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .in(DoctorTeamPeople::getTeamId, teamIds));
+
+
+            if(!CollectionUtils.isEmpty(doctorTeamPeopleList)){
+                List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                        .collect(Collectors.toList());
+                List<User> users = (List<User>) userService.listByIds(userIds);
+                Map<Integer, User> userMap = users.stream()
+                        .collect(Collectors.toMap(User::getId, t -> t));
+                for(DoctorTeamPeople doctorTeamPeople:doctorTeamPeopleList){
+                    if(userMap.get(doctorTeamPeople.getUserId())!=null){
+                        doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
+                        doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+
+                    }
+                }
+                Map<Integer, List<DoctorTeamPeople>> map = doctorTeamPeopleList.stream()
+                        .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
+
+                for(DoctorTeam doctorTeam:doctorTeams){
+                    doctorTeam.setDoctorTeamPeopleList(map.get(doctorTeam.getId()));
+                }
+            }
+
+        }
+        return RestResponse.ok(doctorTeams);
+    }
+
 
     @Override
     protected Class<DoctorTeam> getEntityClass() {

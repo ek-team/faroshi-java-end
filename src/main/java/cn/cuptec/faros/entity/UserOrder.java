@@ -126,6 +126,9 @@ public class UserOrder {
     //发货时间
     private Date deliveryTime;
 
+    //物流实际 发货时间
+    private LocalDateTime logisticsDeliveryTime;
+
     //确认收货时间
     private LocalDateTime revTime;
     //产品图片

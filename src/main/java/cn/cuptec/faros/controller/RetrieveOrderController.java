@@ -498,6 +498,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         log.info("自动下单回调参数" + xiaDanParam.getData().getTaskId());
         if (xiaDanParam.getCode() == 200 && xiaDanParam.getMessage().equals("success")) {
             RetrieveOrder retrieveOrder = new RetrieveOrder();
+            retrieveOrder.setUserOrderNo(userOrder.getOrderNo());
             retrieveOrder.setRentDay(day.intValue());
             retrieveOrder.setOrderId(param.getOrderNo());
             retrieveOrder.setUserId(SecurityUtils.getUser().getId());
