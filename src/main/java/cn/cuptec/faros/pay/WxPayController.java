@@ -147,8 +147,11 @@ public class WxPayController {
                 List<User> clerkUser = (List<User>) userService.listByIds(userIds);
                 for (User user : clerkUser) {
                     if (clerkUser != null) {
-                        wxMpService.paySuccessNotice(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, 1 + "",
-                                "请不要点击该消息，只作为通知", "pages/myOrder/myOrder");
+                        if (!StringUtils.isEmpty(user.getMpOpenId())) {
+                            wxMpService.paySuccessNotice(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, 1 + "",
+                                    "请不要点击该消息，只作为通知", "pages/myOrder/myOrder");
+                        }
+
                     }
                 }
 

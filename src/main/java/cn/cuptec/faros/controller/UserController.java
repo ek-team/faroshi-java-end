@@ -659,6 +659,20 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return service.deleteUserById(user) ? RestResponse.ok(DATA_DELETE_SUCCESS) : RestResponse.failed(DATA_DELETE_FAILED);
     }
 
+    /**
+     * 注销账号
+     *
+     * @return
+     */
+    @GetMapping("/cancel")
+    public RestResponse cancel() {
+        User user = new User();
+        user.setId(SecurityUtils.getUser().getId());
+        doctorTeamPeopleService.remove(new QueryWrapper<DoctorTeamPeople>().lambda()
+                .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
+        return service.deleteUserById(user) ? RestResponse.ok(DATA_DELETE_SUCCESS) : RestResponse.failed(DATA_DELETE_FAILED);
+    }
+
     @SysLog("更新用户信息")
     @PutMapping("/manage/update")
     @PreAuthorize("@pms.hasPermission('user_edit')")

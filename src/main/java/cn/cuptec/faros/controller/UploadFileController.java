@@ -78,7 +78,8 @@ public class UploadFileController {
     ) throws Exception {
         productStockService.update(Wrappers.<ProductStock>lambdaUpdate()
                 .eq(ProductStock::getMacAddress, macAdd)
-                .set(ProductStock::getUpload, 1));//修改上传标识
+                .set(ProductStock::getUpload, 1)
+                .set(ProductStock::getTag, 1));//修改上传标识
         for (int i = 0; i <= files.length - 1; i++) {
             MultipartFile file = files[i];
             File fileResult = FileUtils.multipartFileToFile(file);
