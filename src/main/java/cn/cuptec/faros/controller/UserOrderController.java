@@ -174,8 +174,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                    @RequestParam(value = "toSort", required = false) String toSort,
                                    @RequestParam(value = "userOrderNo", required = false) String userOrderNo,
                                    @RequestParam(value = "productSn1", required = false) String productSn1,
-                                   @RequestParam(value = "productSn1", required = false) String productSn2,
-                                   @RequestParam(value = "productSn1", required = false) String productSn3) {
+                                   @RequestParam(value = "productSn2", required = false) String productSn2,
+                                   @RequestParam(value = "productSn3", required = false) String productSn3,
+                                   @RequestParam(value = "startDeliveryDate", required = false) String startDeliveryDate) {
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
@@ -210,13 +211,25 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         if (!StringUtils.isEmpty(toSort)) {
             if (toSort.equals("DESC")) {
-                queryWrapper.orderByDesc("delivery_date");
+                queryWrapper.orderByDesc("user_order.delivery_date");
 
             } else {
-                queryWrapper.orderByAsc("delivery_date");
+                queryWrapper.orderByAsc("user_order.delivery_date");
 
             }
 
+        }else{
+            queryWrapper.orderByDesc("user_order.create_time");
+
+        }
+        if (!StringUtils.isEmpty(startDeliveryDate)) {
+
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String endDeliveryDate = df.format(now);
+
+            queryWrapper.le("user_order.delivery_date", endDeliveryDate);
+            queryWrapper.ge("user_order.delivery_date", startDeliveryDate);
         }
         IPage<UserOrder> pageScoped = service.pageScoped(page, queryWrapper);
         if (CollUtil.isNotEmpty(pageScoped.getRecords())) {
@@ -310,8 +323,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/manage/confirmDelivery")
     @Transactional
     public RestResponse confirDelivery(@RequestParam("id") int orderId,
+                                       @RequestParam("productSn1") String productSn1,
+                                       @RequestParam("productSn2") String productSn2,
+                                       @RequestParam("productSn3") String productSn3,
                                        @RequestParam(value = "deliveryCompanyCode") String deliveryCompanyCode, @RequestParam(value = "deliveryNumber", required = false) String deliveryNumber) {
-        service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber);
+        service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber,productSn1,productSn2,productSn3);
 
         return RestResponse.ok();
     }

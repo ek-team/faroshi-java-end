@@ -239,12 +239,15 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 //    }
 //
     @Transactional(rollbackFor = Exception.class)
-    public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber) {
+    public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber,
+                                String productSn1,String productSn2,String productSn3) {
         UserOrder userOrder = super.getById(orderId);
         Assert.notNull(userOrder, "订单不存在");
 
         Assert.isTrue(userOrder.getStatus() == 2, "订单非待发货状态");
-
+        userOrder.setProductSn1(productSn1);
+        userOrder.setProductSn2(productSn2);
+        userOrder.setProductSn3(productSn3);
         userOrder.setStatus(3);
         userOrder.setDeliveryCompanyCode(deliveryCompanyCode);
         userOrder.setDeliverySn(deliveryNumber);

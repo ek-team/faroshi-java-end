@@ -55,7 +55,7 @@ public interface UserOrderMapper extends BaseMapper<UserOrder> {
             "LEFT JOIN hospital_info ON doctor_team.hospital_id = hospital_info.id " +
             "LEFT JOIN patient_user ON user_order.patient_user_id = patient_user.id " +
             "LEFT JOIN service_pack ON user_order.service_pack_id = service_pack.id " +
-            "${ew.customSqlSegment} ORDER BY user_order.create_time DESC")
+            "${ew.customSqlSegment} ")
     IPage<UserOrder> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 
     @Select("SELECT user_order.product_sn3,user_order.product_sn2,user_order.product_sn1,user_order.actual_retrieve_amount,user_order.use_day,user_order.id,user_order.bill_id,user_order.product_pic,user_order.delivery_time,user_order.pay_time,hospital_info.name as  hospitalName,user_order.bill_image,user_order.delivery_date,user_order.order_no,doctor_team.name as doctorTeamName, " +

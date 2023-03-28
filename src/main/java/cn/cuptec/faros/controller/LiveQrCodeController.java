@@ -5,6 +5,8 @@ import cn.cuptec.faros.common.constrants.QrCodeConstants;
 import cn.cuptec.faros.common.utils.QrCodeUtil;
 import cn.cuptec.faros.common.utils.StringUtils;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.com.Url;
+import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.config.wx.builder.TextBuilder;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
@@ -14,6 +16,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.AllArgsConstructor;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+@AllArgsConstructor
 @RestController
 @RequestMapping("/liveQrCode")
 public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeService, LiveQrCode> {
@@ -46,7 +50,7 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
     private UserService userService;
     @Resource
     private WxMpService wxMpService;
-
+    private final Url url;
 
     @GetMapping("/dispatcher/{id}")
     public void dispatcher(@PathVariable String id) throws IOException {
@@ -65,13 +69,13 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
             return RestResponse.failed("没有该设备");
         }
         LiveQrCode byId = service.getById(one.getLiveQrCodeId());
-        if(byId.getType()==7){
-            if(StringUtils.isEmpty(byId.getUrl())){
+        if (byId.getType() == 7) {
+            if (StringUtils.isEmpty(byId.getUrl())) {
                 return RestResponse.ok("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg2NzcxMjg4Mw==&scene=110#wechat_redirect");
             }
             return RestResponse.ok(byId.getUrl());
         }
-        return RestResponse.ok("http://pharos.ewj100.com/liveQrCode/dispatcher/" + one.getLiveQrCodeId());
+        return RestResponse.ok(url.getUrl() + "/liveQrCode/dispatcher/" + one.getLiveQrCodeId());
     }
 
     @GetMapping("/sendLiveQrCodeNotice")
@@ -151,9 +155,10 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
             return RestResponse.ok(service.pageNali(page, productSn, mac));
         }
     }
+
     @GetMapping("/pageHxdProductQrcode")
     public RestResponse pageHxdProductQrcode(@RequestParam(value = "productSn", required = false) String productSn,
-                                              @RequestParam(value = "mac", required = false) String mac) {
+                                             @RequestParam(value = "mac", required = false) String mac) {
         IPage page = getNullablePage();
         if (page == null) {
             return RestResponse.failed("分页参数不能为空");
@@ -161,6 +166,7 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
             return RestResponse.ok(service.pageHxdProductQrcode(page, productSn, mac));
         }
     }
+
     @GetMapping("/page")
     public RestResponse page() {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
@@ -240,7 +246,8 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
         if (liveQrCode != null) {
             String url = liveQrCodeService.getFullDispatcherUrl(liveQrCode.getId());
             if (liveQrCode.getType() == 7) {
-                ;url = liveQrCode.getUrl()+"/"+liveQrCode.getId();
+                ;
+                url = liveQrCode.getUrl() + "/" + liveQrCode.getId();
             }
 
             ProductStock productStock = productStockService.getproductStockByCodeId(id);
@@ -281,7 +288,7 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
         if (liveQrCode != null) {
             String url = liveQrCodeService.getFullDispatcherUrl(liveQrCode.getId());
             if (liveQrCode.getType() == 7) {
-                url = liveQrCode.getUrl()+"/"+liveQrCode.getId();
+                url = liveQrCode.getUrl() + "/" + liveQrCode.getId();
             }
             ProductStock productStock = productStockService.getproductStockByCodeId(id);
             Product product = productService.getById(productStock.getProductId());
@@ -440,8 +447,8 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
             List<ProductStock> dbProductStock = productStockService.list(Wrappers.<ProductStock>lambdaQuery()
                     .nested(query -> query.eq(ProductStock::getProductSn, liveQrCode.getProductSn()).eq(ProductStock::getDel, 1))
                     .or(query -> query.eq(ProductStock::getMacAddress, liveQrCode.getMacAddress()).eq(ProductStock::getDel, 1)));
-            if(!CollectionUtils.isEmpty(dbProductStock)){
-                for(ProductStock productStock:dbProductStock){
+            if (!CollectionUtils.isEmpty(dbProductStock)) {
+                for (ProductStock productStock : dbProductStock) {
                     if (productStock != null && !productStock.getId().equals(liveQrCode.getProductStockId())) {
                         throw new RuntimeException("已存在序列号为【" + productStock.getProductSn() + "】的产品 或者 mac地址为 [" + productStock.getMacAddress() + "] ");
                     }

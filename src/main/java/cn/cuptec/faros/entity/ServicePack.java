@@ -27,6 +27,7 @@ public class ServicePack extends Model<ServicePack> {
     private Integer rent; //是否是租用 1
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String name;
+    private String showName;
     private Integer deptId;
     private Integer createUserId;
     private LocalDateTime createTime;

@@ -83,3 +83,6 @@ tx:
     sdkAppID: 1400561339
     accessKeySecret: aa525b5eb4312ec1998d03d657a8b4457199583322d15cfacf337b525f718d53
     admin: administrator
+
+com:
+  url: https://api.jhxiao-school.com/
