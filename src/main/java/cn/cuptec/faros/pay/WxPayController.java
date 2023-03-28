@@ -9,6 +9,7 @@ import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.http.HttpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
@@ -80,6 +81,8 @@ public class WxPayController {
     private PatientRelationTeamService patientRelationTeamService;
     @Resource
     private ServicePackService servicePackService;
+    @Resource
+    private UserQrCodeService userQrCodeService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -127,18 +130,31 @@ public class WxPayController {
                     "点击查看详情", "pages/myOrder/myOrder");
 
             //发送公众号通知业务员
-            ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
-            String keyword1 = "";
-            if (servicePack != null) {
-                keyword1 = servicePack.getName() + "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
-            } else {
-                keyword1 = "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
+            LambdaQueryWrapper<UserQrCode> eq = new QueryWrapper<UserQrCode>().lambda()
+                    .eq(UserQrCode::getQrCodeId, userOrder.getServicePackId());
+            List<UserQrCode> userQrCodeList = userQrCodeService.list(
+                    eq);
+            if (!CollectionUtils.isEmpty(userQrCodeList)) {
+                List<String> userIds = userQrCodeList.stream().map(UserQrCode::getUserId)
+                        .collect(Collectors.toList());
+                ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+                String keyword1 = "";
+                if (servicePack != null) {
+                    keyword1 = servicePack.getName() + "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
+                } else {
+                    keyword1 = "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
+                }
+                List<User> clerkUser = (List<User>) userService.listByIds(userIds);
+                for (User user : clerkUser) {
+                    if (clerkUser != null) {
+                        wxMpService.paySuccessNotice(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, 1 + "",
+                                "请不要点击该消息，只作为通知", "pages/myOrder/myOrder");
+                    }
+                }
+
+
             }
-            User clerkUser = userService.getById(2312);
-            if (clerkUser != null) {
-                wxMpService.paySuccessNotice(clerkUser.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, 1 + "",
-                        "请不要点击该消息，只作为通知", "pages/myOrder/myOrder");
-            }
+
 
             Integer patientUserId = userOrder.getPatientUserId();
             PatientUser byId = patientUserService.getById(patientUserId);
