@@ -323,9 +323,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/manage/confirmDelivery")
     @Transactional
     public RestResponse confirDelivery(@RequestParam("id") int orderId,
-                                       @RequestParam("productSn1") String productSn1,
-                                       @RequestParam("productSn2") String productSn2,
-                                       @RequestParam("productSn3") String productSn3,
+                                       @RequestParam(value = "productSn1",required = false) String productSn1,
+                                       @RequestParam(value = "productSn2",required = false) String productSn2,
+                                       @RequestParam(value = "productSn3",required = false) String productSn3,
                                        @RequestParam(value = "deliveryCompanyCode") String deliveryCompanyCode, @RequestParam(value = "deliveryNumber", required = false) String deliveryNumber) {
         service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber,productSn1,productSn2,productSn3);
 
