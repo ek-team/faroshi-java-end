@@ -804,9 +804,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             if (!CollectionUtils.isEmpty(deliveryMoBans)) {
                 Map<String, DeliveryMoBan> deliveryMoBanmap = new HashMap<>();
                 for (DeliveryMoBan deliveryMoBan : deliveryMoBans) {
-                    DeliveryMoBan deliveryMoBan1 = deliveryMoBanmap.get(deliveryMoBan.getOrderNo());
+                    String orderNo = deliveryMoBan.getOrderNo();
+                    String[] split = orderNo.split("-");
+                    if (split.length == 1) {
+                        orderNo = split[0];
+                    } else {
+                        orderNo = split[1];
+                    }
+                    DeliveryMoBan deliveryMoBan1 = deliveryMoBanmap.get(orderNo);
                     if (deliveryMoBan1 == null) {
-                        deliveryMoBanmap.put(deliveryMoBan.getOrderNo(), deliveryMoBan);
+                        deliveryMoBanmap.put(orderNo, deliveryMoBan);
                     }
                 }
                 List<String> orderNos = deliveryMoBans.stream().map(DeliveryMoBan::getOrderNo)

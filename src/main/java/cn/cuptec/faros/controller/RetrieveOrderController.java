@@ -100,7 +100,8 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                                    @RequestParam(value = "endTime", required = false) String endTime,
                                    @RequestParam(value = "nickname", required = false) String nickname,
                                    @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
-                                   @RequestParam(value = "orderId", required = false) String orderId) {
+                                   @RequestParam(value = "orderId", required = false) String orderId,
+                                   @RequestParam(value = "userOrderNo", required = false) String userOrderNo) {
         Page<RetrieveOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
@@ -111,6 +112,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         }
         if (!StringUtils.isEmpty(orderId)) {
             queryWrapper.eq("retrieve_order.order_id", orderId);
+        }
+        if (!StringUtils.isEmpty(userOrderNo)) {
+            queryWrapper.eq("retrieve_order.user_order_no", userOrderNo);
         }
         if (!StringUtils.isEmpty(startTime)) {
             if (StringUtils.isEmpty(endTime)) {
