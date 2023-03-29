@@ -71,6 +71,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     private DiseasesService diseasesService;
     @Resource
     private UserQrCodeService userQrCodeService;
+    @Resource
+    private HospitalInfoService hospitalInfoService;
 
     /**
      * 设备二维码绑定服务包
@@ -485,6 +487,21 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     }
 
     /**
+     * 查询服务包所在的医院
+     */
+    @GetMapping("/getHospitalInfoByServicePackId")
+    public RestResponse getHospitalInfoByServicePackId(@RequestParam("servicePackId") Integer servicePackId) {
+
+        ServicePack byId = service.getById(servicePackId);
+        Integer hospitalId = byId.getHospitalId();
+        if (hospitalId != null) {
+            HospitalInfo hospitalInfo = hospitalInfoService.getById(hospitalId);
+            return RestResponse.ok(hospitalInfo);
+        }
+        return RestResponse.ok();
+    }
+
+    /**
      * 业务员和服务包绑定
      */
     @PostMapping("/bindServicePack")
@@ -609,6 +626,16 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             return RestResponse.ok(new ArrayList<>());
         }
 
+    }
+
+    /**
+     * 根据医院查询服务包
+     */
+    @GetMapping("/getByIdHospitalInfo")
+    public RestResponse getByIdHospitalInfo(@RequestParam("id") Integer id) {
+
+
+        return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id)));
     }
 
     /**

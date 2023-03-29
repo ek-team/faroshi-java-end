@@ -85,4 +85,5 @@ tx:
     admin: administrator
 
 com:
+  #url: https://pharos3.ewj100.com/
   url: https://api.jhxiao-school.com/

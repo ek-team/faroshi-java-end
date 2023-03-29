@@ -83,6 +83,8 @@ public class WxPayController {
     private ServicePackService servicePackService;
     @Resource
     private UserQrCodeService userQrCodeService;
+    @Resource
+    private UserOrderNotifyService userOrderNotifyService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -134,9 +136,19 @@ public class WxPayController {
                     .eq(UserQrCode::getQrCodeId, userOrder.getServicePackId());
             List<UserQrCode> userQrCodeList = userQrCodeService.list(
                     eq);
-            if (!CollectionUtils.isEmpty(userQrCodeList)) {
-                List<String> userIds = userQrCodeList.stream().map(UserQrCode::getUserId)
+            List<String> userIdList = new ArrayList<>();
+            List<UserOrderNotify> userOrderNotifyList = userOrderNotifyService.list();
+            if (!CollectionUtils.isEmpty(userOrderNotifyList)) {
+                userIdList = userOrderNotifyList.stream().map(UserOrderNotify::getUserId)
                         .collect(Collectors.toList());
+            }
+
+            if (!CollectionUtils.isEmpty(userQrCodeList)) {
+                List<String> userIdLIst = userQrCodeList.stream().map(UserQrCode::getUserId)
+                        .collect(Collectors.toList());
+                userIdList.addAll(userIdLIst);
+            }
+            if (!CollectionUtils.isEmpty(userIdList)) {
                 ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
                 String keyword1 = "";
                 if (servicePack != null) {
@@ -144,7 +156,7 @@ public class WxPayController {
                 } else {
                     keyword1 = "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
                 }
-                List<User> clerkUser = (List<User>) userService.listByIds(userIds);
+                List<User> clerkUser = (List<User>) userService.listByIds(userIdList);
                 for (User user : clerkUser) {
                     if (clerkUser != null) {
                         if (!StringUtils.isEmpty(user.getMpOpenId())) {
@@ -155,9 +167,7 @@ public class WxPayController {
                     }
                 }
 
-
             }
-
 
             Integer patientUserId = userOrder.getPatientUserId();
             PatientUser byId = patientUserService.getById(patientUserId);
