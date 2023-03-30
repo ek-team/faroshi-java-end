@@ -496,10 +496,6 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         }
 
         XiaDanParam xiaDanParam = new Gson().fromJson(post, XiaDanParam.class);
-        log.info("自动下单回调参数" + post);
-        log.info("自动下单回调参数" + xiaDanParam.getData().toString());
-        log.info("自动下单回调参数" + xiaDanParam.toString());
-        log.info("自动下单回调参数" + xiaDanParam.getData().getTaskId());
         if (xiaDanParam.getCode() == 200 && xiaDanParam.getMessage().equals("success")) {
             RetrieveOrder retrieveOrder = new RetrieveOrder();
             retrieveOrder.setUserOrderNo(userOrder.getOrderNo());

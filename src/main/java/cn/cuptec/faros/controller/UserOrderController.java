@@ -80,7 +80,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private DoctorTeamService doctorTeamService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
-
+    @Resource
+    private RetrieveOrderService retrieveOrderService;
     /**
      * 获取省的订单数量
      *
@@ -303,6 +304,34 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         return RestResponse.ok();
     }
+
+    /**
+     * 判断订单是否可以开票
+     * @return
+     */
+    @GetMapping("/checkOrderBill")
+    public RestResponse checkOrderBill(@RequestParam("id") Integer id) {
+        UserOrder userOrder = service.getById(id);
+        if(userOrder.getOrderType().equals(1)) {
+            //租用
+            RetrieveOrder one = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                    .eq(RetrieveOrder::getOrderId, id));
+            if(one==null){
+                return RestResponse.ok("10");
+            }
+            if(!one.getStatus().equals(5)){
+                return RestResponse.ok("10");
+            }
+        }else {
+            //购买
+
+
+        }
+
+
+        return RestResponse.ok("20");
+    }
+
 
     //上传发票
     @PutMapping("/uploadBillImage")

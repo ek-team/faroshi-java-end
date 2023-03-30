@@ -110,16 +110,20 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @PostMapping("/saveSale")
     public RestResponse saveSale(@RequestBody ServicePack servicePack) {
         List<SaleSpec> saleSpecs = servicePack.getSaleSpec();
+        List<SaleSpec> saleSpecList = new ArrayList<>();
         if (!CollectionUtils.isEmpty(saleSpecs)) {
-
             for (SaleSpec saleSpec : saleSpecs) {
+                if (!StringUtils.isEmpty(saleSpec.getSaleSpecDescs())) {
+                    saleSpec.setServicePackId(servicePack.getId());
+                    saleSpecList.add(saleSpec);
+                }
 
-                saleSpec.setServicePackId(servicePack.getId());
 
             }
-            saleSpecService.saveBatch(saleSpecs);
 
-            for (SaleSpec saleSpec : saleSpecs) {
+            saleSpecService.saveBatch(saleSpecList);
+
+            for (SaleSpec saleSpec : saleSpecList) {
                 List<SaleSpecDesc> saleSpecDescs1 = saleSpec.getSaleSpecDescs();
                 if (!CollectionUtils.isEmpty(saleSpecDescs1)) {
                     for (SaleSpecDesc saleSpecDesc : saleSpecDescs1) {
@@ -130,8 +134,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
 
         }
-        Collections.sort(saleSpecs);
-        return RestResponse.ok(saleSpecs);
+        Collections.sort(saleSpecList);
+        return RestResponse.ok(saleSpecList);
     }
 
 

@@ -10,12 +10,14 @@ import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.mapper.UserOrderMapper;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ExcelUtil;
 import cn.cuptec.faros.util.IdCardUtil;
 import cn.cuptec.faros.util.SnowflakeIdWorker;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -30,6 +32,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -141,6 +144,103 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             queryWrapper.in("educational_level", selectEducationalLevel1);
         }
         return RestResponse.ok(service.page(page, queryWrapper));
+    }
+
+    @GetMapping("/export")
+    public RestResponse export(HttpServletResponse response, @RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
+                               @RequestParam(value = "maxHeight", required = false) Integer maxHeight, @RequestParam(value = "miniHeight", required = false) Integer miniHeight,
+                               @RequestParam(value = "startDate", required = false) String startDate, @RequestParam(value = "endDate", required = false) String endDate,
+                               @RequestParam(value = "startOnsetTime", required = false) String startOnsetTime, @RequestParam(value = "endOnsetTime", required = false) String endOnsetTime,
+                               @RequestParam(value = "miniEducationalLevel", required = false) String miniEducationalLevel, @RequestParam(value = "maxEducationalLevel", required = false) String maxEducationalLevel) {
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+
+        if (maxAge != null && miniAge != null) {
+            queryWrapper.le("age", maxAge);
+            queryWrapper.ge("age", miniAge);
+
+        }
+        if (maxHeight != null && miniHeight != null) {
+            queryWrapper.le("CAST(height AS UNSIGNED)", maxHeight);//小于等于
+            queryWrapper.ge("CAST(height AS UNSIGNED)", miniHeight);//大于等于
+
+        }
+        if (!StringUtils.isEmpty(startDate) && !StringUtils.isEmpty(endDate)) {
+            queryWrapper.le("date", endDate);
+            queryWrapper.ge("date", startDate);
+        }
+        if (!StringUtils.isEmpty(startOnsetTime) && !StringUtils.isEmpty(endOnsetTime)) {
+
+            queryWrapper.le("onset_time", endOnsetTime);
+            queryWrapper.ge("onset_time", startOnsetTime);
+        }
+        if (!StringUtils.isEmpty(maxEducationalLevel) && !StringUtils.isEmpty(miniEducationalLevel)) {
+            List<String> educationalLevel = new ArrayList<>();
+            educationalLevel.add("小学");
+            educationalLevel.add("初中");
+            educationalLevel.add("高中");
+            educationalLevel.add("大学本科");
+            educationalLevel.add("硕士");
+            educationalLevel.add("博士");
+            List<String> selectEducationalLevel = new ArrayList<>();
+            int i = educationalLevel.indexOf(maxEducationalLevel);
+            if (i >= 0) {
+                for (int j = 0; j <= i; j++) {
+                    selectEducationalLevel.add(educationalLevel.get(j));
+                }
+            }
+            List<String> selectEducationalLevel1 = new ArrayList<>();
+            int a = educationalLevel.indexOf(miniEducationalLevel);
+            if (a >= 0) {
+                for (int j = a; j < 6; j++) {
+                    selectEducationalLevel1.add(educationalLevel.get(j));
+                }
+            }
+            selectEducationalLevel1.retainAll(selectEducationalLevel);
+            queryWrapper.in("educational_level", selectEducationalLevel1);
+        }
+        List<TbTrainUser> tbTrainUsers = service.list(queryWrapper);
+        if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+            SimpleDateFormat sdf = new SimpleDateFormat(" yyyy-MM-dd HH:mm:ss ");
+            List<PlanUserExcel> planUserExcelList = new ArrayList<>();
+            for (TbTrainUser tbTrainUser : tbTrainUsers) {
+                PlanUserExcel planUserExcel = new PlanUserExcel();
+                planUserExcel.setAddress(tbTrainUser.getAddress());
+                if (tbTrainUser.getDate() != null) {
+                    String format = sdf.format(tbTrainUser.getDate());
+                    planUserExcel.setDate(format);
+                } else {
+                    planUserExcel.setDate("");
+
+                }
+
+                planUserExcel.setDiagnosis(tbTrainUser.getDiagnosis());
+                planUserExcel.setHospitalName(tbTrainUser.getHospitalName());
+                planUserExcel.setIdCard(tbTrainUser.getIdCard());
+                planUserExcel.setName(tbTrainUser.getName());
+                planUserExcel.setWeight(tbTrainUser.getWeight());
+                planUserExcel.setTelePhone(tbTrainUser.getTelePhone());
+                planUserExcel.setAge("" + tbTrainUser.getAge());
+                if (tbTrainUser.getIsTestAccount().equals(1)) {
+                    planUserExcel.setIsTestAccount("是");
+
+                } else {
+                    planUserExcel.setIsTestAccount("否");
+
+                }
+                planUserExcel.setWeight(tbTrainUser.getWeight());
+
+                planUserExcelList.add(planUserExcel);
+            }
+            try {
+                String cFileName = URLEncoder.encode("planUser", "UTF-8");
+
+                ExcelUtil.writeUserOrderExcel(response, planUserExcelList, cFileName, "planUser", PlanUserExcel.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+        return RestResponse.ok();
     }
 
     /**
@@ -503,9 +603,9 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
 
     @PutMapping("/bindSystemUserId")
-    public RestResponse bindSystemUserId(@RequestParam long uid,@RequestParam(value = "macAddress",required = false) String macAdd) {
-        log.info("bindSystemUserId======="+macAdd);
-        service.bindSystemUserId(uid,macAdd);
+    public RestResponse bindSystemUserId(@RequestParam long uid, @RequestParam(value = "macAddress", required = false) String macAdd) {
+        log.info("bindSystemUserId=======" + macAdd);
+        service.bindSystemUserId(uid, macAdd);
 //        System.out.println("zxczxczxc");
         return RestResponse.ok();
     }
