@@ -47,6 +47,7 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -180,7 +181,14 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         return userOrder;
     }
 
+    public static void main(String[] args) {
+        LocalDate now = LocalDate.now();
+        System.out.println(now.equals(LocalDate.now()));
+    }
     public UOrderStatuCountVo countScoped() {
+
+        LocalDate now = LocalDate.now();
+
         DataScope dataScope = new DataScope();
         dataScope.setIsOnly(true);
         List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery(), dataScope);
@@ -189,12 +197,14 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         long count2 = userOrders.stream().filter(it -> it.getStatus() == 2).count();
         long count3 = userOrders.stream().filter(it -> it.getStatus() == 3).count();
         long count4 = userOrders.stream().filter(it -> it.getStatus() == 4).count();
+        long count5 = userOrders.stream().filter(it -> it.getDeliveryDate().equals(now)).count();
         UOrderStatuCountVo vo = new UOrderStatuCountVo();
         vo.setStatu0(count0);
         vo.setStatu1(count1);
         vo.setStatu2(count2);
         vo.setStatu3(count3);
         vo.setStatu4(count4);
+        vo.setStatu5(count5);
         return vo;
     }
 
@@ -240,7 +250,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 //
     @Transactional(rollbackFor = Exception.class)
     public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber,
-                                String productSn1,String productSn2,String productSn3) {
+                                String productSn1, String productSn2, String productSn3) {
         UserOrder userOrder = super.getById(orderId);
         Assert.notNull(userOrder, "订单不存在");
 

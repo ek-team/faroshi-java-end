@@ -10,5 +10,6 @@ public class UOrderStatuCountVo {
     private Long statu2;
     private Long statu3;
     private Long statu4;
+    private Long statu5;
 
 }
