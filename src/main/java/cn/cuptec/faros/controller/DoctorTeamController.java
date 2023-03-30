@@ -216,9 +216,41 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
      * @return
      */
     @GetMapping("/pageScoped")
-    public RestResponse pageScoped(@RequestParam(required = false, value = "status") Integer status) {
-        Page<DoctorTeam> page = getPage();
+    public RestResponse pageScoped(@RequestParam(required = false, value = "status") Integer status,
+                                   @RequestParam(required = false, value = "hospitalName") Integer hospitalName,
+                                   @RequestParam(required = false, value = "doctorName") Integer doctorName) {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        IPage<DoctorTeam> result = new Page<>();
+        if (!StringUtils.isEmpty(doctorName)) {
+            List<User> users = userService.list(new QueryWrapper<User>().lambda().eq(User::getNickname, doctorName));
+            if (CollectionUtils.isEmpty(users)) {
+                return RestResponse.ok(result);
+            }
+            List<Integer> userIds = users.stream().map(User::getId)
+                    .collect(Collectors.toList());
+            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                    .in(DoctorTeamPeople::getUserId, userIds));
+            if (CollectionUtils.isEmpty(doctorTeamPeopleList)) {
+
+                return RestResponse.ok(result);
+            }
+            List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
+                    .collect(Collectors.toList());
+            queryWrapper.in("id", teamIds);
+
+        }
+
+
+        Page<DoctorTeam> page = getPage();
+        if (!StringUtils.isEmpty(hospitalName)) {
+            List<HospitalInfo> hospitalInfos = hospitalInfoService.list(new QueryWrapper<HospitalInfo>().lambda().eq(HospitalInfo::getName, hospitalName));
+            if (CollectionUtils.isEmpty(hospitalInfos)) {
+                return RestResponse.ok(result);
+            }
+            List<Integer> hospitalInfoIds = hospitalInfos.stream().map(HospitalInfo::getId)
+                    .collect(Collectors.toList());
+            queryWrapper.in("hospital_id", hospitalInfoIds);
+        }
         User user = userService.getById(SecurityUtils.getUser().getId());
         DataScope dataScope = new DataScope();
 
@@ -428,20 +460,20 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             }
 
         }
-        if(!CollectionUtils.isEmpty(doctorTeams)){
+        if (!CollectionUtils.isEmpty(doctorTeams)) {
 
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .in(DoctorTeamPeople::getTeamId, teamIds));
 
 
-            if(!CollectionUtils.isEmpty(doctorTeamPeopleList)){
+            if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
                 List<User> users = (List<User>) userService.listByIds(userIds);
                 Map<Integer, User> userMap = users.stream()
                         .collect(Collectors.toMap(User::getId, t -> t));
-                for(DoctorTeamPeople doctorTeamPeople:doctorTeamPeopleList){
-                    if(userMap.get(doctorTeamPeople.getUserId())!=null){
+                for (DoctorTeamPeople doctorTeamPeople : doctorTeamPeopleList) {
+                    if (userMap.get(doctorTeamPeople.getUserId()) != null) {
                         doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
                         doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
 
@@ -450,7 +482,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
                 Map<Integer, List<DoctorTeamPeople>> map = doctorTeamPeopleList.stream()
                         .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
 
-                for(DoctorTeam doctorTeam:doctorTeams){
+                for (DoctorTeam doctorTeam : doctorTeams) {
                     doctorTeam.setDoctorTeamPeopleList(map.get(doctorTeam.getId()));
                 }
             }
