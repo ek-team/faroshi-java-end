@@ -310,11 +310,11 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         for (TbSubPlan tbSubPlan : subPlanEntity) {
             tbSubPlan.setUpdateDate(new Date());
             if (tbSubPlan.getId() == null) {
-                if (sortEndDate != null) {
-                    tbSubPlan.setStartDate(sortEndDate);
-                    tbSubPlan.setEndDate(addAndSubtractDaysByGetTime(sortEndDate, 7));
-                    sortEndDate = tbSubPlan.getEndDate();
-                }
+//                if (sortEndDate != null) {
+//                    tbSubPlan.setStartDate(sortEndDate);
+//                    tbSubPlan.setEndDate(addAndSubtractDaysByGetTime(sortEndDate, 7));
+//                    sortEndDate = tbSubPlan.getEndDate();
+//                }
 
                 tbSubPlans.add(tbSubPlan);
             }
