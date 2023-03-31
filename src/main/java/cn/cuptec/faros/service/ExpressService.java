@@ -20,9 +20,10 @@ import org.springframework.util.Assert;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
+
 @Slf4j
 @Service
-public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
+public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
 
     @Resource
     private UserOrdertService userOrdertService;
@@ -35,30 +36,31 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
 
     /**
      * 获取用户订单物流轨迹信息
+     *
      * @param id 订单id
      * @return
      */
     public MapExpressTrackVo getUserOrderMapTrace(int id) {
         UserOrder userOrder = userOrdertService.getById(id);
         Assert.isTrue(userOrder != null, "未查询到此订单");
-        MapExpressTrackVo mapExpressTrackVo = queryExpressData(userOrder.getDeliveryCompanyCode(), userOrder.getDeliverySn());
+        MapExpressTrackVo mapExpressTrackVo = queryExpressData(userOrder.getReceiverPhone(), userOrder.getDeliveryCompanyCode(), userOrder.getDeliverySn());
         mapExpressTrackVo.setUserOrder(userOrder);
         return mapExpressTrackVo;
     }
 
     //获取用户回收单物流信息
-    public MapExpressTrackVo queryRetrieveOrderExpressInfo(int id){
+    public MapExpressTrackVo queryRetrieveOrderExpressInfo(int id) {
         RetrieveOrder retrieveOrder = retrieveOrderService.getById(id);
         Assert.isTrue(retrieveOrder != null, "未查询到此订单");
         Assert.isTrue(retrieveOrder.getUserId().intValue() == SecurityUtils.getUser().getId().intValue(), "未查询到物流信息");
         Assert.isTrue(StringUtils.isNotEmpty(retrieveOrder.getDeliverySn()), "未查询到物流信息");
-        MapExpressTrackVo mapExpressTrackVo = queryExpressData(retrieveOrder.getDeliveryCompanyCode(), retrieveOrder.getDeliverySn());
+        MapExpressTrackVo mapExpressTrackVo = queryExpressData(retrieveOrder.getReceiverPhone(),retrieveOrder.getDeliveryCompanyCode(), retrieveOrder.getDeliverySn());
         mapExpressTrackVo.setUserOrder(retrieveOrder);
         return mapExpressTrackVo;
     }
 
 
-    private MapExpressTrackVo queryMapTrace(String com, String num, String from, String to){
+    private MapExpressTrackVo queryMapTrace(String com, String num, String from, String to) {
         MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
         expressParam.setCom(com);
         expressParam.setNum(num);
@@ -77,10 +79,9 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
             HttpResponse response = HttpUtils.doGet("https://poll.kuaidi100.com", "/poll/maptrack.do", "get", new HashMap<>(), paramMap);
             String expressResult = EntityUtils.toString(response.getEntity()); //输出json
             MapExpressTrackVo expressTrackVo = JSON.parseObject(expressResult, MapExpressTrackVo.class);
-            if (expressTrackVo.getStatus() == 200){
+            if (expressTrackVo.getStatus() == 200) {
                 return expressTrackVo;
-            }
-            else{
+            } else {
                 throw new RuntimeException(expressTrackVo.getMessage());
             }
         } catch (Exception e) {
@@ -90,14 +91,19 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
 
     /**
      * 查询物流信息
+     *
      * @param com 快递公司编码
      * @param num 快递单号
      * @return
      */
-    private MapExpressTrackVo queryExpressData(String com, String num){
+    private MapExpressTrackVo queryExpressData(String phone, String com, String num) {
         MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
         expressParam.setCom(com);
         expressParam.setNum(num);
+        if(!StringUtils.isEmpty(phone)){
+            expressParam.setPhone(phone);
+
+        }
         String expressParamStr = JSON.toJSONString(expressParam);
         String signOrigion = expressParamStr + key + customer;
         String sign = DigestUtils.md5Hex(signOrigion).toUpperCase();
@@ -110,17 +116,16 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
         try {
             HttpResponse response = HttpUtils.doGet("https://poll.kuaidi100.com", "/poll/query.do", "get", new HashMap<>(), paramMap);
             String expressResult = EntityUtils.toString(response.getEntity()); //输出json
-            log.info(expressResult+"ppppppppppppppppppppppppppppppp");
+            log.info(expressResult + "ppppppppppppppppppppppppppppppp");
             MapExpressTrackVo expressTrackVo = JSON.parseObject(expressResult, MapExpressTrackVo.class);
-            if (expressTrackVo.getStatus() == 200){
+            if (expressTrackVo.getStatus() == 200) {
                 return expressTrackVo;
-            }
-            else{
+            } else {
                 throw new RuntimeException(expressTrackVo.getMessage());
             }
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage());
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("未查询到物流信息");
         }
     }
@@ -128,7 +133,8 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
     public static void main(String[] args) {
         MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
         expressParam.setCom("shunfeng");
-        expressParam.setNum("SF1416769162853");
+        expressParam.setNum("SF1138935062341");
+        expressParam.setPhone("15990010125");
         String expressParamStr = JSON.toJSONString(expressParam);
         String signOrigion = expressParamStr + key + customer;
         String sign = DigestUtils.md5Hex(signOrigion).toUpperCase();
@@ -139,16 +145,16 @@ public class ExpressService  extends ServiceImpl<ExpressMapper, Express> {
         paramMap.put("sign", sign);
         paramMap.put("param", expressParamStr);
 
+        System.out.println(paramMap);
         HttpResponse response = null;
         try {
             response = HttpUtils.doGet("https://poll.kuaidi100.com", "/poll/query.do", "post", new HashMap<>(), paramMap);
             String expressResult = EntityUtils.toString(response.getEntity()); //输出json
-            log.info(expressResult+"ppppppppppppppppppppppppppppppp");
+            log.info(expressResult + "ppppppppppppppppppppppppppppppp");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
 
     }

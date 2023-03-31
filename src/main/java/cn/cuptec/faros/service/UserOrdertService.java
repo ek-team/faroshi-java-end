@@ -185,6 +185,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         LocalDate now = LocalDate.now();
         System.out.println(now.equals(LocalDate.now()));
     }
+
     public UOrderStatuCountVo countScoped() {
 
         LocalDate now = LocalDate.now();
@@ -249,7 +250,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 //    }
 //
     @Transactional(rollbackFor = Exception.class)
-    public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber,
+    public void conformDelivery(  int orderId, String deliveryCompanyCode, String deliveryNumber,
                                 String productSn1, String productSn2, String productSn3) {
         UserOrder userOrder = super.getById(orderId);
         Assert.notNull(userOrder, "订单不存在");

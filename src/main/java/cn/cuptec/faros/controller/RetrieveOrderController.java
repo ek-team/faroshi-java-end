@@ -505,6 +505,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             retrieveOrder.setCreateTime(new Date());
             retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
             retrieveOrder.setStatus(1);
+            retrieveOrder.setReceiverPhone(param.getRecManMobile());
             retrieveOrder.setTaskId(xiaDanParam.getData().getTaskId());
             retrieveOrder.setDeliveryCompanyCode(param.getCom());
             service.saveRetrieveOrder(retrieveOrder);

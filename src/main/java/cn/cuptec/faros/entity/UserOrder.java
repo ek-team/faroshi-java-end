@@ -88,7 +88,6 @@ public class UserOrder {
     //发货地址
     private String deliveryAddress;
 
-
     //实际付款
     private BigDecimal payment;
 
