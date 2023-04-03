@@ -77,11 +77,14 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private SaleSpecDescService saleSpecDescService;
     @Resource
+    private SaleSpecService saleSpecService;
+    @Resource
     private DoctorTeamService doctorTeamService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private RetrieveOrderService retrieveOrderService;
+
     /**
      * 获取省的订单数量
      *
@@ -219,7 +222,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
             }
 
-        }else{
+        } else {
             queryWrapper.orderByDesc("user_order.create_time");
 
         }
@@ -307,24 +310,55 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
     /**
      * 判断订单是否可以开票
+     * 10不可
+     * 20可以
+     *
      * @return
      */
     @GetMapping("/checkOrderBill")
     public RestResponse checkOrderBill(@RequestParam("id") Integer id) {
         UserOrder userOrder = service.getById(id);
-        if(userOrder.getOrderType().equals(1)) {
+        if (userOrder.getOrderType().equals(1)) {
             //租用
             RetrieveOrder one = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getOrderId, id));
-            if(one==null){
+            if (one == null) {
                 return RestResponse.ok("10");
             }
-            if(!one.getStatus().equals(5)){
+            if (!one.getStatus().equals(5)) {
                 return RestResponse.ok("10");
             }
-        }else {
+        } else {
             //购买
+            Integer servicePackId = userOrder.getServicePackId();
+            SaleSpec saleSpec = saleSpecService.getOne(new QueryWrapper<SaleSpec>().lambda()
+                    .eq(SaleSpec::getServicePackId, servicePackId)
+                    .eq(SaleSpec::getName, "服务周期"));
+            String saleSpecDescIdList1 = userOrder.getSaleSpecDescIdList();
+            List<String> split = Arrays.asList(saleSpecDescIdList1.split(","));
+            Integer rentDay = 0;
+            if (saleSpec != null) {
+                List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                        .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
+                List<Integer> saleSpecDescIdList = saleSpecDescList.stream().map(SaleSpecDesc::getId)
+                        .collect(Collectors.toList());
+                saleSpecDescIdList.retainAll(split);
+                Integer saleSpecDescId = saleSpecDescIdList.get(0);
+                if (saleSpecDescId != null) {
+                    for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+                        if (saleSpecDescId.equals(saleSpecDesc.getSaleSpecId())) {
+                            rentDay = Integer.parseInt(saleSpecDesc.getName());
+                        }
+                    }
 
+                }
+
+                LocalDateTime payTime = userOrder.getPayTime();
+                LocalDateTime localDateTime = payTime.plusDays(rentDay);
+                if (localDateTime.isBefore(LocalDateTime.now())) {
+                    return RestResponse.ok("10");
+                }
+            }
 
         }
 
@@ -352,11 +386,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/manage/confirmDelivery")
     @Transactional
     public RestResponse confirDelivery(@RequestParam("id") int orderId,
-                                       @RequestParam(value = "productSn1",required = false) String productSn1,
-                                       @RequestParam(value = "productSn2",required = false) String productSn2,
-                                       @RequestParam(value = "productSn3",required = false) String productSn3,
+                                       @RequestParam(value = "productSn1", required = false) String productSn1,
+                                       @RequestParam(value = "productSn2", required = false) String productSn2,
+                                       @RequestParam(value = "productSn3", required = false) String productSn3,
                                        @RequestParam(value = "deliveryCompanyCode") String deliveryCompanyCode, @RequestParam(value = "deliveryNumber", required = false) String deliveryNumber) {
-        service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber,productSn1,productSn2,productSn3);
+        service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber, productSn1, productSn2, productSn3);
 
         return RestResponse.ok();
     }
@@ -463,9 +497,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         List<Integer> saleSpecDescIds = userOrder.getSaleSpecDescIds();
         String querySaleSpecIds = "";
+        String userOrderSaleSpecDescIds = "";
         for (Integer saleSpecDescId : saleSpecDescIds) {
             querySaleSpecIds = querySaleSpecIds + saleSpecDescId;
+            userOrderSaleSpecDescIds = userOrderSaleSpecDescIds + "," + saleSpecDescId;
         }
+        userOrder.setSaleSpecDescIdList(userOrderSaleSpecDescIds);
         querySaleSpecIds = querySaleSpecIds.chars()        // IntStream
                 .sorted()
                 .collect(StringBuilder::new,
@@ -494,9 +531,21 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
-        Integer orderType = 1;
-        if (saleSpecGroup.getRecovery().equals(1)) {
-            orderType = 2;
+        Integer orderType = 1;//判断是租用还是购买
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+        if (servicePack.getRentBuy() != null) {
+            orderType = servicePack.getRentBuy();
+        } else {
+            List<SaleSpecDesc> saleSpecDescList = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+                if (saleSpecDesc.getName().equals("租用")) {
+                    orderType = 1;
+                    break;
+                } else {
+                    orderType = 2;
+                    break;
+                }
+            }
         }
         userOrder.setOrderType(orderType);
         userOrder.setProductPic(saleSpecGroup.getUrlImage());
@@ -569,9 +618,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         List<Integer> saleSpecDescIds = userOrder.getSaleSpecDescIds();
         String querySaleSpecIds = "";
+        String userOrderSaleSpecDescIds = "";
         for (Integer saleSpecDescId : saleSpecDescIds) {
             querySaleSpecIds = querySaleSpecIds + saleSpecDescId;
+            userOrderSaleSpecDescIds = userOrderSaleSpecDescIds + "," + saleSpecDescId;
         }
+        userOrder.setSaleSpecDescIdList(userOrderSaleSpecDescIds);
         querySaleSpecIds = querySaleSpecIds.chars()        // IntStream
                 .sorted()
                 .collect(StringBuilder::new,
@@ -596,8 +648,18 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
         Integer orderType = 1;
-        if (saleSpecGroup.getRecovery().equals(1)) {
-            orderType = 2;
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+        if (servicePack.getRentBuy() != null) {
+            orderType = servicePack.getRentBuy();
+        } else {
+            List<SaleSpecDesc> saleSpecDescList = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
+            for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+                if (saleSpecDesc.getName().equals("租用")) {
+                    orderType = 1;
+                } else {
+                    orderType = 2;
+                }
+            }
         }
         userOrder.setOrderType(orderType);
         userOrder.setProductPic(saleSpecGroup.getUrlImage());
@@ -728,7 +790,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        System.out.println(null + "");
+        List<Integer> a = new ArrayList<>();
+        a.add(1);
+        a.add(3);
+        a.add(2);
+        List<Integer> b = new ArrayList<>();
+        b.add(1);
+        b.add(5);
+        b.add(6);
+        a.retainAll(b);
+        System.out.println(a);
     }
 
     /**

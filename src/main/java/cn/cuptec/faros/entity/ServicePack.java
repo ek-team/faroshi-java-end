@@ -23,8 +23,9 @@ public class ServicePack extends Model<ServicePack> {
     private Integer id;
     private Double weight;//物品重量
     private String mpQrCode; //公众号二维码 永久
-    private Integer buy; //是否是购买 1
-    private Integer rent; //是否是租用 1
+    private Integer buy; //是否是购买 1没用
+    private Integer rent; //是否是租用 1没用
+    private Integer rentBuy; //1-租用 2-购买
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String name;
     private String showName;

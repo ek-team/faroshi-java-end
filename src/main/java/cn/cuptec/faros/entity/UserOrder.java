@@ -23,6 +23,7 @@ public class UserOrder {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private Integer billId;
+    private String saleSpecDescIdList;
     private Integer userServicePackageInfoId;
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String orderNo;

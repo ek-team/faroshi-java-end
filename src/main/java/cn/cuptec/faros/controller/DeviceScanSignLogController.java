@@ -149,8 +149,8 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
     }
 
     @GetMapping("/add")
-    public RestResponse add(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) Integer userId) {
-        service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
+    public RestResponse add(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) String userId) {
+        service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, userId));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
         deviceScanSignLog.setUserId(userId + "");
@@ -210,7 +210,8 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
                 TbTrainUser user = map.get(deviceScanSignLog.getUserId());
                 if (user != null) {
                     deviceScanSignLog.setUserName(user.getName());
-
+                    deviceScanSignLog.setIdCard(user.getIdCard());
+                    deviceScanSignLog.setPhone(user.getTelePhone());
                 }
             }
         }

@@ -22,6 +22,10 @@ public class DeviceScanSignLog implements Serializable {
     private String userId;
     @TableField(exist = false)
     private String userName;
+    @TableField(exist = false)
+    private String phone;
+    @TableField(exist = false)
+    private String idCard;
     /**
      * 创建时间
      */
