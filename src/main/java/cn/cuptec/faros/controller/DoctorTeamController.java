@@ -217,10 +217,13 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
      */
     @GetMapping("/pageScoped")
     public RestResponse pageScoped(@RequestParam(required = false, value = "status") Integer status,
-                                   @RequestParam(required = false, value = "hospitalName") Integer hospitalName,
-                                   @RequestParam(required = false, value = "doctorName") Integer doctorName) {
+                                   @RequestParam(required = false, value = "hospitalName") String hospitalName,
+                                   @RequestParam(required = false, value = "hospitalId") Integer hospitalId,
+                                   @RequestParam(required = false, value = "doctorName") String doctorName) {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         IPage<DoctorTeam> result = new Page<>();
+
+
         if (!StringUtils.isEmpty(doctorName)) {
             List<User> users = userService.list(new QueryWrapper<User>().lambda().eq(User::getNickname, doctorName));
             if (CollectionUtils.isEmpty(users)) {
@@ -236,7 +239,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             }
             List<Integer> teamIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getTeamId)
                     .collect(Collectors.toList());
-            queryWrapper.in("id", teamIds);
+            queryWrapper.in("doctor_team.id", teamIds);
 
         }
 
@@ -250,6 +253,11 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             List<Integer> hospitalInfoIds = hospitalInfos.stream().map(HospitalInfo::getId)
                     .collect(Collectors.toList());
             queryWrapper.in("hospital_id", hospitalInfoIds);
+        }
+
+        if (hospitalId != null) {
+
+            queryWrapper.eq("hospital_id", hospitalId);
         }
         User user = userService.getById(SecurityUtils.getUser().getId());
         DataScope dataScope = new DataScope();

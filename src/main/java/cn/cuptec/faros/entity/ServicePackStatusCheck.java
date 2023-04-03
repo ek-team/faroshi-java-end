@@ -15,5 +15,5 @@ public class ServicePackStatusCheck extends Model<ServicePackStatusCheck> {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private Integer servicePackId;
-    private Integer status;//0-启用 停-启用
+    private Integer status;//0-启用 停-启用 2-待审核
 }
