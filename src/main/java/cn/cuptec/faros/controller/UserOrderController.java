@@ -578,10 +578,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
                 if (saleSpecDesc.getName().equals("租用")) {
                     orderType = 1;
-                    break;
                 } else {
                     orderType = 2;
-                    break;
                 }
             }
         }
