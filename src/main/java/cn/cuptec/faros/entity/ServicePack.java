@@ -23,6 +23,7 @@ public class ServicePack extends Model<ServicePack> {
     private Integer id;
     private Double weight;//物品重量
     private String mpQrCode; //公众号二维码 永久
+    private Integer status = 0;//0-启用 1停用
     private Integer buy; //是否是购买 1没用
     private Integer rent; //是否是租用 1没用
     private Integer rentBuy; //1-租用 2-购买
@@ -45,7 +46,7 @@ public class ServicePack extends Model<ServicePack> {
     private String productName;//产品名称
 
     @TableField(exist = false)
-    private List<ServicePackProductPic> servicePackProductPics=new ArrayList<>();//产品图片
+    private List<ServicePackProductPic> servicePackProductPics = new ArrayList<>();//产品图片
     @TableField(exist = false)
     private List<ServicePackProductPic> servicePackProductPicsBuy;//产品图片 购买
     @TableField(exist = false)
