@@ -22,6 +22,7 @@ public class UserOrder {
 
     @TableId(type = IdType.AUTO)
     private Integer id;
+    private LocalDateTime moveTime;//运行时间
     private Integer billId;
     private String saleSpecDescIdList;
     private Integer userServicePackageInfoId;

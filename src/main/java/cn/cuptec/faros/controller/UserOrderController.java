@@ -55,7 +55,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/purchase/order")
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
     private final OssProperties ossProperties;
-
+    @Resource
+    private UpdateOrderRecordService updateOrderRecordService;
     @Resource
     private PatientUserService patientUserService;
     @Resource
@@ -304,8 +305,45 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @PutMapping("/manage/updateOrder")
     public RestResponse updateOrderManual(@RequestBody UserOrder order) {
         service.updateById(order);
+        if (order.getMoveTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+            updateOrderRecord.setOrderId(order.getId());
+            updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+            updateOrderRecord.setCreateTime(LocalDateTime.now());
+            updateOrderRecord.setDesc("修改运行时间为 " + formatter.format(order.getMoveTime()));
+            updateOrderRecordService.save(updateOrderRecord);
 
+        }
+        if (order.getUseDay() != null) {
+            UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+            updateOrderRecord.setOrderId(order.getId());
+            updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+            updateOrderRecord.setCreateTime(LocalDateTime.now());
+            updateOrderRecord.setDesc("修改使用天数为 " + order.getUseDay());
+            updateOrderRecordService.save(updateOrderRecord);
+
+        }
         return RestResponse.ok();
+    }
+
+    /**
+     * 查询订单修改记录
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("/queryUpdateOrderRecord")
+    public RestResponse checkOrderBill(@RequestParam("pageSize") int pageSize, @RequestParam("pageNum") int pageNum, @RequestParam(value = "id", required = false) Integer id) {
+        IPage page = new Page(pageNum, pageSize);
+
+        LambdaQueryWrapper<UpdateOrderRecord> eq = new QueryWrapper<UpdateOrderRecord>().lambda();
+        if (id != null) {
+            eq.eq(UpdateOrderRecord::getOrderId, id);
+        }
+        IPage<UpdateOrderRecord> page1 = updateOrderRecordService.page(page, eq);
+
+        return RestResponse.ok(page1);
     }
 
     /**
