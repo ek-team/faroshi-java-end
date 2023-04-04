@@ -160,7 +160,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/doctorTeam/getByMacAdd",
                         "/productStock/getByMacAddress",
                         "/palnUser/export",
-                        "/deviceScanSignLog/removeByMacAddress"
+                        "/deviceScanSignLog/removeByMacAddress",
+                        "/productStock/getByMacAddressHospitalInfo"
 
                 )
                 .permitAll()

@@ -399,6 +399,22 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         return RestResponse.ok(service.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel,1)));
     }
 
+    /**
+     * 查询设备对应的医院
+     * @param macAddress
+     * @return
+     */
+    @GetMapping("/getByMacAddressHospitalInfo")
+    public RestResponse getByMacAddressHospitalInfo(@RequestParam("macAddress") String macAddress) {
+        ProductStock one = service.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel, 1));
+        Integer hospitalId = one.getHospitalId();
+        if(hospitalId!=null){
+            HospitalInfo hospitalInfo = hospitalInfoService.getById(hospitalId);
+            return RestResponse.ok(hospitalInfo);
+        }
+        return RestResponse.ok();
+    }
+
     @PutMapping("/updateById")
     public RestResponse updateById(@RequestBody ProductStock productStock) {
         List<ProductStock> dbProductStock = service.list(Wrappers.<ProductStock>lambdaQuery()
@@ -442,7 +458,10 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         //如果业务员id不为空指定业务员所在的部门
         if (productStock.getSalesmanId() != null) {
             User user1 = userService.getById(productStock.getSalesmanId());
-            productStock.setDeptId(user1.getDeptId());
+            if(user1!=null){
+                productStock.setDeptId(user1.getDeptId());
+
+            }
         }
         if (StrUtil.isNotEmpty(productStock.getMacAddress())) {
             productStock.setMacAddress(productStock.getMacAddress().toLowerCase());
