@@ -638,8 +638,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @GetMapping("/getByIdHospitalInfo")
     public RestResponse getByIdHospitalInfo(@RequestParam("id") Integer id) {
 
+        User user = userService.getById(SecurityUtils.getUser().getId());
 
-        return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id)));
+        return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id).eq(ServicePack::getDeptId,user.getDeptId())));
     }
 
     /**
