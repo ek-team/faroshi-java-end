@@ -92,7 +92,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
             Integer status = retrieveOrder.getStatus();
-            if (!status.equals(3)) {
+            if (!status.equals(6)) {
                 return RestResponse.ok();
             }
 

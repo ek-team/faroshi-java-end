@@ -147,6 +147,11 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         service.remove(new UpdateWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress));
         return RestResponse.ok();
     }
+    @GetMapping("/removeByMacAddress")
+    public RestResponse removeByMacAddress(@RequestParam("macAddress") String macAddress) {
+        service.remove(new UpdateWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress));
+        return RestResponse.ok();
+    }
 
     @GetMapping("/add")
     public RestResponse add(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) String userId) {
