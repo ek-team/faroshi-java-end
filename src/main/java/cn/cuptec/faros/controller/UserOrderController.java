@@ -311,7 +311,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             updateOrderRecord.setOrderId(order.getId());
             updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
             updateOrderRecord.setCreateTime(LocalDateTime.now());
-            updateOrderRecord.setDesc("修改运行时间为 " + formatter.format(order.getMoveTime()));
+            updateOrderRecord.setDescStr("修改运行时间为 " + formatter.format(order.getMoveTime()));
             updateOrderRecordService.save(updateOrderRecord);
 
         }
@@ -320,7 +320,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             updateOrderRecord.setOrderId(order.getId());
             updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
             updateOrderRecord.setCreateTime(LocalDateTime.now());
-            updateOrderRecord.setDesc("修改使用天数为 " + order.getUseDay());
+            updateOrderRecord.setDescStr("修改使用天数为 " + order.getUseDay());
             updateOrderRecordService.save(updateOrderRecord);
 
         }

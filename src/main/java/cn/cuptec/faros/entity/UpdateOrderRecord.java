@@ -20,5 +20,5 @@ public class UpdateOrderRecord {
 
     private Integer createUserId;
 
-    private String desc;
+    private String descStr;
 }
