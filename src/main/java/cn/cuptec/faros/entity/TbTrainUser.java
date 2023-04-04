@@ -32,7 +32,7 @@ public class TbTrainUser {
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private String height="0";//身高
     @Queryable(queryLogical = QueryLogical.EQUAL)
-    private String educationalLevel;//文化程度
+    private String educationLevel;//文化程度
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Date onsetTime;//发病时间
     private String onsetDiagnosis;//发病诊断
