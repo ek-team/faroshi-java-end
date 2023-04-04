@@ -188,7 +188,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 
     public UOrderStatuCountVo countScoped() {
 
-        LocalDate now = LocalDate.now();
+        LocalDate now = LocalDate.now().plusDays(1);
 
         DataScope dataScope = new DataScope();
         dataScope.setIsOnly(true);
@@ -198,7 +198,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         long count2 = userOrders.stream().filter(it -> it.getStatus() == 2).count();
         long count3 = userOrders.stream().filter(it -> it.getStatus() == 3).count();
         long count4 = userOrders.stream().filter(it -> it.getStatus() == 4).count();
-        long count5 = userOrders.stream().filter(it -> it.getDeliveryDate().equals(now)).count();
+        long count5 = userOrders.stream().filter(it -> it.getDeliveryDate().isBefore(now) && it.getStatus() == 2).count();
         UOrderStatuCountVo vo = new UOrderStatuCountVo();
         vo.setStatu0(count0);
         vo.setStatu1(count1);
@@ -250,7 +250,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 //    }
 //
     @Transactional(rollbackFor = Exception.class)
-    public void conformDelivery(  int orderId, String deliveryCompanyCode, String deliveryNumber,
+    public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber,
                                 String productSn1, String productSn2, String productSn3) {
         UserOrder userOrder = super.getById(orderId);
         Assert.notNull(userOrder, "订单不存在");
