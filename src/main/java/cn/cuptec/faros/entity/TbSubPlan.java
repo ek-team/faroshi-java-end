@@ -29,6 +29,10 @@ public class TbSubPlan {
     private Integer endLoad;//负重
     @TableField(exist = false)
     private String weight;//患者体重
+    @TableField(exist = false)
+    private String startDateStr;
+    @TableField(exist = false)
+    private String endDateStr;
     private Integer weekNum;//第几周
     private Integer dayNum;//第几天
     private Date startDate;

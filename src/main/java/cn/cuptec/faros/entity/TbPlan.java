@@ -33,6 +33,10 @@ public class TbPlan implements Serializable {
     private String weight;//患者体重
     private Integer planTotalDay;//训练周期 （天）
     private Integer classId;//阶段Id （1到3）3个阶段
+    @TableField(exist = false)
+    private String startDateStr;
+    @TableField(exist = false)
+    private String endDateStr;
     private Integer planStatus;//计划状态 0未开始，1进行中，2完成
     private Date startDate;//开始时间wx8d3cacbced9f7d0a
     private Date endDate;//结束时间
