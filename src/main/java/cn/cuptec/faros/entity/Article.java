@@ -7,12 +7,15 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @TableName("article")
 public class Article {
     @TableId(type = IdType.AUTO)
     private int id;
     private Integer createUserId;
+    private LocalDateTime createTime;
     private Integer deptId;
     private String video;
     private String content;

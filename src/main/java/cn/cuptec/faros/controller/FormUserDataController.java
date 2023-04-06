@@ -172,16 +172,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             newChatMsg.setStr3(chatMsg.getId());
             chatMsgService.save(newChatMsg);
         }
-        //更改消息填写表单状态
-        //添加待办事项
-//        Upcoming upcoming = new Upcoming();
-//        upcoming.setContent("用户填写表单成功");
-//        upcoming.setTitle("表单");
-//        upcoming.setUserId(SecurityUtils.getUser().getId());
-//        upcoming.setDoctorId(formManagementData.get(0).getDoctorId());
-//        upcoming.setCreateTime(LocalDateTime.now());
-//        upcoming.setType("2");
-//        upcomingService.save(upcoming);
+
         return RestResponse.ok();
     }
 

@@ -7,15 +7,18 @@ import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.Article;
 import cn.cuptec.faros.entity.BluetoothShoesConfig;
 import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.entity.UserOrder;
 import cn.cuptec.faros.service.ArticleService;
 import cn.cuptec.faros.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -31,6 +34,7 @@ public class ArticleController extends AbstractBaseController<ArticleService, Ar
         User user = userService.getById(SecurityUtils.getUser().getId());
         article.setCreateUserId(user.getId());
         article.setDeptId(user.getDeptId());
+        article.setCreateTime(LocalDateTime.now());
         return RestResponse.ok(service.save(article));
     }
 
@@ -50,8 +54,17 @@ public class ArticleController extends AbstractBaseController<ArticleService, Ar
     public RestResponse<List<Article>> list() {
         Class<Article> entityClass = getEntityClass();
         QueryWrapper queryWrapper = getQueryWrapper(entityClass);
-        queryWrapper.select().orderByDesc("article.sort");
+        queryWrapper.select().orderByDesc("article.create_time");
         return RestResponse.ok(service.list(queryWrapper));
+    }
+
+    @GetMapping("/page")
+    public RestResponse page() {
+        Class<Article> entityClass = getEntityClass();
+        Page<Article> page = getPage();
+        QueryWrapper queryWrapper = getQueryWrapper(entityClass);
+        queryWrapper.select().orderByDesc("article.create_time");
+        return RestResponse.ok(service.page(page, queryWrapper));
     }
 
     //type 1:医院版 2：家庭版
