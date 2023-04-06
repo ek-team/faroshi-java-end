@@ -440,9 +440,13 @@ public class WxPayController {
 
                     retrieveOrder.setStatus(5);
                     retrieveOrderService.updateById(retrieveOrder);
+
+                    UserOrder byId = userOrdertService.getById(Integer.parseInt(retrieveOrder.getOrderId()));
+
                     UserOrder userOrder = new UserOrder();
                     userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
                     userOrder.setActualRetrieveAmount(divide);
+                    userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
                     userOrdertService.updateById(userOrder);
                 }
                 User userById = userService.getById(retrieveOrder.getUserId());

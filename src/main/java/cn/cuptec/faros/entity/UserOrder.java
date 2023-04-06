@@ -137,8 +137,13 @@ public class UserOrder {
 
     private Integer useDay;//使用天数
 
-    //实际回收价格
+    //实际回收价格  退款金额
     private BigDecimal actualRetrieveAmount;
+    private BigDecimal settlementAmount;//结算金额 预付款-退款金额
+    private LocalDateTime recycleTime;//回收揽件时间
+    private LocalDateTime acceptanceTime;//厂家验收时间
+    private LocalDateTime refundInitiationTime;//退款发起时间
+    private LocalDateTime refundReviewTime;//平台退款审核时间
     private String productSn1;//设备序列号1
     private String productSn2;//设备序列号2
     private String productSn3;//设备序列号3

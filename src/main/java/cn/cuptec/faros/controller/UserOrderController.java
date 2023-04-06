@@ -133,7 +133,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         List<UserOrder> userOrders = service.list(new QueryWrapper<UserOrder>().lambda()
                 .eq(UserOrder::getDeliveryCompanyCode, subscribePushParamResp.getLastResult().getCom())
                 .eq(UserOrder::getDeliverySn, subscribePushParamResp.getLastResult().getNu()));
-
         if ("shutdown".equals(subscribePushParamResp.getStatus())) {
 
             // 修改状态为收货

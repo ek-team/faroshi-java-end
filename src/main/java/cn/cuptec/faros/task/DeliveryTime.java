@@ -1,7 +1,9 @@
 package cn.cuptec.faros.task;
 
+import cn.cuptec.faros.entity.RetrieveOrder;
 import cn.cuptec.faros.entity.UserOrder;
 import cn.cuptec.faros.service.ExpressService;
+import cn.cuptec.faros.service.RetrieveOrderService;
 import cn.cuptec.faros.service.UserOrdertService;
 import cn.cuptec.faros.vo.MapExpressTrackVo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -18,6 +20,8 @@ import java.util.List;
 public class DeliveryTime {
     @Resource
     private UserOrdertService userOrdertService;
+    @Resource
+    private RetrieveOrderService retrieveOrderService;
     @Resource
     private ExpressService expressService;
 

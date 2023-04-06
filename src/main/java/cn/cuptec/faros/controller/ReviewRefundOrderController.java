@@ -72,6 +72,14 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
                 .set(RetrieveOrder::getStatus, 6));
+        RetrieveOrder one = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
+
+        UserOrder userOrder = new UserOrder();
+        userOrder.setId(Integer.parseInt(one.getOrderId()));
+        userOrder.setRefundInitiationTime(LocalDateTime.now());
+        userOrdertService.updateById(userOrder);
+
         return RestResponse.ok(service.save(reviewRefundOrder));
     }
 
@@ -87,10 +95,11 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
     public RestResponse review(@RequestParam("id") Integer id, @RequestParam("reviewStatus") Integer reviewStatus) {
         ReviewRefundOrder reviewRefundOrder = service.getById(id);
         Double amount = reviewRefundOrder.getRefundFee().doubleValue();
+        RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
         if (reviewStatus.equals(1)) {
             //退款
-            RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                    .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
+
             Integer status = retrieveOrder.getStatus();
             if (!status.equals(6)) {
                 return RestResponse.ok();
@@ -131,6 +140,12 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         }
         reviewRefundOrder.setStatus(reviewStatus);
         service.updateById(reviewRefundOrder);
+
+
+        UserOrder userOrder = new UserOrder();
+        userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
+        userOrder.setRefundReviewTime(LocalDateTime.now());
+        userOrdertService.updateById(userOrder);
         return RestResponse.ok();
     }
 

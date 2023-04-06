@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -19,6 +20,7 @@ public class RetrieveOrder {
 
     @TableId
     private Integer id;
+    private LocalDateTime recycleTime;//回收揽件时间
     private String taskId;//快递任务id
     private String reviewData;//回收单厂家审核信息
     private String deliveryName;//发货人姓名

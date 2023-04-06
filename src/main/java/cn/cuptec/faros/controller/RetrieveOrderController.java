@@ -74,6 +74,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         retrieveOrder.setId(retrieveOrderReviewData.getRetrieveOrderId());
         retrieveOrder.setStatus(3);
         service.updateById(retrieveOrder);
+        RetrieveOrder retrieveOrderOne = service.getById(retrieveOrderReviewData.getRetrieveOrderId());
+
+        UserOrder userOrder = new UserOrder();
+        userOrder.setId(Integer.parseInt(retrieveOrderOne.getOrderId()));
+        userOrder.setAcceptanceTime(LocalDateTime.now());
+        userOrdertService.updateById(userOrder);
         return RestResponse.ok(retrieveOrderReviewDataService.save(retrieveOrderReviewData));
     }
 
@@ -537,7 +543,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             one.setStatus(2);
             service.updateById(one);
         }
-
+        if (kuaiDiCallBackParam.getData().getStatus().equals("10")) {
+            UserOrder userOrder = new UserOrder();
+            userOrder.setId(Integer.parseInt(one.getOrderId()));
+            userOrder.setRecycleTime(LocalDateTime.now());
+            userOrdertService.updateById(userOrder);
+        }
         KuaiDiCallBackResult kuaiDiCallBackResult = new KuaiDiCallBackResult();
         kuaiDiCallBackResult.setResult(true);
         kuaiDiCallBackResult.setMessage("成功");
