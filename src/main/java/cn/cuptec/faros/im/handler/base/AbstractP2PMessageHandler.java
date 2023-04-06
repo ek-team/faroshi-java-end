@@ -50,7 +50,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     private UserGroupService userGroupService;
     @Resource
     private UserGroupRelationUserService userGroupRelationUserService;
-
+    @Resource
+    private ArticleService articleService;
 
     @Override
     @Transactional
@@ -85,6 +86,11 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 Form form = formService.getById(origionMessage.getStr1());
                 chatMsg.setForm(form);
             }
+            if (origionMessage.getMsgType().equals(ChatProto.ARTICLE)) {
+                Article article = articleService.getById(origionMessage.getStr1());
+                chatMsg.setArticle(article);
+            }
+
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
 
             //判断是否是群聊

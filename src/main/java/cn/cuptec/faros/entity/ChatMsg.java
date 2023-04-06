@@ -81,5 +81,7 @@ public class ChatMsg extends Model<ChatMsg> {
     private FollowUpPlanNotice followUpPlanNotice;//随访计划
     @TableField(exist = false)
     private Form form;//表单
+    @TableField(exist = false)
+    private Article article;//文章
 }
 

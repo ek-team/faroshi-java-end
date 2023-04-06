@@ -52,6 +52,8 @@ public class ChatMsgController {
     @Resource
     private FormService formService;
     @Resource
+    private ArticleService articleService;
+    @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private DoctorTeamService doctorTeamService;
@@ -138,9 +140,11 @@ public class ChatMsgController {
             List<String> otherOrderIds = new ArrayList<>();//获取图文咨询内容
             List<String> followUpPlanNoticeIds = new ArrayList<>();//随访计划
             List<String> formIds = new ArrayList<>();//表单id
+            List<String> articleIds = new ArrayList<>();//表单id
             Map<Integer, PatientOtherOrder> patientOtherOrderMap = new HashMap<>();
             Map<Integer, FollowUpPlanNotice> followUpPlanNoticeMap = new HashMap<>();
             Map<Integer, Form> formMap = new HashMap<>();
+            Map<Integer, Article> articleMap = new HashMap<>();
             for (ChatMsg chatMsg : records) {
                 chatMsg.setUser(userMap.get(chatMsg.getFromUid()));
                 if (chatMsg.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {//图文咨询
@@ -151,6 +155,9 @@ public class ChatMsgController {
                 }
                 if (chatMsg.getMsgType().equals(ChatProto.FORM)) {//表单
                     formIds.add(chatMsg.getStr1());
+                }
+                if (chatMsg.getMsgType().equals(ChatProto.ARTICLE)) {//文章
+                    articleIds.add(chatMsg.getStr1());
                 }
             }
             if (!CollectionUtils.isEmpty(otherOrderIds)) {//图文咨询
@@ -216,6 +223,13 @@ public class ChatMsgController {
                 formMap = forms.stream()
                         .collect(Collectors.toMap(Form::getId, t -> t));
             }
+            //文章
+            if (!CollectionUtils.isEmpty(articleIds)) {//
+                List<Article> articles = (List<Article>) articleService.listByIds(articleIds);
+                articleMap = articles.stream()
+                        .collect(Collectors.toMap(Article::getId, t -> t));
+            }
+
             for (ChatMsg chatMsg : records) {
                 if (chatMsg.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {//图文咨询
                     PatientOtherOrder patientOtherOrder = patientOtherOrderMap.get(Integer.parseInt(chatMsg.getStr1()));
@@ -231,6 +245,10 @@ public class ChatMsgController {
                 if (chatMsg.getMsgType().equals(ChatProto.FORM)) {//表单
 
                     chatMsg.setForm(formMap.get(Integer.parseInt(chatMsg.getStr1())));
+                }
+                if (chatMsg.getMsgType().equals(ChatProto.ARTICLE)) {//文章
+
+                    chatMsg.setArticle(articleMap.get(Integer.parseInt(chatMsg.getStr1())));
                 }
             }
 
