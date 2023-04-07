@@ -56,6 +56,10 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     private ServicePackService servicePackService;
     @Resource
     private ServicePackageInfoService servicePackageInfoService;
+
+    @Resource
+    private DoctorTeamDeptService doctorTeamDeptService;
+
     private final OssProperties ossProperties;
 
     /**
@@ -69,6 +73,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
 
         doctorTeam.setStatus(0);
         doctorTeam.setDeptId(byId.getDeptId());
+        doctorTeam.setDeptIdList(byId.getDeptId() + "");
         doctorTeam.setCreateTime(LocalDateTime.now());
         service.save(doctorTeam);
         //生成一个图片返回
@@ -270,7 +275,9 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         if (status != null) {
             queryWrapper.eq("status", 1);
         }
-        IPage<DoctorTeam> doctorTeamIPage = service.pageScoped(page, queryWrapper, dataScope);
+        User userDept = userService.getById(SecurityUtils.getUser().getId());
+        queryWrapper.in("dept_id_list", userDept.getDeptId());
+        IPage<DoctorTeam> doctorTeamIPage = service.pageScoped(page, queryWrapper);
         return RestResponse.ok(doctorTeamIPage);
     }
 
@@ -280,7 +287,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     @GetMapping("/pageScopedHavePeople")
     public RestResponse pageScopedHavePeople() {
         User user = userService.getById(SecurityUtils.getUser().getId());
-        List<DoctorTeam> doctorTeams = service.pageScopedHavePeople(user.getDeptId());
+        List<DoctorTeam> doctorTeams = service.pageScopedHavePeople(user.getDeptId()+"");
         doctorTeams = doctorTeams.stream().collect(
                 Collectors.collectingAndThen(
                         Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(DoctorTeam::getId))), ArrayList::new)

@@ -26,6 +26,7 @@ public class DoctorTeam extends Model<DoctorTeam> {
     private String hospitalName;
     private String teamDesc;
     private Integer deptId;
+    private String deptIdList;
     private String qrCode;
     private Integer createUserId;
     private Integer status;//审核状态 0-待审核 -1审核通过 2-审核不通过
