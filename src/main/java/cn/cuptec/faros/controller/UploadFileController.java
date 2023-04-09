@@ -54,17 +54,17 @@ public class UploadFileController {
     @ApiOperation(value = "上传文件")
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("file") MultipartFile mulFile,
-                             @RequestParam(value = "dir",required = false) String dir
+                             @RequestParam(value = "dir", required = false) String dir
     ) throws Exception {
         File file = FileUtils.multipartFileToFile(mulFile);
         String originalFilename = mulFile.getOriginalFilename();
         String[] split = originalFilename.split("\\.");
-        dir="image/";
-        return UploadFileUtils.uploadFile(file, dir, ossProperties,split[0] );
+        dir = "image/";
+        return UploadFileUtils.uploadFile(file, dir, ossProperties, split[0]);
     }
 
     public static void main(String[] args) {
-        String a="11.jpeg";
+        String a = "11.jpeg";
         System.out.println(a.split("\\.")[0]);
     }
 
@@ -89,7 +89,16 @@ public class UploadFileController {
             String fileName = file.getOriginalFilename();
             String[] split = fileName.split("_");
             fileName = macAdd + "_" + split[1].split("\\.")[0];
+
+            String name = fileResult.getName();
+            String suffix = name.substring(name.lastIndexOf(".") + 1);
+            String key = "productStockInfo/" + fileName + "." + suffix;
+            log.info(key+"删除文件");
+            UploadFileUtils.deleteFile(key, ossProperties);
+
+
             UploadFileUtils.uploadFile(fileResult, "productStockInfo/", ossProperties, fileName);
+
 
         }
 

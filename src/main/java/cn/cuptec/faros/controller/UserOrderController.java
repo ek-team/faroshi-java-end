@@ -414,6 +414,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         wxMpService.faPiaoNotice(userById.getMpOpenId(), "发票已上传", byId.getOrderNo(), byId.getPayment() + "", userById.getNickname(),
                 "点击查看详情", "pages/myOrder/myOrder");
+
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(order.getId());
+        updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("上传发票");
+        updateOrderRecordService.save(updateOrderRecord);
         return RestResponse.ok();
     }
 
@@ -428,7 +435,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                        @RequestParam(value = "productSn3", required = false) String productSn3,
                                        @RequestParam(value = "deliveryCompanyCode") String deliveryCompanyCode, @RequestParam(value = "deliveryNumber", required = false) String deliveryNumber) {
         service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber, productSn1, productSn2, productSn3);
-
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(orderId);
+        updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("发货");
+        updateOrderRecordService.save(updateOrderRecord);
         return RestResponse.ok();
     }
 

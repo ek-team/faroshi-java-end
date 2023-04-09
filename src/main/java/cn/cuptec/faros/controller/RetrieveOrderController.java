@@ -62,7 +62,8 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
     private RetrieveOrderReviewDataService retrieveOrderReviewDataService;//回收单审核信息
-
+    @Resource
+    private UpdateOrderRecordService updateOrderRecordService;
     /**
      * 添加回收单审核设备信息
      */
@@ -80,6 +81,14 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         userOrder.setId(Integer.parseInt(retrieveOrderOne.getOrderId()));
         userOrder.setAcceptanceTime(LocalDateTime.now());
         userOrdertService.updateById(userOrder);
+
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrderOne.getOrderId()));
+        updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("设备审核");
+        updateOrderRecordService.save(updateOrderRecord);
+
         return RestResponse.ok(retrieveOrderReviewDataService.save(retrieveOrderReviewData));
     }
 

@@ -122,14 +122,12 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
     }
 
     @PostMapping("/save")
-    public RestResponse save(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) Integer userId) {
+    public RestResponse save(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) String userId) {
         log.info("进入====================保存扫描设备:{}", macAddress);
-        if (userId == null) {
-            userId = SecurityUtils.getUser().getId();
-        }
+
         log.info("保存扫描设备:{}", macAddress);
         log.info("保存扫描设备:{}", userId);
-        service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, SecurityUtils.getUser().getId()));
+        service.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress).eq(DeviceScanSignLog::getUserId, userId));
         DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
 
         deviceScanSignLog.setUserId(userId + "");

@@ -37,6 +37,8 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
     private OrderRefundInfoService orderRefundInfoService;
     @Resource
     private DeptService deptService;
+    @Resource
+    private UpdateOrderRecordService updateOrderRecordService;
 
     @Override
     protected Class<ReviewRefundOrder> getEntityClass() {
@@ -79,6 +81,13 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         userOrder.setId(Integer.parseInt(one.getOrderId()));
         userOrder.setRefundInitiationTime(LocalDateTime.now());
         userOrdertService.updateById(userOrder);
+
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(Integer.parseInt(one.getOrderId()));
+        updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("退款审核");
+        updateOrderRecordService.save(updateOrderRecord);
 
         return RestResponse.ok(service.save(reviewRefundOrder));
     }
@@ -131,6 +140,13 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             String result = HttpUtil.get(url);
             retrieveOrder.setStatus(4);
             retrieveOrderService.updateById(retrieveOrder);
+
+            UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+            updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrder.getOrderId()));
+            updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+            updateOrderRecord.setCreateTime(LocalDateTime.now());
+            updateOrderRecord.setDescStr("退款成功");
+            updateOrderRecordService.save(updateOrderRecord);
         }
         if (reviewStatus.equals(2)) {
             //拒绝

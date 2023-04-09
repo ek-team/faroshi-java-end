@@ -31,6 +31,8 @@ public class AliOssUtils {
         String fileName = file.getName();
         String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
         String key = dir + fileName1 + "." + suffix;
+
+
         // 创建PutObjectRequest对象。
         PutObjectRequest putObjectRequest = new PutObjectRequest(storageConfig.getBucket(), key, file);
         // 如果需要上传时设置存储类型与访问权限，请参考以下示例代码。

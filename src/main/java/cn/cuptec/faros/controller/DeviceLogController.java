@@ -40,8 +40,8 @@ public class DeviceLogController extends AbstractBaseController<DeviceLogService
 
     public static void main(String[] args) {
         String url = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/log/1.xlog";
-        String s = url.split("/")[3];
-        System.out.println(s + "/" + url.split("/")[4]);
+        String dir = url.split("/")[3] + "/" + url.split("/")[4];
+        System.out.println(dir);
     }
 
     public static String stringReplace(String str) {
