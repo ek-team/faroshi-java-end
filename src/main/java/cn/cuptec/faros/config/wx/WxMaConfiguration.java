@@ -26,8 +26,11 @@ public class WxMaConfiguration {
 
     @Getter
     private static WxMaService wxMaService;
+    @Getter
+    private static WxMaService wxMa1Service;
 
     private final WxMaProperties wxMaProperties;
+    private final WxMa1Properties wxMa1Properties;
 
     @PostConstruct
     public void init() {
@@ -37,9 +40,20 @@ public class WxMaConfiguration {
         config.setToken(wxMaProperties.getToken());
         config.setAesKey(wxMaProperties.getAesKey());
         config.setMsgDataFormat(wxMaProperties.getMsgFormat());
-
         wxMaService = new WxMaServiceImpl();
         wxMaService.setWxMaConfig(config);
+
+
+        //下肢训练小程序
+        WxMaDefaultConfigImpl config1 = new WxMaDefaultConfigImpl();
+        config1.setAppid(wxMa1Properties.getAppId());
+        config1.setSecret(wxMa1Properties.getSecret());
+        config1.setToken(wxMa1Properties.getToken());
+        config1.setAesKey(wxMa1Properties.getAesKey());
+        config1.setMsgDataFormat(wxMa1Properties.getMsgFormat());
+
+        wxMa1Service = new WxMaServiceImpl();
+        wxMa1Service.setWxMaConfig(config1);
 
         this.newRouter(wxMaService);
     }

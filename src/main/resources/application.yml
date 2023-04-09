@@ -58,8 +58,13 @@ wx:
     token: weixin
     #小程序
   ma:
+    #购买小程序
     app-id: wxad59cd874b45bb96
     secret: d5bc744d1fd9411e159e369f5ba7199d
+  ma1:
+    #下肢训练小程序
+    app-id: wx5e46dffdc68e71cd
+    secret: 0fe69b2bd8709e94ba9d9e547cc212fc
 
 cup:
   sms:

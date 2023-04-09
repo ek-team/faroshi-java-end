@@ -39,8 +39,19 @@ public class MaLoginHandler extends AbstractLoginHandler {
     @SneakyThrows
     public User info(String identify) {
         log.info("小程序登录:" + identify);
+        String[] split = identify.split("/");
+        WxMaUserService wxMaUserService;
+        identify = split[0];
+        if (split.length == 1) {
+
+            wxMaUserService = WxMaConfiguration.getWxMaService().getUserService();
+        } else {
+
+            wxMaUserService = WxMaConfiguration.getWxMa1Service().getUserService();
+        }
         //根据code获取微信信息
-        WxMaUserService wxMaUserService = WxMaConfiguration.getWxMaService().getUserService();
+        log.info("小程序登录:" + identify);
+
         WxMaJscode2SessionResult sessionInfo = wxMaUserService.getSessionInfo(identify);
         log.info("小程序登录sessionInfo:{}" + sessionInfo.toString());
         User user = userService.getBaseMapper().getUnionIdIsExist(sessionInfo.getUnionid());
