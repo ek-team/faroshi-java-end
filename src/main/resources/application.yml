@@ -56,6 +56,11 @@ wx:
     appId: wx0ed9d77369636eb3
     secret: 31afe6666a17a2fbe3dd44ae6d09f7ab
     token: weixin
+  #测试公众号
+  mp1:
+    appId: wxed6151fe3094bbd0
+    secret: 1539391f5e68b8901714099c40d6ca4d
+    token: weixin
     #小程序
   ma:
     #购买小程序

@@ -35,13 +35,15 @@ public class WxMpConfiguration {
     //endregion
 
     private final WxMpProperties wxMpProperties;
-
+	private final WxMp1Properties wxMp1Properties;
     @Getter
 	private static WxMpMessageRouter router;
 
 	@Getter
 	private static WxMpService wxMpService;
 
+	@Getter
+	private static WxMpService wxMp1Service;
 
 	@PostConstruct
 	public void initService() {
@@ -53,6 +55,17 @@ public class WxMpConfiguration {
 
         wxMpService = new WxMpServiceImpl();
         wxMpService.setWxMpConfigStorage(configStorage);
+
+
+		WxMpDefaultConfigImpl configStorage1 = new WxMpDefaultConfigImpl();
+		configStorage1.setAppId(wxMp1Properties.getAppId());
+		configStorage1.setSecret(wxMp1Properties.getSecret());
+		configStorage1.setToken(wxMp1Properties.getToken());
+		configStorage1.setAesKey(wxMp1Properties.getAesKey());
+
+		wxMp1Service = new WxMpServiceImpl();
+		wxMp1Service.setWxMpConfigStorage(configStorage1);
+
         router = this.newRouter(wxMpService);
 	}
 
