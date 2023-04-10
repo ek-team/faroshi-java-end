@@ -41,7 +41,7 @@ public class DoctorTeamDeptController extends AbstractBaseController<DoctorTeamD
         Integer teamId = doctorTeamDept.getTeamId();
         DoctorTeam doctorTeam = doctorTeamService.getById(teamId);
         String deptIdList = doctorTeam.getDeptIdList();
-        deptIdList = deptIdList + "," + doctorTeamDept.getDept();
+        deptIdList = deptIdList + "," + doctorTeamDept.getDeptId();
         doctorTeam.setDeptIdList(deptIdList);
         doctorTeamService.updateById(doctorTeam);
         return RestResponse.ok();
