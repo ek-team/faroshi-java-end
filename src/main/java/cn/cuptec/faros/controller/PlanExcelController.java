@@ -2,10 +2,7 @@ package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.utils.MapperUtil;
-import cn.cuptec.faros.entity.PlanExcelBO;
-import cn.cuptec.faros.entity.TbPlan;
-import cn.cuptec.faros.entity.TbTrainData;
-import cn.cuptec.faros.entity.TbUserTrainRecord;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.PlanUserTrainRecordService;
 import cn.cuptec.faros.service.TrainDataService;
 import cn.cuptec.faros.util.ExcelUtil;
@@ -32,6 +29,25 @@ public class PlanExcelController {
 
     @GetMapping("export")
     public RestResponse listexportByUid(HttpServletResponse response, @RequestParam("xtUserId") Integer xtUserId, @RequestParam("name") String name) {
+        List<PlanUserExcelBO> planExcelBOS0 = new ArrayList<>();
+        PlanUserExcelBO planUserExcelBO=new PlanUserExcelBO();
+        planUserExcelBO.setName("sadasdasdasd");
+        planExcelBOS0.add(planUserExcelBO);
+        List<PlanExcelBO> planExcelBOS1 = new ArrayList<>();
+        PlanExcelBO planExcelBOd = new PlanExcelBO();
+        planExcelBOd.setName("asldll");
+        planExcelBOS1.add(planExcelBOd);
+        List<PlanExcelBO> planExcelBOS2 = new ArrayList<>();
+        planExcelBOS2.add(planExcelBOd);
+        try {
+            ExcelUtil.writeExcel(response, planExcelBOS0, planExcelBOS1, planExcelBOS2, "wwaw", "训练记录1", PlanExcelBO.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (true) {
+            return RestResponse.ok();
+        }
+
         List<TbUserTrainRecord> tbUserTrainRecords = planUserTrainRecordService.listTrainRecordByXtUserId(xtUserId);
         if (CollectionUtils.isEmpty(tbUserTrainRecords)) {
             return RestResponse.failed("没有数据");
@@ -44,7 +60,6 @@ public class PlanExcelController {
         List<Integer> recordIds = tbUserTrainRecords.stream().map(TbUserTrainRecord::getId)
                 .collect(Collectors.toList());
         List<TbTrainData> tbTrainData = trainDataService.listByRecordIds(recordIds);
-        List<PlanExcelBO> planExcelBOS1 = new ArrayList<>();
         if (!CollectionUtils.isEmpty(tbTrainData)) {
 
             Map<Integer, List<TbTrainData>> tbTrainDataMap = tbTrainData.stream()
@@ -84,7 +99,7 @@ public class PlanExcelController {
 
         try {
 
-            ExcelUtil.writeExcel(response, planExcelBOS1, cFileName, "训练记录1", PlanExcelBO.class);
+            ExcelUtil.writeExcel(response, planExcelBOS0, planExcelBOS1, planExcelBOS2, cFileName, "训练记录1", PlanExcelBO.class);
 
 
         } catch (Exception e) {
