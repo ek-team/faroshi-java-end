@@ -15,15 +15,15 @@ import java.util.List;
 
 @Service
 public class ServicePackService extends ServiceImpl<ServicePackMapper, ServicePack> {
-    public IPage<ServicePack> pageScoped(IPage<ServicePack> page, Wrapper<ServicePack> queryWrapper) {
+    public IPage<ServicePack> pageScoped(Boolean admin, IPage<ServicePack> page, Wrapper<ServicePack> queryWrapper) {
         DataScope dataScope = new DataScope();
-        dataScope.setIsOnly(true);
+        dataScope.setIsOnly(!admin);
         return baseMapper.pageScoped(page, queryWrapper, dataScope);
     }
 
-    public List<ServicePack> listScoped( Wrapper<ServicePack> queryWrapper) {
+    public List<ServicePack> listScoped(Wrapper<ServicePack> queryWrapper) {
         DataScope dataScope = new DataScope();
         dataScope.setIsOnly(true);
-        return baseMapper.listScoped( queryWrapper, dataScope);
+        return baseMapper.listScoped(queryWrapper, dataScope);
     }
 }

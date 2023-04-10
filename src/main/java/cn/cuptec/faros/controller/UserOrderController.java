@@ -56,6 +56,8 @@ import java.util.stream.Collectors;
 public class UserOrderController extends AbstractBaseController<UserOrdertService, UserOrder> {
     private final OssProperties ossProperties;
     @Resource
+    private UserRoleService userRoleService;
+    @Resource
     private UpdateOrderRecordService updateOrderRecordService;
     @Resource
     private PatientUserService patientUserService;
@@ -235,7 +237,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.le("user_order.delivery_date", endDeliveryDate);
             queryWrapper.ge("user_order.delivery_date", startDeliveryDate);
         }
-        IPage<UserOrder> pageScoped = service.pageScoped(page, queryWrapper);
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+
+        IPage<UserOrder> pageScoped = service.pageScoped(aBoolean,page, queryWrapper);
         if (CollUtil.isNotEmpty(pageScoped.getRecords())) {
             List<UserOrder> records = pageScoped.getRecords();
             //服务包信息

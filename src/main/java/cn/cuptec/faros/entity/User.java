@@ -22,6 +22,7 @@ import java.util.List;
 public class User extends Model<User> {
 
     private static final long serialVersionUID = 1L;
+    private String showName;//显示名字
     private String lever;//级别
     private String hospitalInfoName;
     private String department;//科室

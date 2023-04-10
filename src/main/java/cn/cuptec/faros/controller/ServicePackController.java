@@ -45,6 +45,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @Resource
     private UserService userService;
     @Resource
+    private UserRoleService userRoleService;
+    @Resource
     private ProductSpecService productSpecService;//产品规格
 
     @Resource
@@ -471,7 +473,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             queryWrapper.le("service_pack.create_time", endTime);
             queryWrapper.ge("service_pack.create_time", startTime);
         }
-        IPage<ServicePack> servicePackIPage = service.pageScoped(page, queryWrapper);
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+
+        IPage<ServicePack> servicePackIPage = service.pageScoped(aBoolean,page, queryWrapper);
 
         return RestResponse.ok(servicePackIPage);
     }

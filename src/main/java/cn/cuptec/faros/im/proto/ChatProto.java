@@ -37,7 +37,7 @@ public class ChatProto {
 
     //音频消息
     public static final String VIDEO = "VIDEO";
-    //音频消息
+    //视频频消息
     public static final String VIDEO_URL = "VIDEO_URL";
     //转发消息
     public static final String FORWARD = "FORWARFD";

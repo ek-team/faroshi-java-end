@@ -50,7 +50,6 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
         wrapper.like(ChatUser::getUserIds, param.getMyUserId());
         List<ChatUser> chatUsers = new ArrayList<>();
         IPage result = new Page();
-        log.info(param.getSearchName() + "mmmmmmmmmmmmmmmmmmmmmmmmmmmm");
         if (!StringUtils.isEmpty(param.getSearchName())) {//如果是搜索昵称
 
             LambdaQueryWrapper<User> userWrapper = Wrappers.<User>lambdaQuery()

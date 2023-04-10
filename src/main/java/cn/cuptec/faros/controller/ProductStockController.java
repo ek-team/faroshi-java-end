@@ -56,6 +56,26 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
     private OperationRecordService operationRecordService;
     @Resource
     private DeviceVersionService deviceVersionService;
+    @Resource
+    private cn.cuptec.faros.service.WxMpService wxMpService;
+    @Resource
+    private ServicePackService servicePackService;
+
+    /**
+     * 用户扫描设备二维码之后 公众号推送一个扫描成功消息 点击跳入对应购买页面
+     */
+    @GetMapping("/scanSendMpNotice")
+    public RestResponse scanSendMpNotice(@RequestParam("servicePackId") int servicePackId,
+                                         @RequestParam("token") String token) {
+        User user = userService.getById(SecurityUtils.getUser().getId());
+        ServicePack servicePack = servicePackService.getById(servicePackId);
+
+        wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", servicePack.getName(), "法罗适",
+                "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePackId + "&token=" + token);
+
+        return RestResponse.ok();
+    }
+
 
     /**
      * 生成设备激活码
@@ -133,97 +153,97 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
             return RestResponse.failed("没有查询到当前登录用户所属部门");
         }
 
-        List<User> users = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18,7,17));
+        List<User> users = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18, 7, 17));
 
-            //判断搜索条件是 手机号还是昵称 或者是 mac地址
-            String nickname = null;
-            String phone = null;
-            String macAdd = null;
-            if (!StringUtils.isEmpty(search)) {
-                if (search.indexOf(":") > 0) {
-                    macAdd = search;
-                } else if (isNumericZidai(search)) {
-                    phone = search;
-                } else {
-                    nickname = search;
-                }
-            }
-            List<Integer> uids = new ArrayList<>();
-            QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-
-            if (!CollectionUtils.isEmpty(users)) {
-                uids = users.stream().map(User::getId)
-                        .collect(Collectors.toList());
-                queryWrapper.in("salesman_id", uids);
+        //判断搜索条件是 手机号还是昵称 或者是 mac地址
+        String nickname = null;
+        String phone = null;
+        String macAdd = null;
+        if (!StringUtils.isEmpty(search)) {
+            if (search.indexOf(":") > 0) {
+                macAdd = search;
+            } else if (isNumericZidai(search)) {
+                phone = search;
             } else {
-                return RestResponse.ok();
+                nickname = search;
             }
-            queryWrapper.eq(status != null, "status", status);
-            Page<ProductStock> page = getPage();
-            //如果是管理员则查看所有
-            Integer uid = SecurityUtils.getUser().getId();
-            Boolean isAdmin = userRoleService.judgeUserIsAdmin(uid);
-            IPage iPage = null;
-            if (isAdmin) {
-                iPage = service.pageScopedDepAll(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
+        }
+        List<Integer> uids = new ArrayList<>();
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
-            } else {
-                DataScope dataScope = new DataScope();
-                dataScope.setIsOnly(true);
-                iPage = service.pageScopedDep(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId, dataScope);
+        if (!CollectionUtils.isEmpty(users)) {
+            uids = users.stream().map(User::getId)
+                    .collect(Collectors.toList());
+            queryWrapper.in("salesman_id", uids);
+        } else {
+            return RestResponse.ok();
+        }
+        queryWrapper.eq(status != null, "status", status);
+        Page<ProductStock> page = getPage();
+        //如果是管理员则查看所有
+        Integer uid = SecurityUtils.getUser().getId();
+        Boolean isAdmin = userRoleService.judgeUserIsAdmin(uid);
+        IPage iPage = null;
+        if (isAdmin) {
+            iPage = service.pageScopedDepAll(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
 
-            }
-            if (iPage != null) {
-                List<ProductStock> records = iPage.getRecords();
-                if (!CollectionUtils.isEmpty(records)) {
-                    //判断是否有绑定纳里二维码
-                    List<Integer> uIds = new ArrayList<>();
-                    for (ProductStock productStock : records) {
-                        if (StringUtils.isEmpty(productStock.getNaniQrCodeUrl())) {
-                            productStock.setNaniQrCodeUrl("未绑定");
-                        }
-                        if (productStock.getUserId() != null) {
-                            uIds.add(productStock.getUserId());
-                        }
-                    }
-                    if (!CollectionUtils.isEmpty(uIds)) {
-                        List<User> users1 = (List<User>) userService.listByIds(uIds);
-                        Map<Integer, List<User>> userMap = users1.stream()
-                                .collect(Collectors.groupingBy(User::getId));
-                        for (ProductStock productStock : records) {
-                            if (productStock.getUserId() != null) {
-                                if (!CollectionUtils.isEmpty(userMap.get(productStock.getUserId()))) {
-                                    productStock.setUserName(userMap.get(productStock.getUserId()).get(0).getNickname());
+        } else {
+            DataScope dataScope = new DataScope();
+            dataScope.setIsOnly(true);
+            iPage = service.pageScopedDep(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId, dataScope);
 
-                                }
-                            }
-                        }
-                        iPage.setRecords(records);
-                    }
-
-                }
-
-            }
+        }
+        if (iPage != null) {
             List<ProductStock> records = iPage.getRecords();
             if (!CollectionUtils.isEmpty(records)) {
-                List<String> qrcodeIds = records.stream().map(ProductStock::getLiveQrCodeId)
-                        .collect(Collectors.toList());
-                List<LiveQrCode> liveQrCodes = (List<LiveQrCode>) liveQrCodeService.listByIds(qrcodeIds);
-                Map<String, LiveQrCode> liveQrCodeMap = liveQrCodes.stream()
-                        .collect(Collectors.toMap(LiveQrCode::getId, t -> t));
+                //判断是否有绑定纳里二维码
+                List<Integer> uIds = new ArrayList<>();
                 for (ProductStock productStock : records) {
-                    if (!StringUtils.isEmpty(productStock.getLiveQrCodeId())) {
-                        LiveQrCode liveQrCode = liveQrCodeMap.get(productStock.getLiveQrCodeId());
-                        if (liveQrCode != null) {
-                            productStock.setUrlName(liveQrCode.getUrlName());
+                    if (StringUtils.isEmpty(productStock.getNaniQrCodeUrl())) {
+                        productStock.setNaniQrCodeUrl("未绑定");
+                    }
+                    if (productStock.getUserId() != null) {
+                        uIds.add(productStock.getUserId());
+                    }
+                }
+                if (!CollectionUtils.isEmpty(uIds)) {
+                    List<User> users1 = (List<User>) userService.listByIds(uIds);
+                    Map<Integer, List<User>> userMap = users1.stream()
+                            .collect(Collectors.groupingBy(User::getId));
+                    for (ProductStock productStock : records) {
+                        if (productStock.getUserId() != null) {
+                            if (!CollectionUtils.isEmpty(userMap.get(productStock.getUserId()))) {
+                                productStock.setUserName(userMap.get(productStock.getUserId()).get(0).getNickname());
 
+                            }
                         }
                     }
-
+                    iPage.setRecords(records);
                 }
-                iPage.setRecords(records);
+
             }
-            return RestResponse.ok(iPage);
+
+        }
+        List<ProductStock> records = iPage.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
+            List<String> qrcodeIds = records.stream().map(ProductStock::getLiveQrCodeId)
+                    .collect(Collectors.toList());
+            List<LiveQrCode> liveQrCodes = (List<LiveQrCode>) liveQrCodeService.listByIds(qrcodeIds);
+            Map<String, LiveQrCode> liveQrCodeMap = liveQrCodes.stream()
+                    .collect(Collectors.toMap(LiveQrCode::getId, t -> t));
+            for (ProductStock productStock : records) {
+                if (!StringUtils.isEmpty(productStock.getLiveQrCodeId())) {
+                    LiveQrCode liveQrCode = liveQrCodeMap.get(productStock.getLiveQrCodeId());
+                    if (liveQrCode != null) {
+                        productStock.setUrlName(liveQrCode.getUrlName());
+
+                    }
+                }
+
+            }
+            iPage.setRecords(records);
+        }
+        return RestResponse.ok(iPage);
 
     }
 
@@ -396,11 +416,12 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
     @GetMapping("/getByMacAddress")
     public RestResponse getByMacAddress(@RequestParam("macAddress") String macAddress) {
 
-        return RestResponse.ok(service.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel,1)));
+        return RestResponse.ok(service.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel, 1)));
     }
 
     /**
      * 查询设备对应的医院
+     *
      * @param macAddress
      * @return
      */
@@ -408,7 +429,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
     public RestResponse getByMacAddressHospitalInfo(@RequestParam("macAddress") String macAddress) {
         ProductStock one = service.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getMacAddress, macAddress).eq(ProductStock::getDel, 1));
         Integer hospitalId = one.getHospitalId();
-        if(hospitalId!=null){
+        if (hospitalId != null) {
             HospitalInfo hospitalInfo = hospitalInfoService.getById(hospitalId);
             return RestResponse.ok(hospitalInfo);
         }
@@ -420,8 +441,8 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         List<ProductStock> dbProductStock = service.list(Wrappers.<ProductStock>lambdaQuery()
                 .nested(query -> query.eq(ProductStock::getProductSn, productStock.getProductSn()).eq(ProductStock::getDel, 1))
                 .or(query -> query.eq(ProductStock::getMacAddress, productStock.getMacAddress()).eq(ProductStock::getDel, 1)));
-        if(!CollectionUtils.isEmpty(dbProductStock)){
-            for(ProductStock productStockd1:dbProductStock){
+        if (!CollectionUtils.isEmpty(dbProductStock)) {
+            for (ProductStock productStockd1 : dbProductStock) {
                 if (productStockd1 != null && !productStockd1.getId().equals(productStock.getId())) {
                     throw new RuntimeException("已存在序列号为【" + productStockd1.getProductSn() + "】的产品 或者 mac地址为 [" + productStockd1.getMacAddress() + "] ");
                 }
@@ -443,11 +464,11 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         //添加编辑记录
         User user = userService.getById(SecurityUtils.getUser().getId());
 
-        ProductStockRepairRecord record=new ProductStockRepairRecord();
+        ProductStockRepairRecord record = new ProductStockRepairRecord();
         record.setCreateTime(new Date());
         record.setProductStockId(productStock.getId());
-        record.setContent("用户ID"+user.getNickname()+""+user.getPhone()+"编辑mac地址从"+byId.getMacAddress()+"改成"+productStock.getMacAddress()+"序列号从"+
-                byId.getProductSn()+"改为"+productStock.getProductSn());
+        record.setContent("用户ID" + user.getNickname() + "" + user.getPhone() + "编辑mac地址从" + byId.getMacAddress() + "改成" + productStock.getMacAddress() + "序列号从" +
+                byId.getProductSn() + "改为" + productStock.getProductSn());
         productStockRepairRecordService.save(record);
 
         //如果locatorId不为空，设置其所属部门
@@ -458,7 +479,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         //如果业务员id不为空指定业务员所在的部门
         if (productStock.getSalesmanId() != null) {
             User user1 = userService.getById(productStock.getSalesmanId());
-            if(user1!=null){
+            if (user1 != null) {
                 productStock.setDeptId(user1.getDeptId());
 
             }

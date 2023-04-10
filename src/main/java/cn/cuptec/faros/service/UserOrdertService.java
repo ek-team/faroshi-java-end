@@ -210,9 +210,9 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     }
 
     //查询部门订单
-    public IPage<UserOrder> pageScoped(IPage<UserOrder> page, Wrapper<UserOrder> queryWrapper) {
+    public IPage<UserOrder> pageScoped(Boolean admin,IPage<UserOrder> page, Wrapper<UserOrder> queryWrapper) {
         DataScope dataScop3 = new DataScope();
-        dataScop3.setIsOnly(true);
+        dataScop3.setIsOnly(!admin);
         return baseMapper.pageScoped(page, queryWrapper, dataScop3);
     }
 
