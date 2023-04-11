@@ -53,9 +53,9 @@ public class ExcelUtil {
         //这里 需要指定写用哪个class去写
         WriteSheet writeSheet = EasyExcel.writerSheet(0, "基本信息").head(PlanUserExcelBO.class).build();
         excelWriter.write(data, writeSheet);
-        writeSheet = EasyExcel.writerSheet(1, "评估记录").head(PlanExcelBO.class).build();
+        writeSheet = EasyExcel.writerSheet(1, "训练记录").head(PlanExcelBO.class).build();
         excelWriter.write(data1, writeSheet);
-        writeSheet = EasyExcel.writerSheet(2, "训练记录").head(PlanExcelBO.class).build();
+        writeSheet = EasyExcel.writerSheet(2, "评估记录").head(EvaluationRecordsExcelBo.class).build();
         excelWriter.write(data2, writeSheet);
         //千万别忘记finish 会帮忙关闭流
         excelWriter.finish();

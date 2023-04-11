@@ -41,4 +41,15 @@ public class PlanUserExcelBO extends BaseRowModel {
     @ColumnWidth(10)
     @ExcelProperty(value = "疾病诊断", index = 7)
     private String diseaseDiagnosis;//疾病诊断
+
+    @ColumnWidth(10)
+    @ExcelProperty(value = "诊断结果", index = 8)
+    private String diagnosis;
+
+    @ColumnWidth(10)
+    @ExcelProperty(value = "医院名称", index = 9)
+    private String hospitalName;           //医院名称
+    @ColumnWidth(10)
+    @ExcelProperty(value = "医院地址", index = 10)
+    private String hospitalAddress;           //医院地址
 }

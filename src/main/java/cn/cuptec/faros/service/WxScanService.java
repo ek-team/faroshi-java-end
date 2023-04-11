@@ -154,6 +154,13 @@ public class WxScanService {
         if ("subscribe".equals(event)) {//关注消息
             log.info("关注消息：" + wxMessageEventKey + "=====" + event);
             // wxMpService.sendSubNotice(userWxInfo.getOpenId(), "扫码成功", byId.getName(), "法罗适", "点击查看详情", "/pages/orderConfirm/orderConfirm?id=1");
+            String content = "\n" +
+                    "<a href=\"http://pharos.ewj100.com/index.html#/product/homeEdition\">→视频指导</a>\n" +
+                    "\n" +
+                    "<a href=\"http://mp.weixin.qq.com/mp/homepage?__biz=MzUyNDkxMzMyNw==&hid=5&sn=b5fe982b9c9e10f2d1f9e35e2f4337f5&scene=18#wechat_redirect\">→学术分享</a>\n" +
+                    "\n" +
+                    "法罗适医康随时陪伴在您左右";
+            return new TextBuilder().build(content, wxMessage, weixinService);
 
 
         }
