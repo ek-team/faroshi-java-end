@@ -87,6 +87,58 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private RetrieveOrderService retrieveOrderService;
+    @Resource
+    private RentRuleOrderService rentRuleOrderService;
+    @Resource
+    private RentRuleService rentRuleService;
+
+    /**
+     * 查询订单的续租记录
+     */
+    @GetMapping("/queryRentRuleOrder")
+    public RestResponse queryRentRuleOrder(
+            @RequestParam("userOrderNo") String userOrderNo) {
+        String[] split = userOrderNo.split("-");
+        if (split.length == 1) {
+            userOrderNo = split[0];
+        } else {
+            userOrderNo = split[1];
+        }
+        List<RentRuleOrder> list = rentRuleOrderService.list(new QueryWrapper<RentRuleOrder>().lambda().eq(RentRuleOrder::getUserOrderNo, userOrderNo));
+
+
+        return RestResponse.ok(list);
+    }
+
+
+    /**
+     * 订单续租
+     */
+    @GetMapping("/rentRuleOrder")
+    public RestResponse rentRuleOrder(@RequestParam("rentRuleId") Integer rentRuleId,
+                                      @RequestParam("userOrderNo") String userOrderNo) {
+        RentRule rentRule = rentRuleService.getById(rentRuleId);
+        String[] split = userOrderNo.split("-");
+        if (split.length == 1) {
+            userOrderNo = split[0];
+        } else {
+            userOrderNo = split[1];
+        }
+        UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, userOrderNo));
+
+        RentRuleOrder rentRuleOrder = new RentRuleOrder();
+        rentRuleOrder.setUserOrderNo(userOrderNo);
+        rentRuleOrder.setRentRuleOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        rentRuleOrder.setAmount(rentRule.getAmount());
+        rentRuleOrder.setDay(rentRule.getDay() + "");
+        rentRuleOrder.setUserId(SecurityUtils.getUser().getId());
+        rentRuleOrder.setStatus(1);
+        rentRuleOrder.setCreateTime(LocalDateTime.now());
+        rentRuleOrderService.save(rentRuleOrder);
+        RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getDeptId(), rentRuleOrder.getRentRuleOrderNo(), null, rentRuleOrder.getAmount());
+
+        return restResponse;
+    }
 
     /**
      * 获取省的订单数量
@@ -239,7 +291,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
 
-        IPage<UserOrder> pageScoped = service.pageScoped(aBoolean,page, queryWrapper);
+        IPage<UserOrder> pageScoped = service.pageScoped(aBoolean, page, queryWrapper);
         if (CollUtil.isNotEmpty(pageScoped.getRecords())) {
             List<UserOrder> records = pageScoped.getRecords();
             //服务包信息

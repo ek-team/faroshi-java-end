@@ -75,6 +75,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     private UserQrCodeService userQrCodeService;
     @Resource
     private HospitalInfoService hospitalInfoService;
+    @Resource
+    private RentRuleService rentRuleService;
+    @Resource
+    private RecyclingRuleService recyclingRuleService;
 
     /**
      * 设备二维码绑定服务包
@@ -160,7 +164,22 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             servicePackProductPicService.saveBatch(servicePackProductPics);
         }
-
+        //回收规则
+        List<RecyclingRule> recyclingRuleList = servicePack.getRecyclingRuleList();
+        if (!CollectionUtils.isEmpty(recyclingRuleList)) {
+            for (RecyclingRule recyclingRule : recyclingRuleList) {
+                recyclingRule.setServicePackId(servicePack.getId());
+            }
+            recyclingRuleService.saveBatch(recyclingRuleList);
+        }
+        //续租规则
+        List<RentRule> rentRuleList = servicePack.getRentRuleList();
+        if (!CollectionUtils.isEmpty(rentRuleList)) {
+            for (RentRule rentRule : rentRuleList) {
+                rentRule.setServicePackId(servicePack.getId());
+            }
+            rentRuleService.saveBatch(rentRuleList);
+        }
         //添加病种
         List<Diseases> diseasesList = servicePack.getDiseasesList();
         if (!CollectionUtils.isEmpty(diseasesList)) {
@@ -282,6 +301,27 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             }
             servicePackProductPicService.saveBatch(servicePackProductPics);
         }
+
+        //回收规则
+        List<RecyclingRule> recyclingRuleList = servicePack.getRecyclingRuleList();
+        recyclingRuleService.remove(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, servicePack.getId()));
+        if (!CollectionUtils.isEmpty(recyclingRuleList)) {
+            for (RecyclingRule recyclingRule : recyclingRuleList) {
+                recyclingRule.setServicePackId(servicePack.getId());
+            }
+            recyclingRuleService.saveBatch(recyclingRuleList);
+        }
+        //续租规则
+        rentRuleService.remove(new QueryWrapper<RentRule>().lambda().eq(RentRule::getServicePackId, servicePack.getId()));
+        List<RentRule> rentRuleList = servicePack.getRentRuleList();
+        if (!CollectionUtils.isEmpty(rentRuleList)) {
+            for (RentRule rentRule : rentRuleList) {
+                rentRule.setServicePackId(servicePack.getId());
+            }
+            rentRuleService.saveBatch(rentRuleList);
+        }
+
+
         //添加病种
         List<Diseases> diseasesList = servicePack.getDiseasesList();
         servicePackDiseasesService.remove(new QueryWrapper<ServicePackDiseases>().lambda()
@@ -475,7 +515,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         }
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
 
-        IPage<ServicePack> servicePackIPage = service.pageScoped(aBoolean,page, queryWrapper);
+        IPage<ServicePack> servicePackIPage = service.pageScoped(aBoolean, page, queryWrapper);
 
         return RestResponse.ok(servicePackIPage);
     }
@@ -644,7 +684,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
         User user = userService.getById(SecurityUtils.getUser().getId());
 
-        return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id).eq(ServicePack::getDeptId,user.getDeptId())));
+        return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id).eq(ServicePack::getDeptId, user.getDeptId())));
     }
 
     /**
@@ -655,6 +695,14 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @GetMapping("/getById")
     public RestResponse getById(@RequestParam("id") Integer id) {
         ServicePack servicePack = service.getById(id);
+        //回收规则
+        List<RentRule> rentRuleList = rentRuleService.list(new QueryWrapper<RentRule>().lambda().eq(RentRule::getServicePackId, id));
+        servicePack.setRentRuleList(rentRuleList);
+        //续租规则
+        List<RecyclingRule> recyclingRuleList = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, id));
+        servicePack.setRecyclingRuleList(recyclingRuleList);
+
+
         //查询病种
         List<ServicePackDiseases> servicePackDiseasesList = servicePackDiseasesService.list(new QueryWrapper<ServicePackDiseases>().lambda().eq(ServicePackDiseases::getServicePackId, id));
         if (!CollectionUtils.isEmpty(servicePackDiseasesList)) {
@@ -894,6 +942,19 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     }
 
     /**
+     * 查询服务包 续租规则
+     *
+     * @return
+     */
+    @GetMapping("/queryRule")
+    public RestResponse queryRule(@RequestParam("id") Integer id) {
+        List<RentRule> rentRuleList = rentRuleService.list(new QueryWrapper<RentRule>().lambda().eq(RentRule::getServicePackId, id));
+        ServicePack servicePack = service.getById(id);
+        servicePack.setRentRuleList(rentRuleList);
+        return RestResponse.ok(servicePack);
+    }
+
+    /**
      * 复制服务包
      *
      * @return
@@ -907,6 +968,37 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         newServicePack.setName(servicePack.getName() + "复制");
         newServicePack.setCreateTime(LocalDateTime.now());
         service.save(newServicePack);
+
+
+        //回收规则
+        List<RecyclingRule> recyclingRuleList = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, id));
+        if (!CollectionUtils.isEmpty(recyclingRuleList)) {
+            List<RecyclingRule> newRecyclingRules = new ArrayList<>();
+            for (RecyclingRule recyclingRule : recyclingRuleList) {
+                RecyclingRule newRewRentRule = new RecyclingRule();
+                BeanUtils.copyProperties(recyclingRule, newRewRentRule, "id");
+                newRewRentRule.setServicePackId(newServicePack.getId());
+                newRecyclingRules.add(newRewRentRule);
+            }
+
+            recyclingRuleService.saveBatch(newRecyclingRules);
+        }
+
+        //续租规则
+        List<RentRule> rentRuleList = rentRuleService.list(new QueryWrapper<RentRule>().lambda().eq(RentRule::getServicePackId, id));
+
+        if (!CollectionUtils.isEmpty(rentRuleList)) {
+            List<RentRule> newRentRules = new ArrayList<>();
+            for (RentRule rentRule : rentRuleList) {
+                RentRule newRentRule = new RentRule();
+                BeanUtils.copyProperties(rentRule, newRentRule, "id");
+                newRentRule.setServicePackId(newServicePack.getId());
+                newRentRules.add(newRentRule);
+            }
+
+            rentRuleService.saveBatch(newRentRules);
+        }
+
 
         //查询产品图片
         List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>()

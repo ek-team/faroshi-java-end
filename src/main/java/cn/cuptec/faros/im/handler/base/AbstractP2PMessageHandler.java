@@ -79,7 +79,6 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
             }
             chatMsg.setMsg(origionMessage.getMsg());
-            log.info("收到消息=======================" + origionMessage.toString());
             User byId1 = userService.getById(chatMsg.getFromUid());
             chatMsg.setUser(byId1);
             if (origionMessage.getMsgType().equals(ChatProto.FORM)) {

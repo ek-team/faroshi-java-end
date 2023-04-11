@@ -46,6 +46,22 @@ public class WxPayFarosService {
         PayResult wenXinInfo = JSONObject.parseObject(result, PayResult.class);
         return RestResponse.ok(wenXinInfo.getData());
     }
+    public RestResponse unifiedOrder(Integer deptId,String orderNo,String tradeType,BigDecimal amount) {
+        if(StringUtils.isEmpty(tradeType)){
+            tradeType="JSAPI";
+        }else{
+            tradeType="MWEB";
+        }
+        User user = userService.getById(SecurityUtils.getUser().getId());
+
+        Dept dept = deptService.getById(deptId);
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + amount.multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
+
+        //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
+        String result = HttpUtil.get(url);
+        PayResult wenXinInfo = JSONObject.parseObject(result, PayResult.class);
+        return RestResponse.ok(wenXinInfo.getData());
+    }
 
     public RestResponse unifiedOtherOrder(String orderNo) {
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()

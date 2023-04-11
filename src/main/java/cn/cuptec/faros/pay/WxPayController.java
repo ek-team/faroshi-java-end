@@ -85,6 +85,8 @@ public class WxPayController {
     private UserQrCodeService userQrCodeService;
     @Resource
     private UserOrderNotifyService userOrderNotifyService;
+    @Resource
+    private RentRuleOrderService rentRuleOrderService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -348,6 +350,36 @@ public class WxPayController {
 
         }
 
+
+        // 续租订单
+        RentRuleOrder rentRuleOrder = rentRuleOrderService.getOne(new QueryWrapper<RentRuleOrder>().lambda().eq(RentRuleOrder::getRentRuleOrderNo, outTradeNo));
+        if (rentRuleOrder != null) {
+            if (!rentRuleOrder.getStatus().equals(2)) {
+                return RestResponse.ok();
+            }
+            rentRuleOrder.setStatus(2);
+            rentRuleOrder.setTransactionId(transactionId);
+            rentRuleOrderService.updateById(rentRuleOrder);
+            UserOrder userOrderOne = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, rentRuleOrder.getUserOrderNo()));
+            List<UserServicePackageInfo> userServicePackageInfos = userServicePackageInfoService.list(new QueryWrapper<UserServicePackageInfo>().lambda().eq(UserServicePackageInfo::getOrderId, userOrderOne.getId()));
+            if (!CollectionUtils.isEmpty(userServicePackageInfos)) {
+                for (UserServicePackageInfo userServicePackageInfo : userServicePackageInfos) {
+                    LocalDateTime expiredTime = userServicePackageInfo.getExpiredTime();
+                    LocalDateTime now = LocalDateTime.now();
+                    if (expiredTime.isAfter(now)) {
+                        //没过期
+                        userServicePackageInfo.setExpiredTime(expiredTime.plusDays(Long.getLong(rentRuleOrder.getDay())));
+                    } else {
+                        //过期
+                        userServicePackageInfo.setExpiredTime(now.plusDays(Long.getLong(rentRuleOrder.getDay())));
+
+                    }
+                }
+                userServicePackageInfoService.updateBatchById(userServicePackageInfos);
+            }
+
+
+        }
         return RestResponse.ok();
     }
 
