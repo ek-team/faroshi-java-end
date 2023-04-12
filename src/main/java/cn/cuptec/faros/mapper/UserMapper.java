@@ -73,14 +73,17 @@ public interface UserMapper extends BaseMapper<User> {
 			"ORDER BY `user`.create_time DESC" +
 			"</script>")
     IPage<User> pageScopedUser(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
+
+
+
 	@Select("<script>" +
 			"SELECT `user`.*, dept.name as deptName FROM user" +
 			" left JOIN user_role ON user.id = user_role.user_id  " +
 			" left JOIN dept ON user.dept_id = dept.id ${ew.customSqlSegment} " +
-			" and  user_role.role_id is null " +
 			"ORDER BY `user`.create_time DESC" +
 			"</script>")
-	List<User> queryUserByDeptAndNoRole(Page page ,@Param(Constants.WRAPPER) Wrapper wrapper);
+	IPage<User> queryUserByDeptAndNoRole(IPage page ,@Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
+
 	@Select("SELECT user.id, user.nickname, user.avatar, user.phone, user.create_time, user.dept_id as id, user_role.create_time as target_role_create_time " +
             "FROM user " +
 			"JOIN user_role ON user.id = user_role.user_id AND user_role.role_id = #{roleId} ${ew.customSqlSegment}")

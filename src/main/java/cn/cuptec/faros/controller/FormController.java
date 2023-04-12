@@ -167,7 +167,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             List<Form> formDatas = new ArrayList<>();
             for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
                 Form form = new Form();
-
+                form.setGroupId(formUserDatas.get(0).getGroupId());
                 Double scope = 0.0;
                 for (FormUserData formUserData : formUserDatas) {
                     if (formUserData.getScope() != null) {

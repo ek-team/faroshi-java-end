@@ -298,13 +298,13 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         return user;
     }
 
-    public List<User> queryUserByDeptAndNoRole(Page<User> page, Wrapper<User> wrapper) {
-        return baseMapper.queryUserByDeptAndNoRole(page, wrapper);
-    }
+//    public IPage<User> queryUserByDeptAndNoRole(Page<User> page, Wrapper<User> wrapper) {
+//        return baseMapper.queryUserByDeptAndNoRole(page, wrapper);
+//    }
 
     public IPage<User> pageScopedUserVo(IPage<User> page, Wrapper<User> wrapper) {
 
-        IPage<User> scopedUsers = baseMapper.pageScopedUser(page, wrapper, new DataScope());
+        IPage<User> scopedUsers = baseMapper.queryUserByDeptAndNoRole(page, wrapper, new DataScope());
         List<User> records = scopedUsers.getRecords();
         List<Integer> uids = records.stream().map(user -> user.getId()).collect(Collectors.toList());
         if (uids.size() > 0) {

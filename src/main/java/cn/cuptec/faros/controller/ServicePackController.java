@@ -538,8 +538,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
      * 查询服务包所在的医院
      */
     @GetMapping("/getHospitalInfoByServicePackId")
-    public RestResponse getHospitalInfoByServicePackId(@RequestParam("servicePackId") Integer servicePackId) {
-
+    public RestResponse getHospitalInfoByServicePackId(@RequestParam(value = "servicePackId", required = false) Integer servicePackId) {
+        if (servicePackId == null) {
+            return RestResponse.ok();
+        }
         ServicePack byId = service.getById(servicePackId);
         Integer hospitalId = byId.getHospitalId();
         if (hospitalId != null) {

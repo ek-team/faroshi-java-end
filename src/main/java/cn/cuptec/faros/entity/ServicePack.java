@@ -67,6 +67,7 @@ public class ServicePack extends Model<ServicePack> {
     private Integer protocolType;//1-勾选即可 2-弹窗阅读至底部
     private Integer protocolId;
     private String rentRuleImage;//续租图片
+    private String abbreviatedRentRuleImage;//续租缩略图片
     @TableField(exist = false)
     private List<RentRule> rentRuleList;//续租规则
     @TableField(exist = false)

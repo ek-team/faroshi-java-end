@@ -685,12 +685,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @GetMapping("/manage/page")
     public RestResponse<IPage<User>> getUserPage(@RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
         Page<User> page = getPage();
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        QueryWrapper queryWrapper = new QueryWrapper<User>();
+        queryWrapper.isNull("user_role.user_id");
         if (!StringUtils.isEmpty(nickname)) {
-            queryWrapper.like(User::getNickname, nickname);
+            queryWrapper.like("user.nickname", nickname);
         }
         if (!StringUtils.isEmpty(phone)) {
-            queryWrapper.like(User::getPhone, phone);
+            queryWrapper.like("user.phone", phone);
 
         }
 
