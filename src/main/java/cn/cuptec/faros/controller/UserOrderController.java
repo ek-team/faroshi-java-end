@@ -110,6 +110,20 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         return RestResponse.ok(list);
     }
 
+    /**
+     * 续租列表分页查询
+     *
+     * @return
+     */
+    @GetMapping("/pageRentRuleOrder")
+    public RestResponse pageRentRuleOrder(@RequestParam("pageNum") int pageNum, @RequestParam("pageSize") int pageSize) {
+        IPage page = new Page(pageNum, pageSize);
+        IPage page1 = rentRuleOrderService.page(page, new QueryWrapper<RentRuleOrder>().lambda().eq(RentRuleOrder::getUserId, SecurityUtils.getUser().getId()));
+
+
+        return RestResponse.ok(page1);
+    }
+
 
     /**
      * 订单续租
@@ -319,6 +333,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
 
+
+            //查询续租订单
+            List<String> userOrderNos = records.stream().map(UserOrder::getOrderNo)
+                    .collect(Collectors.toList());
+            List<RentRuleOrder> rentRuleOrderList = rentRuleOrderService.list(new QueryWrapper<RentRuleOrder>().lambda().in(RentRuleOrder::getUserOrderNo, userOrderNos));
+            Map<String, List<RentRuleOrder>> rentRuleOrderMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(rentRuleOrderList)) {
+                rentRuleOrderMap = rentRuleOrderList.stream()
+                        .collect(Collectors.groupingBy(RentRuleOrder::getUserOrderNo));
+            }
             for (UserOrder userOrder : records) {
                 //回收时间
                 if (!userOrder.getStatus().equals(5)) {
@@ -345,10 +369,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 userOrder.setServicePack(servicePack);
                 //重新组装订单号
                 String orderNo = userOrder.getOrderNo();
+                userOrder.setRentRuleOrderList(rentRuleOrderMap.get(userOrder.getOrderNo()));
+
                 LocalDateTime createTime = userOrder.getCreateTime();
 
                 userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
-
             }
         }
 
@@ -810,16 +835,28 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 servicePackageInfoMap = servicePackageInfos.stream()
                         .collect(Collectors.groupingBy(ServicePackageInfo::getServicePackageId));
             }
+            //查询续租订单
+            List<String> userOrderNos = records.stream().map(UserOrder::getOrderNo)
+                    .collect(Collectors.toList());
+            List<RentRuleOrder> rentRuleOrderList = rentRuleOrderService.list(new QueryWrapper<RentRuleOrder>().lambda().in(RentRuleOrder::getUserOrderNo, userOrderNos));
+            Map<String, List<RentRuleOrder>> rentRuleOrderMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(rentRuleOrderList)) {
+                rentRuleOrderMap = rentRuleOrderList.stream()
+                        .collect(Collectors.groupingBy(RentRuleOrder::getUserOrderNo));
+            }
             for (UserOrder userOrder : records) {
                 userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
                 List<ServicePackageInfo> servicePackageInfos1 = servicePackageInfoMap.get(userOrder.getServicePackId());
                 userOrder.setServicePackageInfos(servicePackageInfos1);
                 //重新组装订单号
                 String orderNo = userOrder.getOrderNo();
+                List<RentRuleOrder> rentRuleOrderList1 = rentRuleOrderMap.get(userOrder.getOrderNo());
+
+                userOrder.setRentRuleOrderList(rentRuleOrderList1);
+
                 LocalDateTime createTime = userOrder.getCreateTime();
 
                 userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
-
             }
         }
         return RestResponse.ok(iPage);

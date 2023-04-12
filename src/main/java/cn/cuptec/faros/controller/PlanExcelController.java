@@ -39,7 +39,7 @@ public class PlanExcelController {
     @GetMapping("export")
     public RestResponse listexportByUid(HttpServletResponse response, @RequestParam("xtUserId") Integer xtUserId, @RequestParam("name") String name) {
         List<PlanUserExcelBO> planExcelBOS0 = new ArrayList<>();
-        TbTrainUser infoByUXtUserId = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getXtUserId, xtUserId));//getInfoByUXtUserId(xtUserId);
+        TbTrainUser infoByUXtUserId = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getId, xtUserId));//getInfoByUXtUserId(xtUserId);
         PlanUserExcelBO planUserExcelBO = new PlanUserExcelBO();
         planUserExcelBO.setName(infoByUXtUserId.getName());
         planUserExcelBO.setDiseaseDiagnosis(infoByUXtUserId.getDiseaseDiagnosis());

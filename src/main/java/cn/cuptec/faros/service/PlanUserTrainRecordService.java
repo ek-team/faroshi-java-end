@@ -137,7 +137,7 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
     }
 
     public List<TbUserTrainRecord> listTrainRecordByXtUserId(Integer xtUserId) {
-        TbTrainUser infoByUXtUserId = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getXtUserId, xtUserId));//getInfoByUXtUserId(xtUserId);
+        TbTrainUser infoByUXtUserId = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getId, xtUserId));//getInfoByUXtUserId(xtUserId);
         if (infoByUXtUserId == null) return new ArrayList<>();
 
         return listTrainRecordByUid(infoByUXtUserId.getUserId());

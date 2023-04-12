@@ -63,6 +63,8 @@ public class UserOrder {
     @TableField(exist = false)
     private List<Integer> saleSpecDescIds;
     @TableField(exist = false)
+    private List<RentRuleOrder> rentRuleOrderList;
+    @TableField(exist = false)
     private String patientUserIdCard;//就诊人身份证号
     @TableField(exist = false)
     private String patientUserPhone;//就诊人手机号
