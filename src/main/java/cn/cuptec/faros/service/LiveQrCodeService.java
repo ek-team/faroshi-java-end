@@ -221,7 +221,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
         Integer servicePackId = productStock.getServicePackId();
         if(servicePackId!=null){
             log.info("获取的服务包id===========:{}",servicePackId);
-            String url="https://pharos3.ewj100.com/index.html#/nali/redBean?id="+servicePackId;
+            String url="https://pharos3.ewj100.com/index.html#/nali/redBean?id="+servicePackId+"&macAdd="+productStock.getMacAddress();
             ServletUtils.getResponse().sendRedirect(url);
         }else{
             toIntroduce(productStock);

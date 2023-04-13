@@ -5,14 +5,25 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.config.wx.WxMaConfiguration;
 import cn.cuptec.faros.dto.GetMaUrlLinkResult;
+import cn.cuptec.faros.entity.DeviceScanSignLog;
+import cn.cuptec.faros.entity.TbTrainUser;
+import cn.cuptec.faros.service.DeviceScanSignLogService;
+import cn.cuptec.faros.service.PlanUserService;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -22,10 +33,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/wxMa")
 public class WxMaController {
-
+    @Resource
+    private PlanUserService planUserService;
+    @Resource
+    private DeviceScanSignLogService deviceScanSignLogService;
 
     @GetMapping("/test")
-    public RestResponse test(@RequestParam("query") String query) {
+    public RestResponse test(@RequestParam("query") String query, @RequestParam(value = "macAddress", required = false) String macAddress) {
         try {
             String accessToken = WxMaConfiguration.getWxMa1Service().getAccessToken();
             System.out.println(accessToken);
@@ -39,8 +53,18 @@ public class WxMaController {
      * 获取小程序urlLink
      */
     @GetMapping("/getMaUrlLink")
-    public RestResponse getMaUrlLink(@RequestParam("query") String query) {
+    public RestResponse getMaUrlLink(@RequestParam("query") String query, @RequestParam(value = "macAdd", required = false) String macAdd) {
         log.info("获取小程序二维码===" + query);
+        Integer id = SecurityUtils.getUser().getId();
+        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+                .eq(TbTrainUser::getXtUserId, id));
+        if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+            DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
+            deviceScanSignLog.setCreateTime(new Date());
+            deviceScanSignLog.setMacAddress(macAdd);
+            deviceScanSignLog.setUserId(tbTrainUsers.get(0).getUserId());
+            deviceScanSignLogService.save(deviceScanSignLog);
+        }
         try {
             String accessToken = WxMaConfiguration.getWxMaService().getAccessToken();
             log.info("获取小程序二维码===" + accessToken);
