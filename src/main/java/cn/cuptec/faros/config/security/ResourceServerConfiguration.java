@@ -161,7 +161,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/productStock/getByMacAddress",
                         "/palnUser/export",
                         "/deviceScanSignLog/removeByMacAddress",
-                        "/productStock/getByMacAddressHospitalInfo"
+                        "/productStock/getByMacAddressHospitalInfo",
+                        "/productStock/getByMac/**"
 
                 )
                 .permitAll()

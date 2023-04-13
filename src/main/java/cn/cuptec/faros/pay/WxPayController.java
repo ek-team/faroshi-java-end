@@ -128,6 +128,8 @@ public class WxPayController {
             if (!userOrder.getStatus().equals(1)) {
                 return RestResponse.ok();
             }
+            Integer patientUserId = userOrder.getPatientUserId();
+            PatientUser byId = patientUserService.getById(patientUserId);
             User userById = userService.getById(userOrder.getUserId());
             //发送公众号通知
             wxMpService.paySuccessNotice(userById.getMpOpenId(), "您的订单已支付成功!请耐心等待发货", userOrder.getOrderNo(), userOrder.getPayment().toString(),
@@ -150,19 +152,23 @@ public class WxPayController {
                         .collect(Collectors.toList());
                 userIdList.addAll(userIdLIst);
             }
+            String patientName = "";
+            if (byId != null) {
+                patientName = byId.getName();
+            }
             if (!CollectionUtils.isEmpty(userIdList)) {
                 ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
                 String keyword1 = "";
                 if (servicePack != null) {
-                    keyword1 = servicePack.getName() + "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
+                    keyword1 = servicePack.getName() + "患者：" + patientName + "订单号:" + outTradeNo;
                 } else {
-                    keyword1 = "患者：" + userById.getPatientName() + "订单号:" + outTradeNo;
+                    keyword1 = "患者：" + patientName + "订单号:" + outTradeNo;
                 }
                 List<User> clerkUser = (List<User>) userService.listByIds(userIdList);
                 for (User user : clerkUser) {
                     if (clerkUser != null) {
                         if (!StringUtils.isEmpty(user.getMpOpenId())) {
-                            wxMpService.paySuccessNotice(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, 1 + "",
+                            wxMpService.paySuccessNotice(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, userOrder.getPayment().toString(),
                                     "请不要点击该消息，只作为通知", "pages/myOrder/myOrder");
                         }
 
@@ -171,8 +177,7 @@ public class WxPayController {
 
             }
 
-            Integer patientUserId = userOrder.getPatientUserId();
-            PatientUser byId = patientUserService.getById(patientUserId);
+
             if (byId != null) {
                 userById.setPatientName(byId.getName());
                 userById.setPatientId(byId.getId());

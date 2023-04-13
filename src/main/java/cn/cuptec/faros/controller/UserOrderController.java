@@ -893,6 +893,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/user/orderDetail")
     public RestResponse getMyOrderDetail(@RequestParam("orderId") int orderId) {
         UserOrder userOrder = service.getById(orderId);
+        //查询续租订单
+
+        List<RentRuleOrder> rentRuleOrderList = rentRuleOrderService.list(new QueryWrapper<RentRuleOrder>().lambda().eq(RentRuleOrder::getUserOrderNo, userOrder.getOrderNo()));
+        userOrder.setRentRuleOrderList(rentRuleOrderList);
+
         //就诊人
         Integer patientUserId = userOrder.getPatientUserId();
         userOrder.setPatientUser(patientUserService.getById(patientUserId));

@@ -81,5 +81,10 @@ public class WxPayFarosService {
         return RestResponse.ok(data);
     }
 
-
+    public static void main(String[] args) {
+        PatientOtherOrder patientOtherOrder =new PatientOtherOrder();
+        patientOtherOrder.setAmount(0.14);
+        int i = new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+        System.out.println(i);
+    }
 }

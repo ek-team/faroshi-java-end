@@ -299,10 +299,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return RestResponse.ok();
     }
 
-    public static void main(String[] args) {
-        boolean validCard = IdCardUtil.isValidCard("140428199703024432");
-        System.out.println(validCard);
-    }
 
     /**
      * 添加用户就诊人
