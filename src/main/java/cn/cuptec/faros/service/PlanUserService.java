@@ -70,7 +70,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                 //添加医院
                 if (!StringUtils.isEmpty(one.getMacAdd())) {
                     ProductStock productStock = productStockService.getOne(Wrappers.<ProductStock>lambdaQuery().eq(ProductStock::getMacAddress, one.getMacAdd()).eq(ProductStock::getDel, 1));
-                    if (productStock.getHospitalId() != null) {
+                    if (productStock!=null && productStock.getHospitalId() != null) {
                         hospitalDoctorRelationService.remove(new QueryWrapper<HospitalDoctorRelation>().lambda().eq(HospitalDoctorRelation::getUserId, userId));
 
                         //绑定医院

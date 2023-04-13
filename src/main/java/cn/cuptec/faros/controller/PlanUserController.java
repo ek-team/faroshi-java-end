@@ -326,7 +326,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
      */
     @GetMapping("/getQrCode")
     public RestResponse getQrCode(@RequestParam("userId") String userId) {
-        String url = "http://pharos.ewj100.com/user/srBindAdress/" + userId;
+        String url = "https://pharos3.ewj100.com/user/srBindAdress/" + userId;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.drawLogoQRCode(ServletUtils.getResponse().getOutputStream(), "png", "", url, "", 300, "", 2);
@@ -343,7 +343,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
      */
     @GetMapping("/getRegisterPlanUserQrCode")
     public RestResponse getRegisterPlanUserQrCode(@RequestParam("macAdd") String macAdd) {
-        String url = "http://pharos.ewj100.com/palnUser/registerPlanUser/" + macAdd;
+        String url = "https://pharos3.ewj100.com/palnUser/registerPlanUser/" + macAdd;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.drawLogoQRCode(ServletUtils.getResponse().getOutputStream(), "png", "", url, "", 300, "", 2);

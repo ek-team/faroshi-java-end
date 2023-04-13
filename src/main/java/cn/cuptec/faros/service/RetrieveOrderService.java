@@ -201,7 +201,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = "http://pharos.ewj100.com/index.html#/salesmanOption/retrieveOrderDetail/" + retrieveOrder.getId();
+                String url = "https://pharos3.ewj100.com/index.html#/salesmanOption/retrieveOrderDetail/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "用户确认订单回收价格", "用户确认订单回收价格", url);
             }
         }

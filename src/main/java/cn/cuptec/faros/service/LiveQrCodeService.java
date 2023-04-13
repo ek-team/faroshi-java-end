@@ -257,7 +257,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("下肢产品");
             //下肢
             try {
-                ServletUtils.getResponse().sendRedirect("http://pharos.ewj100.com/index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect("https://pharos3.ewj100.com/index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -265,7 +265,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("气动产品");
             //气动
             try {
-                ServletUtils.getResponse().sendRedirect("http://pharos.ewj100.com/index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect("https://pharos3.ewj100.com/index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }
