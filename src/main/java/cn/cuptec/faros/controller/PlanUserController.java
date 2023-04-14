@@ -90,6 +90,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     private EvaluationRecordsBackupService evaluationRecordsBackupService;
     @Resource
     private EvaluationRecordsService evaluationRecordsService;
+    @Resource
+    private ServicePackService servicePackService;
 
     @GetMapping("/page")
     public RestResponse pageList(@RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
@@ -365,26 +367,29 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     }
 
     /**
-     * 发送注册页面模版消息
+     * 发送注册页面 和设备二维码页面 模版消息
      *
      * @return
      */
-    @GetMapping("/sendRegisterPlanUser")
-    public void sendRegisterPlanUser(@RequestParam("macAdd") String macAdd) {
-//        User user = userService.getById(SecurityUtils.getUser().getId());
-//        if (user != null) {
-//            if (!org.apache.commons.lang3.StringUtils.isEmpty(user.getMpOpenId())) {
-//                List<ProductStock> list = productStockService.list(new QueryWrapper<ProductStock>().lambda()
-//                        .eq(ProductStock::getMacAddress, macAdd)
-//                        .eq(ProductStock::getDel, 1));
-//                String serviceName = "康复设备";
-//                String url = QrCodeConstants.REGISTER_PLAN_USER_URL + "?macAdd=" + macAdd;
-//                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-//                String strTime = df.format(LocalDateTime.now());
-//                wxMpService.sendRegisterPlanUser(user.getMpOpenId(), "您好，欢迎注册设备用户", serviceName, " ", strTime, "点击查看详情", url);
-//
-//            }
-//        }
+    @GetMapping("/sendRegisterNotice")
+    public void sendRegisterNotice(@RequestParam("macAdd") String macAdd, @RequestParam("token") String token) {
+        User user = userService.getById(SecurityUtils.getUser().getId());
+        if (user != null) {
+            if (!org.apache.commons.lang3.StringUtils.isEmpty(user.getMpOpenId())) {
+                List<ProductStock> list = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                        .eq(ProductStock::getMacAddress, macAdd)
+                        .eq(ProductStock::getDel, 1));
+                ProductStock productStock = list.get(0);
+                if (productStock.getServicePackId() != null) {
+                    ServicePack servicePack = servicePackService.getById(productStock.getServicePackId());
+                    String servicePackName = servicePack.getName();
+                    wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", servicePackName, "法罗适",
+                            "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePack.getId() + "&token=" + token);
+
+                }
+
+            }
+        }
     }
 
 

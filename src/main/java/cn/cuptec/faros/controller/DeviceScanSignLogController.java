@@ -145,6 +145,7 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
         service.remove(new UpdateWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress));
         return RestResponse.ok();
     }
+
     @GetMapping("/removeByMacAddress")
     public RestResponse removeByMacAddress(@RequestParam("macAddress") String macAddress) {
         service.remove(new UpdateWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, macAddress));
@@ -190,6 +191,9 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
                     .collect(Collectors.toList());
             List<TbTrainUser> list1 = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
                     .in(TbTrainUser::getUserId, userIds));
+            if (CollectionUtils.isEmpty(list1)) {
+                return new ArrayList<>();
+            }
             list1.sort((t1, t2) -> t2.getCreateDate().compareTo(t1.getCreateDate()));
             List<TbTrainUser> result = new ArrayList<>();
             result.add(list1.get(0));
