@@ -3,6 +3,7 @@ package cn.cuptec.faros.service;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.constrants.QrCodeConstants;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.datascope.DataScope;
 import cn.cuptec.faros.config.security.service.CustomUser;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
@@ -14,6 +15,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @Slf4j
 @Service
 public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode> {
@@ -50,6 +53,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
     private OperationRecordService operationRecordService;
     @Resource
     private UserService userService;
+    private final Url url;
 
     /**
      * 根据活码id获取其调度url
@@ -58,11 +62,11 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
      * @return
      */
     public String getFullDispatcherUrl(String id) {
-        return QrCodeConstants.DISPATCHER_URL + id;
+        return url.getUrl() + QrCodeConstants.DISPATCHER_URL + id;
     }
 
     public String getNaliFullDispatcherUrl(Integer id) {
-        return QrCodeConstants.DISPATCHER_NALI_URL + id;
+        return url.getUrl() + QrCodeConstants.DISPATCHER_NALI_URL + id;
     }
 
     public IPage<LiveQrCode> page(IPage<LiveQrCode> page, String productSn, String mac) {
@@ -209,7 +213,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
 
     public void dispatcherNaLi(Integer productStockId) throws IOException {
         //跳转地址
-        ServletUtils.getResponse().sendRedirect(QrCodeConstants.NALI_URL + "?id=" + productStockId);
+        ServletUtils.getResponse().sendRedirect(url.getUrl() + QrCodeConstants.NALI_URL + "?id=" + productStockId);
     }
 
     //活码调度
@@ -219,27 +223,22 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
         ProductStock productStock = productStockService.getOne(new QueryWrapper<ProductStock>().lambda().eq(ProductStock::getLiveQrCodeId, qrCodeId));
         //跳转h5中转页面 判断用户是否关注公众号
         Integer servicePackId = productStock.getServicePackId();
-        if(servicePackId!=null){
-            log.info("获取的服务包id===========:{}",servicePackId);
-            String url="https://pharos3.ewj100.com/index.html#/nali/redBean?id="+servicePackId+"&macAdd="+productStock.getMacAddress();
+        if (servicePackId != null) {
+            log.info("获取的服务包id===========:{}", servicePackId);
+            String url = "https://pharos3.ewj100.com/index.html#/nali/redBean?id=" + servicePackId + "&macAdd=" + productStock.getMacAddress();
             ServletUtils.getResponse().sendRedirect(url);
-        }else{
+        } else {
             toIntroduce(productStock);
         }
     }
 
-    private void doctor(Serializable id) throws IOException {
-        //查询参数
-        String url = QrCodeConstants.DOCTOR_URL + "?id=" + id;
-        ServletUtils.getResponse().sendRedirect(url);
-    }
 
     private void product(Serializable qrCodeId) throws IOException {
         ProductStock productStock = productStockService.getOne(Wrappers.<ProductStock>lambdaQuery().eq(ProductStock::getLiveQrCodeId, qrCodeId));
         //跳转到购买页面
 
         if ((productStock.getStatus() == 30 || productStock.getStatus() == 31) && productStock.getProductId() == 2) {
-            ServletUtils.getResponse().sendRedirect(QrCodeConstants.HARDWARE_DETAIL_URL + productStock.getId());
+            ServletUtils.getResponse().sendRedirect(url.getUrl() + QrCodeConstants.HARDWARE_DETAIL_URL + productStock.getId());
         }
         //3.2、否则跳转到设备介绍页面
         else {

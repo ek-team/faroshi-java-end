@@ -85,10 +85,10 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
         if (user != null) {
             if (!org.apache.commons.lang3.StringUtils.isEmpty(user.getMpOpenId())) {
 
-                String url = QrCodeConstants.NALI_URL + "?id=" + productStockId + "&macAddress=" + macAddress + "&form=" + "button";
+                String url1 =url.getUrl() +  QrCodeConstants.NALI_URL + "?id=" + productStockId + "&macAddress=" + macAddress + "&form=" + "button";
                 //查询服务包名字
 
-                wxMpService.sendLiveQrCodeNotice(user.getMpOpenId(), "您已扫码成功点击查看", servicePackageName, "易网建", "点击查看详情", url);
+                wxMpService.sendLiveQrCodeNotice(user.getMpOpenId(), "您已扫码成功点击查看", servicePackageName, "易网建", "点击查看详情", url1);
 
                 userService.updateById(user);
             }
@@ -117,10 +117,10 @@ public class LiveQrCodeController extends AbstractBaseController<LiveQrCodeServi
         if (user != null) {
             if (!org.apache.commons.lang3.StringUtils.isEmpty(user.getMpOpenId())) {
 
-                String url = QrCodeConstants.NALI_URL + "?id=" + productStock.getId() + "&macAddress=" + macAddress + "&form=" + "button";
+                String url1 =url.getUrl() +  QrCodeConstants.NALI_URL + "?id=" + productStock.getId() + "&macAddress=" + macAddress + "&form=" + "button";
                 //查询服务包名字
 
-                wxMpService.sendLiveQrCodeNotice(user.getMpOpenId(), "您已扫码成功。", liveQrCode == null ? "康复设备" : liveQrCode.getName(), "易网建", "点击查看详情", url);
+                wxMpService.sendLiveQrCodeNotice(user.getMpOpenId(), "您已扫码成功。", liveQrCode == null ? "康复设备" : liveQrCode.getName(), "易网建", "点击查看详情", url1);
 
                 userService.updateById(user);
             }

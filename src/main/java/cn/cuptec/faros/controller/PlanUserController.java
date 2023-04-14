@@ -5,6 +5,7 @@ import cn.cuptec.faros.common.constrants.QrCodeConstants;
 import cn.cuptec.faros.common.utils.OrderNumberUtil;
 import cn.cuptec.faros.common.utils.QrCodeUtil;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
@@ -21,6 +22,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.javassist.expr.Cast;
@@ -39,7 +41,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@AllArgsConstructor
 @Slf4j
 @RestController
 @RequestMapping("/palnUser")
@@ -92,7 +94,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     private EvaluationRecordsService evaluationRecordsService;
     @Resource
     private ServicePackService servicePackService;
-
+    private final Url url;
     @GetMapping("/page")
     public RestResponse pageList(@RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
                                  @RequestParam(value = "maxHeight", required = false) Integer maxHeight, @RequestParam(value = "miniHeight", required = false) Integer miniHeight,
@@ -363,7 +365,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @SneakyThrows
     @GetMapping("/registerPlanUser/{macAdd}")
     public void registerPlanUser(@PathVariable String macAdd, HttpServletResponse response) {
-        response.sendRedirect(QrCodeConstants.REGISTER_PLAN_USER_URL + "?macAdd=" + macAdd);
+        response.sendRedirect(url.getUrl() + QrCodeConstants.REGISTER_PLAN_USER_URL + "?macAdd=" + macAdd);
     }
 
     /**

@@ -2,12 +2,14 @@ package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.constrants.QrCodeConstants;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.PlanUserService;
 import cn.cuptec.faros.service.PneumaticPlanService;
 import cn.cuptec.faros.service.PneumaticRecordService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
@@ -18,11 +20,12 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@AllArgsConstructor
 @RestController
 @RequestMapping("/pneumaticRecord")
 @Slf4j
 public class PneumaticRecordController extends AbstractBaseController<PneumaticRecordService, PneumaticRecord> {
+    private final Url url;
     @Resource
     private PlanUserService planUserService;
     @Resource
@@ -164,7 +167,7 @@ public class PneumaticRecordController extends AbstractBaseController<PneumaticR
         List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, idCard));
         if (!CollectionUtils.isEmpty(list)) {
             TbTrainUser tbTrainUser = list.get(0);
-            response.sendRedirect(QrCodeConstants.PNEUMATIC_Record_PAGE_URL + "?userId=" + tbTrainUser.getUserId());
+            response.sendRedirect(url.getUrl() + QrCodeConstants.PNEUMATIC_Record_PAGE_URL + "?userId=" + tbTrainUser.getUserId());
         }
 
     }

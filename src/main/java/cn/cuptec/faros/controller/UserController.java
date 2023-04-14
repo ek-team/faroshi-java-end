@@ -9,6 +9,7 @@ import cn.cuptec.faros.common.constrants.QrCodeConstants;
 import cn.cuptec.faros.common.exception.InnerException;
 import cn.cuptec.faros.common.utils.QrCodeUtil;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.config.wx.WxMaConfiguration;
@@ -84,7 +85,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @Resource
     private PatientRelationTeamService patientRelationTeamService;
-
+    private final Url url;
     /**
      * 患者添加医生好友
      */
@@ -744,13 +745,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @SneakyThrows
     @GetMapping("/srBindAdress/{uid}/{macAdd}")
     public void handleFoo(@PathVariable Long uid, @PathVariable(value = "macAdd", required = false) String macAdd, HttpServletResponse response) {
-        response.sendRedirect(QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=" + macAdd);
+        response.sendRedirect(url.getUrl() + QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=" + macAdd);
     }
 
     @SneakyThrows
     @GetMapping("/srBindAdress/{uid}")
     public void handleFoo(@PathVariable Long uid, HttpServletResponse response) {
-        response.sendRedirect(QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=11");
+        response.sendRedirect(url.getUrl() + QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=11");
     }
 
     @SysLog("更新用户信息 成为医生")
