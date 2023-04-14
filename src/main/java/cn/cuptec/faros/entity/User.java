@@ -132,4 +132,12 @@ public class User extends Model<User> {
     private String userGroupId;
     @TableField(exist = false)
     private String remark;
+
+
+    @TableField(exist = false)
+    private String importTeam;
+    @TableField(exist = false)
+    private String importTeamPhone;
+    @TableField(exist = false)
+    private String hospitalInfoStr;
 }

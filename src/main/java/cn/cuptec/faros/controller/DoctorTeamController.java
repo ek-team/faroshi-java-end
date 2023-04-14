@@ -11,19 +11,24 @@ import cn.cuptec.faros.dto.BindDiseasesParam;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.UploadFileUtils;
+import com.alibaba.excel.EasyExcel;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.PutObjectResult;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageOutputStream;
+import javax.jws.soap.SOAPBinding;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -56,11 +61,165 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     private ServicePackService servicePackService;
     @Resource
     private ServicePackageInfoService servicePackageInfoService;
-
+    @Resource
+    private UserRoleService userRoleService;
     @Resource
     private DoctorTeamDeptService doctorTeamDeptService;
 
     private final OssProperties ossProperties;
+    private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
+
+
+    @PostMapping("/importDoctor")
+    public RestResponse importDoctor(@RequestPart(value = "file") MultipartFile file) {
+        User byId = userService.getById(SecurityUtils.getUser().getId());
+
+        try {
+            List<ImportDoctor> importDoctors = EasyExcel.read(file.getInputStream())
+                    .head(ImportDoctor.class)
+                    .sheet()
+                    .doReadSync();
+            if (!CollectionUtils.isEmpty(importDoctors)) {
+                List<User> users = new ArrayList<>();
+                List<HospitalInfo> hospitalInfos = new ArrayList<>();
+                List<String> mobiles = new ArrayList<>();
+                List<String> hospitalInfoStrs = new ArrayList<>();
+                int size = 0;
+                String teamPhone = "";
+                String hospitalInfoStrThis = "";
+                for (ImportDoctor importDoctor : importDoctors) {
+
+                    String hospitalInfoStr = importDoctor.getProvince() + importDoctor.getCity() + importDoctor.getArea() + importDoctor.getHospital();
+
+                    //判断医生是否存在
+                    mobiles.add(importDoctor.getMobile());
+                    User user = new User();
+                    if (importDoctor.getRole().equals("组长")) {
+                        user.setImportTeam("1");
+                        teamPhone = importDoctor.getMobile();
+                        user.setImportTeamPhone(teamPhone);
+                        user.setHospitalInfoStr(hospitalInfoStr);
+                        hospitalInfoStrThis = hospitalInfoStr;
+                        size = 1;
+                    } else {
+                        size = 0;
+                    }
+                    if (size == 0) {
+                        user.setImportTeamPhone(teamPhone);
+                        user.setHospitalInfoStr(hospitalInfoStrThis);
+                    }
+                    user.setNickname(importDoctor.getUserName());
+                    user.setPhone(importDoctor.getMobile());
+                    user.setLever(importDoctor.getLevel());
+                    user.setDepartment(user.getDepartment());
+                    user.setPassword(ENCODER.encode(importDoctor.getMobile().substring(5, 11)));
+                    users.add(user);
+
+                    //判断医院是否存在
+                    if (!hospitalInfoStrs.contains(hospitalInfoStr)) {
+                        HospitalInfo hospitalInfo = new HospitalInfo();
+                        hospitalInfo.setName(importDoctor.getHospital());
+                        hospitalInfo.setArea(importDoctor.getArea());
+                        hospitalInfo.setCity(importDoctor.getCity());
+                        hospitalInfo.setProvince(importDoctor.getProvince());
+                        hospitalInfo.setHospitalInfoStr(hospitalInfoStr);
+                        hospitalInfo.setCreateTime(new Date());
+                        hospitalInfos.add(hospitalInfo);
+                    }
+                    hospitalInfoStrs.add(hospitalInfoStr);
+                }
+                List<User> oldUsers = userService.list(new QueryWrapper<User>().lambda().in(User::getPhone, mobiles)
+                );
+                if (!CollectionUtils.isEmpty(oldUsers)) {
+                    Map<String, User> oldUserMap = oldUsers.stream()
+                            .collect(Collectors.toMap(User::getPhone, t -> t));
+                    for (User user : users) {
+                        User user1 = oldUserMap.get(user.getPhone());
+                        if (user1 != null) {
+                            user.setId(user1.getId());
+                        }
+                    }
+                }
+                userService.saveOrUpdateBatch(users);
+                List<UserRole> userRoles = new ArrayList<>();
+                List<Integer> userIds = new ArrayList<>();
+                for (User user : users) {
+                    UserRole userRole = new UserRole();
+                    userRole.setUserId(user.getId());
+                    userRole.setRoleId(20);
+                    userRoles.add(userRole);
+                    userIds.add(user.getId());
+                }
+                userRoleService.remove(new QueryWrapper<UserRole>().lambda().eq(UserRole::getRoleId, 20)
+                        .in(UserRole::getUserId, userIds));
+                userRoleService.saveOrUpdateBatch(userRoles);
+
+                List<HospitalInfo> oldHospitalInfos = hospitalInfoService.list(new QueryWrapper<HospitalInfo>().lambda().in(HospitalInfo::getHospitalInfoStr, hospitalInfoStrs)
+                );
+                if (!CollectionUtils.isEmpty(oldHospitalInfos)) {
+                    Map<String, HospitalInfo> oldHospitalInfoMap = oldHospitalInfos.stream()
+                            .collect(Collectors.toMap(HospitalInfo::getHospitalInfoStr, t -> t));
+                    for (HospitalInfo hospitalInfo : hospitalInfos) {
+                        HospitalInfo ospitalInfo1 = oldHospitalInfoMap.get(hospitalInfo.getHospitalInfoStr());
+                        if (ospitalInfo1 != null) {
+                            hospitalInfo.setId(ospitalInfo1.getId());
+                        }
+                    }
+                }
+                hospitalInfoService.saveOrUpdateBatch(hospitalInfos);
+                Map<String, HospitalInfo> hospitalInfoMap = hospitalInfos.stream()
+                        .collect(Collectors.toMap(HospitalInfo::getHospitalInfoStr, t -> t));
+
+                //创建团队
+                Map<String, List<User>> userTeamMap = users.stream()
+                        .collect(Collectors.groupingBy(User::getImportTeamPhone));
+                List<DoctorTeam> doctorTeamList = new ArrayList<>();
+
+                for (List<User> value : userTeamMap.values()) {
+                    List<User> userList = value;
+                    Integer leaderId = 0;
+                    String name = "";
+                    List<DoctorTeamPeople> doctorTeamPeopleList = new ArrayList<>();
+                    for (User user : userList) {
+                        DoctorTeamPeople doctorTeamPeople = new DoctorTeamPeople();
+                        doctorTeamPeople.setUserId(user.getId());
+                        doctorTeamPeopleList.add(doctorTeamPeople);
+                        if (!StringUtils.isEmpty(user.getImportTeam())) {
+                            leaderId = user.getId();
+                            name = user.getNickname() + "团队";
+                        }
+                    }
+
+                    DoctorTeam doctorTeam = new DoctorTeam();
+                    doctorTeam.setDeptId(byId.getDeptId());
+                    doctorTeam.setDeptIdList(byId.getDeptId() + "");
+                    doctorTeam.setHospitalId(hospitalInfoMap.get(value.get(0).getHospitalInfoStr()).getId());
+                    doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleList);
+                    doctorTeam.setLeaderId(leaderId);
+                    doctorTeam.setName(name);
+                    doctorTeam.setStatus(1);
+                    doctorTeam.setCreateUserId(byId.getId());
+                    doctorTeam.setCreateTime(LocalDateTime.now());
+                    doctorTeam.setModel(2);
+                    doctorTeamList.add(doctorTeam);
+                }
+
+                for (DoctorTeam doctorTeam : doctorTeamList) {
+                    this.add(doctorTeam);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        return RestResponse.ok();
+    }
+
+    public static void main(String[] args) {
+        String a = "13307637744";
+        System.out.println(a.substring(5, 11));
+    }
 
     /**
      * 添加医生团队
@@ -70,8 +229,10 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     @PostMapping("/add")
     public RestResponse add(@RequestBody DoctorTeam doctorTeam) {
         User byId = userService.getById(SecurityUtils.getUser().getId());
+        if (doctorTeam.getStatus() == null) {
+            doctorTeam.setStatus(0);
 
-        doctorTeam.setStatus(0);
+        }
         doctorTeam.setDeptId(byId.getDeptId());
         doctorTeam.setDeptIdList(byId.getDeptId() + "");
         doctorTeam.setCreateTime(LocalDateTime.now());
@@ -287,7 +448,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     @GetMapping("/pageScopedHavePeople")
     public RestResponse pageScopedHavePeople() {
         User user = userService.getById(SecurityUtils.getUser().getId());
-        List<DoctorTeam> doctorTeams = service.pageScopedHavePeople(user.getDeptId()+"");
+        List<DoctorTeam> doctorTeams = service.pageScopedHavePeople(user.getDeptId() + "");
         doctorTeams = doctorTeams.stream().collect(
                 Collectors.collectingAndThen(
                         Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(DoctorTeam::getId))), ArrayList::new)

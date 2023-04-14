@@ -30,7 +30,7 @@ public class HospitalInfo extends Model<HospitalInfo> implements Serializable {
      */
     @JSONField(deserialize = false)
     private Date createTime;
-
+    private String hospitalInfoStr;
     /**
      * 修改时间
      */

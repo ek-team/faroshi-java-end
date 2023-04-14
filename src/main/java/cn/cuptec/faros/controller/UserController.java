@@ -86,6 +86,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @Resource
     private PatientRelationTeamService patientRelationTeamService;
     private final Url url;
+
     /**
      * 患者添加医生好友
      */
@@ -310,11 +311,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @PostMapping("/savePatientUser")
     public RestResponse savePatientUser(@RequestBody PatientUser patientUser) {
         patientUser.setUserId(SecurityUtils.getUser().getId());
-
-        boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
-        if (!validCard) {
-            return RestResponse.failed("身份证格式错误");
+        if (!StringUtils.isEmpty(patientUser.getIdCard())) {
+            boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
+            if (!validCard) {
+                return RestResponse.failed("身份证格式错误");
+            }
         }
+
         patientUserService.save(patientUser);
         return RestResponse.ok();
     }
@@ -327,10 +330,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updatePatientUser")
     public RestResponse updatePatientUser(@RequestBody PatientUser patientUser) {
-        boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
-        if (!validCard) {
-            return RestResponse.failed("身份证格式错误");
+        if (!StringUtils.isEmpty(patientUser.getIdCard())) {
+            boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
+            if (!validCard) {
+                return RestResponse.failed("身份证格式错误");
+            }
         }
+
         patientUserService.updateById(patientUser);
         return RestResponse.ok();
     }

@@ -97,6 +97,9 @@ public class HospitalInfoController extends AbstractBaseController<HospitalInfoS
     @PostMapping("/save")
     public RestResponse save(@RequestBody HospitalInfo hospitalInfo) {
         hospitalInfo = setRegion(hospitalInfo);
+        String hospitalInfoStr = hospitalInfo.getProvince() + hospitalInfo.getCity() + hospitalInfo.getArea() + hospitalInfo.getName();
+
+        hospitalInfo.setHospitalInfoStr(hospitalInfoStr);
         return RestResponse.ok(service.save(hospitalInfo));
     }
 
