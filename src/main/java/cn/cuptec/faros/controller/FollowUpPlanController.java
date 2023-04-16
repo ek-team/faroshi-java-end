@@ -1018,12 +1018,19 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             if (patientUser != null) {
                 user.setIdCard(patientUser.getIdCard());
                 user.setPatientName(patientUser.getName());
+
+                if(patientUser.getCardType()!=null && patientUser.getCardType().equals(2)){
+                    user.setAge(patientUser.getAge());
+
+                    user.setBirthday(patientUser.getAge());
+                    user.setSexCode(patientUser.getSex());//1-男0-女
+                }
             }
 
         }
         //生成年龄性别
         String idCard = user.getIdCard();
-        if (!StringUtils.isEmpty(idCard)) {
+        if (!StringUtils.isEmpty(idCard) && StringUtils.isEmpty(user.getAge())) {
             Map<String, String> map = getAge(idCard);
             user.setAge(map.get("age"));
 
