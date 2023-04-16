@@ -26,6 +26,7 @@ public class TbTrainUser {
 
     private String doctorTeam;
     private int doctorTeamId;
+    private Integer cardType; //1-身份证 2-其他
     private String  treatmentMethodId;//治疗方法Id
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;

@@ -70,7 +70,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                 //添加医院
                 if (!StringUtils.isEmpty(one.getMacAdd())) {
                     ProductStock productStock = productStockService.getOne(Wrappers.<ProductStock>lambdaQuery().eq(ProductStock::getMacAddress, one.getMacAdd()).eq(ProductStock::getDel, 1));
-                    if (productStock!=null && productStock.getHospitalId() != null) {
+                    if (productStock != null && productStock.getHospitalId() != null) {
                         hospitalDoctorRelationService.remove(new QueryWrapper<HospitalDoctorRelation>().lambda().eq(HospitalDoctorRelation::getUserId, userId));
 
                         //绑定医院
@@ -161,6 +161,9 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+                if (StringUtils.isEmpty(tbTrainUser.getIdCard()) && !StringUtils.isEmpty(tbTrainUser.getCaseHistoryNo())) {
+                    tbTrainUser.setIdCard(tbTrainUser.getCaseHistoryNo());
+                }
                 List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().
                         lambda().eq(ProductStock::getMacAddress, tbTrainUser.getMacAdd()).eq(ProductStock::getDel, 1));
                 if (!CollectionUtils.isEmpty(productStocks)) {
@@ -207,6 +210,9 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+                if (StringUtils.isEmpty(tbTrainUser.getIdCard()) && !StringUtils.isEmpty(tbTrainUser.getCaseHistoryNo())) {
+                    tbTrainUser.setIdCard(tbTrainUser.getCaseHistoryNo());
+                }
                 List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().
                         lambda().eq(ProductStock::getMacAddress, tbTrainUser.getMacAdd()).eq(ProductStock::getDel, 1));
                 if (!CollectionUtils.isEmpty(productStocks)) {

@@ -7,7 +7,11 @@ import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.service.CustomUser;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.HospitalInfo;
+import cn.cuptec.faros.entity.TbTrainUser;
 import cn.cuptec.faros.service.HospitalInfoService;
+import cn.cuptec.faros.service.PlanService;
+import cn.cuptec.faros.service.PlanUserService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.AllArgsConstructor;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
@@ -28,16 +32,26 @@ public class TestController {
     private ClientDetailsService clientDetailsService;
     @Resource
     private HospitalInfoService hospitalInfoService;
+    @Resource
+    private PlanUserService planUserService;
 
     @GetMapping("user")
     public RestResponse customUserInfo() {
-        List<HospitalInfo> list = hospitalInfoService.list();
-        for (HospitalInfo importDoctor : list) {
-            String hospitalInfoStr = importDoctor.getProvince() + importDoctor.getCity() + importDoctor.getArea() + importDoctor.getName();
+//        List<HospitalInfo> list = hospitalInfoService.list();
+//        for (HospitalInfo importDoctor : list) {
+//            String hospitalInfoStr = importDoctor.getProvince() + importDoctor.getCity() + importDoctor.getArea() + importDoctor.getName();
+//
+//            importDoctor.setHospitalInfoStr(hospitalInfoStr);
+//        }
+//        hospitalInfoService.updateBatchById(list);
 
-            importDoctor.setHospitalInfoStr(hospitalInfoStr);
+        List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+
+                .isNull(TbTrainUser::getIdCard).or().eq(TbTrainUser::getIdCard, ""));
+        for (TbTrainUser tbTrainUser : list) {
+            tbTrainUser.setIdCard(tbTrainUser.getCaseHistoryNo());
         }
-        hospitalInfoService.updateBatchById(list);
+        planUserService.updateBatchById(list);
         return RestResponse.ok();
     }
 

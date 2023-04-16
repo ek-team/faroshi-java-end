@@ -311,7 +311,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @PostMapping("/savePatientUser")
     public RestResponse savePatientUser(@RequestBody PatientUser patientUser) {
         patientUser.setUserId(SecurityUtils.getUser().getId());
-        if (!StringUtils.isEmpty(patientUser.getIdCard())) {
+        if (!StringUtils.isEmpty(patientUser.getIdCard()) && patientUser.getCardType() != null && patientUser.getCardType().equals(1)) {
             boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
             if (!validCard) {
                 return RestResponse.failed("身份证格式错误");
@@ -330,7 +330,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updatePatientUser")
     public RestResponse updatePatientUser(@RequestBody PatientUser patientUser) {
-        if (!StringUtils.isEmpty(patientUser.getIdCard())) {
+        if (!StringUtils.isEmpty(patientUser.getIdCard()) && patientUser.getCardType() != null && patientUser.getCardType().equals(1)) {
             boolean validCard = IdCardUtil.isValidCard(patientUser.getIdCard());
             if (!validCard) {
                 return RestResponse.failed("身份证格式错误");
@@ -351,13 +351,15 @@ public class UserController extends AbstractBaseController<UserService, User> {
         List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().lambda().eq(PatientUser::getUserId, SecurityUtils.getUser().getId()));
         if (!CollectionUtils.isEmpty(list)) {
             for (PatientUser patientUser : list) {
-                if (!StringUtils.isEmpty(patientUser.getIdCard())) {
+                if (!StringUtils.isEmpty(patientUser.getIdCard()) && StringUtils.isEmpty(patientUser.getAge())) {
                     Map<String, String> map = getAge(patientUser.getIdCard());
                     patientUser.setAge(map.get("birthday"));
+                }
+                if (!StringUtils.isEmpty(patientUser.getIdCard()) && StringUtils.isEmpty(patientUser.getSex())) {
+                    Map<String, String> map = getAge(patientUser.getIdCard());
 
                     patientUser.setSex(map.get("sexCode"));//1-男0-女
                 }
-
 
             }
         }

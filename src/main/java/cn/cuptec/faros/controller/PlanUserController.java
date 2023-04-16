@@ -41,6 +41,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
 @AllArgsConstructor
 @Slf4j
 @RestController
@@ -94,7 +95,10 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     private EvaluationRecordsService evaluationRecordsService;
     @Resource
     private ServicePackService servicePackService;
+    @Resource
+    private DoctorTeamService doctorTeamService;
     private final Url url;
+
     @GetMapping("/page")
     public RestResponse pageList(@RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
                                  @RequestParam(value = "maxHeight", required = false) Integer maxHeight, @RequestParam(value = "miniHeight", required = false) Integer miniHeight,
@@ -147,7 +151,31 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             selectEducationalLevel1.retainAll(selectEducationalLevel);
             queryWrapper.in("educational_level", selectEducationalLevel1);
         }
-        return RestResponse.ok(service.page(page, queryWrapper));
+        IPage page1 = service.page(page, queryWrapper);
+        List<TbTrainUser> records = page1.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
+            List<Integer> doctorTeamIdList = records.stream().map(TbTrainUser::getDoctorTeamId)
+                    .collect(Collectors.toList());
+
+            List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(doctorTeamIdList);
+            if (!CollectionUtils.isEmpty(doctorTeams)) {
+                Map<Integer, DoctorTeam> teamMap = doctorTeams.stream()
+                        .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+                for (TbTrainUser tbTrainUser : records) {
+                    if (tbTrainUser != null) {
+                        DoctorTeam doctorTeam = teamMap.get(tbTrainUser.getDoctorTeamId());
+                        if (doctorTeam != null) {
+                            tbTrainUser.setDoctorTeam(doctorTeam.getName());
+
+                        }
+                    }
+
+                }
+                page1.setRecords(records);
+            }
+
+        }
+        return RestResponse.ok(page1);
     }
 
     @GetMapping("/export")
@@ -288,15 +316,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     }
 
     public static void main(String[] args) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String d = format.format(1629339293214L);
-        Date date = null;
-        try {
-            date = format.parse(d);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        System.out.println(date);
+
+        System.out.println(IdCardUtil.isValidCard("H01454214"));
     }
 
     /**
@@ -397,11 +418,18 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
     @PostMapping("/add")
     public RestResponse add(@RequestBody TbTrainUser tbTrainUser) {
-        if (StringUtils.isEmpty(tbTrainUser.getIdCard())) {
-            return RestResponse.failed("请输入身份证");
+        if (tbTrainUser.getCardType() != null && tbTrainUser.getCardType().equals(1)) {
+            if (!StringUtils.isEmpty(tbTrainUser.getIdCard())) {
+
+                if (!IdCardUtil.isValidCard(tbTrainUser.getIdCard())) {
+                    return RestResponse.failed("身份证有误");
+                }
+
+            }
         }
-        if (!IdCardUtil.isValidCard(tbTrainUser.getIdCard())) {
-            return RestResponse.failed("身份证有误");
+
+        if (StringUtils.isEmpty(tbTrainUser.getIdCard()) && !StringUtils.isEmpty(tbTrainUser.getCaseHistoryNo())) {
+            tbTrainUser.setIdCard(tbTrainUser.getCaseHistoryNo());
         }
         Integer id;
         if (SecurityUtils.getUser() == null) {
