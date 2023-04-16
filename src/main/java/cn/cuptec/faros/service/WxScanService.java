@@ -43,7 +43,8 @@ public class WxScanService {
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private DoctorTeamService doctorTeamService;
-
+    @Resource
+    private ProductStockService productStockService;
 
     public WxMpXmlOutMessage handle(WxMpXmlMessage wxMessage, Map<String, Object> context, WxMpService weixinService, WxSessionManager sessionManager) {
         String wxMessageEventKey = WxUtil.getWxMessageEventKey(wxMessage.getEventKey());
@@ -152,6 +153,17 @@ public class WxScanService {
         }
 
         if ("subscribe".equals(event)) {//关注消息
+            User user = userService.getBaseMapper().getMpOpenIdIsExist(userWxInfo.getOpenId());
+            if (user != null) {
+                String macAdd = user.getMacAdd();
+                ProductStock byMac = productStockService.getByMac(macAdd);
+                if (byMac.getServicePackId() != null) {
+                    ServicePack servicePack = servicePackService.getById(byMac.getServicePackId());
+                    wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", servicePack.getName(), "法罗适",
+                            "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePack.getId());
+                }
+
+            }
             log.info("关注消息：" + wxMessageEventKey + "=====" + event);
             // wxMpService.sendSubNotice(userWxInfo.getOpenId(), "扫码成功", byId.getName(), "法罗适", "点击查看详情", "/pages/orderConfirm/orderConfirm?id=1");
             String content = "\n" +

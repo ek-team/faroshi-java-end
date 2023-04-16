@@ -44,6 +44,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageOutputStream;
+import javax.jws.soap.SOAPBinding;
 import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -485,8 +486,12 @@ public class UserController extends AbstractBaseController<UserService, User> {
      * @return
      */
     @GetMapping("/isSubscribe")
-    public RestResponse<User> isSubscribe() {
+    public RestResponse<User> isSubscribe(@RequestParam(value = "macAdd", required = false) String macAdd) {
         User user = service.selectUserVoById(SecurityUtils.getUser().getId());
+        User updateUser = new User();
+        user.setId(SecurityUtils.getUser().getId());
+        user.setMacAdd(macAdd);
+        service.updateById(updateUser);
         return RestResponse.ok(user);
     }
 
