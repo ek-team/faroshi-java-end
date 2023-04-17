@@ -69,7 +69,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         Map<Integer, FormSetting> formSettingMap = formSettings.stream()
                 .collect(Collectors.toMap(FormSetting::getId, t -> t));
         for (FormUserData formUserData : formManagementData) {
-            if (param.getStr() != null) {
+            if (param.getStr() != null && formUserData.getStr()==null) {
                 formUserData.setStr(param.getStr());
             }
             formUserData.setGroupId(groupId);
@@ -171,6 +171,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             Date date = Date.from(zdt.toInstant());
             newChatMsg.setCreateTime(date);
             newChatMsg.setStr3(chatMsg.getId());
+            newChatMsg.setStr2(1+"");
             chatMsgService.save(newChatMsg);
         }
 
