@@ -26,6 +26,7 @@ public class TbTrainUser {
 
     private String doctorTeam;
     private int doctorTeamId;
+    private String birthday;
     private Integer cardType; //1-身份证 2-其他
     private String  treatmentMethodId;//治疗方法Id
     @TableId(value = "id", type = IdType.AUTO)
@@ -62,6 +63,7 @@ public class TbTrainUser {
     private String doctor;           //医生
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String hospitalName;           //医院名称
+    private String hospitalId;           //医院名称
     private String hospitalAddress;           //医院地址
     private String department;//科室信息
     private String macAdd; //mac地址

@@ -27,11 +27,11 @@ public class WxPayFarosService {
     private PatientOtherOrderService patientOtherOrderService;//患者其它订单
 
 
-    public RestResponse unifiedOrder(String orderNo,String tradeType) {
-        if(StringUtils.isEmpty(tradeType)){
-            tradeType="JSAPI";
-        }else{
-            tradeType="MWEB";
+    public RestResponse unifiedOrder(String orderNo, String tradeType) {
+        if (StringUtils.isEmpty(tradeType)) {
+            tradeType = "JSAPI";
+        } else {
+            tradeType = "MWEB";
         }
         User user = userService.getById(SecurityUtils.getUser().getId());
         UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, orderNo));
@@ -39,23 +39,24 @@ public class WxPayFarosService {
             return RestResponse.failed("订单已支付");
         }
         Dept dept = deptService.getById(userOrder.getDeptId());
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);
         PayResult wenXinInfo = JSONObject.parseObject(result, PayResult.class);
         return RestResponse.ok(wenXinInfo.getData());
     }
-    public RestResponse unifiedOrder(Integer deptId,String orderNo,String tradeType,BigDecimal amount) {
-        if(StringUtils.isEmpty(tradeType)){
-            tradeType="JSAPI";
-        }else{
-            tradeType="MWEB";
+
+    public RestResponse unifiedOrder(Integer deptId, String orderNo, String tradeType, BigDecimal amount) {
+        if (StringUtils.isEmpty(tradeType)) {
+            tradeType = "JSAPI";
+        } else {
+            tradeType = "MWEB";
         }
         User user = userService.getById(SecurityUtils.getUser().getId());
 
         Dept dept = deptService.getById(deptId);
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + amount.multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + amount.multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);
@@ -71,7 +72,7 @@ public class WxPayFarosService {
         }
         Dept dept = deptService.getById(patientOtherOrder.getDeptId());
         User user = userService.getById(SecurityUtils.getUser().getId());
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue()+ "&tradeType=JSAPI";
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount() + "").multiply(new BigDecimal(100)).intValue() + "&tradeType=JSAPI";
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue()+ "&tradeType=JSAPI";
         String result = HttpUtil.get(url);
@@ -82,9 +83,10 @@ public class WxPayFarosService {
     }
 
     public static void main(String[] args) {
-        PatientOtherOrder patientOtherOrder =new PatientOtherOrder();
-        patientOtherOrder.setAmount(0.14);
-        int i = new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+
+        PatientOtherOrder patientOtherOrder = new PatientOtherOrder();
+        patientOtherOrder.setAmount(0.13);
+        int i = new BigDecimal(patientOtherOrder.getAmount() + "").multiply(new BigDecimal("100")).intValue();
         System.out.println(i);
     }
 }

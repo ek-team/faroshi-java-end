@@ -109,6 +109,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
                         user.setHospitalInfoStr(hospitalInfoStrThis);
                     }
                     user.setNickname(importDoctor.getUserName());
+                    user.setDeptId(byId.getDeptId());
                     user.setPhone(importDoctor.getMobile());
                     user.setLever(importDoctor.getLevel());
                     user.setDepartment(user.getDepartment());

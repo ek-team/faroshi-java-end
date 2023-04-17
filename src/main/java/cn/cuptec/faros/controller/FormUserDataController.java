@@ -48,6 +48,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         log.info(param.getFormManagementDatas().get(0).getAnswer() + "");
         String groupId = IdUtil.getSnowflake(0, 0).nextIdStr();
         List<FormUserData> formManagementData = param.getFormManagementDatas();
+        Integer updateFollowUpPlanNoticeId = formManagementData.get(0).getStr();
         Integer formId = formManagementData.get(0).getFormId();
         Form byId = formService.getById(formId);
         ChatMsg byId1 = chatMsgService.getById(param.getStr() + "");
@@ -148,7 +149,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         //更改通知的状态
         Integer str = formManagementData.get(0).getStr();
         FollowUpPlanNotice updateFollowUpPlanNotice = new FollowUpPlanNotice();
-        updateFollowUpPlanNotice.setId(str);
+        updateFollowUpPlanNotice.setId(updateFollowUpPlanNoticeId);
         updateFollowUpPlanNotice.setForm(1);
         followUpPlanNoticeService.updateById(updateFollowUpPlanNotice);
         ChatMsg chatMsg = new ChatMsg();

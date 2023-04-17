@@ -1,10 +1,13 @@
 package cn.cuptec.faros.service;
 
+import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.utils.OrderNumberUtil;
 import cn.cuptec.faros.common.utils.StringUtils;
 import cn.cuptec.faros.common.utils.sms.HttpUtils;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.datascope.DataScope;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
+import cn.cuptec.faros.dto.KuaiDiXiaDanParam;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.mapper.UserOrderMapper;
 import cn.cuptec.faros.vo.MapExpressTrackVo;
@@ -25,13 +28,15 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
+import com.kuaidi100.sdk.api.BOrderOfficial;
 import com.kuaidi100.sdk.api.Subscribe;
 import com.kuaidi100.sdk.contant.ApiInfoConstant;
+import com.kuaidi100.sdk.contant.CompanyConstant;
 import com.kuaidi100.sdk.core.IBaseClient;
 import com.kuaidi100.sdk.pojo.HttpResult;
-import com.kuaidi100.sdk.request.SubscribeParam;
-import com.kuaidi100.sdk.request.SubscribeParameters;
-import com.kuaidi100.sdk.request.SubscribeReq;
+import com.kuaidi100.sdk.request.*;
+import com.kuaidi100.sdk.utils.SignUtils;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpResponse;
@@ -40,6 +45,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
@@ -56,7 +62,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
-
     @Resource
     private UserService userService;
     @Resource
@@ -74,12 +79,52 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     private SalesmanPayChannelService salesmanPayChannelService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+    private String borderApiUrl = "https://poll.kuaidi100.com/order/borderapi.do";
 
-    public String queryStorehouseByProductSn(String productSn, QueryWrapper queryWrapper) {
+    /**
+     * 商家寄件 用户下单付款自动叫订单
+     *
+     * @return
+     */
 
 
-        return null;
-    }
+//    public static void main(String[] args) {
+//        testBorderOfficial();
+//    }
+//
+//
+//    public static void testBorderOfficial() {
+//        PrintReq printReq = new PrintReq();
+//        BOrderReq bOrderReq = new BOrderReq();
+//        bOrderReq.setKuaidicom(CompanyConstant.SF);
+//        bOrderReq.setSendManName("张三");
+//        bOrderReq.setSendManMobile("13633407133");
+//        bOrderReq.setSendManPrintAddr("浙江省杭州市余杭区");
+//        bOrderReq.setRecManName("李四");
+//        bOrderReq.setRecManMobile("13307637744");
+//        bOrderReq.setRecManPrintAddr("浙江省杭州市西湖区");
+//        // bOrderReq.setCallBackUrl(url.getUrl() + "purchase/order/kuaidicallback");
+//        bOrderReq.setCallBackUrl("http://www.baidu.com");
+//        bOrderReq.setWeight("1");
+//
+//        String t = String.valueOf(System.currentTimeMillis());
+//        String param = new Gson().toJson(bOrderReq);
+//        //使用的红小豆快递100
+//        printReq.setKey("JAnUGrLl5945");
+//        printReq.setSign(SignUtils.printSign(param, t, "JAnUGrLl5945", "75bd152004314af288765416804ac830"));
+//        printReq.setT(t);
+//        printReq.setParam(param);
+//        printReq.setMethod(ApiInfoConstant.B_ORDER_OFFICIAL_ORDER_METHOD);
+//        IBaseClient bOrder = new BOrderOfficial();
+//        HttpResult execute = null;
+//        try {
+//            execute = bOrder.execute(printReq);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        System.out.println(execute);
+//    }
+//
 
 //    public void reduceAmounts(UserOrder userOrder) {
 //        List<Double> reduceAmountList = new ArrayList<>();
@@ -181,10 +226,6 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         return userOrder;
     }
 
-    public static void main(String[] args) {
-        LocalDate now = LocalDate.now();
-        System.out.println(now.equals(LocalDate.now()));
-    }
 
     public UOrderStatuCountVo countScoped() {
 
@@ -210,7 +251,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     }
 
     //查询部门订单
-    public IPage<UserOrder> pageScoped(Boolean admin,IPage<UserOrder> page, Wrapper<UserOrder> queryWrapper) {
+    public IPage<UserOrder> pageScoped(Boolean admin, IPage<UserOrder> page, Wrapper<UserOrder> queryWrapper) {
         DataScope dataScop3 = new DataScope();
         dataScop3.setIsOnly(!admin);
         return baseMapper.pageScoped(page, queryWrapper, dataScop3);
