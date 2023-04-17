@@ -52,7 +52,7 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
             if (!CollectionUtils.isEmpty(list1)) {
                 list1.sort((t1, t2) -> t2.getCreateDate().compareTo(t1.getCreateDate()));
                 result.add(list1.get(0));
-                RestResponse.ok(result);
+                return RestResponse.ok(result);
             }
 
         }

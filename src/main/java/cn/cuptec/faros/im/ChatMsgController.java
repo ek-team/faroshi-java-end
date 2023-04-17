@@ -384,7 +384,7 @@ public class ChatMsgController {
                                 .set(ChatUser::getPatientOtherOrderStatus, str2)
                                 .set(ChatUser::getReceiverId, receiverId)
                                 .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
-
+                                .set(ChatUser::getServiceStartTime, LocalDateTime.now())
                         );
                     }
                 });

@@ -156,6 +156,7 @@ public class ChatUserController {
         chatUser.setId(chatUserId);
         LocalDateTime localDateTime = LocalDateTime.now().plusHours(hour);
         chatUser.setServiceEndTime(localDateTime);
+        chatUser.setServiceStartTime(LocalDateTime.now());
         chatUser.setChatDesc("随访");
         chatUser.setPatientOtherOrderStatus("4");//会话随访
         ChatUser byId = chatUserService.getById(chatUserId);
@@ -181,6 +182,7 @@ public class ChatUserController {
                             .eq(ChatUser::getUid, c.getUid())
                             .eq(ChatUser::getTargetUid, c.getTargetUid())
                             .set(ChatUser::getServiceEndTime, localDateTime)
+                            .set(ChatUser::getServiceStartTime, LocalDateTime.now())
                             .set(ChatUser::getChatDesc, "随访")
                             .set(ChatUser::getPatientOtherOrderStatus, "4")
                     );
