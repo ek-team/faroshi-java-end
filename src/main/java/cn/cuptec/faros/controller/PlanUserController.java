@@ -34,6 +34,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -98,6 +99,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @Resource
     private DoctorTeamService doctorTeamService;
     private final Url url;
+    @Resource
+    private OperationRecordService operationRecordService;
 
     @GetMapping("/page")
     public RestResponse pageList(@RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
@@ -315,10 +318,6 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         return RestResponse.ok();
     }
 
-    public static void main(String[] args) {
-
-        System.out.println(IdCardUtil.isValidCard("H01454214"));
-    }
 
     /**
      * 根据名称搜索微信用户
@@ -600,11 +599,83 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
     }
 
+    /**
+     * 获取所有属性，包括父类
+     *
+     * @param object
+     * @return
+     */
+    public static Field[] getAllFields(Object object) {
+        Class clazz = object.getClass();
+        List<Field> fieldList = new ArrayList<>();
+        while (clazz != null) {
+            fieldList.addAll(new ArrayList<>(Arrays.asList(clazz.getDeclaredFields())));
+            clazz = clazz.getSuperclass();
+        }
+        Field[] fields = new Field[fieldList.size()];
+        fieldList.toArray(fields);
+        return fields;
+    }
+
+    public static StringBuilder compareContract(TbTrainUser sign, TbTrainUser existSign) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            Field[] fields = getAllFields(sign);
+            for (int j = 0; j < fields.length; j++) {
+                Field field = fields[j];
+                field.setAccessible(true);
+                // 字段值
+                if (field.get(sign) != null && fields[j].get(existSign) != null && !field.get(sign).equals(fields[j].get(existSign))) {
+                    System.out.println(fields[j].get(existSign));
+                    System.out.println(field.get(sign));
+                    stringBuilder.append(fields[j].getName() + "-");
+                }
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return stringBuilder;
+    }
+
+    public static void main(String[] args) {
+        TbTrainUser tbTrainUser = new TbTrainUser();
+        tbTrainUser.setAccount("asdasd");
+        tbTrainUser.setIdCard("111111");
+        TbTrainUser tbTrainUser1 = new TbTrainUser();
+        tbTrainUser1.setAccount("asdasdasd");
+        tbTrainUser1.setIdCard("1111");
+        StringBuilder stringBuilder = compareContract(tbTrainUser, tbTrainUser1);
+        String s = stringBuilder.toString();
+        if(!StringUtils.isEmpty(s)){
+            List<String> split = Arrays.asList(s.split("-"));
+
+
+
+        }
+
+        System.out.println();
+    }
+
     @PostMapping("/updateById")
     public RestResponse<TbTrainUser> addSaveBatch(@RequestBody TbTrainUser tbTrainUser) {
         TbTrainUser byId = service.getById(tbTrainUser.getId());
         tbTrainUser.setXtUserId(byId.getXtUserId());
         service.updateById(tbTrainUser);
+        //添加修记录
+//        OperationRecord operationRecord = new OperationRecord();
+//        operationRecord.setCreateTime(new Date());
+//        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+//        operationRecord.setStr(tbTrainUser.getUserId());
+//        operationRecord.setType(2);
+//        //判断修改了哪些字段
+//        if (byId.getIdCard().equals(tbTrainUser.getIdCard())) {
+//
+//        }
+//        String oldText = "";
+//        String newText = "";
+//        operationRecord.setText("从" + oldText + "修改为" + newText);
+//        operationRecordService.save(operationRecord);
+
         return RestResponse.ok();
     }
 

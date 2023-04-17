@@ -60,7 +60,7 @@ public class OperationRecordController extends AbstractBaseController<OperationR
         return RestResponse.ok(list);
     }
 
-    @GetMapping("/save")
+    @PostMapping("/save")
     public RestResponse save(@RequestBody OperationRecord operationRecord) {
         operationRecord.setCreateTime(new Date());
         operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
