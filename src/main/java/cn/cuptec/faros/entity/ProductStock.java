@@ -23,11 +23,12 @@ public class ProductStock {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private String targetMacAdd;
+    private String sourceProductSn;
     @Queryable(queryLogical = QueryLogical.EQUAL)
     @NotNull(message = "产品不能为空")
     //产品id
     private Integer productId;
-    private Integer tag=0;//设备标签
+    private Integer tag = 0;//设备标签
     private String ipAdd;
     private String currentUserId;
     private String productDeviceType;

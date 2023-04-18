@@ -626,9 +626,9 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
                 field.setAccessible(true);
                 // 字段值
                 if (field.get(sign) != null && fields[j].get(existSign) != null && !field.get(sign).equals(fields[j].get(existSign))) {
-                    System.out.println(fields[j].get(existSign));
-                    System.out.println(field.get(sign));
-                    stringBuilder.append(fields[j].getName() + "-");
+
+
+                    stringBuilder.append(fields[j].getName() + "字段从" + fields[j].get(existSign) + "修改为" + field.get(sign) + ",");
                 }
             }
         } catch (IllegalAccessException e) {
@@ -646,14 +646,9 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         tbTrainUser1.setIdCard("1111");
         StringBuilder stringBuilder = compareContract(tbTrainUser, tbTrainUser1);
         String s = stringBuilder.toString();
-        if(!StringUtils.isEmpty(s)){
-            List<String> split = Arrays.asList(s.split("-"));
 
 
-
-        }
-
-        System.out.println();
+        System.out.println(s);
     }
 
     @PostMapping("/updateById")
@@ -661,20 +656,16 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         TbTrainUser byId = service.getById(tbTrainUser.getId());
         tbTrainUser.setXtUserId(byId.getXtUserId());
         service.updateById(tbTrainUser);
+        StringBuilder stringBuilder = compareContract(byId, tbTrainUser);
         //添加修记录
-//        OperationRecord operationRecord = new OperationRecord();
-//        operationRecord.setCreateTime(new Date());
-//        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
-//        operationRecord.setStr(tbTrainUser.getUserId());
-//        operationRecord.setType(2);
-//        //判断修改了哪些字段
-//        if (byId.getIdCard().equals(tbTrainUser.getIdCard())) {
-//
-//        }
-//        String oldText = "";
-//        String newText = "";
-//        operationRecord.setText("从" + oldText + "修改为" + newText);
-//        operationRecordService.save(operationRecord);
+        OperationRecord operationRecord = new OperationRecord();
+        operationRecord.setCreateTime(new Date());
+        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+        operationRecord.setStr(byId.getUserId());
+        operationRecord.setType(2);
+
+        operationRecord.setText(stringBuilder.toString());
+        operationRecordService.save(operationRecord);
 
         return RestResponse.ok();
     }
