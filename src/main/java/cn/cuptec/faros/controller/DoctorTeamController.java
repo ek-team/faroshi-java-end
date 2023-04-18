@@ -427,18 +427,16 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             queryWrapper.eq("hospital_id", hospitalId);
         }
         User user = userService.getById(SecurityUtils.getUser().getId());
-        DataScope dataScope = new DataScope();
 
-        if (user.getDeptId().equals(1)) {
-            dataScope.setIsOnly(false);
-        } else {
-            dataScope.setIsOnly(true);
-        }
         if (status != null) {
             queryWrapper.eq("status", 1);
         }
         User userDept = userService.getById(SecurityUtils.getUser().getId());
-        queryWrapper.in("dept_id_list", userDept.getDeptId());
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(userDept.getId());
+        if (!aBoolean) {
+            queryWrapper.like("doctor_team.dept_id_list", userDept.getDeptId());
+
+        }
         IPage<DoctorTeam> doctorTeamIPage = service.pageScoped(page, queryWrapper);
         return RestResponse.ok(doctorTeamIPage);
     }

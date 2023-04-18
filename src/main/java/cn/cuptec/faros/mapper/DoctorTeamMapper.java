@@ -22,12 +22,17 @@ public interface DoctorTeamMapper extends BaseMapper<DoctorTeam> {
     IPage<DoctorTeam> pageScoped(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper);
 
 
-    @Select( "<script> SELECT doctor_team.dept_id_list,doctor_team.`name`,doctor_team.id from doctor_team LEFT JOIN doctor_team_people on doctor_team.id= " +
-            "doctor_team_people.team_id WHERE doctor_team_people.id is not null and doctor_team.dept_id_list " +
-            " IN " +
-            "  <foreach collection=\"deptIds\" item=\"id\" index=\"index\" open=\"(\" close=\")\" separator=\",\">\n" +
-            "   #{id}\n" +
-            "   </foreach> " +
-            "and doctor_team.status=1 </script>")
-    List<DoctorTeam> pageScopedHavePeople(@Param("deptIds") List<String> deptIds);
+//    @Select( "<script> SELECT doctor_team.dept_id_list,doctor_team.`name`,doctor_team.id from doctor_team LEFT JOIN doctor_team_people on doctor_team.id= " +
+//            "doctor_team_people.team_id WHERE doctor_team_people.id is not null and doctor_team.dept_id_list " +
+//            " IN " +
+//            "  <foreach collection=\"deptIds\" item=\"id\" index=\"index\" open=\"(\" close=\")\" separator=\",\">\n" +
+//            "   #{id}\n" +
+//            "   </foreach> " +
+//            "and doctor_team.status=1 </script>")
+
+
+    @Select( "SELECT doctor_team.dept_id_list,doctor_team.`name`,doctor_team.id from doctor_team LEFT JOIN doctor_team_people on doctor_team.id= " +
+            "doctor_team_people.team_id WHERE doctor_team_people.id is not null and doctor_team.dept_id_list LIKE CONCAT('%',#{deptId},'%') " +
+            "and doctor_team.status=1")
+    List<DoctorTeam> pageScopedHavePeople(@Param("deptId") String deptId);
 }

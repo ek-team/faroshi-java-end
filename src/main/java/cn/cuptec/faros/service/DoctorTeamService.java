@@ -24,8 +24,7 @@ public class DoctorTeamService extends ServiceImpl<DoctorTeamMapper, DoctorTeam>
     }
 
     public List<DoctorTeam> pageScopedHavePeople(String deptId){
-        List<String> deptIds=new ArrayList<>();
-        deptIds.add(deptId);
-       return baseMapper.pageScopedHavePeople(deptIds);
+
+       return baseMapper.pageScopedHavePeople(deptId);
    }
 }
