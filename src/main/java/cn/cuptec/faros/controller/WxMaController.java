@@ -38,16 +38,6 @@ public class WxMaController {
     @Resource
     private DeviceScanSignLogService deviceScanSignLogService;
 
-    @GetMapping("/test")
-    public RestResponse test(@RequestParam("query") String query, @RequestParam(value = "macAddress", required = false) String macAddress) {
-        try {
-            String accessToken = WxMaConfiguration.getWxMa1Service().getAccessToken();
-            System.out.println(accessToken);
-        } catch (WxErrorException e) {
-            e.printStackTrace();
-        }
-        return RestResponse.ok();
-    }
 
     /**
      * 获取小程序urlLink

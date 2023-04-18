@@ -4,6 +4,7 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.wx.WxMpProperties;
 import cn.cuptec.faros.dto.DownloadProductStockInfoResult;
+import cn.cuptec.faros.entity.ChatUser;
 import cn.cuptec.faros.entity.MacAddDownloadType;
 import cn.cuptec.faros.entity.ProductStock;
 import cn.cuptec.faros.service.MacAddDownloadTypeService;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -93,7 +95,7 @@ public class UploadFileController {
             String name = fileResult.getName();
             String suffix = name.substring(name.lastIndexOf(".") + 1);
             String key = "productStockInfo/" + fileName + "." + suffix;
-            log.info(key+"删除文件");
+            log.info(key + "删除文件");
             UploadFileUtils.deleteFile(key, ossProperties);
 
 
@@ -116,6 +118,7 @@ public class UploadFileController {
     ) throws Exception {
         //查询设备下载信息
         List<MacAddDownloadType> list = new ArrayList<>();
+
 
         if (!StringUtils.isEmpty(sourceProductSn)) {
             ProductStock productStock = productStockService.getOne(new QueryWrapper<ProductStock>().lambda().
@@ -174,7 +177,10 @@ public class UploadFileController {
             }
 
         }
+        productStockService.update(Wrappers.<ProductStock>lambdaUpdate()
+                .eq(ProductStock::getMacAddress, macAdd)
 
+                .set(ProductStock::getSourceProductSn, ""));
 
         return RestResponse.ok(result);
     }
