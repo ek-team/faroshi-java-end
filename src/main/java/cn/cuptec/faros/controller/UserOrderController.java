@@ -1174,7 +1174,10 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.le("user_order.create_time", endTime);
             queryWrapper.ge("user_order.create_time", startTime);
         }
-        queryWrapper.eq("user_order.dept_id", user.getDeptId());
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(userId);
+        if (!aBoolean) {
+            queryWrapper.eq("user_order.dept_id", user.getDeptId());
+        }
         List<UserOrder> userOrders = service.scoped(queryWrapper);
         if (!CollectionUtils.isEmpty(userOrders)) {
             //服务包信息
@@ -1294,8 +1297,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         return RestResponse.ok();
     }
-
-
 
 
     @Override
