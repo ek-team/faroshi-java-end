@@ -570,6 +570,9 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return service.updateById(user) ? RestResponse.ok() : RestResponse.failed();
     }
 
+    public static void main(String[] args) {
+        System.out.println(ENCODER.encode("534134"));
+    }
     @PutMapping
     public RestResponse update(@RequestBody @Valid User user) {
         user.setId(SecurityUtils.getUser().getId());

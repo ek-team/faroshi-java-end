@@ -104,7 +104,7 @@ public class WxMpPortalController {
 			WxMpXmlMessage inMessage = WxMpXmlMessage.fromEncryptedXml(requestBody, wxService.getWxMpConfigStorage(),
 					timestamp, nonce, msgSignature);
 
-			log.debug("消息解密后内容为：{} ", inMessage.toString());
+			log.info("消息解密后内容为：{} ", inMessage.toString());
 
 			WxMpXmlOutMessage outMessage = WxMpConfiguration.getRouter().route(inMessage);
 			if (outMessage != null) {
@@ -112,7 +112,7 @@ public class WxMpPortalController {
 			}
 		}
 
-		log.debug("组装回复信息：{}", out);
+		log.info("组装回复信息：{}", out);
 		WxMpContextHolder.clear();
 		return out;
 	}

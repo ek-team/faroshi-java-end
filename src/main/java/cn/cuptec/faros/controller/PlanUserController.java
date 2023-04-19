@@ -414,6 +414,51 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         }
     }
 
+    private static Map<String, String> getAge(String idCard) {
+        String birthday = "";
+        String age = "";
+        Integer sexCode = 0;
+
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        char[] number = idCard.toCharArray();
+        boolean flag = true;
+
+        if (number.length == 15) {
+            for (int x = 0; x < number.length; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        } else if (number.length == 18) {
+            for (int x = 0; x < number.length - 1; x++) {
+                if (!flag) {
+                    return new HashMap<String, String>();
+                }
+                flag = Character.isDigit(number[x]);
+            }
+        }
+
+        if (flag && idCard.length() == 15) {
+            birthday = "19" + idCard.substring(6, 8) + "-"
+                    + idCard.substring(8, 10) + "-"
+                    + idCard.substring(10, 12);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 3, idCard.length())) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt("19" + idCard.substring(6, 8))) + "";
+        } else if (flag && idCard.length() == 18) {
+            birthday = idCard.substring(6, 10) + "-"
+                    + idCard.substring(10, 12) + "-"
+                    + idCard.substring(12, 14);
+            sexCode = Integer.parseInt(idCard.substring(idCard.length() - 4, idCard.length() - 1)) % 2 == 0 ? 0 : 1;
+            age = (year - Integer.parseInt(idCard.substring(6, 10))) + "";
+        }
+
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("birthday", birthday);
+        map.put("age", age);
+        map.put("sexCode", sexCode + "");
+        return map;
+    }
 
     @PostMapping("/add")
     public RestResponse add(@RequestBody TbTrainUser tbTrainUser) {
@@ -423,7 +468,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
                 if (!IdCardUtil.isValidCard(tbTrainUser.getIdCard())) {
                     return RestResponse.failed("身份证有误");
                 }
-
+                Map<String, String> map = getAge(tbTrainUser.getIdCard());
+                tbTrainUser.setSex(Integer.parseInt(map.get("sexCode")));//1-男0-女
             }
         }
 
