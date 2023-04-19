@@ -26,7 +26,9 @@ public class SaleSpecGroup extends Model<SaleSpecGroup> {
     private String urlImage;//图片
     private Integer servicePackId;//服务包id
     private Integer stock;//库存
-    private Integer status=0;//0-正常 1-禁用
+    private Integer status = 0;//0-正常 1-禁用
+    private String weight;//回收重量
+    private String recycleRemark;//回收备注
     @TableField(exist = false)
     private List<SaleSpecDesc> saleSpecDescList;//规格值信息
 }

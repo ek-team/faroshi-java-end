@@ -996,7 +996,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/getById")
     public RestResponse getById(@RequestParam String id) {
         UserOrder userOrder = service.getById(id);
-
+        //查询选择的规格组
+        List<SaleSpecGroup> list = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda()
+                .eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
+                .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
+        if (!CollectionUtils.isEmpty(list)) {
+            userOrder.setSaleSpecGroup(list.get(0));
+        }
         return RestResponse.ok(userOrder);
     }
 
