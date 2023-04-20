@@ -118,7 +118,28 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
             List<ServicePackageInfo> servicePackageInfos = (List<ServicePackageInfo>) servicePackageInfoService.listByIds(ids);
             Map<Integer, ServicePackageInfo> map = servicePackageInfos.stream()
                     .collect(Collectors.toMap(ServicePackageInfo::getId, t -> t));
+
+            //查询团队
+            List<Integer> orderIds = list.stream().map(UserServicePackageInfo::getOrderId)
+                    .collect(Collectors.toList());
+            List<UserOrder> userOrders = (List<UserOrder>) userOrdertService.listByIds(orderIds);
+            List<Integer> doctorTeamIds = userOrders.stream().map(UserOrder::getDoctorTeamId)
+                    .collect(Collectors.toList());
+            List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(doctorTeamIds);
+            Map<Integer, DoctorTeam> doctorTeamMap = doctorTeams.stream()
+                    .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+
+            for (UserOrder userOrder : userOrders) {
+                userOrder.setDoctorTeam(doctorTeamMap.get(userOrder.getDoctorTeamId()));
+            }
+            Map<Integer, UserOrder> userOrderMap = userOrders.stream()
+                    .collect(Collectors.toMap(UserOrder::getId, t -> t));
+
             for (UserServicePackageInfo servicePackageInfo : list) {
+                UserOrder userOrder = userOrderMap.get(servicePackageInfo.getOrderId());
+                if (userOrder != null) {
+                    servicePackageInfo.setDoctorTeam(userOrder.getDoctorTeam());
+                }
                 servicePackageInfo.setServicePackageInfo(map.get(servicePackageInfo.getServicePackageInfoId()));
             }
         }

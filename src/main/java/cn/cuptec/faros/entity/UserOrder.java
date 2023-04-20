@@ -59,6 +59,8 @@ public class UserOrder {
     private Integer doctorTeamId;//服务团队id
     @TableField(exist = false)
     private String doctorTeamName;//团队名称
+    @TableField(exist = false)
+    private DoctorTeam doctorTeam;//团队
     private String saleSpecId;//销售规格id
     @TableField(exist = false)
     private List<Integer> saleSpecDescIds;

@@ -118,7 +118,10 @@ public class UploadFileController {
     ) throws Exception {
         //查询设备下载信息
         List<MacAddDownloadType> list = new ArrayList<>();
+        productStockService.update(Wrappers.<ProductStock>lambdaUpdate()
+                .eq(ProductStock::getMacAddress, macAdd)
 
+                .set(ProductStock::getSourceProductSn, ""));
 
         if (!StringUtils.isEmpty(sourceProductSn)) {
             ProductStock productStock = productStockService.getOne(new QueryWrapper<ProductStock>().lambda().
@@ -177,10 +180,7 @@ public class UploadFileController {
             }
 
         }
-        productStockService.update(Wrappers.<ProductStock>lambdaUpdate()
-                .eq(ProductStock::getMacAddress, macAdd)
 
-                .set(ProductStock::getSourceProductSn, ""));
 
         return RestResponse.ok(result);
     }

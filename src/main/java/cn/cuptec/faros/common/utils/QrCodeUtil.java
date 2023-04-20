@@ -310,7 +310,7 @@ public class QrCodeUtil {
                     if (type != 2) {
                         outg4.setColor(Color.BLACK);
                         outg4.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                        outg4.drawString("微 信 公 众 号：易 网 健", 59, 469);
+                        outg4.drawString("微 信 公 众 号:法罗适医康", 59, 469);
                     }
 
                     if (type == 1 || type == 3) {
@@ -392,10 +392,10 @@ public class QrCodeUtil {
                 outg1.setFont(new Font("宋体", Font.BOLD, 25)); // 字体、字型、字号
                 outg1.drawString("咨询热线:400-900-1022", 50, 439);
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("微 信 公 众 号 ：易 网 健", 50, 469);
+                outg1.drawString("微 信 公 众 号:法罗适医康", 50, 469);
             } else {
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("微 信 公 众 号：易 网 健", 59, 409);
+                outg1.drawString("微 信 公 众 号:法罗适医康", 59, 409);
 
             }
 

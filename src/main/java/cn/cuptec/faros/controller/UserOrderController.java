@@ -262,6 +262,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.eq("user_order.receiver_phone", receiverPhone);
         }
         if (!StringUtils.isEmpty(userOrderNo)) {
+            String[] split = userOrderNo.split("-");
+            if (split.length == 1) {
+                userOrderNo = split[0];
+            } else {
+                userOrderNo = split[1];
+            }
             queryWrapper.like("user_order.order_no", userOrderNo);
         }
         if (!StringUtils.isEmpty(productSn1)) {
@@ -669,7 +675,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         } else {
             List<SaleSpecDesc> saleSpecDescList = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
             for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                if (saleSpecDesc.getName().equals("租用")) {
+                if (saleSpecDesc.getName().equals("租赁")) {
                     orderType = 1;
                 } else {
                     orderType = 2;
@@ -783,7 +789,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         } else {
             List<SaleSpecDesc> saleSpecDescList = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
             for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                if (saleSpecDesc.getName().equals("租用")) {
+                if (saleSpecDesc.getName().equals("租赁")) {
                     orderType = 1;
                 } else {
                     orderType = 2;
