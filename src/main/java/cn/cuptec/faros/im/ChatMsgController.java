@@ -464,6 +464,10 @@ public class ChatMsgController {
             @RequestParam("msgId") Integer msgId) {
         ChatMsg chatMsg = chatMsgService.getById(msgId);
         List<ChatMsg> chatMsgs = new ArrayList<>();
+        List<String> images = new ArrayList<>();
+        if (chatMsg == null) {
+            return RestResponse.ok(images);
+        }
         if (chatMsg.getChatUserId() == null) {
             //单聊
             chatMsgs = chatMsgService.list(Wrappers.<ChatMsg>lambdaQuery()
@@ -478,7 +482,7 @@ public class ChatMsgController {
                     .nested(query -> query.eq(ChatMsg::getChatUserId, chatMsg.getChatUserId()).eq(ChatMsg::getMsgType, ChatProto.MESSAGE_PIC))
                     .orderByDesc(ChatMsg::getCreateTime));
         }
-        List<String> images = new ArrayList<>();
+
         if (!CollectionUtils.isEmpty(chatMsgs)) {
             images = chatMsgs.stream().map(ChatMsg::getUrl)
                     .collect(Collectors.toList());

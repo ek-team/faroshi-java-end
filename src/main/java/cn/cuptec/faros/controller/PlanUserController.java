@@ -702,16 +702,19 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         TbTrainUser byId = service.getById(tbTrainUser.getId());
         tbTrainUser.setXtUserId(byId.getXtUserId());
         service.updateById(tbTrainUser);
-        StringBuilder stringBuilder = compareContract(byId, tbTrainUser);
-        //添加修记录
-        OperationRecord operationRecord = new OperationRecord();
-        operationRecord.setCreateTime(new Date());
-        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
-        operationRecord.setStr(byId.getUserId());
-        operationRecord.setType(2);
+        if(byId!=null){
+            StringBuilder stringBuilder = compareContract(byId, tbTrainUser);
+            //添加修记录
+            OperationRecord operationRecord = new OperationRecord();
+            operationRecord.setCreateTime(new Date());
+            operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+            operationRecord.setStr(byId.getUserId());
+            operationRecord.setType(2);
 
-        operationRecord.setText(stringBuilder.toString());
-        operationRecordService.save(operationRecord);
+            operationRecord.setText(stringBuilder.toString());
+            operationRecordService.save(operationRecord);
+        }
+
 
         return RestResponse.ok();
     }
