@@ -402,7 +402,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
                         .eq(ProductStock::getMacAddress, macAdd)
                         .eq(ProductStock::getDel, 1));
                 ProductStock productStock = list.get(0);
-                if (productStock.getServicePackId() != null) {
+                if (!StringUtils.isEmpty(productStock.getServicePackId())) {
                     ServicePack servicePack = servicePackService.getById(productStock.getServicePackId());
                     String servicePackName = servicePack.getName();
                     wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", servicePackName, "法罗适",
@@ -702,12 +702,14 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         TbTrainUser byId = service.getById(tbTrainUser.getId());
         tbTrainUser.setXtUserId(byId.getXtUserId());
         service.updateById(tbTrainUser);
-        if(byId!=null){
+        if (byId != null) {
             StringBuilder stringBuilder = compareContract(byId, tbTrainUser);
             //添加修记录
             OperationRecord operationRecord = new OperationRecord();
             operationRecord.setCreateTime(new Date());
-            operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+            if (SecurityUtils.getUser() != null) {
+                operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+            }
             operationRecord.setStr(byId.getUserId());
             operationRecord.setType(2);
 

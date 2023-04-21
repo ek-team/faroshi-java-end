@@ -80,11 +80,24 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @Resource
     private RecyclingRuleService recyclingRuleService;
 
+
+    /**
+     * 设备二维码绑定服务包
+     */
+    @GetMapping("/removeBindProductStok")
+    public RestResponse removeBindProductStok(@RequestParam("productStockId") Integer productStockId) {
+        ProductStock productStock = new ProductStock();
+        productStock.setId(productStockId);
+        productStock.setServicePackId("");
+        productStockService.updateById(productStock);
+        return RestResponse.ok();
+    }
+
     /**
      * 设备二维码绑定服务包
      */
     @GetMapping("/bindProductStok")
-    public RestResponse saveProductSpec(@RequestParam("servicePackId") Integer servicePackId, @RequestParam("productStockId") Integer productStockId) {
+    public RestResponse saveProductSpec(@RequestParam("servicePackId") String servicePackId, @RequestParam("productStockId") Integer productStockId) {
         ProductStock productStock = new ProductStock();
         productStock.setId(productStockId);
         productStock.setServicePackId(servicePackId);

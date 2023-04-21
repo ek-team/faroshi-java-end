@@ -698,6 +698,42 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return service.updateUser(user) ? RestResponse.ok(DATA_UPDATE_SUCCESS, null) : RestResponse.failed(DATA_UPDATE_FAILED, null);
     }
 
+    @GetMapping("/manage/pageAll")
+    public RestResponse<IPage<User>> getUserPageAll(@RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
+        Page<User> page = getPage();
+        QueryWrapper queryWrapper = new QueryWrapper<User>();
+        if (!StringUtils.isEmpty(nickname)) {
+            queryWrapper.like("user.nickname", nickname);
+        }
+        if (!StringUtils.isEmpty(phone)) {
+            queryWrapper.like("user.phone", phone);
+
+        }
+
+        if (page != null) {
+            IPage iPage = service.pageScopedUserVo(page, queryWrapper);
+            List<User> records = iPage.getRecords();
+            if (!CollectionUtils.isEmpty(records)) {
+                List<Integer> userIds = records.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
+                        .in(PatientUser::getUserId, userIds));
+                if (!CollectionUtils.isEmpty(patientUsers)) {
+                    Map<Integer, List<PatientUser>> patientUserMap = patientUsers.stream()
+                            .collect(Collectors.groupingBy(PatientUser::getUserId));
+
+                    for (User user : records) {
+                        user.setPatientUsers(patientUserMap.get(user.getId()));
+                    }
+                }
+            }
+
+            return RestResponse.ok(iPage);
+
+        } else
+            return RestResponse.ok(emptyPage());
+    }
+
 
     @PreAuthorize("@pms.hasPermission('user_manage')")
     @GetMapping("/manage/page")
@@ -716,18 +752,21 @@ public class UserController extends AbstractBaseController<UserService, User> {
         if (page != null) {
             IPage iPage = service.pageScopedUserVo(page, queryWrapper);
             List<User> records = iPage.getRecords();
-            List<Integer> userIds = records.stream().map(User::getId)
-                    .collect(Collectors.toList());
-            List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
-                    .in(PatientUser::getUserId, userIds));
-            if (!CollectionUtils.isEmpty(patientUsers)) {
-                Map<Integer, List<PatientUser>> patientUserMap = patientUsers.stream()
-                        .collect(Collectors.groupingBy(PatientUser::getUserId));
+            if (!CollectionUtils.isEmpty(records)) {
+                List<Integer> userIds = records.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
+                        .in(PatientUser::getUserId, userIds));
+                if (!CollectionUtils.isEmpty(patientUsers)) {
+                    Map<Integer, List<PatientUser>> patientUserMap = patientUsers.stream()
+                            .collect(Collectors.groupingBy(PatientUser::getUserId));
 
-                for (User user : records) {
-                    user.setPatientUsers(patientUserMap.get(user.getId()));
+                    for (User user : records) {
+                        user.setPatientUsers(patientUserMap.get(user.getId()));
+                    }
                 }
             }
+
             return RestResponse.ok(iPage);
 
         } else

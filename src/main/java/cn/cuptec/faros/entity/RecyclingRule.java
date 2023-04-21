@@ -11,7 +11,7 @@ import java.math.BigDecimal;
  * 服务包回收规则
  */
 @Data
-public class RecyclingRule extends Model<RecyclingRule> {
+public class RecyclingRule extends Model<RecyclingRule>  implements Comparable<RecyclingRule>{
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
@@ -19,4 +19,8 @@ public class RecyclingRule extends Model<RecyclingRule> {
     private Integer servicePackId;
     private Integer day; //天数
     private BigDecimal amount;//金额
+    @Override
+    public int compareTo(RecyclingRule o) {
+        return this.amount.compareTo(o.amount);//根据时间降序
+    }
 }

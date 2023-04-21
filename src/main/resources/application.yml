@@ -5,7 +5,7 @@ logging:
     org.springframework.security: debug
 
 server:
-  port: 10049
+  port: 10011
 
 spring:
   application:
@@ -16,7 +16,7 @@ spring:
       driver-class-name: com.mysql.cj.jdbc.Driver
       username: ${MYSQL-USER:root}
       password: ${MYSQL-PWD:Ctm@_2017}
-      url: jdbc:mysql://${MYSQL-HOST:119.37.193.94}:${MYSQL-PORT:3306}/${MYSQL-DB:faros3}?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&allowMultiQueries=true
+      url: jdbc:mysql://${MYSQL-HOST:119.37.193.94}:${MYSQL-PORT:3306}/${MYSQL-DB:faros4}?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&allowMultiQueries=true
   redis:
     database: 3
     port: 6379
@@ -38,7 +38,7 @@ mybatis-plus:
   typeEnumsPackage: cn.cuptec.faros.common.web.enums
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl 关闭日志打印
   global-config:
     banner: false
     db-config:
@@ -95,5 +95,5 @@ tx:
     admin: administrator
 
 com:
-  url: https://pharos3.ewj100.com/
-  //url: https://api.jhxiao-school.com/
+  #url: https://pharos3.ewj100.com/
+  url: https://api.jhxiao-school.com/

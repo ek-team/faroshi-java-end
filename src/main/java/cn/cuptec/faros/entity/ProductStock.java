@@ -4,10 +4,7 @@ import cn.cuptec.faros.common.annotation.Queryable;
 import cn.cuptec.faros.common.enums.QueryLogical;
 import cn.cuptec.faros.common.utils.DateTimeUtil;
 import com.alibaba.fastjson.annotation.JSONField;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 
@@ -71,7 +68,8 @@ public class ProductStock {
 
     //当前设备属于哪个部门
     private Integer deptId;
-    private Integer servicePackId;//服务包id
+    @TableField(strategy = FieldStrategy.IGNORED)
+    private String servicePackId;//服务包id
     //当前产品属于哪个销售 为空时未绑定到相关用户
     private Integer salesmanId;
     //当前产品属于哪个销售 名字

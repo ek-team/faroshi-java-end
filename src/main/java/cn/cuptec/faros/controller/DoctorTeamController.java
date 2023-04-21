@@ -604,8 +604,8 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     @GetMapping("/getByMacAdd")
     public RestResponse getByMacAdd(@RequestParam("macAdd") String macAdd) {
         ProductStock byMac = productStockService.getByMac(macAdd);
-        Integer servicePackId = byMac.getServicePackId();
-        if (servicePackId == null) {
+        String servicePackId = byMac.getServicePackId();
+        if (StringUtils.isEmpty(servicePackId)) {
             return RestResponse.ok();
         }
         //查询服务信息

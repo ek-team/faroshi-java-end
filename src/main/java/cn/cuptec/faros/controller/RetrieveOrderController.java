@@ -66,6 +66,11 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     private RetrieveOrderReviewDataService retrieveOrderReviewDataService;//回收单审核信息
     @Resource
     private UpdateOrderRecordService updateOrderRecordService;
+    @Resource
+    private RecyclingRuleService recyclingRuleService;
+    @Resource
+    private ReviewRefundOrderService reviewRefundOrderService;
+
     /**
      * 添加回收单审核设备信息
      */
@@ -144,7 +149,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         }
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
 
-        IPage pageResult = service.pageScoped(aBoolean,page, queryWrapper);
+        IPage pageResult = service.pageScoped(aBoolean, page, queryWrapper);
         if (CollUtil.isNotEmpty(pageResult.getRecords())) {
             List<RetrieveOrder> records = pageResult.getRecords();
             //服务包信息
@@ -293,6 +298,57 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     public RestResponse confirmRetrieveAmount(@RequestParam int id) {
         service.confirmRetrieveAmount(id);
         return RestResponse.ok();
+    }
+
+
+    //计算退款金额
+    @GetMapping("/retrieveAmount")
+    public RestResponse retrieveAmount(@RequestParam("id") int id) {
+        RetrieveAmountDto retrieveAmountDto = new RetrieveAmountDto();
+        RetrieveOrder retrieveOrder = service.getById(id);
+        Integer rentDay = retrieveOrder.getRentDay();
+        retrieveAmountDto.setRentDay(rentDay);
+        BigDecimal amount = new BigDecimal(0);
+        if (rentDay != null) {
+            Integer servicePackId = retrieveOrder.getServicePackId();
+            List<RecyclingRule> recyclingRuleList = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, servicePackId));
+            if (!CollectionUtils.isEmpty(recyclingRuleList)) {
+                Collections.sort(recyclingRuleList);
+                for (RecyclingRule recyclingRule : recyclingRuleList) {
+                    Integer day = recyclingRule.getDay();
+                    if (rentDay <= day) {
+                        amount = recyclingRule.getAmount();
+                        break;
+                    }
+
+                }
+            }
+
+
+        }
+        UserOrder userOrder = userOrdertService.getById(retrieveOrder.getOrderId());
+
+        Date date = userOrder.getDeliveryTime();
+        Instant instant = date.toInstant();
+        ZoneId zoneId = ZoneId.systemDefault();
+        ZonedDateTime zonedDateTime = instant.atZone(zoneId);
+        LocalDateTime startTime = zonedDateTime.toLocalDateTime();
+        retrieveAmountDto.setAmount(amount);
+        retrieveAmountDto.setPayTime(userOrder.getPayTime());
+        retrieveAmountDto.setTotalAmount(userOrder.getPayment());
+        retrieveAmountDto.setStartTime(startTime);
+        retrieveAmountDto.setEndTime(startTime.plusDays(userOrder.getSaleSpecServiceEndTime()));
+
+        List<RetrieveOrderReviewData> list = retrieveOrderReviewDataService.list(new QueryWrapper<RetrieveOrderReviewData>().lambda()
+                .eq(RetrieveOrderReviewData::getRetrieveOrderId, id));
+        if (!CollectionUtils.isEmpty(list)) {
+            retrieveAmountDto.setReviewData(list.get(0).getReviewData());
+        }
+        //查询退款审核描述
+        List<ReviewRefundOrder> reviewRefundOrders = reviewRefundOrderService.list(new QueryWrapper<ReviewRefundOrder>().lambda()
+                .eq(ReviewRefundOrder::getRetrieveOrderNo, retrieveOrder.getOrderNo()));
+        retrieveAmountDto.setReviewRefundOrders(reviewRefundOrders);
+        return RestResponse.ok(retrieveAmountDto);
     }
 
     //延长收货
