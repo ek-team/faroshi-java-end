@@ -59,6 +59,8 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     @Resource
     private ServicePackService servicePackService;
     @Resource
+    private UserRoleService userRoleService;
+    @Resource
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
     private RetrieveOrderReviewDataService retrieveOrderReviewDataService;//回收单审核信息
@@ -140,7 +142,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             queryWrapper.le("retrieve_order.create_time", endTime);
             queryWrapper.ge("retrieve_order.create_time", startTime);
         }
-        IPage pageResult = service.pageScoped(page, queryWrapper);
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+
+        IPage pageResult = service.pageScoped(aBoolean,page, queryWrapper);
         if (CollUtil.isNotEmpty(pageResult.getRecords())) {
             List<RetrieveOrder> records = pageResult.getRecords();
             //服务包信息

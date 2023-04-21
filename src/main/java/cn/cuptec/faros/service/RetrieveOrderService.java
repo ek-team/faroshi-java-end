@@ -64,8 +64,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
 
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
                 .eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
-                .eq(SaleSpecGroup::getServicePackId,userOrder.getServicePackId()));
-        if(saleSpecGroup.getRecoveryPrice()!=null){
+                .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
+        if (saleSpecGroup.getRecoveryPrice() != null) {
             entity.setRetrieveAmount(new BigDecimal(saleSpecGroup.getRecoveryPrice()));//回收价格
         }
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
@@ -84,9 +84,9 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         return baseMapper.pageRetrieveOrder(page, wrapper);
     }
 
-    public IPage pageScoped(IPage page, Wrapper wrapper) {
+    public IPage pageScoped(Boolean aBoolean, IPage page, Wrapper wrapper) {
         DataScope dataScope = new DataScope();
-        dataScope.setIsOnly(true);
+        dataScope.setIsOnly(!aBoolean);
         return baseMapper.pageScoped(page, wrapper, dataScope);
     }
 
@@ -94,8 +94,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         List<RetrieveOrder> tbUserOrders = baseMapper.listScoped(Wrappers.<RetrieveOrder>lambdaQuery(), new DataScope());
         RetrieveOrderCountVo vo = new RetrieveOrderCountVo();
         if (!CollectionUtils.isEmpty(tbUserOrders)) {
-            long count0 = tbUserOrders.stream().filter(it -> it.getStatus()!=null && it.getStatus() == 0).count();
-            long count9 = tbUserOrders.stream().filter(it -> it.getStatus()!=null && it.getStatus() == 9).count();
+            long count0 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 0).count();
+            long count9 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 9).count();
 
             vo.setStatu0(count0);
             vo.setStatu9(count9);
