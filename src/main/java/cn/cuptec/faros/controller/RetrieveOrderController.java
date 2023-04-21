@@ -306,10 +306,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     public RestResponse retrieveAmount(@RequestParam("id") int id) {
         RetrieveAmountDto retrieveAmountDto = new RetrieveAmountDto();
         RetrieveOrder retrieveOrder = service.getById(id);
+        UserOrder userOrder = userOrdertService.getById(retrieveOrder.getOrderId());
+
         Integer rentDay = retrieveOrder.getRentDay();
         retrieveAmountDto.setRentDay(rentDay);
         BigDecimal amount = new BigDecimal(0);
-        if (rentDay != null) {
+        if (userOrder.getSaleSpecServiceEndTime() != null && rentDay != null) {
             Integer servicePackId = retrieveOrder.getServicePackId();
             List<RecyclingRule> recyclingRuleList = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, servicePackId));
             if (!CollectionUtils.isEmpty(recyclingRuleList)) {
@@ -324,9 +326,10 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 }
             }
 
+        } else {
+            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice());
 
         }
-        UserOrder userOrder = userOrdertService.getById(retrieveOrder.getOrderId());
 
         Date date = userOrder.getDeliveryTime();
         Instant instant = date.toInstant();

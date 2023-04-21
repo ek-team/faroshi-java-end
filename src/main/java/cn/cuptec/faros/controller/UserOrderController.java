@@ -830,6 +830,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
+        userOrder.setSaleSpecRecoveryPrice(saleSpecGroup.getRecoveryPrice());
         Integer orderType = 2;
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 
