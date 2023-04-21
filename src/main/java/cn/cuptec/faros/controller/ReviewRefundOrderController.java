@@ -152,7 +152,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             //拒绝
             retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                     .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
-                    .set(RetrieveOrder::getStatus, 7));
+                    .set(RetrieveOrder::getStatus, 3));
         }
         reviewRefundOrder.setStatus(reviewStatus);
         service.updateById(reviewRefundOrder);
