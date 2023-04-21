@@ -694,7 +694,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
-        Integer orderType = 1;//判断是租用还是购买
+        Integer orderType = 2;//判断是租用还是购买
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
         if (servicePack.getRentBuy() != null) {
             orderType = servicePack.getRentBuy();
@@ -703,8 +703,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
                 if (saleSpecDesc.getName().equals("租赁")) {
                     orderType = 1;
-                } else {
-                    orderType = 2;
                 }
             }
         }
@@ -832,7 +830,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
-        Integer orderType = 1;
+        Integer orderType = 2;
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 
 
@@ -843,8 +841,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
                 if (saleSpecDesc.getName().equals("租赁")) {
                     orderType = 1;
-                } else {
-                    orderType = 2;
                 }
             }
         }
