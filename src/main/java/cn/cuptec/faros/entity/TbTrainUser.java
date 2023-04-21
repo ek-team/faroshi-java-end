@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -28,11 +29,11 @@ public class TbTrainUser {
     private int doctorTeamId;
     private String birthday;
     private Integer cardType; //1-身份证 2-其他
-    private String  treatmentMethodId;//治疗方法Id
+    private String treatmentMethodId;//治疗方法Id
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     @Queryable(queryLogical = QueryLogical.EQUAL)
-    private String height="0";//身高
+    private String height = "0";//身高
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private String educationLevel;//文化程度
     @Queryable(queryLogical = QueryLogical.EQUAL)
@@ -82,6 +83,7 @@ public class TbTrainUser {
     private String account;      // 用户名
     private String password;      // 密码
     private String str;      // 保留
+    private LocalDateTime firstTrainTime;//第一次上传训练记录时间
     @TableField(strategy = FieldStrategy.IGNORED)
     private Integer xtUserId; //系统用户id
     private Integer endService; //是否结束服务 1否 2是

@@ -140,4 +140,6 @@ public class User extends Model<User> {
     private String importTeamPhone;
     @TableField(exist = false)
     private String hospitalInfoStr;
+    @TableField(exist = false)
+    private List<PatientUser> patientUsers;
 }

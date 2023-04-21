@@ -24,37 +24,39 @@ import javax.servlet.MultipartConfigElement;
 @EnableScheduling
 public class FarosApplication implements CommandLineRunner {
 
-	public static void main(String[] args) {
-		SpringApplication.run(FarosApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(FarosApplication.class, args);
+    }
 
-	/**
-	 * 文件上传配置
-	 * @return
-	 */
-	@Bean
-	public MultipartConfigElement multipartConfigElement() {
-		MultipartConfigFactory factory = new MultipartConfigFactory();
-		//单个文件最大
-		factory.setMaxFileSize(DataSize.ofMegabytes(10));
-		// 设置总上传数据总大小
-		factory.setMaxRequestSize(DataSize.ofMegabytes(10));
-		return factory.createMultipartConfig();
-	}
-	@Override
-	public void run(String... args) throws Exception {
-		//final ChatServer server = new ChatServer(8018);
-		final ChatServer server = new ChatServer(8098);
-		server.init();
-		server.start();
-		// 注册进程钩子，在JVM进程关闭前释放资源
-		Runtime.getRuntime().addShutdownHook(new Thread(){
-			@Override
-			public void run(){
-				server.shutdown();
-				log.warn(">>>>>>>>>> jvm shutdown");
-				System.exit(0);
-			}
-		});
-	}
+    /**
+     * 文件上传配置
+     *
+     * @return
+     */
+    @Bean
+    public MultipartConfigElement multipartConfigElement() {
+        MultipartConfigFactory factory = new MultipartConfigFactory();
+        //单个文件最大
+        factory.setMaxFileSize(DataSize.ofMegabytes(10));
+        // 设置总上传数据总大小
+        factory.setMaxRequestSize(DataSize.ofMegabytes(10));
+        return factory.createMultipartConfig();
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        final ChatServer server = new ChatServer(8018);
+        //final ChatServer server = new ChatServer(8098);
+        server.init();
+        server.start();
+        // 注册进程钩子，在JVM进程关闭前释放资源
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                server.shutdown();
+                log.warn(">>>>>>>>>> jvm shutdown");
+                System.exit(0);
+            }
+        });
+    }
 }

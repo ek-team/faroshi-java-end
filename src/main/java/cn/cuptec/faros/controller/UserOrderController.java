@@ -48,6 +48,8 @@ import java.net.URLEncoder;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -665,6 +667,30 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         }
         userOrder.setQuerySaleSpecIds(querySaleSpecIds);
+        //查询订单规格值的服务周期
+        List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
+                .eq(SaleSpec::getServicePackId, userOrder.getServicePackId())
+                .eq(SaleSpec::getName, "服务周期"));
+        if (!CollectionUtils.isEmpty(saleSpecList)) {
+            SaleSpec saleSpec = saleSpecList.get(0);
+            List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                    .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId())
+            );
+            if (!CollectionUtils.isEmpty(saleSpecDescList)) {
+                for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+                    if (saleSpecDescIds.contains(saleSpecDesc.getId())) {
+                        String name = saleSpecDesc.getName();
+                        String regEx = "[^0-9]";
+                        Pattern p = Pattern.compile(regEx);
+                        Matcher m = p.matcher(name);
+                        String result = m.replaceAll("").trim();
+                        if (!StringUtils.isEmpty(result)) {
+                            userOrder.setSaleSpecServiceEndTime(Integer.parseInt(result));
+                        }
+                    }
+                }
+            }
+        }
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
@@ -779,11 +805,37 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         }
         userOrder.setQuerySaleSpecIds(querySaleSpecIds);
+        //查询订单规格值的服务周期
+        List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
+                .eq(SaleSpec::getServicePackId, userOrder.getServicePackId())
+                .eq(SaleSpec::getName, "服务周期"));
+        if (!CollectionUtils.isEmpty(saleSpecList)) {
+            SaleSpec saleSpec = saleSpecList.get(0);
+            List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                    .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId())
+            );
+            if (!CollectionUtils.isEmpty(saleSpecDescList)) {
+                for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+                    if (saleSpecDescIds.contains(saleSpecDesc.getId())) {
+                        String name = saleSpecDesc.getName();
+                        String regEx = "[^0-9]";
+                        Pattern p = Pattern.compile(regEx);
+                        Matcher m = p.matcher(name);
+                        String result = m.replaceAll("").trim();
+                        if (!StringUtils.isEmpty(result)) {
+                            userOrder.setSaleSpecServiceEndTime(Integer.parseInt(result));
+                        }
+                    }
+                }
+            }
+        }
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
         Integer orderType = 1;
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+
+
         if (servicePack.getRentBuy() != null) {
             orderType = servicePack.getRentBuy();
         } else {
@@ -942,16 +994,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        List<Integer> a = new ArrayList<>();
-        a.add(1);
-        a.add(3);
-        a.add(2);
-        List<Integer> b = new ArrayList<>();
-        b.add(1);
-        b.add(5);
-        b.add(6);
-        a.retainAll(b);
-        System.out.println(a);
+        String str = "asdf";
+        String regEx = "[^0-9]";
+        Pattern p = Pattern.compile(regEx);
+        Matcher m = p.matcher(str);
+        String result = m.replaceAll("").trim();
+        System.out.println(result);
     }
 
     /**

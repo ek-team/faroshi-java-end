@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,10 +36,23 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
         if (CollUtil.isEmpty(userTrainRecordList)) return;
         this.saveBatch(userTrainRecordList);
         String userId = userTrainRecordList.get(0).getUserId();
-        planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改训练记录上传标识
-                .eq(TbTrainUser::getUserId, userId)
-                .set(TbTrainUser::getTrainRecordTag, 0)
-        );
+        //判断是否是第一次上传训练记录
+        List<TbUserTrainRecord> list = list(new QueryWrapper<TbUserTrainRecord>().lambda().eq(TbUserTrainRecord::getUserId, userId));
+        if (CollectionUtils.isEmpty(list)) {
+
+            planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改训练记录上传标识
+                    .eq(TbTrainUser::getUserId, userId)
+                    .set(TbTrainUser::getTrainRecordTag, 0)
+                    .set(TbTrainUser::getFirstTrainTime, LocalDateTime.now())
+            );
+        } else {
+
+            planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改训练记录上传标识
+                    .eq(TbTrainUser::getUserId, userId)
+                    .set(TbTrainUser::getTrainRecordTag, 0)
+            );
+        }
+
         //更改使用设备序列号
         List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().
                 lambda().eq(ProductStock::getMacAddress, userTrainRecordList.get(0).getUserId()).eq(ProductStock::getDel, 1));
@@ -143,8 +157,8 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
         return listTrainRecordByUid(infoByUXtUserId.getUserId());
     }
 
-    public List<TbUserTrainRecord> trainRecordByPhone(String phone, String idCard,String xtUserId) {
-        TbTrainUser infoByUXtUserId = planUserService.getInfoByPhoneAndIdCard(phone, idCard,xtUserId);
+    public List<TbUserTrainRecord> trainRecordByPhone(String phone, String idCard, String xtUserId) {
+        TbTrainUser infoByUXtUserId = planUserService.getInfoByPhoneAndIdCard(phone, idCard, xtUserId);
         if (infoByUXtUserId == null) return new ArrayList<>();
 
         return trainRecordByUid(infoByUXtUserId.getUserId());

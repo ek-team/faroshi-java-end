@@ -53,6 +53,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -83,7 +84,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private UserFollowDoctorService userFollowDoctorService;
     @Resource
     private UserDoctorRelationService userDoctorRelationService;
-
+    @Resource
+    private PlanUserService planUserService;
+    @Resource
+    private UserOrdertService userOrdertService;
     @Resource
     private PatientRelationTeamService patientRelationTeamService;
     private final Url url;
@@ -573,6 +577,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     public static void main(String[] args) {
         System.out.println(ENCODER.encode("534134"));
     }
+
     @PutMapping
     public RestResponse update(@RequestBody @Valid User user) {
         user.setId(SecurityUtils.getUser().getId());
@@ -708,9 +713,24 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
         }
 
-        if (page != null)
-            return RestResponse.ok(service.pageScopedUserVo(page, queryWrapper));
-        else
+        if (page != null) {
+            IPage iPage = service.pageScopedUserVo(page, queryWrapper);
+            List<User> records = iPage.getRecords();
+            List<Integer> userIds = records.stream().map(User::getId)
+                    .collect(Collectors.toList());
+            List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
+                    .in(PatientUser::getUserId, userIds));
+            if (!CollectionUtils.isEmpty(patientUsers)) {
+                Map<Integer, List<PatientUser>> patientUserMap = patientUsers.stream()
+                        .collect(Collectors.groupingBy(PatientUser::getUserId));
+
+                for (User user : records) {
+                    user.setPatientUsers(patientUserMap.get(user.getId()));
+                }
+            }
+            return RestResponse.ok(iPage);
+
+        } else
             return RestResponse.ok(emptyPage());
     }
 
@@ -800,5 +820,40 @@ public class UserController extends AbstractBaseController<UserService, User> {
     public RestResponse judgeUserIsAdmin() {
         Boolean isAdmin = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
         return RestResponse.ok(isAdmin ? 1 : 0);
+    }
+
+    /**
+     * 根据身份证判断用户是否可以使用训练小程序
+     */
+
+    @GetMapping("/checkUserUseMa")
+    public RestResponse checkUserUseMa(@RequestParam("idCard") String idCard) {
+
+        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, idCard));
+        if (CollectionUtils.isEmpty(tbTrainUsers)) {
+            return RestResponse.ok(false);
+        }
+        TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+        if (tbTrainUser.getXtUserId() == null) {
+            return RestResponse.ok(false);
+        }
+        if (tbTrainUser.getFirstTrainTime() == null) {
+            return RestResponse.ok(true);
+        }
+        List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getUserId, tbTrainUser.getXtUserId()).orderByDesc(UserOrder::getPayTime));
+        if (CollectionUtils.isEmpty(userOrders)) {
+            return RestResponse.ok(false);
+        }
+        UserOrder userOrder = userOrders.get(0);
+        Integer saleSpecServiceEndTime = userOrder.getSaleSpecServiceEndTime();
+        if (saleSpecServiceEndTime == null) {
+            return RestResponse.ok(false);
+        }
+        LocalDateTime localDateTime = tbTrainUser.getFirstTrainTime().plusDays(saleSpecServiceEndTime);
+
+        if (localDateTime.isAfter(LocalDateTime.now())) {
+            return RestResponse.ok(false);
+        }
+        return RestResponse.ok(true);
     }
 }

@@ -30,6 +30,7 @@ public class UserOrder {
     private String orderNo;
     private Integer patientUserId;//就诊人id
     private String querySaleSpecIds;//查询规格值
+    private Integer saleSpecServiceEndTime;//订单的服务结束时间 取自 规格里面的服务周期
     private Integer chatUserId;//聊天id
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDateTime operationTime;//手术时间
