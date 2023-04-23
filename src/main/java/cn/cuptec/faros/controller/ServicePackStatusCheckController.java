@@ -18,10 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -115,9 +112,13 @@ public class ServicePackStatusCheckController extends AbstractBaseController<Ser
             for (ServicePack servicePack : servicePacks) {
                 hospitalIds.add(servicePack.getHospitalId());
             }
-            List<HospitalInfo> hospitalInfos = (List<HospitalInfo>) hospitalInfoService.listByIds(hospitalIds);
-            Map<Integer, HospitalInfo> hospitalInfoMap = hospitalInfos.stream()
-                    .collect(Collectors.toMap(HospitalInfo::getId, t -> t));
+            Map<Integer, HospitalInfo> hospitalInfoMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(hospitalIds)) {
+                List<HospitalInfo> hospitalInfos = (List<HospitalInfo>) hospitalInfoService.listByIds(hospitalIds);
+                hospitalInfoMap = hospitalInfos.stream()
+                        .collect(Collectors.toMap(HospitalInfo::getId, t -> t));
+
+            }
 
             for (ServicePack servicePack : servicePacks) {
                 HospitalInfo hospitalInfo = hospitalInfoMap.get(servicePack.getHospitalId());
