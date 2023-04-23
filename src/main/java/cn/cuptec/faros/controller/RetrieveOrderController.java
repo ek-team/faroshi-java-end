@@ -327,7 +327,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             }
 
         } else {
-            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice());
+            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice()+"");
 
         }
 
@@ -340,7 +340,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         retrieveAmountDto.setPayTime(userOrder.getPayTime());
         retrieveAmountDto.setTotalAmount(userOrder.getPayment());
         retrieveAmountDto.setStartTime(startTime);
-        retrieveAmountDto.setEndTime(startTime.plusDays(userOrder.getSaleSpecServiceEndTime()));
+        if (userOrder.getSaleSpecServiceEndTime() != null) {
+            retrieveAmountDto.setEndTime(startTime.plusDays(userOrder.getSaleSpecServiceEndTime()));
+        }
 
         List<RetrieveOrderReviewData> list = retrieveOrderReviewDataService.list(new QueryWrapper<RetrieveOrderReviewData>().lambda()
                 .eq(RetrieveOrderReviewData::getRetrieveOrderId, id));
@@ -354,6 +356,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         return RestResponse.ok(retrieveAmountDto);
     }
 
+    public static void main(String[] args) {
+        System.out.println(new BigDecimal(0.20+""));
+    }
     //延长收货
     @GetMapping("/user/extendedReceipt")
     public RestResponse extendedReceipt(@RequestParam("id") int id, @RequestParam("day") int day) {

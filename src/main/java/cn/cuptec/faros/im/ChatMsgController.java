@@ -317,6 +317,8 @@ public class ChatMsgController {
         updateChatUser.setPatientOtherOrderStatus(str2);
         chatUserService.updateById(updateChatUser);
         patientOtherOrder.setAcceptStatus(str2);
+        patientOtherOrder.setStartTime(LocalDateTime.now());
+        patientOtherOrder.setEndTime(LocalDateTime.now().plusHours(24));
         patientOtherOrderService.updateById(patientOtherOrder);
         ChatUser byId = chatUserService.getById(chatUserId);
         ChatMsg chatMsg = new ChatMsg();

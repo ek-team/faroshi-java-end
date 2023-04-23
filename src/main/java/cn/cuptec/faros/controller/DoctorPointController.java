@@ -451,6 +451,66 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         return RestResponse.ok(patientOtherOrder);
     }
 
+    /**
+     * 分页查询图文咨询
+     *
+     * @return
+     */
+    @GetMapping("/pagePatientOtherOrder")
+    public RestResponse pagePatientOtherOrder(@RequestParam("pageNum") Integer pageNum,
+                                              @RequestParam("pageSize") Integer pageSize) {
+        IPage page = new Page(pageNum, pageSize);
+        User user = userService.getById(SecurityUtils.getUser().getId());
+
+        LambdaQueryWrapper<PatientOtherOrder> eq = new QueryWrapper<PatientOtherOrder>().lambda().eq(PatientOtherOrder::getDeptId, user.getDeptId());
+
+
+        IPage page1 = patientOtherOrderService.page(page, eq);
+        List<PatientOtherOrder> records = page1.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
+            List<Integer> userIds = new ArrayList<>();
+            List<Integer> doctorIds = new ArrayList<>();
+            List<Integer> teamIds = new ArrayList<>();
+            for (PatientOtherOrder patientOtherOrder : records) {
+                userIds.add(patientOtherOrder.getUserId());
+                if (patientOtherOrder.getDoctorId() != null) {
+                    doctorIds.add(patientOtherOrder.getDoctorId());
+                }
+                if (patientOtherOrder.getDoctorTeamId() != null) {
+                    teamIds.add(patientOtherOrder.getDoctorTeamId());
+                }
+            }
+            List<User> users = (List<User>) userService.listByIds(userIds);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+            Map<Integer, User> doctorMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(doctorIds)) {
+
+                List<User> doctorUsers = (List<User>) userService.listByIds(doctorIds);
+                doctorMap = doctorUsers.stream()
+                        .collect(Collectors.toMap(User::getId, t -> t));
+            }
+            Map<Integer, DoctorTeam> doctorTeamMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(teamIds)) {
+
+                List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+                doctorTeamMap = doctorTeams.stream()
+                        .collect(Collectors.toMap(DoctorTeam::getId, t -> t));
+            }
+
+            for (PatientOtherOrder patientOtherOrder : records) {
+                User user1 = userMap.get(patientOtherOrder.getUserId());
+                if (user1 != null) {
+                    patientOtherOrder.setUser(user1);
+                }
+                DoctorTeam doctorTeam = doctorTeamMap.get(patientOtherOrder.getDoctorTeamId());
+                patientOtherOrder.setDoctorTeam(doctorTeam);
+                patientOtherOrder.setDoctor(doctorMap.get(patientOtherOrder.getDoctorId()));
+            }
+        }
+        return RestResponse.ok(page1);
+    }
+
     public static void main(String[] args) {
         LocalDateTime d1 = LocalDateTime.now();
         System.out.println(d1);

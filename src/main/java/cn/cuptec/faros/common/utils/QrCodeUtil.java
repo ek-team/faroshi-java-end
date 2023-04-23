@@ -310,7 +310,7 @@ public class QrCodeUtil {
                     if (type != 2) {
                         outg4.setColor(Color.BLACK);
                         outg4.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                        outg4.drawString("微信公众号:法罗适医康", 50, 469);
+                        outg4.drawString("微信公众号:法罗适医康", 59, 469);
                     }
 
                     if (type == 1 || type == 3) {
@@ -388,14 +388,14 @@ public class QrCodeUtil {
             outg1.setColor(Color.BLACK);
             if (type != 1) {
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("售后服务及回收请扫码", 70, 409);
+                outg1.drawString("售后服务及回收请扫码", 62, 409);
                 outg1.setFont(new Font("宋体", Font.BOLD, 25)); // 字体、字型、字号
-                outg1.drawString("咨询热线:400-900-1022", 50, 439);
+                outg1.drawString("咨询热线:400-900-1022", 51, 439);
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("微信公众号:法罗适医康", 40, 469);
+                outg1.drawString("微信公众号:法罗适医康", 59, 469);
             } else {
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("微信公众号:法罗适医康", 50, 409);
+                outg1.drawString("微信公众号:法罗适医康", 59, 409);
 
             }
 
@@ -468,15 +468,15 @@ public class QrCodeUtil {
             outg1.setColor(Color.BLACK);
             if (type == 1) {
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("售后服务及回收请扫码", 70, 409);
+                outg1.drawString("售后服务及回收请扫码", 62, 409);
                 outg1.setFont(new Font("宋体", Font.BOLD, 25)); // 字体、字型、字号
-                outg1.drawString("咨询热线:400-618-9886", 50, 439);
+                outg1.drawString("咨询热线:400-618-9886", 51, 439);
 
             } else {
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("售后服务及回收请扫码", 70, 409);
+                outg1.drawString("售后服务及回收请扫码", 62, 409);
                 outg1.setFont(new Font("宋体", Font.BOLD, 25)); // 字体、字型、字号
-                outg1.drawString("咨询热线:400-900-1022", 50, 439);
+                outg1.drawString("咨询热线:400-900-1022", 51, 439);
             }
 
             outg1.dispose();

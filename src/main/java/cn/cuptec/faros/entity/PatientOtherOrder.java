@@ -25,6 +25,8 @@ public class PatientOtherOrder {
     private Integer doctorId;
     private Integer doctorTeamId;
     private LocalDateTime createTime;
+    private LocalDateTime startTime;//医生接受时间
+    private LocalDateTime endTime;//会话结束时间
     private Integer patientId;//就诊人id
     private String illnessDesc;//病情描述
     private String imageUrl;
@@ -48,4 +50,8 @@ public class PatientOtherOrder {
     private User user;
     @TableField(exist = false)
     private String efficientHour;//有效小时
+    @TableField(exist = false)
+    private DoctorTeam doctorTeam;
+    @TableField(exist = false)
+    private User doctor;
 }
