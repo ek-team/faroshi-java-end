@@ -300,7 +300,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
 
         } else {
-            queryWrapper.orderByDesc("user_order.create_time");
+            queryWrapper.orderByDesc("user_order.pay_time", "user_order.create_time");
 
         }
         if (!StringUtils.isEmpty(startDeliveryDate)) {

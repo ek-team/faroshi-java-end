@@ -101,7 +101,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
      * @return
      */
     @GetMapping("/review")
-    public RestResponse review(@RequestParam("id") Integer id, @RequestParam("reviewStatus") Integer reviewStatus) {
+    public RestResponse review(@RequestParam("reviewRefundDesc") String reviewRefundDesc, @RequestParam("id") Integer id, @RequestParam("reviewStatus") Integer reviewStatus) {
         ReviewRefundOrder reviewRefundOrder = service.getById(id);
         Double amount = reviewRefundOrder.getRefundFee().doubleValue();
         RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
@@ -155,6 +155,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                     .set(RetrieveOrder::getStatus, 3));
         }
         reviewRefundOrder.setStatus(reviewStatus);
+        reviewRefundOrder.setReviewRefundDesc(reviewRefundDesc);
         service.updateById(reviewRefundOrder);
 
 

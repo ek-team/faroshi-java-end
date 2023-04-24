@@ -53,6 +53,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -870,29 +871,30 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
         List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, idCard));
         if (CollectionUtils.isEmpty(tbTrainUsers)) {
-            return RestResponse.ok(false);
+            return RestResponse.ok(0);
         }
         TbTrainUser tbTrainUser = tbTrainUsers.get(0);
         if (tbTrainUser.getXtUserId() == null) {
-            return RestResponse.ok(false);
+            return RestResponse.ok(0);
         }
         if (tbTrainUser.getFirstTrainTime() == null) {
-            return RestResponse.ok(true);
+            return RestResponse.ok(0);
         }
         List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getUserId, tbTrainUser.getXtUserId()).orderByDesc(UserOrder::getPayTime));
         if (CollectionUtils.isEmpty(userOrders)) {
-            return RestResponse.ok(false);
+            return RestResponse.ok(0);
         }
         UserOrder userOrder = userOrders.get(0);
         Integer saleSpecServiceEndTime = userOrder.getSaleSpecServiceEndTime();
         if (saleSpecServiceEndTime == null) {
-            return RestResponse.ok(false);
+            return RestResponse.ok(0);
         }
         LocalDateTime localDateTime = tbTrainUser.getFirstTrainTime().plusDays(saleSpecServiceEndTime);
 
         if (localDateTime.isAfter(LocalDateTime.now())) {
-            return RestResponse.ok(false);
+            return RestResponse.ok(0);
         }
-        return RestResponse.ok(true);
+
+        return RestResponse.ok(Duration.between(LocalDateTime.now(), localDateTime).toDays());
     }
 }
