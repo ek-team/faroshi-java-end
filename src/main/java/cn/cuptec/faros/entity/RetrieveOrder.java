@@ -87,6 +87,9 @@ public class RetrieveOrder {
     //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成 6-退款待审核  7-退款拒绝
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
+    private Integer reviewRefundOrderId;//退款审核id
+    @TableField(exist = false)
+    private ReviewRefundOrder reviewRefundOrder;
     private Integer kuAiDiStatus;
     //回收价格
     private BigDecimal retrieveAmount;

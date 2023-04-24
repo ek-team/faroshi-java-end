@@ -152,6 +152,23 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         IPage pageResult = service.pageScoped(aBoolean, page, queryWrapper);
         if (CollUtil.isNotEmpty(pageResult.getRecords())) {
             List<RetrieveOrder> records = pageResult.getRecords();
+
+            //查询退款审核记录
+            List<Integer> reviewRefundOrderIds = new ArrayList<>();
+            for (RetrieveOrder retrieveOrder : records) {
+                if (retrieveOrder.getReviewRefundOrderId() != null) {
+                    reviewRefundOrderIds.add(retrieveOrder.getReviewRefundOrderId());
+                }
+            }
+            Map<Integer, ReviewRefundOrder> reviewRefundOrderMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(reviewRefundOrderIds)) {
+                List<ReviewRefundOrder> reviewRefundOrders = (List<ReviewRefundOrder>) reviewRefundOrderService.listByIds(reviewRefundOrderIds);
+
+
+                reviewRefundOrderMap = reviewRefundOrders.stream()
+                        .collect(Collectors.toMap(ReviewRefundOrder::getId, t -> t));
+            }
+
             //服务包信息
             List<Integer> servicePackIds = records.stream().map(RetrieveOrder::getServicePackId)
                     .collect(Collectors.toList());
@@ -186,6 +203,10 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                     servicePack.setServicePackProductPics(new ArrayList<>());
                 }
                 retrieveOrder.setServicePack(servicePack);
+                if (retrieveOrder.getReviewRefundOrderId() != null) {
+                    ReviewRefundOrder reviewRefundOrder = reviewRefundOrderMap.get(retrieveOrder.getReviewRefundOrderId());
+                    retrieveOrder.setReviewRefundOrder(reviewRefundOrder);
+                }
             }
         }
 
@@ -327,7 +348,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             }
 
         } else {
-            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice()+"");
+            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice() + "");
 
         }
 
@@ -357,8 +378,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     }
 
     public static void main(String[] args) {
-        System.out.println(new BigDecimal(0.20+""));
+        System.out.println(new BigDecimal(0.20 + ""));
     }
+
     //延长收货
     @GetMapping("/user/extendedReceipt")
     public RestResponse extendedReceipt(@RequestParam("id") int id, @RequestParam("day") int day) {

@@ -71,9 +71,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
     public RestResponse add(@RequestBody ReviewRefundOrder reviewRefundOrder) {
         reviewRefundOrder.setCreateTime(LocalDateTime.now());
         reviewRefundOrder.setStatus(3);
-        retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
-                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
-                .set(RetrieveOrder::getStatus, 6));
+
         RetrieveOrder one = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
 
@@ -88,8 +86,12 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         updateOrderRecord.setCreateTime(LocalDateTime.now());
         updateOrderRecord.setDescStr("退款审核");
         updateOrderRecordService.save(updateOrderRecord);
-
-        return RestResponse.ok(service.save(reviewRefundOrder));
+        service.save(reviewRefundOrder);
+        retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
+                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
+                .set(RetrieveOrder::getStatus, 6)
+                .set(RetrieveOrder::getReviewRefundOrderId, reviewRefundOrder.getId()));
+        return RestResponse.ok();
     }
 
 
