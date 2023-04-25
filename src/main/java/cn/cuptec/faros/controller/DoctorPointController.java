@@ -61,6 +61,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     private DoctorTeamPeopleService doctorTeamPeopleService;
     @Autowired
     public RedisTemplate redisTemplate;
+    @Resource
+    private PatientUserService patientUserService;
 
     /**
      * 分页查询医生积分
@@ -458,13 +460,40 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
      */
     @GetMapping("/pagePatientOtherOrder")
     public RestResponse pagePatientOtherOrder(@RequestParam("pageNum") Integer pageNum,
+                                              @RequestParam(value = "doctorTeamName", required = false) String doctorTeamName,
+                                              @RequestParam(value = "doctorName", required = false) String doctorName,
+                                              @RequestParam(value = "userName", required = false) String userName,
                                               @RequestParam("pageSize") Integer pageSize) {
         IPage page = new Page(pageNum, pageSize);
         User user = userService.getById(SecurityUtils.getUser().getId());
 
         LambdaQueryWrapper<PatientOtherOrder> eq = new QueryWrapper<PatientOtherOrder>().lambda().eq(PatientOtherOrder::getDeptId, user.getDeptId());
+        if (!StringUtils.isEmpty(userName)) {
+            List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda().like(PatientUser::getName, userName));
+            if (!CollectionUtils.isEmpty(patientUsers)) {
+                List<Integer> userIds = patientUsers.stream().map(PatientUser::getUserId)
+                        .collect(Collectors.toList());
+                eq.in(PatientOtherOrder::getUserId, userIds);
 
+            }
+        }
+        if (!StringUtils.isEmpty(doctorTeamName)) {
+            List<DoctorTeam> doctorTeams = doctorTeamService.list(new QueryWrapper<DoctorTeam>().lambda().like(DoctorTeam::getName, doctorTeamName));
+            if (!CollectionUtils.isEmpty(doctorTeams)) {
+                List<Integer> teamIds = doctorTeams.stream().map(DoctorTeam::getId)
+                        .collect(Collectors.toList());
+                eq.in(PatientOtherOrder::getDoctorTeamId, teamIds);
 
+            }
+        }
+        if (!StringUtils.isEmpty(doctorName)) {
+            List<User> users = userService.list(new QueryWrapper<User>().lambda().like(User::getNickname, doctorName));
+            if (!CollectionUtils.isEmpty(users)) {
+                List<Integer> userIds = users.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                eq.in(PatientOtherOrder::getDoctorId, userIds);
+            }
+        }
         IPage page1 = patientOtherOrderService.page(page, eq);
         List<PatientOtherOrder> records = page1.getRecords();
         if (!CollectionUtils.isEmpty(records)) {

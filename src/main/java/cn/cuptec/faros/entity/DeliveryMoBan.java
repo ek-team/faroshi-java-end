@@ -23,4 +23,13 @@ public class DeliveryMoBan extends BaseRowModel {
     @ColumnWidth(10)
     @ExcelProperty(value = "快递单号", index = 3)
     private String deliverySn;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "下肢设备序列号", index = 4)
+    private String product_sn1;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "蓝牙鞋序列号", index = 5)
+    private String product_sn2;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "其他序列号", index = 6)
+    private String product_sn3;//
 }

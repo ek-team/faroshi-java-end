@@ -8,6 +8,8 @@ import cn.cuptec.faros.service.PlanService;
 import cn.cuptec.faros.service.PlanUserService;
 import cn.cuptec.faros.service.SubPlanService;
 import cn.cuptec.faros.util.SnowflakeIdWorker;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -162,7 +164,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 //                        trainStep = trainStep + step;
 //                        tbSubPlan.setTrainStep(trainStep);
 //                    }
-                    tbSubPlan.setTrainStep(((i + 1) * 200 + (weeks - (i + 1)) * trainStep)/weeks);
+                    tbSubPlan.setTrainStep(((i + 1) * 200 + (weeks - (i + 1)) * trainStep) / weeks);
 
                 }
                 tbSubPlan.setPlanId(tbPlan.getPlanId());
@@ -356,10 +358,16 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
      */
     @PostMapping("/batchUpdate")
     public RestResponse<TbSubPlan> batchUpdate(@RequestBody List<TbSubPlan> subPlanEntity) {
+
         if (!CollectionUtils.isEmpty(subPlanEntity)) {
             for (TbSubPlan tbSubPlan : subPlanEntity) {
                 tbSubPlan.setUpdateDate(new Date());
+                tbSubPlan.setNewStatus(1);
             }
+            String url = "http://pharos.ewj100.com/subPlan/batchUpdate";
+            String params = JSONObject.toJSONString(subPlanEntity);
+            String post = HttpUtil.post(url, params);
+
             service.updateBatchById(subPlanEntity);
         }
         return RestResponse.ok();
@@ -392,7 +400,12 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
     public RestResponse<TbSubPlan> addHistory(@RequestBody List<TbSubPlan> subPlanEntity) {
         for (TbSubPlan tbSubPlan : subPlanEntity) {
             tbSubPlan.setUpdateDate(new Date());
+            tbSubPlan.setNewStatus(1);
         }
+        String url = "http://pharos.ewj100.com/subPlan/addHistory";
+        String params = JSONObject.toJSONString(subPlanEntity);
+        String post = HttpUtil.post(url, params);
+
         LambdaUpdateWrapper<TbPlan> wrapper = new UpdateWrapper<TbPlan>().lambda()
                 .set(TbPlan::getUpdateDate, new Date())
                 .eq(TbPlan::getUserId, subPlanEntity.get(0).getUserId());
@@ -569,6 +582,9 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
                                                      @RequestParam("userId") String userId,
                                                      @RequestParam("beforeVersion") Integer beforeVersion,
                                                      @RequestParam("afterVersion") Integer afterVersion) {
+        String url = "http://pharos.ewj100.com/subPlan/batchUpdate?doctorName="+doctorName+"&userId="+userId+"&beforeVersion="+beforeVersion+"&afterVersion="+afterVersion;
+        String post = HttpUtil.get(url);
+
         DoctorUpdateSubPlanRecord record = new DoctorUpdateSubPlanRecord();
         record.setDoctorName(doctorName);
         record.setUserId(userId);

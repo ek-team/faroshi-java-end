@@ -700,7 +700,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     }
 
     @GetMapping("/manage/pageAll")
-    public RestResponse<IPage<User>> getUserPageAll(@RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
+    public RestResponse<IPage<User>> getUserPageAll(@RequestParam(required = false, value = "patientName") String patientName,@RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
         Page<User> page = getPage();
         QueryWrapper queryWrapper = new QueryWrapper<User>();
         if (!StringUtils.isEmpty(nickname)) {
@@ -710,7 +710,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
             queryWrapper.like("user.phone", phone);
 
         }
+        if (!StringUtils.isEmpty(patientName)) {
+            queryWrapper.like("patient_user.name", patientName);
 
+        }
         if (page != null) {
             IPage iPage = service.pageScopedUserVo(page, queryWrapper);
             List<User> records = iPage.getRecords();

@@ -46,4 +46,6 @@ public class TbSubPlan {
     private Integer trainStep;//训练步数 踩踏次数
     private int modifyStatus;//修改状态  0未修改，1云端修改，2设备端修改
     private int initStart;//是否是初使计划 1-是 2-不是
+    @TableField(exist = false)
+    private Integer newStatus;
  }

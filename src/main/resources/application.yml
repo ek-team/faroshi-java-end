@@ -97,3 +97,9 @@ tx:
 com:
   #url: https://pharos3.ewj100.com/
   url: https://api.jhxiao-school.com/
+
+alipay:
+  alipayPublicKey: ALIPAY_PUBLIC_KEY
+  appId: YOUR_APP_ID
+  gateway: https://openapi.alipay.com/gateway.do
+  appPrivateKey: YOUR_PRIVATE_KEY

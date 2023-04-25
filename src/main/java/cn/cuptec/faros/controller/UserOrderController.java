@@ -1177,6 +1177,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         userOrder.setDeliverySn(deliveryMoBan.getDeliverySn());
                         userOrder.setDeliveryNumber(deliveryMoBan.getDeliverySn());
                         userOrder.setDeliveryTime(new Date());
+                        userOrder.setProductSn1(deliveryMoBan.getProduct_sn1());
+                        userOrder.setProductSn2(deliveryMoBan.getProduct_sn2());
+                        userOrder.setProductSn3(deliveryMoBan.getProduct_sn3());
                     }
                     service.updateBatchById(userOrders);
                 }

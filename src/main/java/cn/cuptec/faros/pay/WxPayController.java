@@ -87,6 +87,9 @@ public class WxPayController {
     private UserOrderNotifyService userOrderNotifyService;
     @Resource
     private RentRuleOrderService rentRuleOrderService;
+    @Resource
+    private HospitalInfoService hospitalInfoService;
+
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -169,6 +172,22 @@ public class WxPayController {
                     keyword1 = "患者：" + patientName + "订单号:" + outTradeNo;
                 }
                 List<User> clerkUser = (List<User>) userService.listByIds(userIdList);
+                //查询医院信息
+                Integer hospitalId = servicePack.getHospitalId();
+                if (hospitalId != null) {
+                    HospitalInfo hospitalInfo = hospitalInfoService.getById(hospitalId);
+                    if (hospitalInfo != null) {
+                        keyword1 = keyword1 + "医院:" + hospitalInfo.getName();
+                    }
+                }
+                //查询医生团队
+                Integer doctorTeamId = userOrder.getDoctorTeamId();
+                if (doctorTeamId != null) {
+                    DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
+                    if (doctorTeam != null) {
+                        keyword1 = keyword1 + "医生团队:" + doctorTeam.getName();
+                    }
+                }
                 for (User user : clerkUser) {
                     if (clerkUser != null) {
                         if (!StringUtils.isEmpty(user.getMpOpenId())) {
