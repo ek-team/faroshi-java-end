@@ -389,7 +389,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     @CacheEvict(value = CacheConstants.USER_DETAILS, key = "#user.id")
     @Transactional
     public Boolean deleteUserById(User user) {
-        userRoleService.deleteByUserId(user.getId());
+        //userRoleService.deleteByUserId(user.getId());
         this.removeById(user.getId());
         tokenService.delTokenByUserId(user.getId());
         return Boolean.TRUE;

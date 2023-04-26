@@ -79,7 +79,6 @@ public interface UserMapper extends BaseMapper<User> {
 	@Select("<script>" +
 			"SELECT `user`.*, dept.name as deptName FROM user" +
 			" left JOIN user_role ON user.id = user_role.user_id  " +
-			" left JOIN patient_user ON user.id = patient_user.user_id  " +
 			" left JOIN dept ON user.dept_id = dept.id ${ew.customSqlSegment} " +
 			"ORDER BY `user`.create_time DESC" +
 			"</script>")

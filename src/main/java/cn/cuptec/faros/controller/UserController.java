@@ -700,7 +700,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     }
 
     @GetMapping("/manage/pageAll")
-    public RestResponse<IPage<User>> getUserPageAll(@RequestParam(required = false, value = "patientName") String patientName,@RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
+    public RestResponse<IPage<User>> getUserPageAll(@RequestParam(required = false, value = "patientName") String patientName, @RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
         Page<User> page = getPage();
         QueryWrapper queryWrapper = new QueryWrapper<User>();
         if (!StringUtils.isEmpty(nickname)) {
@@ -711,7 +711,14 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
         }
         if (!StringUtils.isEmpty(patientName)) {
-            queryWrapper.like("patient_user.name", patientName);
+            List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
+                    .like(PatientUser::getName, patientName));
+            if (!CollectionUtils.isEmpty(list)) {
+                List<Integer> userIds = list.stream().map(PatientUser::getUserId)
+                        .collect(Collectors.toList());
+                queryWrapper.in("user.id", userIds);
+            }
+
 
         }
         if (page != null) {
