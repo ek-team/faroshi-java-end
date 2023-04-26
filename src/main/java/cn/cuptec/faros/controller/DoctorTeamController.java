@@ -112,7 +112,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
                     user.setDeptId(byId.getDeptId());
                     user.setPhone(importDoctor.getMobile());
                     user.setLever(importDoctor.getLevel());
-                    user.setDepartment(user.getDepartment());
+                    user.setDepartment(importDoctor.getDepartment());
                     user.setPassword(ENCODER.encode(importDoctor.getMobile().substring(5, 11)));
                     users.add(user);
 

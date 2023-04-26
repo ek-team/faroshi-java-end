@@ -8,6 +8,7 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.util.CollectionUtils;
@@ -124,12 +125,22 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
      */
 
     @GetMapping("/getTrainRecord")
-    public RestResponse getTrainRecord(@RequestParam("idCard") String idCard) {
-        List<TbTrainUser> list = planUserService.list(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getIdCard, idCard));
-        if (CollectionUtils.isEmpty(list)) {
-            return RestResponse.ok(new ArrayList<>());
+    public RestResponse getTrainRecord(@RequestParam(value = "idCard",required = false) String idCard,@RequestParam(required = false,value = "userId") String userId) {
+        if(StringUtils.isEmpty(userId)){
+            List<TbTrainUser> list = planUserService.list(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getIdCard, idCard));
+            if (CollectionUtils.isEmpty(list)) {
+                return RestResponse.ok(new ArrayList<>());
+            }
+            userId = list.get(0).getUserId();
+        }else{
+            List<TbTrainUser> list = planUserService.list(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getXtUserId, userId));
+            if(CollectionUtils.isEmpty(list)){
+                return RestResponse.ok(new ArrayList<>());
+            }
+            userId = list.get(0).getUserId();
         }
-        String userId = list.get(0).getUserId();
+
+
         List<TbUserTrainRecord> tbUserTrainRecords = service.listTrainRecordByUid(userId);
         if (CollectionUtils.isEmpty(tbUserTrainRecords)) {
             return RestResponse.ok();

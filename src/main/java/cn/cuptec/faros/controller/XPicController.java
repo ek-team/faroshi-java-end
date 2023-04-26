@@ -40,7 +40,7 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
      * 根据身份证查询
      */
     @GetMapping("/getByIdCard")
-    public RestResponse getByIdCard(@RequestParam("idCard") String idCard) {
+    public RestResponse getByIdCard(@RequestParam(value = "idCard",required = false) String idCard,@RequestParam(value = "userId",required = false) String userId) {
         List<XPic> list = service.list(new QueryWrapper<XPic>().lambda().eq(XPic::getIdCard, idCard));
         if (!CollectionUtils.isEmpty(list)) {
             List<LocalDate> datas = list.stream().map(XPic::getCreateTime)

@@ -497,7 +497,7 @@ public class WxPayController {
                 if (retrieveOrder != null) {
                     //修改订单的实际回收价
                     retrieveOrder.setRetrieveAmount(divide);
-
+                    retrieveOrder.setRetrieveEndTime(LocalDateTime.now());
                     retrieveOrder.setStatus(5);
                     retrieveOrderService.updateById(retrieveOrder);
 

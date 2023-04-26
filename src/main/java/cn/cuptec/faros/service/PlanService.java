@@ -170,8 +170,8 @@ public class PlanService extends ServiceImpl<PlanMapper, TbPlan> {
         return this.list(Wrappers.<TbPlan>lambdaQuery().eq(TbPlan::getUserId, infoByUXtUserId.getUserId()).orderByAsc(TbPlan::getStartDate));
     }
 
-    public List<TbPlan> listGroupByPhone(String phone, String idCard) {
-        TbTrainUser infoByUXtUserId = planUserService.getInfoByPhoneAndIdCard(phone, idCard,null);
+    public List<TbPlan> listGroupByPhone(String phone, String idCard,String userId) {
+        TbTrainUser infoByUXtUserId = planUserService.getInfoByPhoneAndIdCard(phone, idCard,userId);
         if (infoByUXtUserId == null) return CollUtil.toList();
 
 
@@ -191,14 +191,7 @@ public class PlanService extends ServiceImpl<PlanMapper, TbPlan> {
                 subPlans = subPlanService.list(new QueryWrapper<TbSubPlan>().lambda().eq(TbSubPlan::getVersion, version).eq(TbSubPlan::getUserId, infoByUXtUserId.getUserId()));
             }
             if (!CollectionUtils.isEmpty(subPlans)) {
-//                Integer key = 1;
-//                for (TbSubPlan tbSubPlan : subPlans) {
-//                    if (key < tbSubPlan.getVersion()) {
-//                        key = tbSubPlan.getVersion();
-//                    }
-//                }
-//                Map<Integer, List<TbSubPlan>> map = subPlans.stream()
-//                        .collect(Collectors.groupingBy(TbSubPlan::getVersion));
+
                 list.get(0).setSubPlanEntityList(subPlans);
             }
 

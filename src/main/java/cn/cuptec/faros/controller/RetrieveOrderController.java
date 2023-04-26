@@ -15,6 +15,12 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
+import com.kuaidi100.sdk.contant.ApiInfoConstant;
+import com.kuaidi100.sdk.contant.CompanyConstant;
+import com.kuaidi100.sdk.core.IBaseClient;
+import com.kuaidi100.sdk.request.PrintReq;
+import com.kuaidi100.sdk.request.cloud.COrderReq;
+import com.kuaidi100.sdk.utils.SignUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -377,9 +383,6 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         return RestResponse.ok(retrieveAmountDto);
     }
 
-    public static void main(String[] args) {
-        System.out.println(new BigDecimal(0.20 + ""));
-    }
 
     //延长收货
     @GetMapping("/user/extendedReceipt")
@@ -582,26 +585,27 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
 
 
         String post = post(params);
-        //计算回收天数
-        String orderId = param.getOrderNo();
-        UserOrder userOrder = userOrdertService.getById(orderId);
-        Long day = 1L;
-        if (userOrder != null) {
-            Date deliveryTime = userOrder.getDeliveryTime();
-            Instant instant = deliveryTime.toInstant();
-            ZoneId zoneId = ZoneId.systemDefault();
-
-            LocalDateTime localDateDeliveryTime = instant.atZone(zoneId).toLocalDateTime();
-
-            LocalDateTime now = LocalDateTime.now();
-            java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
-            day = duration.toDays();
-            userOrder.setUseDay(day.intValue());
-            userOrdertService.updateById(userOrder);
-        }
+        log.info("回收返回结果" + post);
 
         XiaDanParam xiaDanParam = new Gson().fromJson(post, XiaDanParam.class);
         if (xiaDanParam.getCode() == 200 && xiaDanParam.getMessage().equals("success")) {
+            //计算回收天数
+            String orderId = param.getOrderNo();
+            UserOrder userOrder = userOrdertService.getById(orderId);
+            Long day = 1L;
+            if (userOrder != null) {
+                Date deliveryTime = userOrder.getDeliveryTime();
+                Instant instant = deliveryTime.toInstant();
+                ZoneId zoneId = ZoneId.systemDefault();
+
+                LocalDateTime localDateDeliveryTime = instant.atZone(zoneId).toLocalDateTime();
+
+                LocalDateTime now = LocalDateTime.now();
+                java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
+                day = duration.toDays();
+                userOrder.setUseDay(day.intValue());
+                userOrdertService.updateById(userOrder);
+            }
             RetrieveOrder retrieveOrder = new RetrieveOrder();
             retrieveOrder.setUserOrderNo(userOrder.getOrderNo());
             retrieveOrder.setRentDay(day.intValue());
@@ -699,6 +703,33 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         return response.toString();
     }
 
+    public static void main(String[] args) {
+
+
+        Map<String, String> params = new HashMap();
+        params.put("secret_key", "C58ZzLwXbQu6hqSHvz");
+        params.put("secret_code", "ddffadd3df4b4c0d8d6f9942c7a8c990");
+        params.put("secret_sign", "2E20DED9F6AC5E211E84A80A4E13FAC8");
+        params.put("com", CompanyConstant.SF);
+        params.put("recManName", "李四");
+        params.put("recManMobile", "13916908294");
+        params.put("recManPrintAddr", "中国上海上海市闵行区剑川路930弄C座1楼");
+        params.put("sendManName","张三");
+        params.put("sendManMobile", "18709108132");
+        params.put("sendManPrintAddr","上海市上海市静安区上海市");
+        params.put("cargo", "文件");
+        params.put("weight", "1");
+        params.put("remark", "测试下单，待会取消");
+        params.put("salt", "123456");
+        params.put("callBackUrl", "https://pharos3.ewj100.com/retrieveOrder/kuaidicallback");
+        params.put("dayType", "今天");
+        params.put("pickupStartTime", "18:00");
+        params.put("pickupEndTime", "20:00");
+
+
+        String post = post(params);
+        System.out.println(post);
+    }
     @Override
     protected Class<RetrieveOrder> getEntityClass() {
         return RetrieveOrder.class;

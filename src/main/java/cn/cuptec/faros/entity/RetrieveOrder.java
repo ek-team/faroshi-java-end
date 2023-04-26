@@ -93,6 +93,8 @@ public class RetrieveOrder {
     private Integer kuAiDiStatus;
     //回收价格
     private BigDecimal retrieveAmount;
+    //回收完成时间
+    private LocalDateTime retrieveEndTime;
     //建议扣款金额
     private BigDecimal deductionAmount;
 

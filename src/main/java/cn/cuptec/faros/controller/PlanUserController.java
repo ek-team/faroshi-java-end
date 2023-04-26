@@ -744,9 +744,9 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     }
 
     @GetMapping("/getByPhoneAndIdCard")
-    public RestResponse getByPhoneAndIdCard(@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard) {
+    public RestResponse getByPhoneAndIdCard(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard) {
 
-        return RestResponse.ok(service.getInfoByPhoneAndIdCard(phone, idCard, null));
+        return RestResponse.ok(service.getInfoByPhoneAndIdCard(phone, idCard, userId));
     }
 
 

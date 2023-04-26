@@ -84,9 +84,9 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
     }
 
     @GetMapping("listGroupByPhoneAndIdCard")
-    public RestResponse listGroupByPhoneAndIdCard(@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard) {
+    public RestResponse listGroupByPhoneAndIdCard(@RequestParam(value = "userId", required = false) String userId,@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard) {
 
-        return RestResponse.ok(service.listGroupByPhone(phone, idCard));
+        return RestResponse.ok(service.listGroupByPhone(phone, idCard,userId));
     }
 
     @PutMapping("updateList")

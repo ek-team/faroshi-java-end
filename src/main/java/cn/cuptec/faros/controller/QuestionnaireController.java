@@ -7,8 +7,10 @@ import cn.cuptec.faros.service.PlanUserService;
 import cn.cuptec.faros.service.PlanUserTrainRecordService;
 import cn.cuptec.faros.service.QuestionnaireGroupService;
 import cn.cuptec.faros.service.QuestionnaireService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -127,8 +129,16 @@ public class QuestionnaireController extends AbstractBaseController<Questionnair
      * 查询试卷
      */
     @GetMapping("/getByIdCard")
-    public RestResponse getByUserId(@RequestParam("idCard") String idCard) {
-        List<TbTrainUser> list1 = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, idCard));
+    public RestResponse getByUserId(@RequestParam(value = "idCard",required = false) String idCard,@RequestParam(value = "userId",required = false) String userId) {
+        LambdaQueryWrapper<TbTrainUser> queryWrapper = new LambdaQueryWrapper<>();
+
+        if (!StringUtils.isEmpty(idCard)) {
+            queryWrapper.eq(TbTrainUser::getIdCard, idCard);
+        }
+        if (!StringUtils.isEmpty(userId)) {
+            queryWrapper.eq(TbTrainUser::getXtUserId, userId);
+        }
+        List<TbTrainUser> list1 = planUserService.list(queryWrapper);
         if(CollectionUtils.isEmpty(list1)){
             return RestResponse.ok(new ArrayList<>());
         }
