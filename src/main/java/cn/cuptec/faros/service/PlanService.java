@@ -16,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.xml.crypto.Data;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,6 +92,7 @@ public class PlanService extends ServiceImpl<PlanMapper, TbPlan> {
 //                }
 //                Map<Integer, List<TbSubPlan>> map = subPlans.stream()
 //                        .collect(Collectors.groupingBy(TbSubPlan::getVersion));
+                Collections.sort(subPlans);
                 list.get(0).setSubPlanEntityList(subPlans);
             }
 
@@ -130,6 +128,7 @@ public class PlanService extends ServiceImpl<PlanMapper, TbPlan> {
 //                }
 //                Map<Integer, List<TbSubPlan>> map = subPlans.stream()
 //                        .collect(Collectors.groupingBy(TbSubPlan::getVersion));
+                Collections.sort(subPlans);
                 list.get(0).setSubPlanEntityList(subPlans);
             }
 

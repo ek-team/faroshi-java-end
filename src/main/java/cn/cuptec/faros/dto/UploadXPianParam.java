@@ -8,4 +8,5 @@ public class UploadXPianParam {
    private List<String> urls;
    private String xtUserId;
    private String createTime;
+   private String idCard;
 }

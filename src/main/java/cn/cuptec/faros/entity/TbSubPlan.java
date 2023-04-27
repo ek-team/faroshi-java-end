@@ -1,6 +1,7 @@
 package cn.cuptec.faros.entity;
 
 
+import cn.cuptec.faros.im.bean.ChatUserVO;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -13,7 +14,7 @@ import java.util.Date;
  * Describe:
  */
 @Data
-public class TbSubPlan {
+public class TbSubPlan implements Comparable<TbSubPlan>{
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
@@ -48,4 +49,9 @@ public class TbSubPlan {
     private int initStart;//是否是初使计划 1-是 2-不是
     @TableField(exist = false)
     private Integer newStatus;
+
+    @Override
+    public int compareTo(TbSubPlan o) {
+        return this.startDate.compareTo(o.startDate);//根据时间降序
+    }
  }

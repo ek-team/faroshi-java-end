@@ -5,6 +5,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.FormUserDataParam;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -52,7 +53,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         Integer formId = formManagementData.get(0).getFormId();
         Form byId = formService.getById(formId);
         ChatMsg byId1 = chatMsgService.getById(param.getStr() + "");
-        FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeService.getById(param.getStr());
+        FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeService.getById(updateFollowUpPlanNoticeId);
 
         List<Integer> formSettingId = formManagementData.stream().map(FormUserData::getFormSettingId)
                 .collect(Collectors.toList());
@@ -69,7 +70,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         Map<Integer, FormSetting> formSettingMap = formSettings.stream()
                 .collect(Collectors.toMap(FormSetting::getId, t -> t));
         for (FormUserData formUserData : formManagementData) {
-            if (param.getStr() != null && formUserData.getStr()==null) {
+            if (param.getStr() != null && formUserData.getStr() == null) {
                 formUserData.setStr(param.getStr());
             }
             formUserData.setGroupId(groupId);
@@ -171,7 +172,28 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             Date date = Date.from(zdt.toInstant());
             newChatMsg.setCreateTime(date);
             newChatMsg.setStr3(chatMsg.getId());
-            newChatMsg.setStr2(1+"");
+            newChatMsg.setStr2(1 + "");
+            chatMsgService.save(newChatMsg);
+        }
+        //判断如果是随访计划 再发送一条表单消息
+        if (byId1 != null && followUpPlanNotice != null) {
+
+            ChatMsg newChatMsg = new ChatMsg();
+            BeanUtils.copyProperties(byId1, newChatMsg, "id");
+            newChatMsg.setFromUid(SecurityUtils.getUser().getId());
+            if (byId1.getChatUserId() == null) {
+                newChatMsg.setToUid(byId1.getFromUid());
+            }
+            ZoneId zoneId = ZoneId.systemDefault();
+            LocalDateTime localDateTime = LocalDateTime.now().plusMinutes(1);
+            ZonedDateTime zdt = localDateTime.atZone(zoneId);
+            newChatMsg.setMsgType(ChatProto.FORM);
+            newChatMsg.setMsg("表单");
+            newChatMsg.setStr1(formId + "");
+            Date date = Date.from(zdt.toInstant());
+            newChatMsg.setCreateTime(date);
+            newChatMsg.setStr3(updateFollowUpPlanNoticeId + "");
+            newChatMsg.setStr2(1 + "");
             chatMsgService.save(newChatMsg);
         }
 

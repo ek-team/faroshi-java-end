@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,7 +41,7 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
      * 根据身份证查询
      */
     @GetMapping("/getByIdCard")
-    public RestResponse getByIdCard(@RequestParam(value = "idCard",required = false) String idCard,@RequestParam(value = "userId",required = false) String userId) {
+    public RestResponse getByIdCard(@RequestParam(value = "idCard", required = false) String idCard, @RequestParam(value = "userId", required = false) String userId) {
         List<XPic> list = service.list(new QueryWrapper<XPic>().lambda().eq(XPic::getIdCard, idCard));
         if (!CollectionUtils.isEmpty(list)) {
             List<LocalDate> datas = list.stream().map(XPic::getCreateTime)
@@ -66,9 +67,12 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
     @PostMapping("/uploadXPian")
     public RestResponse uploadXPian(@RequestBody UploadXPianParam param) {
         try {
+            TbTrainUser infoByUXtUserId = null;
+            if (!StringUtils.isEmpty(param.getXtUserId())) {
+                infoByUXtUserId = planUserService.getInfoByUXtUserId(Integer.parseInt(param.getXtUserId()));
+            }
 
-            TbTrainUser infoByUXtUserId = planUserService.getInfoByUXtUserId(Integer.parseInt(param.getXtUserId()));
-            if (infoByUXtUserId == null) {
+            if (infoByUXtUserId == null && StringUtils.isEmpty(param.getIdCard())) {
                 return RestResponse.failed("未查询到设备用户");
             }
             List<XPic> xPics = new ArrayList<>();
@@ -76,7 +80,13 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
                 XPic xPic = new XPic();
                 xPic.setUrl(url);
                 xPic.setCreateTime(LocalDate.parse(param.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                xPic.setIdCard(infoByUXtUserId.getIdCard());
+                if (infoByUXtUserId == null) {
+                    xPic.setIdCard(param.getIdCard());
+
+                } else {
+                    xPic.setIdCard(infoByUXtUserId.getIdCard());
+
+                }
                 xPics.add(xPic);
             }
 
