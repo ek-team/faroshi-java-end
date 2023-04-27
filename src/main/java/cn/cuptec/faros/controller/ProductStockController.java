@@ -171,13 +171,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         List<Integer> uids = new ArrayList<>();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
-        if (!CollectionUtils.isEmpty(users)) {
-            uids = users.stream().map(User::getId)
-                    .collect(Collectors.toList());
-            queryWrapper.in("salesman_id", uids);
-        } else {
-            return RestResponse.ok();
-        }
+
         queryWrapper.eq(status != null, "status", status);
         Page<ProductStock> page = getPage();
         //如果是管理员则查看所有
@@ -190,6 +184,22 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         } else {
             DataScope dataScope = new DataScope();
             dataScope.setIsOnly(true);
+            List<UserRole> list = userRoleService.list(new QueryWrapper<UserRole>().lambda().eq(UserRole::getUserId, user.getId()));
+            if (!CollectionUtils.isEmpty(list)) {
+                for (UserRole userRole : list) {
+                    if (userRole.getRoleId().equals(26)) {
+                        dataScope.setIsOnly(false);
+                    }
+                }
+            }
+            if (dataScope.getIsOnly()) {
+                if (!CollectionUtils.isEmpty(users)) {
+                    uids = users.stream().map(User::getId)
+                            .collect(Collectors.toList());
+                    queryWrapper.in("salesman_id", uids);
+                }
+            }
+
             iPage = service.pageScopedDep(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId, dataScope);
 
         }

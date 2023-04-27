@@ -89,15 +89,16 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     private WxMpTagService wxMpTagService;
     @Resource
     private PatientUserService patientUserService;
+
     /**
      *
      */
     public User getUserINfo(Integer uid) {
 
         User user = baseMapper.selectById(uid);
-        if(!StringUtils.isEmpty(user.getPatientId())){
+        if (!StringUtils.isEmpty(user.getPatientId())) {
             PatientUser patientUser = patientUserService.getById(user.getPatientId());
-            if(patientUser!=null){
+            if (patientUser != null) {
                 user.setIdCard(patientUser.getIdCard());
                 user.setPatientName(patientUser.getName());
             }
@@ -301,6 +302,45 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 //    public IPage<User> queryUserByDeptAndNoRole(Page<User> page, Wrapper<User> wrapper) {
 //        return baseMapper.queryUserByDeptAndNoRole(page, wrapper);
 //    }
+
+    public IPage<User> pageScopedAllUserVo(IPage<User> page, Wrapper<User> wrapper, Boolean aBoolean) {
+        DataScope dataScope = new DataScope();
+        dataScope.setIsOnly(!aBoolean);
+
+        IPage<User> scopedUsers = baseMapper.pageScopedAllUserVo(page, wrapper, dataScope);
+        List<User> records = scopedUsers.getRecords();
+        List<Integer> uids = records.stream().map(user -> user.getId()).collect(Collectors.toList());
+        if (uids.size() > 0) {
+            List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
+                    .in(UserRole::getUserId, uids)
+            );
+            List<Integer> roleIds = userRoles.stream().map(userRole -> userRole.getRoleId()).collect(Collectors.toList());
+            if (roleIds.size() > 0) {
+                List<Role> roles = (List<Role>) roleService.listByIds(roleIds);
+                records.forEach(user -> {
+                    List<Integer> userRoleIds = new ArrayList<>();
+                    userRoles.forEach(userRole -> {
+                        if (userRole.getUserId().equals(user.getId())) {
+                            userRoleIds.add(userRole.getRoleId());
+                        }
+                    });
+                    List<Role> urs = new ArrayList<>();
+                    roles.forEach(role -> {
+                        if (userRoleIds.contains(role.getId().intValue())) {
+                            urs.add(role);
+                        }
+                    });
+                    user.setRoles(urs.toArray(new Role[0]));
+                });
+            } else {
+                records.forEach(user -> {
+                    user.setRoles(new ArrayList<Role>().toArray(new Role[0]));
+                });
+            }
+        }
+        userDoctorRelationService.getDoctorByUserList(records);
+        return scopedUsers;
+    }
 
     public IPage<User> pageScopedUserVo(IPage<User> page, Wrapper<User> wrapper) {
 

@@ -84,7 +84,43 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     @GetMapping("/trainRecordByPhone")
     public RestResponse trainRecordByPhone(@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard, @RequestParam(value = "xtUserId", required = false) String xtUserId) {
 
-        return RestResponse.ok(service.trainRecordByPhone(phone, idCard,xtUserId));
+        return RestResponse.ok(service.trainRecordByPhone(phone, idCard, xtUserId));
+    }
+
+    /**
+     * @return
+     */
+    @GetMapping("/getByIdCard")
+    public RestResponse getByIdCard(@RequestParam(value = "idCard", required = false) String idCard) {
+
+        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, idCard));
+        if (CollectionUtils.isEmpty(tbTrainUsers)) {
+            return RestResponse.ok();
+        }
+        TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+        List<TbUserTrainRecord> tbUserTrainRecords = service.list(new QueryWrapper<TbUserTrainRecord>().lambda().eq(TbUserTrainRecord::getUserId, tbTrainUser.getUserId()).orderByAsc(TbUserTrainRecord::getDateStr));
+        if (CollectionUtils.isEmpty(tbUserTrainRecords)) {
+            tbUserTrainRecords = new ArrayList<>();
+            List<TbSubPlan> list = subPlanService.list(new QueryWrapper<TbSubPlan>().lambda().eq(TbSubPlan::getUserId, tbTrainUser.getUserId()).orderByAsc(TbSubPlan::getStartDate));
+            if (!CollectionUtils.isEmpty(list)) {
+                TbSubPlan tbSubPlan = list.get(0);
+                TbUserTrainRecord tbUserTrainRecord = new TbUserTrainRecord();
+                tbUserTrainRecord.setTargetLoad(tbSubPlan.getLoad());
+                tbUserTrainRecords.add(tbUserTrainRecord);
+
+            }
+        }
+        if (!CollectionUtils.isEmpty(tbUserTrainRecords)) {
+            List<String> Ids = new ArrayList<>();//
+            tbUserTrainRecords = tbUserTrainRecords.stream().filter(// 过滤去重
+                    v -> {
+                        boolean flag = !Ids.contains(v.getDateStr() + "");
+                        Ids.add(v.getDateStr() + "");
+                        return flag;
+                    }
+            ).collect(Collectors.toList());
+        }
+        return RestResponse.ok(tbUserTrainRecords);
     }
 
     /**
@@ -125,16 +161,16 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
      */
 
     @GetMapping("/getTrainRecord")
-    public RestResponse getTrainRecord(@RequestParam(value = "idCard",required = false) String idCard,@RequestParam(required = false,value = "userId") String userId) {
-        if(StringUtils.isEmpty(userId)){
+    public RestResponse getTrainRecord(@RequestParam(value = "idCard", required = false) String idCard, @RequestParam(required = false, value = "userId") String userId) {
+        if (StringUtils.isEmpty(userId)) {
             List<TbTrainUser> list = planUserService.list(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getIdCard, idCard));
             if (CollectionUtils.isEmpty(list)) {
                 return RestResponse.ok(new ArrayList<>());
             }
             userId = list.get(0).getUserId();
-        }else{
+        } else {
             List<TbTrainUser> list = planUserService.list(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getXtUserId, userId));
-            if(CollectionUtils.isEmpty(list)){
+            if (CollectionUtils.isEmpty(list)) {
                 return RestResponse.ok(new ArrayList<>());
             }
             userId = list.get(0).getUserId();
@@ -214,7 +250,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
             getTrainRecordDTO.setDateStr(key);
             getTrainRecordDTO.setMaxTargetLoad(maxTargetLoad);
             getTrainRecordDTO.setMiniTargetLoad(miniTargetLoad);
-            if(totalTargetLoad!=0 && totalStepCount!=0 ){
+            if (totalTargetLoad != 0 && totalStepCount != 0) {
                 getTrainRecordDTO.setAverageTargetLoad(totalTargetLoad / totalStepCount);
             }
             getTrainRecordDTO.setTotalStepCount(totalStepCount);

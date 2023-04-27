@@ -722,7 +722,8 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
         }
         if (page != null) {
-            IPage iPage = service.pageScopedUserVo(page, queryWrapper);
+            Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+            IPage iPage = service.pageScopedAllUserVo(page, queryWrapper,aBoolean);
             List<User> records = iPage.getRecords();
             if (!CollectionUtils.isEmpty(records)) {
                 List<Integer> userIds = records.stream().map(User::getId)

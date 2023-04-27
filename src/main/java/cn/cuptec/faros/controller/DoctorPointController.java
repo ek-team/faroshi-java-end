@@ -114,7 +114,10 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                 if (doctorTeam != null) {
                     doctorPoint.setDoctorTeamName(doctorTeam.getName());
                 }
-                doctorPoint.setPatientName(userMap.get(doctorPoint.getPatientId()).getPatientName());
+                if (userMap.get(doctorPoint.getPatientId()) != null) {
+                    doctorPoint.setPatientName(userMap.get(doctorPoint.getPatientId()).getPatientName());
+                }
+
             }
         }
         return RestResponse.ok(doctorPointIPage);

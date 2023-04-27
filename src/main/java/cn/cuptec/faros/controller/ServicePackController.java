@@ -982,7 +982,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         BeanUtils.copyProperties(servicePack, newServicePack, "id");
         newServicePack.setName(servicePack.getName() + "复制");
         newServicePack.setCreateTime(LocalDateTime.now());
-        newServicePack.setStatus(0);
+        newServicePack.setStatus(1);
         service.save(newServicePack);
 
 
