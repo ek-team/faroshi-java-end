@@ -164,7 +164,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/productStock/getByMacAddressHospitalInfo",
                         "/productStock/getByMac/**",
                         "/user/checkUserUseMa",
-                        "/planUserTrainRecord/getByIdCard"
+                        "/planUserTrainRecord/getByIdCard",
+                        "/xPic/uploadXPian"
 
                 )
                 .permitAll()
