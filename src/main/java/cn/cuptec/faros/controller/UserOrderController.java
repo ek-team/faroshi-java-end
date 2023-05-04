@@ -146,6 +146,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
         RentRuleOrder rentRuleOrder = new RentRuleOrder();
         rentRuleOrder.setUserOrderNo(userOrderNo);
+        rentRuleOrder.setServiceCount(rentRule.getServiceCount());
         rentRuleOrder.setRentRuleOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
         rentRuleOrder.setAmount(rentRule.getAmount());
         rentRuleOrder.setDay(rentRule.getDay() + "");

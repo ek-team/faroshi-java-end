@@ -20,6 +20,7 @@ public class RentRule extends Model<RentRule> implements Comparable<RentRule> {
     private Integer servicePackId;
     private Integer day; //天数
     private BigDecimal amount;//金额
+    private Integer serviceCount;//图文咨询次数
 
     @Override
     public int compareTo(RentRule o) {

@@ -24,7 +24,7 @@ public class RentRuleOrder extends Model<RentRuleOrder> {
     private String rentRuleOrderNo;//续租订单号
 
     private String day;//续租天数
-
+    private Integer serviceCount;//图文咨询次数
     private BigDecimal amount;//金额
     private Integer userId;
     private Integer status;//1-代付款 2-已付款

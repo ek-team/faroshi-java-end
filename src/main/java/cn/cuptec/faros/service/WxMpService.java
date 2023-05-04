@@ -34,7 +34,24 @@ public class WxMpService {
             e.printStackTrace();
         }
     }
+    public void sendUrlTemplateMsg(String openId, String templateId, String url, List<WxMpTemplateData> dataList) {
 
+        WxMpTemplateMessage templateMessage = WxMpTemplateMessage.builder()
+                .toUser(openId)//要推送的用户openid
+                .templateId(templateId)//模板id
+                .url(url)
+                .build();
+
+        if (CollUtil.isNotEmpty(dataList)) {
+            dataList.forEach(templateMessage::addData);
+        }
+
+        try {
+            WxMpConfiguration.getWxMpService().getTemplateMsgService().sendTemplateMsg(templateMessage);
+        } catch (WxErrorException e) {
+            e.printStackTrace();
+        }
+    }
     public void sendTopic(String openId, String first, String keyword1,
                           String keyword2, String remark, String url) {
         String templateId = "s4SMlZMpXSeml9lMfaHG8mm1kv4TW5ga77giTfTj2Q8";
@@ -260,6 +277,31 @@ public class WxMpService {
         dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
         sendTemplateMsg(openId, templateId, url, dataList);
     }
+    public void sendDoctorUrlTip(String openId, String first, String keyword1,
+                     String keyword2, String keyword3, String url) {
+        String templateId = "JS1GcbXs_Tm28-HnzuStvnDTbLxtL71wxdWaZ-wpnd0";
+
+        List<WxMpTemplateData> dataList = new ArrayList<>();
+        WxMpTemplateData wxMpTemplateData = new WxMpTemplateData();
+        wxMpTemplateData.setName("first");
+        wxMpTemplateData.setValue(first);
+        dataList.add(wxMpTemplateData);
+        WxMpTemplateData wxMpTemplateData1 = new WxMpTemplateData();
+        wxMpTemplateData1.setName("keyword1");
+        wxMpTemplateData1.setValue(keyword1);
+        dataList.add(wxMpTemplateData1);
+        WxMpTemplateData wxMpTemplateData2 = new WxMpTemplateData();
+        wxMpTemplateData2.setName("keyword2");
+        wxMpTemplateData2.setValue(keyword2);
+        dataList.add(wxMpTemplateData2);
+        WxMpTemplateData wxMpTemplateData3 = new WxMpTemplateData();
+        wxMpTemplateData3.setName("keyword3");
+        wxMpTemplateData3.setValue(keyword3);
+        dataList.add(wxMpTemplateData3);
+        dataList.add(new WxMpTemplateData("remark", "点击查看详情", "#FF0000"));
+        sendUrlTemplateMsg(openId, templateId, url, dataList);
+    }
+
     //医嘱消息提醒
     public void sendDoctorTip(String openId, String first, String keyword1,
                               String keyword2, String keyword3, String url) {

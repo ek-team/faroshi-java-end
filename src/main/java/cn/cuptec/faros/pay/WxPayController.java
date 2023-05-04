@@ -414,6 +414,9 @@ public class WxPayController {
                         userServicePackageInfo.setExpiredTime(now.plusDays(Long.getLong(rentRuleOrder.getDay())));
 
                     }
+                    if (rentRuleOrder.getServiceCount() != null) {
+                        userServicePackageInfo.setTotalCount(userServicePackageInfo.getTotalCount() + rentRuleOrder.getServiceCount());
+                    }
                 }
                 userServicePackageInfoService.updateBatchById(userServicePackageInfos);
             }
