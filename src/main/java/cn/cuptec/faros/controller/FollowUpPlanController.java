@@ -196,8 +196,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
         followUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
         followUpPlan.setCreateTime(LocalDateTime.now());
-//        User byId = userService.getById(SecurityUtils.getUser().getId());
-//        followUpPlan.setDeptId(byId.getDeptId());
         service.save(followUpPlan);
         List<FollowUpPlanContent> followUpPlanContentList = followUpPlan.getFollowUpPlanContentList();
         if (!CollectionUtils.isEmpty(followUpPlanContentList)) {
