@@ -165,7 +165,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/productStock/getByMac/**",
                         "/user/checkUserUseMa",
                         "/planUserTrainRecord/getByIdCard",
-                        "/xPic/uploadXPian"
+                        "/xPic/uploadXPian",
+                        "/alipay/notifyAliOrder"
 
                 )
                 .permitAll()

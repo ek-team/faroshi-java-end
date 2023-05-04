@@ -89,7 +89,8 @@ public class WxPayController {
     private RentRuleOrderService rentRuleOrderService;
     @Resource
     private HospitalInfoService hospitalInfoService;
-
+    @Resource
+    private SaleSpecGroupService saleSpecGroupService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -274,13 +275,24 @@ public class WxPayController {
 
             List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
                     .eq(ServicePackageInfo::getServicePackageId, servicePackId));
+
+            List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds()));
+            Integer serviceCount = null;
+            if (!CollectionUtils.isEmpty(saleSpecGroupList)) {
+                SaleSpecGroup saleSpecGroup = saleSpecGroupList.get(0);
+                serviceCount = saleSpecGroup.getServiceCount();
+
+            }
+
             if (!CollectionUtils.isEmpty(servicePackageInfos)) {
                 List<UserServicePackageInfo> userServicePackageInfos = new ArrayList<>();
                 for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
                     UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
                     userServicePackageInfo.setUserId(userOrder.getUserId());
                     userServicePackageInfo.setOrderId(userOrder.getId());
-                    userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
+                    if (serviceCount != null) {
+                        userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
+                    }
                     userServicePackageInfo.setChatUserId(chatUser.getId());
                     userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
                     userServicePackageInfo.setCreateTime(LocalDateTime.now());

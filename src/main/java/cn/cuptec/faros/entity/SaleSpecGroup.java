@@ -29,6 +29,7 @@ public class SaleSpecGroup extends Model<SaleSpecGroup> {
     private Integer status = 0;//0-正常 1-禁用
     private String weight;//回收重量
     private String recycleRemark;//回收备注
+    private Integer serviceCount;//图文咨询次数
     @TableField(exist = false)
     private List<SaleSpecDesc> saleSpecDescList;//规格值信息
 }
