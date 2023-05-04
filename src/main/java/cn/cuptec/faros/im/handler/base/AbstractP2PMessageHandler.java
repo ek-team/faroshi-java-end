@@ -204,8 +204,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                                 LocalDateTime now = LocalDateTime.now();
                                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                                 String time = df.format(now);
-                                //wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
-                                wxMpService.sendDoctorUrlTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
+                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
+                                //wxMpService.sendDoctorUrlTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
 
                             }
                         }

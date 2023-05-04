@@ -33,6 +33,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -91,6 +93,10 @@ public class WxPayController {
     private HospitalInfoService hospitalInfoService;
     @Resource
     private SaleSpecGroupService saleSpecGroupService;
+    @Resource
+    private SaleSpecDescService saleSpecDescService;
+    @Resource
+    private SaleSpecService saleSpecService;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -136,6 +142,8 @@ public class WxPayController {
             if (!userOrder.getStatus().equals(1)) {
                 return RestResponse.ok();
             }
+
+
             Integer patientUserId = userOrder.getPatientUserId();
             PatientUser byId = patientUserService.getById(patientUserId);
             User userById = userService.getById(userOrder.getUserId());
@@ -304,6 +312,30 @@ public class WxPayController {
             }
 
             userOrdertService.updateById(userOrder);
+
+            //判断用户是否选择了发送支架链接规格
+            String saleSpecDescIdList = userOrder.getSaleSpecDescIdList();
+            List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
+                    .eq(SaleSpec::getServicePackId, userOrder.getServicePackId())
+                    .eq(SaleSpec::getName, "支架选择"));
+            if (!CollectionUtils.isEmpty(saleSpecList)) {
+                SaleSpec saleSpec = saleSpecList.get(0);
+                List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+                        .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId())
+                );
+                if (!CollectionUtils.isEmpty(saleSpecDescList)) {
+                    for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+                        if (saleSpecDescIdList.contains(saleSpecDesc.getId() + "")) {
+                            String name = saleSpecDesc.getName();
+                            if (name.equals("不带支架")) {
+                                //发送支架提醒
+
+                            }
+                        }
+                    }
+                }
+            }
+
         }
         //图文咨询订单处理
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
