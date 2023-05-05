@@ -286,7 +286,8 @@ public class WxPayController {
             List<ServicePackageInfo> servicePackageInfos = servicePackageInfoService.list(new QueryWrapper<ServicePackageInfo>().lambda()
                     .eq(ServicePackageInfo::getServicePackageId, servicePackId));
 
-            List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds()));
+            List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
+                    .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
             Integer serviceCount = null;
             Integer sendUrl = 0;
             if (!CollectionUtils.isEmpty(saleSpecGroupList)) {

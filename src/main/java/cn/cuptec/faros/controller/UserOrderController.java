@@ -96,7 +96,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private RentRuleService rentRuleService;
     @Resource
     private PlanUserService planUserService;
-
     /**
      * 查询订单的续租记录
      */
@@ -492,11 +491,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
                 }
                 List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, userOrder.getUserId()));
-                if (CollectionUtils.isEmpty(tbTrainUsers)) {
+                if(CollectionUtils.isEmpty(tbTrainUsers)){
                     return RestResponse.ok("10");
                 }
                 TbTrainUser tbTrainUser = tbTrainUsers.get(0);
-                if (tbTrainUser.getFirstTrainTime() == null) {
+                if(tbTrainUser.getFirstTrainTime()==null){
                     return RestResponse.ok("10");
                 }
                 LocalDateTime payTime = tbTrainUser.getFirstTrainTime();
