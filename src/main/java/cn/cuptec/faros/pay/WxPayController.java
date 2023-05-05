@@ -288,11 +288,13 @@ public class WxPayController {
 
             List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
                     .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
-            Integer serviceCount = null;
+            Integer serviceCount = 3;
             Integer sendUrl = 0;
             if (!CollectionUtils.isEmpty(saleSpecGroupList)) {
                 SaleSpecGroup saleSpecGroup = saleSpecGroupList.get(0);
-                serviceCount = saleSpecGroup.getServiceCount();
+                if(saleSpecGroup.getServiceCount()!=null){
+                    serviceCount = saleSpecGroup.getServiceCount();
+                }
                 sendUrl = saleSpecGroup.getSendUrl();
             }
 
@@ -302,9 +304,9 @@ public class WxPayController {
                     UserServicePackageInfo userServicePackageInfo = new UserServicePackageInfo();
                     userServicePackageInfo.setUserId(userOrder.getUserId());
                     userServicePackageInfo.setOrderId(userOrder.getId());
-                    if (serviceCount != null) {
+
                         userServicePackageInfo.setTotalCount(serviceCount);
-                    }
+
                     userServicePackageInfo.setChatUserId(chatUser.getId());
                     userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
                     userServicePackageInfo.setCreateTime(LocalDateTime.now());
