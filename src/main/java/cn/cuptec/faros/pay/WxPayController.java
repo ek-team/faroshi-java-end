@@ -335,8 +335,8 @@ public class WxPayController {
                                 //发送支架提醒
                                 LocalDateTime now = LocalDateTime.now();
                                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "您的智能居家训练计划和智能居家训练鞋已支付成功，训练鞋需要搭配助行器和手机支架使用。我们挑选了几款不错的助行器供您挑选购买", doctorTeamName,
-                                        df.format(now), "pages/myOrder/myOrder");
+                                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
+                                        "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
                             }
                         }
                     }

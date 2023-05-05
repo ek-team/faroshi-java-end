@@ -39,7 +39,8 @@ public class TestController {
     @GetMapping("user")
     public RestResponse customUserInfo() {
 
-
+        wxMpService.sendDoctorUrlTip("oV8W46Jr8-9S-8aDSQ4Mcigwbwms", "您的智能居家训练计划和智能居家训练鞋已支付成功，训练鞋需要搭配助行器和手机支架使用。我们挑选了几款不错的助行器供您挑选购买", "22",
+                "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
 //        List<HospitalInfo> list = hospitalInfoService.list();
 //        for (HospitalInfo importDoctor : list) {
 //            String hospitalInfoStr = importDoctor.getProvince() + importDoctor.getCity() + importDoctor.getArea() + importDoctor.getName();
