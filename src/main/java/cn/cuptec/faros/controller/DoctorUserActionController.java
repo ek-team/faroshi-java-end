@@ -59,6 +59,7 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
     @PostMapping("/openService")
     public RestResponse openService(@RequestBody DoctorUserAction doctorUserAction) {
         doctorUserAction.setUserId(SecurityUtils.getUser().getId());
+
         service.save(doctorUserAction);
         return RestResponse.ok();
     }

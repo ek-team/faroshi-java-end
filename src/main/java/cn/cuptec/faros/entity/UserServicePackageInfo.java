@@ -31,4 +31,6 @@ public class UserServicePackageInfo extends Model<UserServicePackageInfo> {
     private Integer userId;
     @TableField(exist = false)
     private User user;
+    @TableField(exist = false)
+    private Integer serviceCount;//图文咨询次数
 }

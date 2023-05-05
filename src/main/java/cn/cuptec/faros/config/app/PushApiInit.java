@@ -17,9 +17,9 @@ import javax.annotation.PostConstruct;
 @Configuration
 @AllArgsConstructor
 public class PushApiInit {
-    private final String appId = "QoSChD3LEr9E7umOhHFN1A";
-    private final String appKey = "LVgmnS6a4O6G4lHwZM2HC2";
-    private final String masterSecret = "8dub6XMHEdAWXaaSkqFWj6";
+    private final String appId = "vR7NTW6Xma9Lx86tUan4q";
+    private final String appKey = "BqToPFQOCa9peLc3EBUdH4 ";
+    private final String masterSecret = "8qQcfRuDYH8Os1GI6wLkR1";
     @Getter
     private static PushApi pushApi;
 

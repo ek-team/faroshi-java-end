@@ -38,6 +38,8 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
     private UserService userService;
     @Resource
     private PatientUserService patientUserService;
+    @Resource
+    private SaleSpecGroupService saleSpecGroupService;
 
     /**
      * 判断用户是否有这个团队的免费咨询
@@ -178,6 +180,12 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
         DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
         doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleList);
         userServicePackageInfo.setDoctorTeam(doctorTeam);
+        List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
+                .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
+        if (!CollectionUtils.isEmpty(saleSpecGroupList)) {
+            SaleSpecGroup saleSpecGroup = saleSpecGroupList.get(0);
+            userServicePackageInfo.setServiceCount(saleSpecGroup.getServiceCount());
+        }
         return RestResponse.ok(userServicePackageInfo);
     }
 

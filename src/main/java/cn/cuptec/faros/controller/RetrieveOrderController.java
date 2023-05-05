@@ -338,7 +338,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         Integer rentDay = retrieveOrder.getRentDay();
         retrieveAmountDto.setRentDay(rentDay);
         BigDecimal amount = new BigDecimal(0);
-        if (userOrder.getSaleSpecServiceEndTime() != null && rentDay != null) {
+        if (userOrder.getSaleSpecServiceEndTime() == null && rentDay != null) {
             Integer servicePackId = retrieveOrder.getServicePackId();
             List<RecyclingRule> recyclingRuleList = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, servicePackId));
             if (!CollectionUtils.isEmpty(recyclingRuleList)) {
@@ -714,9 +714,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         params.put("recManName", "李四");
         params.put("recManMobile", "13916908294");
         params.put("recManPrintAddr", "中国上海上海市闵行区剑川路930弄C座1楼");
-        params.put("sendManName","张三");
+        params.put("sendManName", "张三");
         params.put("sendManMobile", "18709108132");
-        params.put("sendManPrintAddr","上海市上海市静安区上海市");
+        params.put("sendManPrintAddr", "上海市上海市静安区上海市");
         params.put("cargo", "文件");
         params.put("weight", "1");
         params.put("remark", "测试下单，待会取消");
@@ -730,6 +730,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         String post = post(params);
         System.out.println(post);
     }
+
     @Override
     protected Class<RetrieveOrder> getEntityClass() {
         return RetrieveOrder.class;
