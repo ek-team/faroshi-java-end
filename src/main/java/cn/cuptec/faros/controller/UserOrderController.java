@@ -98,6 +98,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private RentRuleService rentRuleService;
     @Resource
     private PlanUserService planUserService;
+
     /**
      * 查询订单的续租记录
      */
@@ -493,11 +494,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
                 }
                 List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, userOrder.getUserId()));
-                if(CollectionUtils.isEmpty(tbTrainUsers)){
+                if (CollectionUtils.isEmpty(tbTrainUsers)) {
                     return RestResponse.ok("10");
                 }
                 TbTrainUser tbTrainUser = tbTrainUsers.get(0);
-                if(tbTrainUser.getFirstTrainTime()==null){
+                if (tbTrainUser.getFirstTrainTime() == null) {
                     return RestResponse.ok("10");
                 }
                 LocalDateTime payTime = tbTrainUser.getFirstTrainTime();
@@ -885,16 +886,17 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         if (CollUtil.isNotEmpty(iPage.getRecords())) {
             List<UserOrder> records = iPage.getRecords();
             //服务包信息
+            //服务包信息
             List<Integer> servicePackIds = records.stream().map(UserOrder::getServicePackId)
                     .collect(Collectors.toList());
             List<Integer> userServicePackInfoIds = records.stream().map(UserOrder::getUserServicePackageInfoId)
                     .collect(Collectors.toList());
-            Map<Integer, UserServicePackageInfo> userServicePackInfoMap=new HashMap<>();
-            if(!CollectionUtils.isEmpty(userServicePackInfoIds)){
+            Map<Integer, UserServicePackageInfo> userServicePackInfoMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(userServicePackInfoIds)) {
                 List<UserServicePackageInfo> userServicePackageInfos = (List<UserServicePackageInfo>) userServicePackageInfoService.listByIds(userServicePackInfoIds);
-                if(!CollectionUtils.isEmpty(userServicePackageInfos)){
-                     userServicePackInfoMap = userServicePackageInfos.stream()
-                             .collect(Collectors.toMap(UserServicePackageInfo::getId, t -> t));
+                if (!CollectionUtils.isEmpty(userServicePackageInfos)) {
+                    userServicePackInfoMap = userServicePackageInfos.stream()
+                            .collect(Collectors.toMap(UserServicePackageInfo::getId, t -> t));
 
 
                 }
@@ -1026,6 +1028,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             SaleSpecGroup saleSpecGroup = saleSpecGroupList.get(0);
             userOrder.setServiceCount(saleSpecGroup.getServiceCount());
         }
+        UserServicePackageInfo byId = userServicePackageInfoService.getById(userOrder.getUserServicePackageInfoId());
+        userOrder.setUserServicePackageInfo(byId);
 
         return RestResponse.ok(userOrder);
     }
