@@ -30,6 +30,7 @@ public class SaleSpecGroup extends Model<SaleSpecGroup> {
     private String weight;//回收重量
     private String recycleRemark;//回收备注
     private Integer serviceCount;//图文咨询次数
+    private Integer sendUrl=0;//是否发送支架url 0-不发送 1-发送
     @TableField(exist = false)
     private List<SaleSpecDesc> saleSpecDescList;//规格值信息
 }

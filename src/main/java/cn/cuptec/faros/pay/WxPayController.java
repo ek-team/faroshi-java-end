@@ -142,7 +142,7 @@ public class WxPayController {
             if (!userOrder.getStatus().equals(1)) {
                 return RestResponse.ok();
             }
-
+            String doctorTeamName = "";
 
             Integer patientUserId = userOrder.getPatientUserId();
             PatientUser byId = patientUserService.getById(patientUserId);
@@ -191,9 +191,11 @@ public class WxPayController {
                 }
                 //查询医生团队
                 Integer doctorTeamId = userOrder.getDoctorTeamId();
+
                 if (doctorTeamId != null) {
                     DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
                     if (doctorTeam != null) {
+                        doctorTeamName = doctorTeam.getName();
                         keyword1 = keyword1 + "医生团队:" + doctorTeam.getName();
                     }
                 }
@@ -286,10 +288,11 @@ public class WxPayController {
 
             List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds()));
             Integer serviceCount = null;
+            Integer sendUrl = 0;
             if (!CollectionUtils.isEmpty(saleSpecGroupList)) {
                 SaleSpecGroup saleSpecGroup = saleSpecGroupList.get(0);
                 serviceCount = saleSpecGroup.getServiceCount();
-
+                sendUrl = saleSpecGroup.getSendUrl();
             }
 
             if (!CollectionUtils.isEmpty(servicePackageInfos)) {
@@ -327,9 +330,12 @@ public class WxPayController {
                     for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
                         if (saleSpecDescIdList.contains(saleSpecDesc.getId() + "")) {
                             String name = saleSpecDesc.getName();
-                            if (name.equals("不带支架")) {
+                            if (name.equals("不带支架") && sendUrl.equals(1)) {
                                 //发送支架提醒
-
+                                LocalDateTime now = LocalDateTime.now();
+                                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "您的智能居家训练计划和智能居家训练鞋已支付成功，训练鞋需要搭配助行器和手机支架使用。我们挑选了几款不错的助行器供您挑选购买", doctorTeamName,
+                                        df.format(now), "pages/myOrder/myOrder");
                             }
                         }
                     }
