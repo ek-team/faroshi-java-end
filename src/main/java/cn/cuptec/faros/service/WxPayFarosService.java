@@ -1,6 +1,7 @@
 package cn.cuptec.faros.service;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.pay.PayResult;
@@ -9,12 +10,14 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 
+@AllArgsConstructor
 @Service
 public class WxPayFarosService {
     @Resource
@@ -25,7 +28,7 @@ public class WxPayFarosService {
     private DeptService deptService;
     @Resource
     private PatientOtherOrderService patientOtherOrderService;//患者其它订单
-
+    private final Url urlData;
 
     public RestResponse unifiedOrder(String orderNo, String tradeType) {
         if (StringUtils.isEmpty(tradeType)) {
@@ -39,7 +42,7 @@ public class WxPayFarosService {
             return RestResponse.failed("订单已支付");
         }
         Dept dept = deptService.getById(userOrder.getDeptId());
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
+        String url = urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);
@@ -56,7 +59,7 @@ public class WxPayFarosService {
         User user = userService.getById(SecurityUtils.getUser().getId());
 
         Dept dept = deptService.getById(deptId);
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + amount.multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
+        String url = urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + amount.multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);
@@ -72,7 +75,7 @@ public class WxPayFarosService {
         }
         Dept dept = deptService.getById(patientOtherOrder.getDeptId());
         User user = userService.getById(SecurityUtils.getUser().getId());
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount() + "").multiply(new BigDecimal(100)).intValue() + "&tradeType=JSAPI";
+        String url = urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount() + "").multiply(new BigDecimal(100)).intValue() + "&tradeType=JSAPI";
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue()+ "&tradeType=JSAPI";
         String result = HttpUtil.get(url);

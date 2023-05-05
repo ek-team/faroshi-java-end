@@ -73,6 +73,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
+    private UserServicePackageInfoService userServicePackageInfoService;
+    @Resource
     private WxPayFarosService wxPayFarosService;
     @Resource
     private AddressService addressService;
@@ -885,6 +887,18 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             //服务包信息
             List<Integer> servicePackIds = records.stream().map(UserOrder::getServicePackId)
                     .collect(Collectors.toList());
+            List<Integer> userServicePackInfoIds = records.stream().map(UserOrder::getUserServicePackageInfoId)
+                    .collect(Collectors.toList());
+            Map<Integer, UserServicePackageInfo> userServicePackInfoMap=new HashMap<>();
+            if(!CollectionUtils.isEmpty(userServicePackInfoIds)){
+                List<UserServicePackageInfo> userServicePackageInfos = (List<UserServicePackageInfo>) userServicePackageInfoService.listByIds(userServicePackInfoIds);
+                if(!CollectionUtils.isEmpty(userServicePackageInfos)){
+                     userServicePackInfoMap = userServicePackageInfos.stream()
+                             .collect(Collectors.toMap(UserServicePackageInfo::getId, t -> t));
+
+
+                }
+            }
             List<ServicePack> servicePacks = (List<ServicePack>) servicePackService.listByIds(servicePackIds);
             //查询服务包图片信息
             if (!CollectionUtils.isEmpty(servicePacks)) {
@@ -919,6 +933,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         .collect(Collectors.groupingBy(RentRuleOrder::getUserOrderNo));
             }
             for (UserOrder userOrder : records) {
+                UserServicePackageInfo userServicePackageInfo = userServicePackInfoMap.get(userOrder.getUserServicePackageInfoId());
+                userOrder.setUserServicePackageInfo(userServicePackageInfo);
                 userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
                 List<ServicePackageInfo> servicePackageInfos1 = servicePackageInfoMap.get(userOrder.getServicePackId());
                 userOrder.setServicePackageInfos(servicePackageInfos1);

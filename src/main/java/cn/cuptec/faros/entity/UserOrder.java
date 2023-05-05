@@ -48,7 +48,7 @@ public class UserOrder {
     @TableField(exist = false)
     private PatientUser patientUser;
     @TableField(exist = false)
-    private List<UserServicePackageInfo> userServicePackageInfos;//服务信息
+    private UserServicePackageInfo userServicePackageInfo;//服务信息
     @TableField(exist = false)
     private Integer isForm;//判断订单是否有表单
     @TableField(exist = false)

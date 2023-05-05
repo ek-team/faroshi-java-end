@@ -303,7 +303,7 @@ public class WxPayController {
                     userServicePackageInfo.setUserId(userOrder.getUserId());
                     userServicePackageInfo.setOrderId(userOrder.getId());
                     if (serviceCount != null) {
-                        userServicePackageInfo.setTotalCount(servicePackageInfo.getCount());
+                        userServicePackageInfo.setTotalCount(serviceCount);
                     }
                     userServicePackageInfo.setChatUserId(chatUser.getId());
                     userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());

@@ -9,4 +9,5 @@ import org.springframework.context.annotation.Configuration;
 @Data
 public class Url {
     private String url;
+    private String payUrl;
 }
