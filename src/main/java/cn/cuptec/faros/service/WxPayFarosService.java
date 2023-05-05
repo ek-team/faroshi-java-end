@@ -59,7 +59,7 @@ public class WxPayFarosService {
         User user = userService.getById(SecurityUtils.getUser().getId());
 
         Dept dept = deptService.getById(deptId);
-        String url = urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + amount.multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
+        String url =urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + amount.multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);
@@ -75,7 +75,7 @@ public class WxPayFarosService {
         }
         Dept dept = deptService.getById(patientOtherOrder.getDeptId());
         User user = userService.getById(SecurityUtils.getUser().getId());
-        String url = urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount() + "").multiply(new BigDecimal(100)).intValue() + "&tradeType=JSAPI";
+        String url =urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount() + "").multiply(new BigDecimal(100)).intValue() + "&tradeType=JSAPI";
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue()+ "&tradeType=JSAPI";
         String result = HttpUtil.get(url);
@@ -85,11 +85,4 @@ public class WxPayFarosService {
         return RestResponse.ok(data);
     }
 
-    public static void main(String[] args) {
-
-        PatientOtherOrder patientOtherOrder = new PatientOtherOrder();
-        patientOtherOrder.setAmount(0.13);
-        int i = new BigDecimal(patientOtherOrder.getAmount() + "").multiply(new BigDecimal("100")).intValue();
-        System.out.println(i);
-    }
 }

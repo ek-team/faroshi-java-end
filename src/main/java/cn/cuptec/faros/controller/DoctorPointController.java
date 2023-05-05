@@ -310,6 +310,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                                     .eq(ChatUser::getTargetUid, c.getTargetUid())
                                     .set(ChatUser::getChatDesc, "咨询")
                                     .set(ChatUser::getPatientOtherOrderStatus, "0")
+                                    .set(ChatUser::getPatientOtherOrderNo, id + "")
                                     .set(ChatUser::getChatCount, 9)
 
                             );
@@ -319,6 +320,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     chatUser.setChatDesc("咨询");
                     chatUser.setChatCount(9);
                     chatUser.setPatientOtherOrderStatus("0");
+                    chatUser.setPatientOtherOrderNo(id + "");
                     chatUserService.updateById(chatUser);
                 }
 
@@ -365,6 +367,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             }
         }
         patientOtherOrderService.save(patientOtherOrder);
+
+
         PayResultData data = new PayResultData();
         data.setOrderId(patientOtherOrder.getId());
         //添加待办事项
