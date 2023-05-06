@@ -435,7 +435,7 @@ public class WxPayController {
         // 续租订单
         RentRuleOrder rentRuleOrder = rentRuleOrderService.getOne(new QueryWrapper<RentRuleOrder>().lambda().eq(RentRuleOrder::getRentRuleOrderNo, outTradeNo));
         if (rentRuleOrder != null) {
-            if (!rentRuleOrder.getStatus().equals(2)) {
+            if (rentRuleOrder.getStatus().equals(2)) {
                 return RestResponse.ok();
             }
             rentRuleOrder.setStatus(2);

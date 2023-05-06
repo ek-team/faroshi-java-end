@@ -127,6 +127,19 @@ public class DeviceScanSignLogController extends AbstractBaseController<DeviceSc
     @PostMapping("/save")
     public RestResponse save(@RequestParam("macAddress") String macAddress, @RequestParam(value = "userId", required = false) String userId) {
         log.info("进入====================保存扫描设备:{}", macAddress);
+        if (SecurityUtils.getUser() != null && StringUtils.isEmpty(userId)) {
+            Integer id = SecurityUtils.getUser().getId();
+            log.info("微信用户id" + id);
+            if (id != null) {
+                List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, id));
+                if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+                    TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+                    userId = tbTrainUser.getUserId();
+                }
+            }
+
+        }
+
 
         log.info("保存扫描设备:{}", macAddress);
         log.info("保存扫描设备:{}", userId);
