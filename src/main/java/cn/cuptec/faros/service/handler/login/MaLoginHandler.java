@@ -65,7 +65,7 @@ public class MaLoginHandler extends AbstractLoginHandler {
             userService.save(user);
         }
 
-        if (StringUtils.isEmpty(user.getMaOpenId())) {
+        if (split.length == 1) { //获取购买小程序 openId
             //若小程序openId为空，更新
             user.setMaOpenId(sessionInfo.getOpenid());
             userService.updateById(user);
