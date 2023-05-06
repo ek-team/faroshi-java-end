@@ -449,10 +449,10 @@ public class WxPayController {
                     LocalDateTime now = LocalDateTime.now();
                     if (expiredTime.isAfter(now)) {
                         //没过期
-                        userServicePackageInfo.setExpiredTime(expiredTime.plusDays(Long.getLong(rentRuleOrder.getDay())));
+                        userServicePackageInfo.setExpiredTime(expiredTime.plusDays(Long.parseLong(rentRuleOrder.getDay())));
                     } else {
                         //过期
-                        userServicePackageInfo.setExpiredTime(now.plusDays(Long.getLong(rentRuleOrder.getDay())));
+                        userServicePackageInfo.setExpiredTime(now.plusDays(Long.parseLong(rentRuleOrder.getDay())));
 
                     }
                     if (rentRuleOrder.getServiceCount() != null) {

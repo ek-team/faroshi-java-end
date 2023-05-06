@@ -6,21 +6,20 @@ import cn.cuptec.faros.common.utils.http.ServletUtils;
 import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.service.CustomUser;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
-import cn.cuptec.faros.entity.HospitalInfo;
-import cn.cuptec.faros.entity.TbTrainUser;
-import cn.cuptec.faros.service.HospitalInfoService;
-import cn.cuptec.faros.service.PlanService;
-import cn.cuptec.faros.service.PlanUserService;
+import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.AllArgsConstructor;
 import org.springframework.security.oauth2.provider.ClientDetails;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @AllArgsConstructor
@@ -36,11 +35,48 @@ public class TestController {
     private PlanUserService planUserService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+    @Resource
+    private RentRuleOrderService rentRuleOrderService;
+    @Resource
+    private UserOrdertService userOrdertService;
+    @Resource
+    private UserServicePackageInfoService userServicePackageInfoService;
     @GetMapping("user")
     public RestResponse customUserInfo() {
 
-        wxMpService.sendDoctorUrlTip("oV8W46Jr8-9S-8aDSQ4Mcigwbwms", "您的智能居家训练计划和智能居家训练鞋已支付成功，训练鞋需要搭配助行器和手机支架使用。我们挑选了几款不错的助行器供您挑选购买", "22",
-                "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
+        RentRuleOrder rentRuleOrder = rentRuleOrderService.getOne(new QueryWrapper<RentRuleOrder>().lambda().eq(RentRuleOrder::getRentRuleOrderNo, "1654674697675079680"));
+        if (rentRuleOrder != null) {
+            if (rentRuleOrder.getStatus().equals(2)) {
+                return RestResponse.ok();
+            }
+            rentRuleOrder.setStatus(2);
+            rentRuleOrder.setTransactionId("4200001835202305066288764118");
+            rentRuleOrderService.updateById(rentRuleOrder);
+            UserOrder userOrderOne = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, rentRuleOrder.getUserOrderNo()));
+            List<UserServicePackageInfo> userServicePackageInfos = userServicePackageInfoService.list(new QueryWrapper<UserServicePackageInfo>().lambda().eq(UserServicePackageInfo::getOrderId, userOrderOne.getId()));
+            if (!CollectionUtils.isEmpty(userServicePackageInfos)) {
+                for (UserServicePackageInfo userServicePackageInfo : userServicePackageInfos) {
+                    LocalDateTime expiredTime = userServicePackageInfo.getExpiredTime();
+                    LocalDateTime now = LocalDateTime.now();
+                    if (expiredTime.isAfter(now)) {
+                        //没过期
+                        Long aLong = Long.getLong(rentRuleOrder.getDay());
+
+                        userServicePackageInfo.setExpiredTime(expiredTime.plusDays(aLong));
+                    } else {
+                        //过期
+                        userServicePackageInfo.setExpiredTime(now.plusDays(Long.getLong(rentRuleOrder.getDay())));
+
+                    }
+                    if (rentRuleOrder.getServiceCount() != null) {
+                        userServicePackageInfo.setTotalCount(userServicePackageInfo.getTotalCount() + rentRuleOrder.getServiceCount());
+                    }
+                }
+                userServicePackageInfoService.updateBatchById(userServicePackageInfos);
+            }
+
+
+        }
 //        List<HospitalInfo> list = hospitalInfoService.list();
 //        for (HospitalInfo importDoctor : list) {
 //            String hospitalInfoStr = importDoctor.getProvince() + importDoctor.getCity() + importDoctor.getArea() + importDoctor.getName();
