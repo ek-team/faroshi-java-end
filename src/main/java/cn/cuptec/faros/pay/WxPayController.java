@@ -1,6 +1,7 @@
 package cn.cuptec.faros.pay;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.pay.PayConfig;
 
 import cn.cuptec.faros.config.security.util.SecurityUtils;
@@ -97,7 +98,7 @@ public class WxPayController {
     private SaleSpecDescService saleSpecDescService;
     @Resource
     private SaleSpecService saleSpecService;
-
+    private final Url urlData;
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -202,8 +203,8 @@ public class WxPayController {
                 for (User user : clerkUser) {
                     if (clerkUser != null) {
                         if (!StringUtils.isEmpty(user.getMpOpenId())) {
-                            wxMpService.paySuccessNotice(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, userOrder.getPayment().toString(),
-                                    "请不要点击该消息，只作为通知", "pages/myOrder/myOrder");
+                            wxMpService.paySuccessNoticeSalesman(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, userOrder.getPayment().toString(),
+                                    "点击查看详情", urlData.getUrl()+"index.html#/salesman/orderDetailster?id="+outTradeNo);
                         }
 
                     }

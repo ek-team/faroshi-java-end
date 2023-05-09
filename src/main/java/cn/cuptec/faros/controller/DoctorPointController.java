@@ -164,14 +164,16 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             //查询医生图文咨询申请价格
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
                     .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
-                    .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1));
+                    .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
+                    .eq(DoctorUserAction::getStatus, 0));
             if (one != null) {
                 return RestResponse.ok(one);
             }
         } else {
             //查询团队图文咨询申请价格
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId())
+                    .eq(DoctorUserAction::getStatus, 0));
             if (one != null) {
                 return RestResponse.ok(one);
             }

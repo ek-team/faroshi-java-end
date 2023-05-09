@@ -43,10 +43,27 @@ public class DeliveryTime {
                 String time = datum.getTime();
                 LocalDateTime ldt = LocalDateTime.parse(time, df);
                 userOrder.setLogisticsDeliveryTime(ldt);
+                Integer state = userOrderMapTrace.getState();
+                if (state.equals(3)) {
+                    userOrder.setStatus(4);
+                }
             }
             userOrdertService.updateBatchById(list);
         }
-
+        List<UserOrder> list1 = userOrdertService.list(new QueryWrapper<UserOrder>().lambda()
+                .eq(UserOrder::getStatus, 3)
+        );
+        if (!CollectionUtils.isEmpty(list1)) {
+            for (UserOrder userOrder : list1) {
+                MapExpressTrackVo userOrderMapTrace = expressService.getUserOrderMapTrace(userOrder.getId());
+                MapExpressTrackVo.ExpressData[] data = userOrderMapTrace.getData();
+                Integer state = userOrderMapTrace.getState();
+                if (state.equals(3)) {
+                    userOrder.setStatus(4);
+                }
+            }
+            userOrdertService.updateBatchById(list);
+        }
     }
 
 }

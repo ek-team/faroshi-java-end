@@ -21,5 +21,5 @@ public class DoctorUserAction extends Model<DoctorUserAction> {
     private Integer hour;//过期时间
     private Double price;
     private Integer count;//接单数量限制
-
+    private Integer status=0; //0-正常 1-关闭
 }

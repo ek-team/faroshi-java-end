@@ -170,6 +170,29 @@ public class WxMpService {
         dataList.add(new WxMpTemplateData("remark", remark, "#FF0000"));
         sendTemplateMsg(openId, templateId, url, dataList);
     }
+    //支付成功通知业务员
+    public void paySuccessNoticeSalesman(String openId, String first, String keyword1,
+                                 String keyword2, String remark, String url) {
+        String templateId = "mzXslzSjZiMhCQJ6MQi_bcDJOVbDLl6sfLn6u_0gocI";
+        if(StringUtils.isEmpty(remark)){
+            remark="点击查看详情";
+        }
+        List<WxMpTemplateData> dataList = new ArrayList<>();
+        WxMpTemplateData wxMpTemplateData = new WxMpTemplateData();
+        wxMpTemplateData.setName("first");
+        wxMpTemplateData.setValue(first);
+        dataList.add(wxMpTemplateData);
+        WxMpTemplateData wxMpTemplateData1 = new WxMpTemplateData();
+        wxMpTemplateData1.setName("keyword1");
+        wxMpTemplateData1.setValue(keyword1);
+        dataList.add(wxMpTemplateData1);
+        WxMpTemplateData wxMpTemplateData2 = new WxMpTemplateData();
+        wxMpTemplateData2.setName("keyword2");
+        wxMpTemplateData2.setValue(keyword2);
+        dataList.add(wxMpTemplateData2);
+        dataList.add(new WxMpTemplateData("remark", remark, "#FF0000"));
+        sendUrlTemplateMsg(openId, templateId, url, dataList);
+    }
     //发货通知
     public void shipNotice(String openId, String first, String keyword1,
                                  String keyword2,String keyword3,String keyword4, String remark, String url) {

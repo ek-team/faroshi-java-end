@@ -113,7 +113,7 @@ public class WxMpMenuController {
         String token = getToken();
 
         String url = "https://api.weixin.qq.com/cgi-bin/tags/create?access_token=" + token;
-        String params = "{ \"tag\" : { \"name\" : \"医生\"}}";
+        String params = "{ \"tag\" : { \"name\" : \"业务员\"}}";
         String post = HttpUtil.post(url, body);
         System.out.println(post + "==========");
         return RestResponse.ok(post);
@@ -223,10 +223,7 @@ public class WxMpMenuController {
         page.setSize(1000);
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         List<Integer> roleIds = new ArrayList<>();
-        roleIds.add(17);
         roleIds.add(18);
-        roleIds.add(19);
-        roleIds.add(7);
         IPage<User> userIPage = userService.queryUserByRole(roleIds, queryWrapper, page);
         List<User> records = userIPage.getRecords();
         if (CollectionUtils.isEmpty(records)) {
@@ -239,7 +236,7 @@ public class WxMpMenuController {
             }
         }
         UserTag userTag = new UserTag();
-        userTag.setTagid(103);
+        userTag.setTagid(100);
         userTag.setOpenid_list(openid_list);
         batchTaggings(userTag);
         System.out.println(1);

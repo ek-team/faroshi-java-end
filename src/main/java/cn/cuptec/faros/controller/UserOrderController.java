@@ -71,6 +71,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private ServicePackService servicePackService;
     @Resource
+    private HospitalInfoService hospitalInfoService;
+    @Resource
     private ServicePackProductPicService servicePackProductPicService;
     @Resource
     private UserServicePackageInfoService userServicePackageInfoService;
@@ -1072,6 +1074,14 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setServicePackageInfos(servicePackageInfo);
         //服务包信息
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+        //查询服务包医院
+        Integer hospitalId = servicePack.getHospitalId();
+        if (hospitalId != null) {
+            HospitalInfo byId = hospitalInfoService.getById(hospitalId);
+            if (byId != null) {
+                servicePack.setHospitalName(byId.getName());
+            }
+        }
         //查询服务包图片信息
         if (servicePack != null) {
             List<ServicePackProductPic> servicePackProductPics = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()

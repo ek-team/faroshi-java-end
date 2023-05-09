@@ -59,8 +59,8 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
     @PostMapping("/openService")
     public RestResponse openService(@RequestBody DoctorUserAction doctorUserAction) {
         doctorUserAction.setUserId(SecurityUtils.getUser().getId());
-
-        service.save(doctorUserAction);
+        doctorUserAction.setStatus(0);
+        service.saveOrUpdate(doctorUserAction);
         return RestResponse.ok();
     }
 
@@ -71,7 +71,10 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
      */
     @GetMapping("/closeService")
     public RestResponse closeService(@RequestParam("id") String id) {
-        service.removeById(id);
+        DoctorUserAction doctorUserAction = new DoctorUserAction();
+        doctorUserAction.setId(Integer.parseInt(id));
+        doctorUserAction.setStatus(1);
+        service.updateById(doctorUserAction);
         return RestResponse.ok();
     }
 

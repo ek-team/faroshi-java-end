@@ -45,8 +45,8 @@ public class FarosApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        //final ChatServer server = new ChatServer(8018);
-        final ChatServer server = new ChatServer(8098);
+        final ChatServer server = new ChatServer(8018);
+        //final ChatServer server = new ChatServer(8098);
         server.init();
         server.start();
         // 注册进程钩子，在JVM进程关闭前释放资源
