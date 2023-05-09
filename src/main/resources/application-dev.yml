@@ -6,11 +6,9 @@ logging:
     org.springframework.security: debug
 
 server:
-  port: 10011
+  port: 10049
 
 spring:
-  profiles:
-    active: test #需要使用的配置文件的后缀
   application:
     name: faros
   datasource:
@@ -19,7 +17,7 @@ spring:
       driver-class-name: com.mysql.cj.jdbc.Driver
       username: ${MYSQL-USER:root}
       password: ${MYSQL-PWD:Ctm@_2017}
-      url: jdbc:mysql://${MYSQL-HOST:119.37.193.94}:${MYSQL-PORT:3306}/${MYSQL-DB:faros4}?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&allowMultiQueries=true
+      url: jdbc:mysql://${MYSQL-HOST:119.37.193.94}:${MYSQL-PORT:3306}/${MYSQL-DB:faros3}?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&allowMultiQueries=true
   redis:
     database: 3
     port: 6379
@@ -98,10 +96,9 @@ tx:
     admin: administrator
 
 com:
-  #url: https://pharos3.ewj100.com/
-  #payUrl: https://api.redadzukibeans.com/weChat/wxpayother/otherOrder
-  payUrl: https://api.redadzukibeans.com/weChat/wxpayother/testotherOrder
-  url: https://api.jhxiao-school.com/
+  url: https://pharos3.ewj100.com/
+  payUrl: https://api.redadzukibeans.com/weChat/wxpayother/otherOrder
+  chatServer: 8098
 
 alipay:
   alipayPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqnvbm/slPh1TKRx3u/GpNbwCObJACqnSfsj72hEHlB8mDMivA6GvYpxbct1gGqQKknBZntbq4pgqY48ugDVFfVqbV14xKA74KGoMK0k87mHTSkSnXURsUXmgAnM7h44hhsPWAFlxUhJT+m6gt51+ltA4txigMXcvJtTSapJHU7nyzNFZ7fXqSzLQ1ZIiVgx8zuVGAnDbWimwd4O8+yVrxYuic2ZOO+2Qt5s91TwtTMOasfcXv/S4TB82v8t6g9gWm9riY9RvJ6gEucZkMkQvV4etU8s4CEIzud9ybqUOfhZguocSXMtTxHU3PdM1HhzktMj68cgP50vgDAdGBt9CTQIDAQAB

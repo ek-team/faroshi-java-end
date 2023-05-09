@@ -99,6 +99,7 @@ public class WxPayController {
     @Resource
     private SaleSpecService saleSpecService;
     private final Url urlData;
+
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
@@ -204,7 +205,7 @@ public class WxPayController {
                     if (clerkUser != null) {
                         if (!StringUtils.isEmpty(user.getMpOpenId())) {
                             wxMpService.paySuccessNoticeSalesman(user.getMpOpenId(), "您的客户已成功下单，请您尽快处理！", keyword1, userOrder.getPayment().toString(),
-                                    "点击查看详情", urlData.getUrl()+"index.html#/salesman/orderDetailster?id="+outTradeNo);
+                                    "点击查看详情", urlData.getUrl() + "index.html#/salesman/orderDetailster?id=" + outTradeNo);
                         }
 
                     }
@@ -293,7 +294,7 @@ public class WxPayController {
             Integer sendUrl = 0;
             if (!CollectionUtils.isEmpty(saleSpecGroupList)) {
                 SaleSpecGroup saleSpecGroup = saleSpecGroupList.get(0);
-                if(saleSpecGroup.getServiceCount()!=null){
+                if (saleSpecGroup.getServiceCount() != null) {
                     serviceCount = saleSpecGroup.getServiceCount();
                 }
                 sendUrl = saleSpecGroup.getSendUrl();
@@ -306,7 +307,7 @@ public class WxPayController {
                     userServicePackageInfo.setUserId(userOrder.getUserId());
                     userServicePackageInfo.setOrderId(userOrder.getId());
 
-                        userServicePackageInfo.setTotalCount(serviceCount);
+                    userServicePackageInfo.setTotalCount(serviceCount);
 
                     userServicePackageInfo.setChatUserId(chatUser.getId());
                     userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
@@ -565,14 +566,26 @@ public class WxPayController {
                     userOrder.setActualRetrieveAmount(divide);
                     userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
                     userOrdertService.updateById(userOrder);
+                    User userById = userService.getById(retrieveOrder.getUserId());
+                    //发送公众号通知
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                    wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
+                            "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
                 }
-                User userById = userService.getById(retrieveOrder.getUserId());
-                //发送公众号通知
-                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, outRefundNo));
+                if (userOrder != null) {
+                    userOrder.setStatus(7);
+                    userOrdertService.updateById(userOrder);
 
-                wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
-                        "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
+                    User userById = userService.getById(userOrder.getUserId());
+                    //发送公众号通知
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+                    wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
+                            "点击查看详情", "pages/myOrder/myOrder");
+
+                }
             }
 
         }

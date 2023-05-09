@@ -9,8 +9,6 @@ server:
   port: 10011
 
 spring:
-  profiles:
-    active: test #需要使用的配置文件的后缀
   application:
     name: faros
   datasource:
@@ -56,8 +54,8 @@ file-upload:
 wx:
   #公众号
   mp:
-    appId: wx0ed9d77369636eb3
-    secret: 31afe6666a17a2fbe3dd44ae6d09f7ab
+    appId: wxbd00156e33ccca64
+    secret: 328612338fd922f3be1c49b20b945427
     token: weixin
   #测试公众号
   mp1:
@@ -98,11 +96,9 @@ tx:
     admin: administrator
 
 com:
-  #url: https://pharos3.ewj100.com/
-  #payUrl: https://api.redadzukibeans.com/weChat/wxpayother/otherOrder
   payUrl: https://api.redadzukibeans.com/weChat/wxpayother/testotherOrder
   url: https://api.jhxiao-school.com/
-
+  chatServer: 8018
 alipay:
   alipayPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqnvbm/slPh1TKRx3u/GpNbwCObJACqnSfsj72hEHlB8mDMivA6GvYpxbct1gGqQKknBZntbq4pgqY48ugDVFfVqbV14xKA74KGoMK0k87mHTSkSnXURsUXmgAnM7h44hhsPWAFlxUhJT+m6gt51+ltA4txigMXcvJtTSapJHU7nyzNFZ7fXqSzLQ1ZIiVgx8zuVGAnDbWimwd4O8+yVrxYuic2ZOO+2Qt5s91TwtTMOasfcXv/S4TB82v8t6g9gWm9riY9RvJ6gEucZkMkQvV4etU8s4CEIzud9ybqUOfhZguocSXMtTxHU3PdM1HhzktMj68cgP50vgDAdGBt9CTQIDAQAB
   appId: 2021003190689317

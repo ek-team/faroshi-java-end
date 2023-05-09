@@ -113,7 +113,7 @@ public class UserOrder {
     //终端用户id
     private Integer userId;
 
-    //订单状态 0-待确认 1-待付款 2-待发货 3-待收货 4-已收货 5-已回收 6-已取消
+    //订单状态 0-待确认 1-待付款 2-待发货 3-待收货 4-已收货 5-已回收 6-已取消 7-已退款
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;
     private LocalDateTime payTime;//支付时间

@@ -1,6 +1,8 @@
 package cn.cuptec.faros;
 
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.im.ChatServer;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.filters.CorsFilter;
 import org.springframework.boot.CommandLineRunner;
@@ -22,7 +24,10 @@ import javax.servlet.MultipartConfigElement;
 @ComponentScan("cn.cuptec.faros.*")
 @EnableTransactionManagement
 @EnableScheduling
+@AllArgsConstructor
 public class FarosApplication implements CommandLineRunner {
+
+    private final Url url;
 
     public static void main(String[] args) {
         SpringApplication.run(FarosApplication.class, args);
@@ -45,7 +50,7 @@ public class FarosApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        final ChatServer server = new ChatServer(8018);
+        final ChatServer server = new ChatServer(Integer.parseInt(url.getChatServer()));
         //final ChatServer server = new ChatServer(8098);
         server.init();
         server.start();

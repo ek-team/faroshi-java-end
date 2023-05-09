@@ -10,4 +10,5 @@ import org.springframework.context.annotation.Configuration;
 public class Url {
     private String url;
     private String payUrl;
+    private String chatServer;
 }

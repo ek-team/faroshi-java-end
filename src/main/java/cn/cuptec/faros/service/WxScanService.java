@@ -141,14 +141,14 @@ public class WxScanService {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String time = df.format(now);
                 wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctor.getNickname(), time,
-                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token);
+                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token+"&doctorId="+doctor.getId());
             }
             if (doctorTeam != null) {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String time = df.format(now);
                 wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctorTeam.getName(), time,
-                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token);
+                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token+"&doctorTeamId="+doctorTeam.getId());
             }
         }
 

@@ -3,6 +3,7 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.utils.QrCodeUtil;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
@@ -16,6 +17,7 @@ import cn.cuptec.faros.util.UploadFileUtils;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.PutObjectResult;
@@ -100,7 +102,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private RentRuleService rentRuleService;
     @Resource
     private PlanUserService planUserService;
-
+    @Resource
+    private OrderRefundInfoService orderRefundInfoService;
+    @Resource
+    private DeptService deptService;
+    private final Url urlData;
     /**
      * 查询订单的续租记录
      */
@@ -632,6 +638,43 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
         return RestResponse.ok(resultStr);
 
+    }
+    /**
+     * 发货之前取消订单
+     */
+    @GetMapping("/cancelOrder")
+    public RestResponse cancelOrder(@RequestParam("orderNo") String orderNo) {
+        String[] split = orderNo.split("-");
+        if (split.length == 1) {
+            orderNo = split[0];
+        } else {
+            orderNo = split[1];
+        }
+        UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, orderNo));
+        if (!userOrder.getStatus().equals(1)) {
+            return RestResponse.failed("用户未支付");
+        }
+        //添加退款记录
+        OrderRefundInfo orderRefunds = new OrderRefundInfo();
+        orderRefunds.setOrderId(orderNo);
+        orderRefunds.setRefundReason("发货之前取消");
+        orderRefunds.setRefundFee(userOrder.getPayment().multiply(new BigDecimal("100")));
+        orderRefunds.setCreateId(SecurityUtils.getUser().getId());
+        orderRefunds.setCreateTime(new Date());
+        orderRefunds.setRefundStatus(1);
+        orderRefunds.setRetrieveOrderId(userOrder.getId());
+        orderRefunds.setOrderRefundNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        orderRefunds.setTransactionId(userOrder.getTransactionId());
+        orderRefundInfoService.save(orderRefunds);
+
+
+        Dept dept = deptService.getById(userOrder.getDeptId());
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder?orderNo=" + orderNo + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal("100")).intValue() + "&refundFee=" + userOrder.getPayment().multiply(new BigDecimal("100")).intValue();
+
+        //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
+        String result = HttpUtil.get(url);
+
+        return RestResponse.ok();
     }
 
     /**
