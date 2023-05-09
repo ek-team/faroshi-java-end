@@ -107,6 +107,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private DeptService deptService;
     private final Url urlData;
+
     /**
      * 查询订单的续租记录
      */
@@ -639,6 +640,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         return RestResponse.ok(resultStr);
 
     }
+
     /**
      * 发货之前取消订单
      */
@@ -654,25 +656,31 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         if (!userOrder.getStatus().equals(1)) {
             return RestResponse.failed("用户未支付");
         }
-        //添加退款记录
-        OrderRefundInfo orderRefunds = new OrderRefundInfo();
-        orderRefunds.setOrderId(orderNo);
-        orderRefunds.setRefundReason("发货之前取消");
-        orderRefunds.setRefundFee(userOrder.getPayment().multiply(new BigDecimal("100")));
-        orderRefunds.setCreateId(SecurityUtils.getUser().getId());
-        orderRefunds.setCreateTime(new Date());
-        orderRefunds.setRefundStatus(1);
-        orderRefunds.setRetrieveOrderId(userOrder.getId());
-        orderRefunds.setOrderRefundNo(IdUtil.getSnowflake(0, 0).nextIdStr());
-        orderRefunds.setTransactionId(userOrder.getTransactionId());
-        orderRefundInfoService.save(orderRefunds);
+        //生成回收单
+        RetrieveOrder retrieveOrder = new RetrieveOrder();
+        retrieveOrder.setUserId(userOrder.getUserId());
+        retrieveOrder.setCreateTime(new Date());
+        retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        retrieveOrder.setStatus(1);
+        retrieveOrder.setUserOrderNo(userOrder.getOrderNo());
+        retrieveOrder.setOrderId(userOrder.getId() + "");
+        retrieveOrder.setDeptId(userOrder.getDeptId());
 
+        Long day = 1L;
+        if (userOrder != null) {
+            Date deliveryTime = userOrder.getDeliveryTime();
+            Instant instant = deliveryTime.toInstant();
+            ZoneId zoneId = ZoneId.systemDefault();
 
-        Dept dept = deptService.getById(userOrder.getDeptId());
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder?orderNo=" + orderNo + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal("100")).intValue() + "&refundFee=" + userOrder.getPayment().multiply(new BigDecimal("100")).intValue();
+            LocalDateTime localDateDeliveryTime = instant.atZone(zoneId).toLocalDateTime();
 
-        //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
-        String result = HttpUtil.get(url);
+            LocalDateTime now = LocalDateTime.now();
+            java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
+            day = duration.toDays();
+
+        }
+        retrieveOrder.setRentDay(day.intValue());
+        retrieveOrderService.saveRetrieveOrder(retrieveOrder);
 
         return RestResponse.ok();
     }

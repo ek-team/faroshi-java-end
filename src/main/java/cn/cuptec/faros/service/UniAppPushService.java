@@ -18,17 +18,19 @@ import com.getui.push.v2.sdk.dto.req.message.android.Ups;
 import com.getui.push.v2.sdk.dto.req.message.ios.Alert;
 import com.getui.push.v2.sdk.dto.req.message.ios.Aps;
 import com.getui.push.v2.sdk.dto.req.message.ios.IosDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Map;
-
+@Slf4j
 @Service
 public class UniAppPushService {
     @Resource
     private UserService userService;
 
     public void send(String title, String body, String userId, String url) {
+        log.info("发送通知消息"+userId);
         User user = userService.getById(userId);
         if (user == null || StringUtils.isEmpty(user.getCid())) {
             return;

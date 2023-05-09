@@ -573,19 +573,7 @@ public class WxPayController {
                     wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
                             "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
                 }
-                UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, outRefundNo));
-                if (userOrder != null) {
-                    userOrder.setStatus(7);
-                    userOrdertService.updateById(userOrder);
 
-                    User userById = userService.getById(userOrder.getUserId());
-                    //发送公众号通知
-                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-                    wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
-                            "点击查看详情", "pages/myOrder/myOrder");
-
-                }
             }
 
         }
