@@ -653,34 +653,32 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             orderNo = split[1];
         }
         UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, orderNo));
-        if (!userOrder.getStatus().equals(1)) {
+        if (!userOrder.getStatus().equals(2)) {
             return RestResponse.failed("用户未支付");
         }
+        userOrder.setStatus(7);
+        service.updateById(userOrder);
         //生成回收单
         RetrieveOrder retrieveOrder = new RetrieveOrder();
         retrieveOrder.setUserId(userOrder.getUserId());
         retrieveOrder.setCreateTime(new Date());
         retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
-        retrieveOrder.setStatus(1);
+        retrieveOrder.setStatus(3);
         retrieveOrder.setUserOrderNo(userOrder.getOrderNo());
         retrieveOrder.setOrderId(userOrder.getId() + "");
         retrieveOrder.setDeptId(userOrder.getDeptId());
 
         Long day = 1L;
-        if (userOrder != null) {
-            Date deliveryTime = userOrder.getDeliveryTime();
-            Instant instant = deliveryTime.toInstant();
-            ZoneId zoneId = ZoneId.systemDefault();
 
-            LocalDateTime localDateDeliveryTime = instant.atZone(zoneId).toLocalDateTime();
-
-            LocalDateTime now = LocalDateTime.now();
-            java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
-            day = duration.toDays();
-
-        }
         retrieveOrder.setRentDay(day.intValue());
         retrieveOrderService.saveRetrieveOrder(retrieveOrder);
+
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(userOrder.getId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("订单取消");
+        updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+        updateOrderRecordService.save(updateOrderRecord);
 
         return RestResponse.ok();
     }
@@ -1088,12 +1086,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        String str = "asdf";
-        String regEx = "[^0-9]";
-        Pattern p = Pattern.compile(regEx);
-        Matcher m = p.matcher(str);
-        String result = m.replaceAll("").trim();
-        System.out.println(result);
+        Integer status = 1;
+        if (status >= 1 && status <= 2) {
+            System.out.println(status);
+        }
+
     }
 
     /**

@@ -317,6 +317,8 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         }
         retrieveOrder.setRentDay(day.intValue());
         service.saveRetrieveOrder(retrieveOrder);
+        userOrder.setStatus(5);
+        userOrdertService.updateById(userOrder);
         return RestResponse.ok();
     }
 
@@ -334,7 +336,13 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         RetrieveAmountDto retrieveAmountDto = new RetrieveAmountDto();
         RetrieveOrder retrieveOrder = service.getById(id);
         UserOrder userOrder = userOrdertService.getById(retrieveOrder.getOrderId());
-
+        if (userOrder.getStatus().equals(7)) {
+            retrieveAmountDto.setAmount(userOrder.getPayment());
+            retrieveAmountDto.setReviewData("订单已被取消");
+            retrieveAmountDto.setTotalAmount(userOrder.getPayment());
+            retrieveAmountDto.setPayTime(userOrder.getPayTime());
+            return RestResponse.ok(retrieveAmountDto);
+        }
         Integer rentDay = retrieveOrder.getRentDay();
         retrieveAmountDto.setRentDay(rentDay);
         BigDecimal amount = new BigDecimal(0);
@@ -618,6 +626,8 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             retrieveOrder.setTaskId(xiaDanParam.getData().getTaskId());
             retrieveOrder.setDeliveryCompanyCode(param.getCom());
             service.saveRetrieveOrder(retrieveOrder);
+            userOrder.setStatus(5);
+            userOrdertService.updateById(userOrder);
             return RestResponse.ok();
         }
         return RestResponse.failed(xiaDanParam.getMessage());

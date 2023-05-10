@@ -55,8 +55,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     @Transactional
     public boolean saveRetrieveOrder(RetrieveOrder entity) {
         UserOrder userOrder = userOrdertService.getById(entity.getOrderId());
-        userOrder.setStatus(5);
-        userOrdertService.updateById(userOrder);
+
         List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
                 .eq(ServicePackProductPic::getServicePackId, userOrder.getServicePackId()));
         entity.setProductPic(list.get(0).getImage());

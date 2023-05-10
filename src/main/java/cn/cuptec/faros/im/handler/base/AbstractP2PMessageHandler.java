@@ -197,6 +197,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         if (targetUserChannel != null) {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                         } else {
+
                             uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
 
                             User user = userService.getById(userId);
