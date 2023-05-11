@@ -62,6 +62,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             //
             SocketUser userInfo = UserChannelManager.getUserInfo(channel);
             User fromUser = userInfo.getUserInfo();
+            User byId2 = userService.getById(fromUser.getId());
+            fromUser.setPatientName(byId2.getPatientName());
             if (fromUser.getId() == null) {
                 channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.authRequired())));
                 return;
@@ -156,7 +158,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                 } else {
-                    uniAppPushService.send("法罗适", origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
+                    uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
                     User user = userService.getById(origionMessage.getTargetUid());
                     if (!StringUtils.isEmpty(user.getMpOpenId())) {
                         LocalDateTime now = LocalDateTime.now();
@@ -198,7 +200,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                         } else {
 
-                            uniAppPushService.send("法罗适", origionMessage.getMsg(), userId, "");
+                            uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), userId, "");
 
                             User user = userService.getById(userId);
                             if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {

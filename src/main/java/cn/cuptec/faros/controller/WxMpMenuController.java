@@ -147,7 +147,12 @@ public class WxMpMenuController {
     }
 
     public String batchTaggings(UserTag userTag) {
-        String token = getToken();
+        String token = null;
+        try {
+            token = WxMpConfiguration.getWxMpService().getAccessToken();
+        } catch (WxErrorException e) {
+            e.printStackTrace();
+        }
         String url = "https://api.weixin.qq.com/cgi-bin/tags/members/batchtagging?access_token=" + token;
         String params = JSONObject.toJSONString(userTag);
         String post = HttpUtil.post(url, params);
@@ -159,8 +164,12 @@ public class WxMpMenuController {
      */
     @GetMapping("/batchCancelTagging")
     public RestResponse batchCancelTagging(@RequestParam("tagId") int tagId, @RequestParam("mpOpenId") String mpOpenId) {
-
-        String token = getToken();
+        String token = null;
+        try {
+            token = WxMpConfiguration.getWxMpService().getAccessToken();
+        } catch (WxErrorException e) {
+            e.printStackTrace();
+        }
         String url = "https://api.weixin.qq.com/cgi-bin/tags/members/batchuntagging?access_token=" + token;
         UserTag userTag = new UserTag();
         userTag.setTagid(tagId);
@@ -178,7 +187,12 @@ public class WxMpMenuController {
      */
     @GetMapping("/gettagidlist")
     public RestResponse getTagIdList(@RequestParam(value = "openId", required = false) String openId) {
-        String token = getToken();
+        String token = null;
+        try {
+            token = WxMpConfiguration.getWxMpService().getAccessToken();
+        } catch (WxErrorException e) {
+            e.printStackTrace();
+        }
         String url = "https://api.weixin.qq.com/cgi-bin/tags/getidlist?access_token=" + token;
         TagOpenId tagOpenId = new TagOpenId();
         tagOpenId.setOpenid(openId);
