@@ -98,7 +98,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     private ServicePackService servicePackService;
     @Resource
     private DoctorTeamService doctorTeamService;
-    private final Url url;
+    private final Url urlData;
     @Resource
     private OperationRecordService operationRecordService;
 
@@ -350,7 +350,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
      */
     @GetMapping("/getQrCode")
     public RestResponse getQrCode(@RequestParam("userId") String userId) {
-        String url = "https://pharos3.ewj100.com/user/srBindAdress/" + userId;
+        String url =urlData.getUrl()+ "user/srBindAdress/" + userId;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.drawLogoQRCode(ServletUtils.getResponse().getOutputStream(), "png", "", url, "", 300, "", 2);
@@ -367,7 +367,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
      */
     @GetMapping("/getRegisterPlanUserQrCode")
     public RestResponse getRegisterPlanUserQrCode(@RequestParam("macAdd") String macAdd) {
-        String url = "https://pharos3.ewj100.com/palnUser/registerPlanUser/" + macAdd;
+        String url = urlData.getUrl()+"palnUser/registerPlanUser/" + macAdd;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.drawLogoQRCode(ServletUtils.getResponse().getOutputStream(), "png", "", url, "", 300, "", 2);
@@ -385,7 +385,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @SneakyThrows
     @GetMapping("/registerPlanUser/{macAdd}")
     public void registerPlanUser(@PathVariable String macAdd, HttpServletResponse response) {
-        response.sendRedirect(url.getUrl() + QrCodeConstants.REGISTER_PLAN_USER_URL + "?macAdd=" + macAdd);
+        response.sendRedirect(urlData.getUrl() + QrCodeConstants.REGISTER_PLAN_USER_URL + "?macAdd=" + macAdd);
     }
 
     /**
