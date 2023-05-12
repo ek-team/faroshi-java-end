@@ -2,7 +2,7 @@
 
 logging:
   level:
-    cn.cuptec.avr: debug
+    cn.cuptec.avr: debugdoux
     org.springframework.security: debug
 
 server:
@@ -52,7 +52,7 @@ file-upload:
   path: D:\imgs
 
 wx:
-  #公众号
+  #测试购买公众号
   mp:
     appId: wxbd00156e33ccca64
     secret: 328612338fd922f3be1c49b20b945427
@@ -64,9 +64,9 @@ wx:
     token: weixin
     #小程序
   ma:
-    #购买小程序
-    app-id: wxad59cd874b45bb96
-    secret: d5bc744d1fd9411e159e369f5ba7199d
+    #测试购买小程序
+    app-id: wx347d83ad4078ede4
+    secret: 8ec2ecd62adc7f6b544451376ccca90f
   ma1:
     #下肢训练小程序
     app-id: wx5e46dffdc68e71cd

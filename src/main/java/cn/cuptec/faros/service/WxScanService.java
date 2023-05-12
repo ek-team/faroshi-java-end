@@ -34,6 +34,8 @@ import java.util.Map;
 public class WxScanService {
 
     @Resource
+    private WxMpTagService wxMpTagService;
+    @Resource
     private UserService userService;
     @Resource
     private UserRoleService userRoleService;
@@ -126,10 +128,10 @@ public class WxScanService {
                 user.setIsSubscribe(true);
                 userService.updateById(user);
                 //查询该用户的权限
-//                    List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
-//                            .in(UserRole::getUserId, user.getId()));
+                    List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
+                            .in(UserRole::getUserId, user.getId()));
 
-                //wxMpTagService.batchTaggings(userRoles, user.getId());
+                wxMpTagService.batchTaggings(userRoles, user.getId());
             }
             if (byId != null) {
                 wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", byId.getName(), "法罗适",

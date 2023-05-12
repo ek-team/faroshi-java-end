@@ -781,6 +781,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setOrderType(orderType);
         userOrder.setProductPic(saleSpecGroup.getUrlImage());
         service.save(userOrder);
+        if (userOrder.getPayType().equals(2)) {
+            return RestResponse.ok(userOrder);
+        }
         //生成一个图片返回
         String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" + userOrder.getOrderNo();
         BufferedImage png = null;

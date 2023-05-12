@@ -167,7 +167,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/planUserTrainRecord/getByIdCard",
                         "/xPic/uploadXPian",
                         "/alipay/notifyAliOrder",
-                        "/uniAppPush/send"
+                        "/uniAppPush/send",
+                        "/alipay/pay"
 
                 )
                 .permitAll()
