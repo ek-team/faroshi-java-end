@@ -2,7 +2,7 @@
 
 logging:
   level:
-    cn.cuptec.avr: debugdoux
+    cn.cuptec.avr: debug
     org.springframework.security: debug
 
 server:
