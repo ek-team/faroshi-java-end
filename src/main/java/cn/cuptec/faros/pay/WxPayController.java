@@ -332,30 +332,37 @@ public class WxPayController {
             userOrdertService.updateById(userOrder);
 
             //判断用户是否选择了发送支架链接规格
-            String saleSpecDescIdList = userOrder.getSaleSpecDescIdList();
-            List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
-                    .eq(SaleSpec::getServicePackId, userOrder.getServicePackId())
-                    .eq(SaleSpec::getName, "支架选择"));
-            if (!CollectionUtils.isEmpty(saleSpecList)) {
-                SaleSpec saleSpec = saleSpecList.get(0);
-                List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
-                        .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId())
-                );
-                if (!CollectionUtils.isEmpty(saleSpecDescList)) {
-                    for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                        if (saleSpecDescIdList.contains(saleSpecDesc.getId() + "")) {
-                            String name = saleSpecDesc.getName();
-                            if (name.equals("不带支架") && sendUrl.equals(1)) {
-                                //发送支架提醒
-                                LocalDateTime now = LocalDateTime.now();
-                                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
-                                        "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
-                            }
-                        }
-                    }
-                }
+            if (sendUrl.equals(1)) {
+                //发送支架提醒
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
+                        "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
             }
+//            String saleSpecDescIdList = userOrder.getSaleSpecDescIdList();
+//            List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
+//                    .eq(SaleSpec::getServicePackId, userOrder.getServicePackId())
+//                    .eq(SaleSpec::getName, "支架选择"));
+//            if (!CollectionUtils.isEmpty(saleSpecList)) {
+//                SaleSpec saleSpec = saleSpecList.get(0);
+//                List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
+//                        .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId())
+//                );
+//                if (!CollectionUtils.isEmpty(saleSpecDescList)) {
+//                    for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+//                        if (saleSpecDescIdList.contains(saleSpecDesc.getId() + "")) {
+//                            String name = saleSpecDesc.getName();
+//                            if (name.equals("不带支架") && sendUrl.equals(1)) {
+//                                //发送支架提醒
+//                                LocalDateTime now = LocalDateTime.now();
+//                                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+//                                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
+//                                        "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
+//                            }
+//                        }
+//                    }
+//                }
+//            }
 
         }
         //图文咨询订单处理
