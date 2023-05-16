@@ -3,6 +3,7 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.utils.QrCodeUtil;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.datascope.DataScope;
 import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
@@ -65,6 +66,8 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     private UserRoleService userRoleService;
     @Resource
     private DoctorTeamDeptService doctorTeamDeptService;
+
+    private final Url urlData;
 
     private final OssProperties ossProperties;
     private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
@@ -239,7 +242,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         doctorTeam.setCreateTime(LocalDateTime.now());
         service.save(doctorTeam);
         //生成一个图片返回
-        String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + doctorTeam.getId() + "-";
+        String url = urlData.getUrl()+"index.html#/newPlatform/addFriends?doctorId=" + doctorTeam.getId() + "-";
         BufferedImage png = null;
         try {
             png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);

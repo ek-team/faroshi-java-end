@@ -9,6 +9,7 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -23,17 +24,21 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -99,6 +104,8 @@ public class WxPayController {
     @Resource
     private SaleSpecService saleSpecService;
     private final Url urlData;
+    @Autowired
+    public RedisTemplate redisTemplate;
 
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
@@ -144,6 +151,9 @@ public class WxPayController {
             if (!userOrder.getStatus().equals(1)) {
                 return RestResponse.ok();
             }
+
+
+
             String doctorTeamName = "";
 
             Integer patientUserId = userOrder.getPatientUserId();
@@ -589,9 +599,8 @@ public class WxPayController {
     }
 
     public static void main(String[] args) {
-        BigDecimal bigDecimal = new BigDecimal(1);
-        BigDecimal divide = bigDecimal.divide(new BigDecimal(100));
-        System.out.println(divide);
+        Duration sjc = Duration.between(LocalDateTime.now(), LocalDateTime.now().plusMonths(1));// 计算时间差
+        System.out.println(sjc.toDays());
     }
 
     @ApiOperation(value = "图文咨询订单申请退款")

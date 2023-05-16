@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import javax.jws.soap.SOAPBinding;
+import java.time.LocalDateTime;
 
 /**
  * 就诊人和医生的绑定

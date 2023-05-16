@@ -49,6 +49,8 @@ public class TbSubPlan implements Comparable<TbSubPlan>{
     private int initStart;//是否是初使计划 1-是 2-不是
     @TableField(exist = false)
     private Integer newStatus;
+    @TableField(exist = false)
+    private Integer updateStatus;//同步到老平台的状态
 
     @Override
     public int compareTo(TbSubPlan o) {

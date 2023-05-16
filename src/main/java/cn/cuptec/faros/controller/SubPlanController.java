@@ -19,6 +19,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -220,8 +221,38 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         return RestResponse.ok();
     }
 
+    @PostMapping("/saveOrUpdate")
+    public RestResponse saveOrUpdate(@RequestBody List<TbSubPlan> subPlanEntity) {
+        service.remove(new QueryWrapper<TbSubPlan>().lambda().eq(TbSubPlan::getUserId, subPlanEntity.get(0).getUserId()));
+        String url = "http://pharos.ewj100.com/subPlan/listByUserId?userId=" + subPlanEntity.get(0).getUserId();
+        String post = HttpUtil.get(url);
+        List<TbSubPlan> objectList = JSONObject.parseArray(post, TbSubPlan.class);
+        log.info("kaskdkkkkkkk" + objectList.toString());
+        List<TbSubPlan> list1 = new ArrayList<>();
+        for (TbSubPlan tbSubPlan : objectList) {
+
+            TbSubPlan newTbSubPlan = new TbSubPlan();
+            BeanUtils.copyProperties(tbSubPlan, newTbSubPlan, "id");
+
+            list1.add(newTbSubPlan);
+        }
+
+        service.saveBatch(list1);
+        return RestResponse.ok();
+    }
+
+    @GetMapping("/listByUserId")
+    public List<TbSubPlan> listByUserId(@RequestParam("userId") String userId) {
+
+        return service.list(new QueryWrapper<TbSubPlan>().lambda().eq(TbSubPlan::getUserId, userId));
+    }
+
     @PostMapping("/update")
     public RestResponse<TbSubPlan> update(@RequestBody List<TbSubPlan> subPlanEntity) {
+
+        log.info(subPlanEntity.size() + "同步数据====================");
+        log.info(subPlanEntity.toString());
+
 
         Date sortEndDate = null;
         Integer version = 1;
@@ -335,6 +366,15 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
                 .set(TbPlan::getEndDate, endDate)
                 .eq(TbPlan::getUserId, subPlanEntity.get(0).getUserId());
         planService.update(wrapper);
+
+        if (subPlanEntity.get(0).getUpdateStatus() == null) {
+            List<TbSubPlan> list = service.list(new QueryWrapper<TbSubPlan>().lambda().eq(TbSubPlan::getUserId, subPlanEntity.get(0).getUserId()));
+
+
+            String url = "http://pharos.ewj100.com/subPlan/saveOrUpdate"; //同步到老平台
+            String params = JSONObject.toJSONString(list);
+            String post = HttpUtil.post(url, params);
+        }
         return RestResponse.ok();
     }
 
@@ -362,13 +402,17 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         if (!CollectionUtils.isEmpty(subPlanEntity)) {
             for (TbSubPlan tbSubPlan : subPlanEntity) {
                 tbSubPlan.setUpdateDate(new Date());
-                tbSubPlan.setNewStatus(1);
             }
-            String url = "http://pharos.ewj100.com/subPlan/batchUpdate";
-            String params = JSONObject.toJSONString(subPlanEntity);
-            String post = HttpUtil.post(url, params);
-
             service.updateBatchById(subPlanEntity);
+
+            if (subPlanEntity.get(0).getUpdateStatus() == null) {
+
+                String url = "http://pharos.ewj100.com/subPlan/saveOrUpdate";
+                String params = JSONObject.toJSONString(subPlanEntity);
+                String post = HttpUtil.post(url, params);
+            }
+
+
         }
         return RestResponse.ok();
     }
@@ -402,9 +446,9 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
             tbSubPlan.setUpdateDate(new Date());
             tbSubPlan.setNewStatus(1);
         }
-        String url = "http://pharos.ewj100.com/subPlan/addHistory";
-        String params = JSONObject.toJSONString(subPlanEntity);
-        String post = HttpUtil.post(url, params);
+//        String url = "http://pharos.ewj100.com/subPlan/addHistory";
+//        String params = JSONObject.toJSONString(subPlanEntity);
+//        String post = HttpUtil.post(url, params);
 
         LambdaUpdateWrapper<TbPlan> wrapper = new UpdateWrapper<TbPlan>().lambda()
                 .set(TbPlan::getUpdateDate, new Date())
@@ -582,7 +626,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
                                                      @RequestParam("userId") String userId,
                                                      @RequestParam("beforeVersion") Integer beforeVersion,
                                                      @RequestParam("afterVersion") Integer afterVersion) {
-        String url = "http://pharos.ewj100.com/subPlan/batchUpdate?doctorName="+doctorName+"&userId="+userId+"&beforeVersion="+beforeVersion+"&afterVersion="+afterVersion;
+        String url = "http://pharos.ewj100.com/subPlan/batchUpdate?doctorName=" + doctorName + "&userId=" + userId + "&beforeVersion=" + beforeVersion + "&afterVersion=" + afterVersion;
         String post = HttpUtil.get(url);
 
         DoctorUpdateSubPlanRecord record = new DoctorUpdateSubPlanRecord();

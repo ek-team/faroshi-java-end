@@ -3,22 +3,27 @@ package cn.cuptec.faros.service;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.mapper.PlanUserTrainRecordMapper;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +35,11 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
     private PlanUserService planUserService;
     @Resource
     private ProductStockService productStockService;
+    @Resource
+    private UserOrdertService userOrdertService;
+    @Autowired
+    public RedisTemplate redisTemplate;
+
 
     @Transactional(rollbackFor = Exception.class)
     public void saveAndData(List<TbUserTrainRecord> userTrainRecordList) {
@@ -45,6 +55,36 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
                     .set(TbTrainUser::getTrainRecordTag, 0)
                     .set(TbTrainUser::getFirstTrainTime, LocalDateTime.now())
             );
+            TbTrainUser one = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
+
+            List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getUserId, one.getXtUserId()).orderByDesc(UserOrder::getPayTime));
+            if (!CollectionUtils.isEmpty(userOrders)) {
+                UserOrder userOrder = userOrders.get(0);
+                if (userOrder.getOrderType().equals(2)) {
+                    for (int i = 1; i < 4; i++) {
+                        String keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice" + i + "3:", userOrder.getId()));
+                        LocalDateTime localDateTime = LocalDateTime.now().plusMonths(i);
+                        LocalDateTime localDateTime3 = localDateTime.minusDays(3);
+                        Duration sjc = Duration.between(LocalDateTime.now(), localDateTime3);// 计算时间差
+                        redisTemplate.opsForValue().set(keyRedis, userOrder.getId(), sjc.toDays(), TimeUnit.DAYS);//设置过期时间
+                        //5天
+                        keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice" + i + "5:", userOrder.getId()));
+                        LocalDateTime localDateTime5 = localDateTime.minusDays(5);
+                        Duration sjc5 = Duration.between(LocalDateTime.now(), localDateTime5);// 计算时间差
+                        redisTemplate.opsForValue().set(keyRedis, userOrder.getId(), sjc5.toDays(), TimeUnit.DAYS);//设置过期时间
+                        //7天
+                        keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice" + i + "7:", userOrder.getId()));
+                        LocalDateTime localDateTime7 = localDateTime.minusDays(7);
+                        Duration sjc7 = Duration.between(LocalDateTime.now(), localDateTime7);// 计算时间差
+                        redisTemplate.opsForValue().set(keyRedis, userOrder.getId(), sjc7.toDays(), TimeUnit.DAYS);//设置过期时间
+
+                    }
+
+                }
+
+            }
+
+
         } else {
 
             planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改训练记录上传标识

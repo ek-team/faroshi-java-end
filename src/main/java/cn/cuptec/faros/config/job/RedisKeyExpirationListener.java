@@ -218,6 +218,125 @@ public class RedisKeyExpirationListener implements MessageListener {
                 }
 
             }
+
+            if (body.contains("serviceNotice13:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+            if (body.contains("serviceNotice15:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到30天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+            if (body.contains("serviceNotice17:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到30天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+
+            if (body.contains("serviceNotice23:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到60天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+            if (body.contains("serviceNotice25:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到60天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+            if (body.contains("serviceNotice27:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到60天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+            if (body.contains("serviceNotice33:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到90天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+            if (body.contains("serviceNotice35:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到90天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
+            if (body.contains("serviceNotice37:")) {//服务时间通知
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    User user = userService.getById(userOrder.getUserId());
+                    LocalDateTime now = LocalDateTime.now();
+                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String time = df.format(now);
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到90天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                }
+
+            }
         }
     }
 }

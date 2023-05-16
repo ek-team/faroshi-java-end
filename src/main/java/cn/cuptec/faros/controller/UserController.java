@@ -91,8 +91,9 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private UserOrdertService userOrdertService;
     @Resource
     private PatientRelationTeamService patientRelationTeamService;
-    private final Url url;
-
+    private final Url urlData;
+    @Resource
+    private PatientUserBindDoctorService patientUserBindDoctorService;
     /**
      * 患者添加医生好友
      */
@@ -197,7 +198,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
             DoctorQrCodeDto doctorQrCodeDto = new DoctorQrCodeDto();
 
             //生成一个图片返回
-            String url = "https://pharos3.ewj100.com/index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
+            String url = urlData.getUrl()+"index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
             BufferedImage png = null;
             try {
                 png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -832,13 +833,13 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @SneakyThrows
     @GetMapping("/srBindAdress/{uid}/{macAdd}")
     public void handleFoo(@PathVariable Long uid, @PathVariable(value = "macAdd", required = false) String macAdd, HttpServletResponse response) {
-        response.sendRedirect(url.getUrl() + QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=" + macAdd);
+        response.sendRedirect(urlData.getUrl() + QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=" + macAdd);
     }
 
     @SneakyThrows
     @GetMapping("/srBindAdress/{uid}")
     public void handleFoo(@PathVariable Long uid, HttpServletResponse response) {
-        response.sendRedirect(url.getUrl() + QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=11");
+        response.sendRedirect(urlData.getUrl() + QrCodeConstants.DEVICE_BIND_USER_URL + "?uid=" + uid + "&macAdd=11");
     }
 
     @SysLog("更新用户信息 成为医生")

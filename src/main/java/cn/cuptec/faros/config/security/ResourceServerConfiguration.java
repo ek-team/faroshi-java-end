@@ -97,6 +97,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/liveQrCode/getLiveQrCodeUrl",
                         "/evaluationRecords/listGroupByPhoneAndIdCard",
                         "/subPlan/update",
+                        "/subPlan/saveOrUpdate",
+                        "/subPlan/listByUserId",
                         "/subPlan/delete",
                         "/subPlan/addHistory",
                         "/plan/listByUid/**",

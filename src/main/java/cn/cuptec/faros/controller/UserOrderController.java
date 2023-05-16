@@ -105,7 +105,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private OrderRefundInfoService orderRefundInfoService;
     @Resource
-    private DeptService deptService;
+    private ProductStockService productStockService;
+    @Resource
+    private DeviceScanSignLogService deviceScanSignLogService;
     private final Url urlData;
 
     /**
@@ -1285,6 +1287,26 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         userOrder.setProductSn1(deliveryMoBan.getProduct_sn1());
                         userOrder.setProductSn2(deliveryMoBan.getProduct_sn2());
                         userOrder.setProductSn3(deliveryMoBan.getProduct_sn3());
+                        if (!StringUtils.isEmpty(deliveryMoBan.getProduct_sn1())) {
+                            Integer userId = userOrder.getUserId();
+                            TbTrainUser infoByUXtUserId = planUserService.getInfoByUXtUserId(userId);
+                            if (infoByUXtUserId != null) {
+                                String userId1 = infoByUXtUserId.getUserId();
+                                List<ProductStock> list = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                                        .eq(ProductStock::getProductSn, deliveryMoBan.getProduct_sn1())
+                                        .eq(ProductStock::getDel, 1));
+                                if (!CollectionUtils.isEmpty(list)) {
+                                    ProductStock productStock = list.get(0);
+                                    boolean remove = deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, productStock.getMacAddress()));
+                                    DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
+                                    deviceScanSignLog.setMacAddress(productStock.getMacAddress());
+                                    deviceScanSignLog.setUserId(userId1);
+                                    deviceScanSignLog.setCreateTime(new Date());
+                                    deviceScanSignLogService.save(deviceScanSignLog);
+                                }
+
+                            }
+                        }
                     }
                     service.updateBatchById(userOrders);
                 }

@@ -129,7 +129,7 @@ public class WxMaController {
             JSONObject paramMap = new JSONObject();
             //接口调用凭证
             //通过 URL Link 进入的小程序页面路径，必须是已经发布的小程序存在的页面，不可携带 query 。path 为空时会跳转小程序主页
-            paramMap.put("path", "pages/savePersonInfo/savePersonInfo");
+            paramMap.put("path", "pages/bindDoctor/bindDoctor");
             paramMap.put("query", query);
             //生成的 URL Link 类型，到期失效：true，永久有效：false
             paramMap.put("is_expire", false);
