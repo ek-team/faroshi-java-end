@@ -57,6 +57,20 @@ wx:
     appId: wx0ed9d77369636eb3
     secret: 31afe6666a17a2fbe3dd44ae6d09f7ab
     token: weixin
+    #模版消息url
+  mpurl:
+    sendTopic: s4SMlZMpXSeml9lMfaHG8mm1kv4TW5ga77giTfTj2Q8
+    sendLiveQrCodeNotice: UsLUYgFGFqvv2FEl4UeHa-aGi_kvUF5Rl1zrkRGerMc
+    sendSubNotice: A5D2HXLY7MnU72NaeDqcQBwCYR3Ldg-8plClkQL8OGE
+    paySuccessNotice: mzXslzSjZiMhCQJ6MQi_bcDJOVbDLl6sfLn6u_0gocI
+    paySuccessNoticeSalesman: mzXslzSjZiMhCQJ6MQi_bcDJOVbDLl6sfLn6u_0gocI
+    shipNotice: 4bNAEvxGtvR3itx2X6SzUOBiU8wtmby9tdEOhGU5a3I
+    refundNotice: XAJp_620LIdi6otX14W1dLSrYSpuJ_txhuusVoNIv5k
+    faPiaoNotice: cYvxMNdH8IOSrLlDCaQ9g-Z8MlCpikBMLi0mvR-9yk0
+    sendFollowUpPlanNotice: hqiXa8OXHi3w4BbJF2RaXiVLWbtgTRPi_CQNhFAwa60
+    sendDoctorUrlTip: I0dnOwCdpMux-CjWwjsuYPtNhZPaBTA8lkH4lfOgFSs
+    sendDoctorTip: JS1GcbXs_Tm28-HnzuStvnDTbLxtL71wxdWaZ-wpnd0
+    patientAddDoctor: Y3MxxxKiLCCqf6D2qn1nJwYOlKU2pf2_zFy0cz_YEcs
   #测试公众号
   mp1:
     appId: wxed6151fe3094bbd0

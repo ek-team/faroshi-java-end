@@ -152,8 +152,6 @@ public class WxPayController {
                 return RestResponse.ok();
             }
 
-
-
             String doctorTeamName = "";
 
             Integer patientUserId = userOrder.getPatientUserId();
@@ -337,7 +335,7 @@ public class WxPayController {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
-                        "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
+                        "购买支架链接", urlData.getUrl()+"record.html#/ucenter/recovery/externalLink");
             }
 //            String saleSpecDescIdList = userOrder.getSaleSpecDescIdList();
 //            List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()

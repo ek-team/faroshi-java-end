@@ -17,6 +17,7 @@ import cn.cuptec.faros.util.UploadFileUtils;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
 import com.aliyun.oss.OSS;
@@ -33,6 +34,8 @@ import com.kuaidi100.sdk.utils.SignUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +53,7 @@ import java.net.URLEncoder;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -109,7 +113,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private DeviceScanSignLogService deviceScanSignLogService;
     private final Url urlData;
-
+    @Autowired
+    public RedisTemplate redisTemplate;
     /**
      * 查询订单的续租记录
      */
@@ -556,6 +561,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                        @RequestParam(value = "productSn2", required = false) String productSn2,
                                        @RequestParam(value = "productSn3", required = false) String productSn3,
                                        @RequestParam(value = "deliveryCompanyCode") String deliveryCompanyCode, @RequestParam(value = "deliveryNumber", required = false) String deliveryNumber) {
+
+        String keyRedis = String.valueOf(StrUtil.format("{}{}", "pay7:", orderId));
+        redisTemplate.opsForValue().set(keyRedis, orderId, 7, TimeUnit.DAYS);//设置过期时间
+
+
         service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber, productSn1, productSn2, productSn3);
         UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
         updateOrderRecord.setOrderId(orderId);
@@ -605,7 +615,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/shareOrder")
     public RestResponse shareOrder(@RequestParam("orderNo") String orderNo) {
         //生成一个图片返回
-        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" + orderNo;
+        String url = urlData.getUrl()+"index.html#/transferPage/helpPay?orderNo=" + orderNo;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -787,7 +797,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             return RestResponse.ok(userOrder);
         }
         //生成一个图片返回
-        String url = "https://pharos3.ewj100.com/index.html#/transferPage/helpPay?orderNo=" + userOrder.getOrderNo();
+        String url = urlData.getUrl()+"index.html#/transferPage/helpPay?orderNo=" + userOrder.getOrderNo();
         BufferedImage png = null;
         try {
             png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -1280,6 +1290,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         }
 
                         userOrder.setStatus(3);
+                        String keyRedis = String.valueOf(StrUtil.format("{}{}", "pay7:", userOrder.getId()));
+                        redisTemplate.opsForValue().set(keyRedis, userOrder.getId(), 7, TimeUnit.DAYS);//设置过期时间
                         userOrder.setDeliveryCompanyCode(deliveryCompanyCode);
                         userOrder.setDeliverySn(deliveryMoBan.getDeliverySn());
                         userOrder.setDeliveryNumber(deliveryMoBan.getDeliverySn());

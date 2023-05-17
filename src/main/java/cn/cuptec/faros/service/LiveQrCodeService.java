@@ -53,7 +53,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
     private OperationRecordService operationRecordService;
     @Resource
     private UserService userService;
-    private final Url url;
+    private final Url urlData;
 
     /**
      * 根据活码id获取其调度url
@@ -62,11 +62,11 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
      * @return
      */
     public String getFullDispatcherUrl(String id) {
-        return url.getUrl() + QrCodeConstants.DISPATCHER_URL + id;
+        return urlData.getUrl() + QrCodeConstants.DISPATCHER_URL + id;
     }
 
     public String getNaliFullDispatcherUrl(Integer id) {
-        return url.getUrl() + QrCodeConstants.DISPATCHER_NALI_URL + id;
+        return urlData.getUrl() + QrCodeConstants.DISPATCHER_NALI_URL + id;
     }
 
     public IPage<LiveQrCode> page(IPage<LiveQrCode> page, String productSn, String mac) {
@@ -213,7 +213,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
 
     public void dispatcherNaLi(Integer productStockId) throws IOException {
         //跳转地址
-        ServletUtils.getResponse().sendRedirect(url.getUrl() + QrCodeConstants.NALI_URL + "?id=" + productStockId);
+        ServletUtils.getResponse().sendRedirect(urlData.getUrl() + QrCodeConstants.NALI_URL + "?id=" + productStockId);
     }
 
     //活码调度
@@ -225,7 +225,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
         String servicePackId = productStock.getServicePackId();
         if (!StringUtils.isEmpty(servicePackId)) {
             log.info("获取的服务包id===========:{}", servicePackId);
-            String url = "https://pharos3.ewj100.com/index.html#/nali/redBean?id=" + servicePackId + "&macAdd=" + productStock.getMacAddress();
+            String url = urlData.getUrl()+"index.html#/nali/redBean?id=" + servicePackId + "&macAdd=" + productStock.getMacAddress();
             ServletUtils.getResponse().sendRedirect(url);
         } else {
             toIntroduce(productStock);
@@ -238,7 +238,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
         //跳转到购买页面
 
         if ((productStock.getStatus() == 30 || productStock.getStatus() == 31) && productStock.getProductId() == 2) {
-            ServletUtils.getResponse().sendRedirect(url.getUrl() + QrCodeConstants.HARDWARE_DETAIL_URL + productStock.getId());
+            ServletUtils.getResponse().sendRedirect(urlData.getUrl() + QrCodeConstants.HARDWARE_DETAIL_URL + productStock.getId());
         }
         //3.2、否则跳转到设备介绍页面
         else {
@@ -256,7 +256,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("下肢产品");
             //下肢
             try {
-                ServletUtils.getResponse().sendRedirect("https://pharos3.ewj100.com/index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect(urlData.getUrl()+"index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -264,7 +264,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("气动产品");
             //气动
             try {
-                ServletUtils.getResponse().sendRedirect("https://pharos3.ewj100.com/index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect(urlData.getUrl()+"index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }

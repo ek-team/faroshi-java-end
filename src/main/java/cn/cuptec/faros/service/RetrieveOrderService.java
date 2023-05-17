@@ -3,6 +3,7 @@ package cn.cuptec.faros.service;
 import cn.cuptec.faros.common.constrants.CommonConstants;
 import cn.cuptec.faros.common.exception.InnerException;
 import cn.cuptec.faros.common.utils.DateTimeUtil;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.datascope.DataScope;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
@@ -18,6 +19,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +30,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@AllArgsConstructor
 @Service
 public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, RetrieveOrder> {
 
@@ -48,7 +50,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     private UserOrdertService userOrdertService;
     @Resource
     private SaleSpecService saleSpecService;
-
+    private final Url urlData;
     @Resource
     private WxMpService wxMpService;
 
@@ -200,7 +202,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = "https://pharos3.ewj100.com/index.html#/salesmanOption/retrieveOrderDetail/" + retrieveOrder.getId();
+                String url = urlData.getUrl()+"index.html#/salesmanOption/retrieveOrderDetail/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "用户确认订单回收价格", "用户确认订单回收价格", url);
             }
         }

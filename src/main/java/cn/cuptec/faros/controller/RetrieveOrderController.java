@@ -1,6 +1,7 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.*;
@@ -21,6 +22,7 @@ import com.kuaidi100.sdk.core.IBaseClient;
 import com.kuaidi100.sdk.request.PrintReq;
 import com.kuaidi100.sdk.request.cloud.COrderReq;
 import com.kuaidi100.sdk.utils.SignUtils;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +47,7 @@ import java.util.stream.Collectors;
 /**
  * 回收单
  */
+@AllArgsConstructor
 @Slf4j
 @RestController
 @RequestMapping("/retrieveOrder")
@@ -76,7 +79,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     private RecyclingRuleService recyclingRuleService;
     @Resource
     private ReviewRefundOrderService reviewRefundOrderService;
-
+    private final Url urlData;
     /**
      * 添加回收单审核设备信息
      */
@@ -283,7 +286,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = "http://pharos.ewj100.com/index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
+                String url =urlData.getUrl()+ "index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "业务员修改回收价格", "待您确认", url);
             }
         }
@@ -450,7 +453,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = "http://pharos.ewj100.com/index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
+                String url = urlData.getUrl()+"index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "用户确认邮寄", "用户确认邮寄", url);
             }
         }
@@ -491,7 +494,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = "http://pharos.ewj100.com/index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
+                String url = urlData.getUrl()+"index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "业务员已打款", "待您确认", url);
             }
         }
@@ -586,7 +589,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         params.put("weight", param.getWeight());
         params.put("remark", param.getRemark());
         params.put("salt", "123456");
-        params.put("callBackUrl", "https://pharos3.ewj100.com/retrieveOrder/kuaidicallback");
+        params.put("callBackUrl", urlData.getUrl()+"retrieveOrder/kuaidicallback");
         params.put("dayType", param.getDayType());
         params.put("pickupStartTime", param.getPickupStartTime());
         params.put("pickupEndTime", param.getPickupEndTime());

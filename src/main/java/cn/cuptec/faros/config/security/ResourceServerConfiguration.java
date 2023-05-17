@@ -99,6 +99,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/subPlan/update",
                         "/subPlan/saveOrUpdate",
                         "/subPlan/listByUserId",
+                        "/subPlan/listPlanByUserId",
                         "/subPlan/delete",
                         "/subPlan/addHistory",
                         "/plan/listByUid/**",

@@ -113,7 +113,7 @@ public class UserRoleService extends ServiceImpl<UserRoleMapper, UserRole> {
 
 		if (CollUtil.isNotEmpty(listByUserId)){
 			List<Integer> collect = listByUserId.stream().map(UserRole::getRoleId).collect(Collectors.toList());
-			if(collect.contains(7) || collect.contains(21)){
+			if(collect.contains(7) || collect.contains(30) || collect.contains(29)){
 				return true;
 			}
 		}

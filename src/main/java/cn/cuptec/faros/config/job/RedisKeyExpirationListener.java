@@ -167,6 +167,18 @@ public class RedisKeyExpirationListener implements MessageListener {
                 one.setPush(one.getPush() + 1);
                 followUpPlanNoticeCountService.updateById(one);
             }
+            //支付倒计时7天收货成功
+            if (body.contains("pay7:")) {
+                String[] str = body.split(":");
+                String orderId = str[1];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+                    userOrder.setStatus(4);
+                    userOrdertService.updateById(userOrder);
+                }
+
+            }
+
             if (body.contains("patientOrder:")) {//图文咨询过期时间
                 String[] str = body.split(":");
                 String patientOrderId = str[1];

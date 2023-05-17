@@ -238,6 +238,21 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         }
 
         service.saveBatch(list1);
+
+        String url1 = "http://pharos.ewj100.com/subPlan/listPlanByUserId?userId=" + subPlanEntity.get(0).getUserId();
+        String post1 = HttpUtil.get(url1);
+        List<TbPlan> tbPlans = JSONObject.parseArray(post1, TbPlan.class);
+        List<TbPlan> list2 = new ArrayList<>();
+        for (TbPlan tbPlan : tbPlans) {
+
+            TbPlan newTbPlan = new TbPlan();
+            BeanUtils.copyProperties(tbPlan, newTbPlan, "id");
+
+            list2.add(newTbPlan);
+        }
+        planService.remove(new QueryWrapper<TbPlan>().lambda().eq(TbPlan::getUserId, subPlanEntity.get(0).getUserId()));
+        planService.saveBatch(list2);
+
         return RestResponse.ok();
     }
 
@@ -246,7 +261,11 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 
         return service.list(new QueryWrapper<TbSubPlan>().lambda().eq(TbSubPlan::getUserId, userId));
     }
+    @GetMapping("/listPlanByUserId")
+    public List<TbPlan> listPlanByUserId(@RequestParam("userId") String userId) {
 
+        return planService.list(new QueryWrapper<TbPlan>().lambda().eq(TbPlan::getUserId, userId));
+    }
     @PostMapping("/update")
     public RestResponse<TbSubPlan> update(@RequestBody List<TbSubPlan> subPlanEntity) {
 

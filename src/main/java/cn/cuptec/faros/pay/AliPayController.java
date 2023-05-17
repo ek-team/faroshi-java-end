@@ -141,50 +141,46 @@ public class AliPayController {
     }
 
     public static void main(String[] args) {
-        String a = "gmt_create=2023-05-11+17%3A32%3A47&charset=UTF-8&seller_email=farosgzh1%40163.com&subject=111&sign=oFoyalZZm8px7HF5t6KGMlzrd5MGpiruz194W%2BZq%2FE12YfrDZwSHA7bs6ODwriRcbdXo55dD%2F3snl095g2v0pQhs%2BOlzm4lvFBMKQLyNsDTbLX5ae91iF7HqZzwZOUieORRdvgvssnGqe3rvrVYiyNjiIEaxbsVAxoYWbcwf5XH0jd%2BHfekEj2FWRBLlVyoR8TEp%2BPMJ3oJLdCyml9L4388Vj2MITrOq9KiEp7k3%2F0GMxgLcZLlO%2F3%2BfIkByFuuDk94EYFOUDOEPwP1656rLszaFudbjkFkmA6ksSsOXO%2F9viMEANUrpOhUWOScpjsoBIJkVZKPFmBL3Q32QYIcFRA%3D%3D&buyer_open_id=089ai0p7ep6IDVNGgac05oBz2MwYgSy0N-vsJhOBmNt34se&invoice_amount=0.10&notify_id=2023051101222173248097891413848192&fund_bill_list=%5B%7B%22amount%22%3A%220.10%22%2C%22fundChannel%22%3A%22PCREDIT%22%7D%5D&notify_type=trade_status_sync&trade_status=TRADE_SUCCESS&receipt_amount=0.10&buyer_pay_amount=0.10&app_id=2021003190689317&sign_type=RSA2&seller_id=2088641138868070&gmt_payment=2023-05-11+17%3A32%3A47&notify_time=2023-05-11+17%3A32%3A48&merchant_app_id=2021003190689317&version=1.0&out_trade_no=1656257935585574912&total_amount=0.10&trade_no=2023051122001497891452684427&auth_app_id=2021003190689317&buyer_logon_id=181****3260&point_amount=0.00";
-        Map<String, String> reconstructedUtilMap = Arrays.stream(a.split("&"))
-                .map(s -> s.split("="))
-                .collect(Collectors.toMap(s -> s[0], s -> s[1]));
-        System.out.println(reconstructedUtilMap.get("out_trade_no"));
 
 
-//        String appId = "2021003190689317";
-//        String appPrivateKey = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0tTMfv5mmV3qfLEI5xn61BXFUikZ+DemZXfgrLUHPq/99UZu3tlUU9zTTi+Y/BOg93gVRHNcj36523MT5A0sZ0DvCpERLrlLj0XoLJU1x8QtsYBakboXk6Qjpk8+PRNgvcFhSbQLC6jFHyZKaVS3CHkUZ70Ra84l3D6uAu1eXqXaB35hLPLe0P1898pV1Es3FktQT3qVBGV/5HQatrFG7Wa+D2FvFUFPwcPcZJbxF93L3hxSQsoNrMvO5zDvgrrS7k4YFeSlzl8DgYjbHqupS3idvG4kjbIkEUXsKdYSl2xiFe4KWG8CqUyfTamt6kJyTRElmtPVP+gvpb2T7EmNHAgMBAAECggEAZeGHCk5GvU6yto0IZXRwuXRxGb2/0o/bdPlS0lz4rrIFIE1jYqcsvt5E7UQBsuP8X+0NyFZfQT16Kk97yfy+WbZaCvn7+0M0Pnc6vI/yYtwImbhu65PYb1+nA7GvItIopE5NrWMCXIwW7qdJvTNq0feo898/BZwqk3LFOZXl433XwxmgCBrci1xa5SXzn3fCbGpcut9XX4jdgTU8e2XFXxEUBWUlIKh/nRqeIZOqj71SPG+YwbV4ouhhR/hp8zS0qw8z4RuqjUPPsn5/6Usu/Xgcf0Mjctt0ZObnk4crR5Txr45RvoCrFCDDvyWMTsY/cNvRqQTO8LCoq0PUSEfqkQKBgQDereFPmv2r3lKw4faOkdE6R+4cewwRisw9Vr3lpQDn2uqKV7SnEfPzZGdii5MfYnoa5X9URJ6Rp4PD7n4AtUTG6DYKN4CBHlWQSDU2TzmfpxbFRKIXj5uQSXTJUSpb5bgHEgm1vKwblD2biYm+hkdWAaHiHyVwoeGRdlUknKTrnwKBgQDPv4flcmrX8JtVCLSReZgnsIVJ49RlwaYDb1MOC6Pgg5UneCoXHSzN7C6jl+eKgvL7kC2WEOg+gGGNSNStuj8ebjQX5pyyxlQig3/3qnOalFbRHab+UL/Xuic/iF+ZeLW4oaaETzzubrUR55vvY5vo9ut8/pY0XJ6eL+uwNuDnWQKBgGa6XMk2vXQ+enNzqyUWjCmQ6X5mHakyGQrrK2v39TUBP1ZXI9Y3aA2O8kr6DQNbkO07lsQva9/SIe2P5r044uPIWLXZ6QSoE90eEr5dSj4m/VBAW273J1MnMCN3uEzw6zcH0UbwJY4Lk2hfyRYGKH66/g2tRL5zT/alWp4rTcINAoGAY6MwwlMF+1tipH3wXHU9DIwU4UNr8wHVZYBXDT13844oUy3Gwh80Be9ozv1kB4KWlyCnPHoPaSqZnvF3T3ssGqQwR+ZK8VM9tu/qyBXwLAtJODJIjWCdIhIeENKPR0Qlo8+j1YFLb++Y2GWE3GOhuzHx75kK4UIqsSO6nmEzrMECgYEA2HEY22eKmLp1Fqaca8lKXIIL9ocQZbXh21J/zEFmaJzl2C2IL+gOksOyS4KroMYvWPX09tw3VsGxcch/qa9KW/f6HLImwo14XuRxXUrP4AJiDzLxqCjN0DLKSb0g/MEyfVlg9RegtGM/Kcq/0qtgwRUOQ2PcSglo4h423H8khSQ=";
-//        String alipayPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtLUzH7+Zpld6nyxCOcZ+tQVxVIpGfg3pmV34Ky1Bz6v/fVGbt7ZVFPc004vmPwToPd4FURzXI9+udtzE+QNLGdA7wqRES65S49F6CyVNcfELbGAWpG6F5OkI6ZPPj0TYL3BYUm0CwuoxR8mSmlUtwh5FGe9EWvOJdw+rgLtXl6l2gd+YSzy3tD9fPfKVdRLNxZLUE96lQRlf+R0GraxRu1mvg9hbxVBT8HD3GSW8Rfdy94cUkLKDazLzucw74K60u5OGBXkpc5fA4GI2x6rqUt4nbxuJI2yJBFF7CnWEpdsYhXuClhvAqlMn02prepCck0RJZrT1T/oL6W9k+xJjRwIDAQAB";
-//        AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "UTF-8", alipayPublicKey, "RSA2");
-//        AlipayTradeWapPayRequest request = new AlipayTradeWapPayRequest();
-////异步接收地址，仅支持http/https，公网可访问
-//        request.setNotifyUrl("");
-////同步跳转地址，仅支持http/https
-//        request.setReturnUrl("");
-///******必传参数******/
-//        JSONObject bizContent = new JSONObject();
-////商户订单号，商家自定义，保持唯一性
-//        bizContent.put("out_trade_no", "20210817010101004");
-////支付金额，最小值0.01元
-//        bizContent.put("total_amount", 0.01);
-////订单标题，不可使用特殊符号
-//        bizContent.put("subject", "测试商品");
-//
-///******可选参数******/
-////手机网站支付默认传值FAST_INSTANT_TRADE_PAY
-//        bizContent.put("product_code", "QUICK_WAP_WAY");
-//
-//
-//        request.setBizContent(bizContent.toString());
-//        AlipayTradeWapPayResponse response = null;
-//        try {
-//            response = alipayClient.pageExecute(request,"get");
-//        } catch (AlipayApiException e) {
-//            e.printStackTrace();
-//        }
-//        if (response.isSuccess()) {
-//            System.out.println("调用成功");
-//            System.out.println(response);
-//            System.out.println(response.getBody());
-//        } else {
-//            System.out.println("调用失败");
-//        }
+
+        String appId = "2021003190689317";
+        String appPrivateKey = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0tTMfv5mmV3qfLEI5xn61BXFUikZ+DemZXfgrLUHPq/99UZu3tlUU9zTTi+Y/BOg93gVRHNcj36523MT5A0sZ0DvCpERLrlLj0XoLJU1x8QtsYBakboXk6Qjpk8+PRNgvcFhSbQLC6jFHyZKaVS3CHkUZ70Ra84l3D6uAu1eXqXaB35hLPLe0P1898pV1Es3FktQT3qVBGV/5HQatrFG7Wa+D2FvFUFPwcPcZJbxF93L3hxSQsoNrMvO5zDvgrrS7k4YFeSlzl8DgYjbHqupS3idvG4kjbIkEUXsKdYSl2xiFe4KWG8CqUyfTamt6kJyTRElmtPVP+gvpb2T7EmNHAgMBAAECggEAZeGHCk5GvU6yto0IZXRwuXRxGb2/0o/bdPlS0lz4rrIFIE1jYqcsvt5E7UQBsuP8X+0NyFZfQT16Kk97yfy+WbZaCvn7+0M0Pnc6vI/yYtwImbhu65PYb1+nA7GvItIopE5NrWMCXIwW7qdJvTNq0feo898/BZwqk3LFOZXl433XwxmgCBrci1xa5SXzn3fCbGpcut9XX4jdgTU8e2XFXxEUBWUlIKh/nRqeIZOqj71SPG+YwbV4ouhhR/hp8zS0qw8z4RuqjUPPsn5/6Usu/Xgcf0Mjctt0ZObnk4crR5Txr45RvoCrFCDDvyWMTsY/cNvRqQTO8LCoq0PUSEfqkQKBgQDereFPmv2r3lKw4faOkdE6R+4cewwRisw9Vr3lpQDn2uqKV7SnEfPzZGdii5MfYnoa5X9URJ6Rp4PD7n4AtUTG6DYKN4CBHlWQSDU2TzmfpxbFRKIXj5uQSXTJUSpb5bgHEgm1vKwblD2biYm+hkdWAaHiHyVwoeGRdlUknKTrnwKBgQDPv4flcmrX8JtVCLSReZgnsIVJ49RlwaYDb1MOC6Pgg5UneCoXHSzN7C6jl+eKgvL7kC2WEOg+gGGNSNStuj8ebjQX5pyyxlQig3/3qnOalFbRHab+UL/Xuic/iF+ZeLW4oaaETzzubrUR55vvY5vo9ut8/pY0XJ6eL+uwNuDnWQKBgGa6XMk2vXQ+enNzqyUWjCmQ6X5mHakyGQrrK2v39TUBP1ZXI9Y3aA2O8kr6DQNbkO07lsQva9/SIe2P5r044uPIWLXZ6QSoE90eEr5dSj4m/VBAW273J1MnMCN3uEzw6zcH0UbwJY4Lk2hfyRYGKH66/g2tRL5zT/alWp4rTcINAoGAY6MwwlMF+1tipH3wXHU9DIwU4UNr8wHVZYBXDT13844oUy3Gwh80Be9ozv1kB4KWlyCnPHoPaSqZnvF3T3ssGqQwR+ZK8VM9tu/qyBXwLAtJODJIjWCdIhIeENKPR0Qlo8+j1YFLb++Y2GWE3GOhuzHx75kK4UIqsSO6nmEzrMECgYEA2HEY22eKmLp1Fqaca8lKXIIL9ocQZbXh21J/zEFmaJzl2C2IL+gOksOyS4KroMYvWPX09tw3VsGxcch/qa9KW/f6HLImwo14XuRxXUrP4AJiDzLxqCjN0DLKSb0g/MEyfVlg9RegtGM/Kcq/0qtgwRUOQ2PcSglo4h423H8khSQ=";
+        String alipayPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtLUzH7+Zpld6nyxCOcZ+tQVxVIpGfg3pmV34Ky1Bz6v/fVGbt7ZVFPc004vmPwToPd4FURzXI9+udtzE+QNLGdA7wqRES65S49F6CyVNcfELbGAWpG6F5OkI6ZPPj0TYL3BYUm0CwuoxR8mSmlUtwh5FGe9EWvOJdw+rgLtXl6l2gd+YSzy3tD9fPfKVdRLNxZLUE96lQRlf+R0GraxRu1mvg9hbxVBT8HD3GSW8Rfdy94cUkLKDazLzucw74K60u5OGBXkpc5fA4GI2x6rqUt4nbxuJI2yJBFF7CnWEpdsYhXuClhvAqlMn02prepCck0RJZrT1T/oL6W9k+xJjRwIDAQAB";
+        AlipayClient alipayClient = new DefaultAlipayClient("https://openapi.alipay.com/gateway.do", appId, appPrivateKey, "json", "UTF-8", alipayPublicKey, "RSA2");
+        AlipayTradeWapPayRequest request = new AlipayTradeWapPayRequest();
+//异步接收地址，仅支持http/https，公网可访问
+        request.setNotifyUrl("");
+//同步跳转地址，仅支持http/https
+        request.setReturnUrl("");
+/******必传参数******/
+        JSONObject bizContent = new JSONObject();
+//商户订单号，商家自定义，保持唯一性
+        bizContent.put("out_trade_no", "20210817010101004");
+//支付金额，最小值0.01元
+        bizContent.put("total_amount", 0.01);
+//订单标题，不可使用特殊符号
+        bizContent.put("subject", "测试商品");
+
+/******可选参数******/
+//手机网站支付默认传值FAST_INSTANT_TRADE_PAY
+        bizContent.put("product_code", "QUICK_WAP_WAY");
+
+
+        request.setBizContent(bizContent.toString());
+        AlipayTradeWapPayResponse response = null;
+        try {
+            response = alipayClient.pageExecute(request,"get");
+        } catch (AlipayApiException e) {
+            e.printStackTrace();
+        }
+        if (response.isSuccess()) {
+            System.out.println("调用成功");
+            System.out.println(response);
+            System.out.println(response.getBody());
+        } else {
+            System.out.println("调用失败");
+        }
     }
 
 
@@ -405,7 +401,7 @@ public class AliPayController {
                                     LocalDateTime now = LocalDateTime.now();
                                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                                     wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
-                                            "购买支架链接", "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
+                                            "购买支架链接", urlData.getUrl()+"record.html#/ucenter/recovery/externalLink");
                                 }
                             }
                         }
