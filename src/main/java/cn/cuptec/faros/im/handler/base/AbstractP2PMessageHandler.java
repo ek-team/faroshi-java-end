@@ -63,7 +63,12 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             SocketUser userInfo = UserChannelManager.getUserInfo(channel);
             User fromUser = userInfo.getUserInfo();
             User byId2 = userService.getById(fromUser.getId());
-            fromUser.setPatientName(byId2.getPatientName());
+            if (!StringUtils.isEmpty(byId2.getNickname())) {
+                fromUser.setPatientName(byId2.getNickname());
+            }
+            if (!StringUtils.isEmpty(byId2.getPatientName())) {
+                fromUser.setPatientName(byId2.getPatientName());
+            }
             if (fromUser.getId() == null) {
                 channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.authRequired())));
                 return;

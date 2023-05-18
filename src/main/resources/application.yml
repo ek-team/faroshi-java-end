@@ -10,7 +10,7 @@ server:
 
 spring:
   profiles:
-    active: test #需要使用的配置文件的后缀
+    active: dev #需要使用的配置文件的后缀
   application:
     name: faros
   datasource:

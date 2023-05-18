@@ -698,8 +698,13 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     public RestResponse getByIdHospitalInfo(@RequestParam("id") Integer id) {
 
         User user = userService.getById(SecurityUtils.getUser().getId());
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(user.getId());
+        if(aBoolean){
+            return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id)));
+        }else {
+            return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id).eq(ServicePack::getDeptId, user.getDeptId())));
 
-        return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id).eq(ServicePack::getDeptId, user.getDeptId())));
+        }
     }
 
     /**

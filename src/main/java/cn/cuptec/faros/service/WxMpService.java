@@ -1,8 +1,10 @@
 package cn.cuptec.faros.service;
 
+import cn.binarywang.wx.miniapp.config.WxMaConfig;
 import cn.cuptec.faros.common.utils.StringUtils;
 import cn.cuptec.faros.config.com.MpUrl;
 import cn.cuptec.faros.config.com.Url;
+import cn.cuptec.faros.config.wx.WxMaProperties;
 import cn.cuptec.faros.config.wx.WxMpConfiguration;
 
 import cn.hutool.core.collection.CollUtil;
@@ -19,13 +21,14 @@ import java.util.List;
 @Service
 public class WxMpService {
     private final MpUrl mpUrl;
+    private final WxMaProperties wxMaProperties;
 
     public void sendTemplateMsg(String openId, String templateId, String url, List<WxMpTemplateData> dataList) {
 
         WxMpTemplateMessage templateMessage = WxMpTemplateMessage.builder()
                 .toUser(openId)//要推送的用户openid
                 .templateId(templateId)//模板id
-                .miniProgram(new WxMpTemplateMessage.MiniProgram("wxad59cd874b45bb96", url, false))
+                .miniProgram(new WxMpTemplateMessage.MiniProgram(wxMaProperties.getAppId(), url, false))
                 .build();
 
         if (CollUtil.isNotEmpty(dataList)) {
