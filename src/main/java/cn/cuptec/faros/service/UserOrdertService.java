@@ -2,7 +2,6 @@ package cn.cuptec.faros.service;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.common.utils.OrderNumberUtil;
-import cn.cuptec.faros.common.utils.StringUtils;
 import cn.cuptec.faros.common.utils.sms.HttpUtils;
 import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.datascope.DataScope;
@@ -39,6 +38,7 @@ import com.kuaidi100.sdk.utils.SignUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,11 +71,11 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     @Resource
     private ProductService productService;
     @Resource
-    private ExpressService expressService;
+    private DeviceScanSignLogService deviceScanSignLogService;
     @Resource
     private ProductStockService productStockService;
     @Resource
-    private LocatorService locatorService;
+    private PlanUserService planUserService;
 
     @Resource
     private UserRoleService userRoleService;
@@ -302,6 +302,29 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber,
                                 String productSn1, String productSn2, String productSn3) {
         UserOrder userOrder = super.getById(orderId);
+        if (!StringUtils.isEmpty(productSn1)) {
+            Integer userId = userOrder.getUserId();
+            TbTrainUser infoByUXtUserId = planUserService.getInfoByUXtUserId(userId);
+            if (infoByUXtUserId != null) {
+                String userId1 = infoByUXtUserId.getUserId();
+                List<ProductStock> list = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                        .eq(ProductStock::getProductSn, productSn1)
+                        .eq(ProductStock::getDel, 1));
+                if (!CollectionUtils.isEmpty(list)) {
+                    ProductStock productStock = list.get(0);
+                    boolean remove = deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, productStock.getMacAddress()));
+                    DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
+                    deviceScanSignLog.setMacAddress(productStock.getMacAddress());
+                    deviceScanSignLog.setUserId(userId1);
+                    deviceScanSignLog.setCreateTime(new Date());
+                    deviceScanSignLogService.save(deviceScanSignLog);
+                }
+
+            }
+        }
+
+
+
         Assert.notNull(userOrder, "订单不存在");
 
         Assert.isTrue(userOrder.getStatus() == 2, "订单非待发货状态");

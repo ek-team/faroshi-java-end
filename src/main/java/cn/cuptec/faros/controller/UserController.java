@@ -94,6 +94,33 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private final Url urlData;
     @Resource
     private PatientUserBindDoctorService patientUserBindDoctorService;
+
+    @GetMapping("/copyUser")
+    public RestResponse copyUser(@RequestParam("id") Integer id) {
+        UserOrder userOrder = userOrdertService.getById(id);
+
+        PatientUser targetPatientUser = patientUserService.getById(userOrder.getPatientUserId());
+        User myUSer = service.getById(SecurityUtils.getUser().getId());
+        PatientUser myPatientUser = new PatientUser();
+        BeanUtils.copyProperties(targetPatientUser, myPatientUser, "id");
+        myPatientUser.setUserId(myUSer.getId());
+        patientUserService.save(myPatientUser);
+
+        UserOrder myUserOrder = new UserOrder();
+        BeanUtils.copyProperties(userOrder, myUserOrder, "id");
+        myUserOrder.setUserId(myUSer.getId());
+        myUserOrder.setPatientUserId(Integer.parseInt(myPatientUser.getId()));
+        userOrdertService.save(myUserOrder);
+
+        Integer chatUserId = userOrder.getChatUserId();
+        ChatUser chatUser = chatUserService.getById(chatUserId);
+        chatUser.setUserIds(chatUser.getUserIds() + "," + SecurityUtils.getUser().getId());
+        chatUserService.updateById(chatUser);
+
+
+        return RestResponse.ok();
+    }
+
     /**
      * 患者添加医生好友
      */
@@ -198,7 +225,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
             DoctorQrCodeDto doctorQrCodeDto = new DoctorQrCodeDto();
 
             //生成一个图片返回
-            String url = urlData.getUrl()+"index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
+            String url = urlData.getUrl() + "index.html#/newPlatform/addFriends?doctorId=" + SecurityUtils.getUser().getId();
             BufferedImage png = null;
             try {
                 png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -724,7 +751,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         }
         if (page != null) {
             Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
-            IPage iPage = service.pageScopedAllUserVo(page, queryWrapper,aBoolean);
+            IPage iPage = service.pageScopedAllUserVo(page, queryWrapper, aBoolean);
             List<User> records = iPage.getRecords();
             if (!CollectionUtils.isEmpty(records)) {
                 List<Integer> userIds = records.stream().map(User::getId)

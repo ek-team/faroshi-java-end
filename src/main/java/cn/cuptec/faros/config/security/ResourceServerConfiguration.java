@@ -88,6 +88,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/palnUser/saveBatch",
                         "/productStock/updateVersion",
                         "/palnUser/naLiRecycle",
+                        "/retrieveOrder/kuaidicallback",
                         "/file/upload",
                         "/devicelog/add",
                         "/HospitalInfo/list",

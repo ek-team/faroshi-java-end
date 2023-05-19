@@ -116,6 +116,21 @@ public class WxMaController {
 
     }
 
+    /**
+     * 生成小程序二维码  后台管理 预览服务包
+     */
+    @GetMapping("/getMaQrCOdeByCopyUser")
+    public RestResponse getMaQrCOdeByCopyUser(@RequestParam("id") Integer id) {
+        WxMaQrcodeService qrcodeService = WxMaConfiguration.getWxMaService().getQrcodeService();
+        byte[] qrcodeBytes = new byte[0];
+        try {
+            qrcodeBytes = qrcodeService.createQrcodeBytes("/pages/bindPatient/bindPatient?id=" + id, 430);
+        } catch (WxErrorException e) {
+            e.printStackTrace();
+        }
+        return RestResponse.ok(qrcodeBytes);
+
+    }
 
     /**
      * 获取小程序urlLink 添加医生好友
