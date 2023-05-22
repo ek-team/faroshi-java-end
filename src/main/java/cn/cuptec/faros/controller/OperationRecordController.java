@@ -52,10 +52,13 @@ public class OperationRecordController extends AbstractBaseController<OperationR
         Map<Integer, User> accountMap = users.stream()
                 .collect(Collectors.toMap(User::getId, t -> t));
         for (OperationRecord operationRecord : list) {
-            User user = accountMap.get(Integer.parseInt(operationRecord.getUserId()));
-            if (user != null) {
-                operationRecord.setUserName(user.getNickname());
+            if(!StringUtils.isEmpty(operationRecord.getUserId())){
+                User user = accountMap.get(Integer.parseInt(operationRecord.getUserId()));
+                if (user != null) {
+                    operationRecord.setUserName(user.getNickname());
+                }
             }
+
         }
         return RestResponse.ok(list);
     }

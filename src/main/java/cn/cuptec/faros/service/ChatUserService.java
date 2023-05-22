@@ -185,6 +185,10 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                         chatUserVO.setPatientName(patientName);
                         chatUserVO.setPatientAvatar(user.getAvatar());
                     }
+                    if (!StringUtils.isEmpty(chatUser.getPatientName())) {
+                        chatUserVO.setPatientName(chatUser.getPatientName());
+                    }
+
                     chatUserVO.setGroupType(1);
 
                     chatUserVO.setChatUserId(chatUser.getId());
@@ -218,48 +222,56 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 }
             }
             // 根据获取的用户信息构造ChatUserVO
-            Map<Integer, ChatUser> chatUserMap = chatUsersList.stream()
-                    .collect(Collectors.toMap(ChatUser::getTargetUid, t -> t));
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
 
-            users.forEach(
-                    tenantUser -> {
-                        ChatUserVO chatUserVO = new ChatUserVO();
-                        chatUserVO.setTargetUid(tenantUser.getId());
-                        String patientName = tenantUser.getPatientName();
-                        if (!StringUtils.isEmpty(chatUserMap.get(tenantUser.getId()).getChatDesc())) {
-                            patientName = patientName + "[" + chatUserMap.get(tenantUser.getId()).getChatDesc() + "]";
+            chatUsers.forEach(
+                    chatUser -> {
+                        if (chatUser.getTeamId() == null) {
+                            ChatUserVO chatUserVO = new ChatUserVO();
+                            chatUserVO.setTargetUid(chatUser.getTargetUid());
+                            User tenantUser = userMap.get(chatUser.getTargetUid());
+                            String patientName = tenantUser.getPatientName();
+                            if (!StringUtils.isEmpty(chatUser.getPatientName())) {
+                                patientName = chatUser.getPatientName();
+                            }
+
+                            if (!StringUtils.isEmpty(chatUser.getChatDesc())) {
+                                patientName = patientName + "[" + chatUser.getChatDesc() + "]";
+                            }
+                            chatUserVO.setPatientName(patientName);
+
+                            chatUserVO.setPatientName(patientName);
+                            chatUserVO.setAvatar(tenantUser.getAvatar());
+                            chatUserVO.setPatientAvatar(tenantUser.getAvatar());
+                            chatUserVO.setNickname(tenantUser.getNickname());
+                            chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
+                            chatUserVO.setServiceStartTime(chatUser.getServiceStartTime());
+                            chatUserVO.setRemark(chatUser.getRemark());
+                            chatUserVO.setClearTime(chatUser.getClearTime());
+                            chatUserVO.setChatUserId(chatUser.getId());
+                            // 最后聊天时间和内容
+                            ChatUser user =
+                                    chatUsersList.stream()
+                                            .filter(chatUser1 -> chatUser1.getTargetUid().equals(chatUserVO.getTargetUid()))
+                                            .findFirst()
+                                            .get();
+                            chatUserVO.setIsClosed(user.getIsClosed());
+                            chatUserVO.setLastChatTime(user.getLastChatTime());
+                            chatUserVO.setLastMsg(user.getLastMsg());
+                            chatUserVos.add(chatUserVO);
+
+                            // 是否有新消息
+                            int count =
+                                    chatMsgService.count(
+                                            Wrappers.<ChatMsg>lambdaQuery()
+                                                    .eq(ChatMsg::getFromUid, tenantUser.getId())
+                                                    .eq(ChatMsg::getToUid, param.getMyUserId())
+                                                    .eq(ChatMsg::getReadStatus, 0));
+
+                            chatUserVO.setHasNewMsg(count);
                         }
-                        chatUserVO.setPatientName(patientName);
 
-                        chatUserVO.setPatientName(patientName);
-                        chatUserVO.setAvatar(tenantUser.getAvatar());
-                        chatUserVO.setPatientAvatar(tenantUser.getAvatar());
-                        chatUserVO.setNickname(tenantUser.getNickname());
-                        chatUserVO.setServiceEndTime(chatUserMap.get(tenantUser.getId()).getServiceEndTime());
-                        chatUserVO.setServiceStartTime(chatUserMap.get(tenantUser.getId()).getServiceStartTime());
-                        chatUserVO.setRemark(chatUserMap.get(tenantUser.getId()).getRemark());
-                        chatUserVO.setClearTime(chatUserMap.get(tenantUser.getId()).getClearTime());
-                        chatUserVO.setChatUserId(chatUserMap.get(tenantUser.getId()).getId());
-                        // 最后聊天时间和内容
-                        ChatUser user =
-                                chatUsersList.stream()
-                                        .filter(chatUser -> chatUser.getTargetUid().equals(chatUserVO.getTargetUid()))
-                                        .findFirst()
-                                        .get();
-                        chatUserVO.setIsClosed(user.getIsClosed());
-                        chatUserVO.setLastChatTime(user.getLastChatTime());
-                        chatUserVO.setLastMsg(user.getLastMsg());
-                        chatUserVos.add(chatUserVO);
-
-                        // 是否有新消息
-                        int count =
-                                chatMsgService.count(
-                                        Wrappers.<ChatMsg>lambdaQuery()
-                                                .eq(ChatMsg::getFromUid, tenantUser.getId())
-                                                .eq(ChatMsg::getToUid, param.getMyUserId())
-                                                .eq(ChatMsg::getReadStatus, 0));
-
-                        chatUserVO.setHasNewMsg(count);
                     }
             );
 
