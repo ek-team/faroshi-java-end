@@ -9,6 +9,7 @@ import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.http.HttpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
@@ -92,7 +93,7 @@ public class ChatMsgController {
     @ApiOperation(value = "查询历史记录")
     @PostMapping("/queryChatMsgHistory")
     public RestResponse queryChatMsgHistory(@RequestBody SocketFrameTextMessage param) {
-        log.info("获取聊天记录开始===============================");
+        log.info("获取聊天记录开始==============================="+param.toString());
         Integer pageNum = param.getPageNum();
         Integer pageSize = param.getPageSize();
         param.setMyUserId(SecurityUtils.getUser().getId());
@@ -102,8 +103,13 @@ public class ChatMsgController {
             param.setClearTime(ldt);
 
         }
+        Integer patientId = param.getPatientId();
+        LambdaQueryWrapper<ChatUser> eq = new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getUid, param.getMyUserId()).eq(ChatUser::getTargetUid, param.getTargetUid());
+        if(patientId!=null){
+            eq.eq(ChatUser::getPatientId,patientId);
+        }
         //查询清空历史记录
-        ChatUser one = chatUserService.getOne(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getUid, param.getMyUserId()).eq(ChatUser::getTargetUid, param.getTargetUid()));
+        ChatUser one = chatUserService.getOne(eq);
         if (one != null) {
             if (one.getClearTime() != null) {
                 param.setClearTime(one.getClearTime());
@@ -118,10 +124,21 @@ public class ChatMsgController {
                     .nested(query -> query.eq(ChatMsg::getChatUserId, param.getChatUserId()).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
                     .orderByDesc(ChatMsg::getCreateTime));
         } else {
-            resultPage = chatMsgService.page(page, Wrappers.<ChatMsg>lambdaQuery()
-                    .nested(query -> query.eq(ChatMsg::getToUid, param.getMyUserId()).eq(ChatMsg::getFromUid, param.getTargetUid()).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
-                    .or(query -> query.eq(ChatMsg::getToUid, param.getTargetUid()).eq(ChatMsg::getFromUid, param.getMyUserId()).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
-                    .orderByDesc(ChatMsg::getCreateTime)
+            LambdaQueryWrapper<ChatMsg> chatMsgLambdaQueryWrapper;
+            if(patientId!=null){
+                       chatMsgLambdaQueryWrapper = Wrappers.<ChatMsg>lambdaQuery()
+                        .nested(query -> query.eq(ChatMsg::getToUid, param.getMyUserId()).eq(ChatMsg::getFromUid, param.getTargetUid()).eq(ChatMsg::getPatientId,patientId).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
+                        .or(query -> query.eq(ChatMsg::getToUid, param.getTargetUid()).eq(ChatMsg::getFromUid, param.getMyUserId()).eq(ChatMsg::getPatientId,patientId).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
+                        .orderByDesc(ChatMsg::getCreateTime);
+            }else {
+                chatMsgLambdaQueryWrapper = Wrappers.<ChatMsg>lambdaQuery()
+                        .nested(query -> query.eq(ChatMsg::getToUid, param.getMyUserId()).eq(ChatMsg::getFromUid, param.getTargetUid()).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
+                        .or(query -> query.eq(ChatMsg::getToUid, param.getTargetUid()).eq(ChatMsg::getFromUid, param.getMyUserId()).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
+                        .orderByDesc(ChatMsg::getCreateTime);
+            }
+
+
+            resultPage = chatMsgService.page(page, chatMsgLambdaQueryWrapper
             );
         }
 

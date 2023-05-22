@@ -56,7 +56,7 @@ public class SocketFrameTextMessage {
      * 目标用户id
      */
     private Integer targetUid;
-
+    private Integer patientId;
     /**
      * 发送者id
      */

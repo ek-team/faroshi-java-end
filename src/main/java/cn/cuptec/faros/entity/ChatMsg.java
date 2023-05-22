@@ -16,6 +16,7 @@ public class ChatMsg extends Model<ChatMsg> {
 
     @TableId(type = IdType.AUTO)
     private String id;
+    private String patientId;
     private Integer chatUserId;//群聊消息id
     private String readUserIds;//已读人用户id
     /**

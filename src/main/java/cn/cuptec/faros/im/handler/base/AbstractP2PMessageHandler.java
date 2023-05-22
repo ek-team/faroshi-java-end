@@ -8,7 +8,9 @@ import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -62,12 +64,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             //
             SocketUser userInfo = UserChannelManager.getUserInfo(channel);
             User fromUser = userInfo.getUserInfo();
+            log.info("kkk" + fromUser.toString());
             User byId2 = userService.getById(fromUser.getId());
             if (!StringUtils.isEmpty(byId2.getNickname())) {
                 fromUser.setPatientName(byId2.getNickname());
-            }
-            if (!StringUtils.isEmpty(byId2.getPatientName())) {
-                fromUser.setPatientName(byId2.getPatientName());
             }
             if (fromUser.getId() == null) {
                 channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.authRequired())));
@@ -319,33 +319,54 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         chatUsers.add(toUserChat);
 
         chatUsers.forEach(chatUser -> {
-            ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, chatUser.getTargetUid()).eq(ChatUser::getUid, chatUser.getUid()));
+            LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, chatUser.getTargetUid()).eq(ChatUser::getUid, chatUser.getUid());
+
+            if (origionMessage.getPatientId() != null) {
+                eq.eq(ChatUser::getPatientId, origionMessage.getPatientId());
+            }
+
+            ChatUser one = chatUserService.getOne(eq);
+            log.info("mmmmmm" + one.toString());
             if (one != null) {
                 if (!one.getChatCount().equals(0)) {
                     one.setChatCount(one.getChatCount() - 1);
                 }
                 if (origionMessage.getType() != null && origionMessage.getType().equals(1) && chatUser.getUid().equals(fromUser.getId())) {
-
-                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                    LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
                             .eq(ChatUser::getUid, chatUser.getUid())
                             .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
-                            .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
-                            .set(ChatUser::getChatCount, one.getChatCount())
-                            .set(ChatUser::getReceiverStatus, 1)
-                            .set(ChatUser::getLastMsg, chatMsg.getMsg()));
+                           ;
+                    if (origionMessage.getPatientId() != null) {
+                        set.eq(ChatUser::getPatientId, origionMessage.getPatientId());
+                        set.set(ChatUser::getLastChatTime, chatUser.getLastChatTime());
+                        set.set(ChatUser::getChatCount, one.getChatCount());
+                        set.set(ChatUser::getReceiverStatus, 1);
+                        set.set(ChatUser::getLastMsg, chatMsg.getMsg());
+                    }
+                    log.info("ddddddd" + origionMessage.getPatientId());
+                    chatUserService.update(set);
                 } else {
-                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                    LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
                             .eq(ChatUser::getUid, chatUser.getUid())
                             .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
-                            .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
-                            .set(ChatUser::getChatCount, one.getChatCount())
-                            .set(ChatUser::getLastMsg, chatMsg.getMsg()));
+                           ;
+                    if (origionMessage.getPatientId() != null) {
+                        set.eq(ChatUser::getPatientId, origionMessage.getPatientId());
+                        set.set(ChatUser::getLastChatTime, chatUser.getLastChatTime());
+                        set.set(ChatUser::getChatCount, one.getChatCount());
+                        set.set(ChatUser::getLastMsg, chatMsg.getMsg());
+                    }
+                    log.info("cccccccccccccc" + origionMessage.getPatientId());
+                    chatUserService.update(set);
                 }
 
 
             } else {
 
                 chatUser.setIsClosed(0);
+                if (origionMessage.getPatientId() != null) {
+                    chatUser.setPatientId(origionMessage.getPatientId() + "");
+                }
                 chatUser.setLastChatTime(new Date());
                 chatUser.setClearTime(LocalDateTime.now().minusDays(1));
                 chatUser.setLastMsg(chatMsg.getMsg());
@@ -359,6 +380,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         ChatMsg chatMsg = new ChatMsg();
         chatMsg.setMsgType(origionMessage.getMsgType());
         chatMsg.setFromUid(fromUser.getId());
+        if (origionMessage.getPatientId() != null) {
+            chatMsg.setPatientId(origionMessage.getPatientId() + "");
+
+        }
         chatMsg.setToUid(origionMessage.getTargetUid());
         chatMsg.setMsg(origionMessage.getMsg());
         chatMsg.setCreateTime(date);

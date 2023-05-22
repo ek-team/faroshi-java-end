@@ -172,6 +172,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             for (ChatUser chatUser : chatUsers) {
                 if (chatUser.getGroupType().equals(1)) {
                     ChatUserVO chatUserVO = new ChatUserVO();
+                    chatUserVO.setPatientId(chatUser.getPatientId());
                     DoctorTeam doctorTeam = doctorTeamMap.get(chatUser.getTeamId());
                     List<DoctorTeamPeople> doctorTeamPeopleList1 = doctorTeam.getDoctorTeamPeopleList();
                     chatUserVO.setDoctorTeamPeopleList(doctorTeamPeopleList1);
@@ -230,6 +231,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                         if (chatUser.getTeamId() == null) {
                             ChatUserVO chatUserVO = new ChatUserVO();
                             chatUserVO.setTargetUid(chatUser.getTargetUid());
+                            chatUserVO.setPatientId(chatUser.getPatientId());
                             User tenantUser = userMap.get(chatUser.getTargetUid());
                             String patientName = tenantUser.getPatientName();
                             if (!StringUtils.isEmpty(chatUser.getPatientName())) {
@@ -251,14 +253,9 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                             chatUserVO.setClearTime(chatUser.getClearTime());
                             chatUserVO.setChatUserId(chatUser.getId());
                             // 最后聊天时间和内容
-                            ChatUser user =
-                                    chatUsersList.stream()
-                                            .filter(chatUser1 -> chatUser1.getTargetUid().equals(chatUserVO.getTargetUid()))
-                                            .findFirst()
-                                            .get();
-                            chatUserVO.setIsClosed(user.getIsClosed());
-                            chatUserVO.setLastChatTime(user.getLastChatTime());
-                            chatUserVO.setLastMsg(user.getLastMsg());
+                            chatUserVO.setIsClosed(chatUser.getIsClosed());
+                            chatUserVO.setLastChatTime(chatUser.getLastChatTime());
+                            chatUserVO.setLastMsg(chatUser.getLastMsg());
                             chatUserVos.add(chatUserVO);
 
                             // 是否有新消息
