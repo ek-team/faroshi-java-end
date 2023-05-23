@@ -96,7 +96,9 @@ public class ChatMsgController {
         log.info("获取聊天记录开始==============================="+param.toString());
         Integer pageNum = param.getPageNum();
         Integer pageSize = param.getPageSize();
-        param.setMyUserId(SecurityUtils.getUser().getId());
+        if (param.getMyUserId() == null) {
+            param.setMyUserId(SecurityUtils.getUser().getId());
+        }
         if (param.getClearTime() == null) {
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             LocalDateTime ldt = LocalDateTime.parse("2017-09-28 01:07:05", df);
