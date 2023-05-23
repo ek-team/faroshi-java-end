@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 public class DoctorUserActionController extends AbstractBaseController<DoctorUserActionService, DoctorUserAction> {
     @Resource
     private DoctorUserServiceSetUpService doctorUserServiceSetUpService;//医生可以设置哪些服务
+    @Resource
+    private DoctorTeamService doctorTeamService;
 
     /**
      * 查询医生可以设置的服务
@@ -58,6 +60,13 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
      */
     @PostMapping("/openService")
     public RestResponse openService(@RequestBody DoctorUserAction doctorUserAction) {
+        Integer teamId = doctorUserAction.getTeamId();
+        if (teamId != null) {
+            DoctorTeam doctorTeam = doctorTeamService.getById(teamId);
+            if (!doctorTeam.getLeaderId().equals(SecurityUtils.getUser().getId())) {
+                return RestResponse.failed("只有队长才能修改");
+            }
+        }
         doctorUserAction.setUserId(SecurityUtils.getUser().getId());
         doctorUserAction.setStatus(0);
         service.saveOrUpdate(doctorUserAction);
@@ -71,10 +80,19 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
      */
     @GetMapping("/closeService")
     public RestResponse closeService(@RequestParam("id") String id) {
-        DoctorUserAction doctorUserAction = new DoctorUserAction();
-        doctorUserAction.setId(Integer.parseInt(id));
-        doctorUserAction.setStatus(1);
-        service.updateById(doctorUserAction);
+        DoctorUserAction doctorUserAction = service.getById(id);
+        Integer teamId = doctorUserAction.getTeamId();
+        if (teamId != null) {
+            DoctorTeam doctorTeam = doctorTeamService.getById(teamId);
+            if (!doctorTeam.getLeaderId().equals(SecurityUtils.getUser().getId())) {
+                return RestResponse.failed("只有队长才能修改");
+            }
+        }
+
+        DoctorUserAction doctorUserActionUpdate = new DoctorUserAction();
+        doctorUserActionUpdate.setId(Integer.parseInt(id));
+        doctorUserActionUpdate.setStatus(1);
+        service.updateById(doctorUserActionUpdate);
         return RestResponse.ok();
     }
 
@@ -85,6 +103,13 @@ public class DoctorUserActionController extends AbstractBaseController<DoctorUse
      */
     @PostMapping("/updateService")
     public RestResponse updateService(@RequestBody DoctorUserAction doctorUserAction) {
+        Integer teamId = doctorUserAction.getTeamId();
+        if (teamId != null) {
+            DoctorTeam doctorTeam = doctorTeamService.getById(teamId);
+            if (!doctorTeam.getLeaderId().equals(SecurityUtils.getUser().getId())) {
+                return RestResponse.failed("只有队长才能修改");
+            }
+        }
         service.updateById(doctorUserAction);
         return RestResponse.ok();
     }
