@@ -468,7 +468,7 @@ public class QrCodeUtil {
             outg1.setColor(Color.BLACK);
             if (type == 1) {
                 outg1.setFont(new Font("宋体", Font.BOLD, 26)); // 字体、字型、字号
-                outg1.drawString("售后服务及回收请扫码", 62, 409);
+                outg1.drawString("回家康复请扫码", 99, 409);
                 outg1.setFont(new Font("宋体", Font.BOLD, 25)); // 字体、字型、字号
                 outg1.drawString("咨询热线:400-618-9886", 51, 439);
 
