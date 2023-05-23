@@ -161,6 +161,7 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
 
         userServicePackageInfo.setServicePackageInfo(servicePackageInfo);
         UserOrder userOrder = userOrdertService.getById(userServicePackageInfo.getOrderId());
+        userServicePackageInfo.setUserOrder(userOrder);
         Integer doctorTeamId = userOrder.getDoctorTeamId();
 
         List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()

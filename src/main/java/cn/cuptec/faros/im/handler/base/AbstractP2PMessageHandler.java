@@ -317,7 +317,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         List<ChatUser> chatUsers = new ArrayList<>();
         chatUsers.add(fromUserChat);
         chatUsers.add(toUserChat);
-
+        log.info("就诊人id========="+origionMessage.getPatientId());
         chatUsers.forEach(chatUser -> {
             LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, chatUser.getTargetUid()).eq(ChatUser::getUid, chatUser.getUid());
 
@@ -332,32 +332,65 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     one.setChatCount(one.getChatCount() - 1);
                 }
                 if (origionMessage.getType() != null && origionMessage.getType().equals(1) && chatUser.getUid().equals(fromUser.getId())) {
-                    LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
-                            .eq(ChatUser::getUid, chatUser.getUid())
-                            .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
-                           ;
+
                     if (origionMessage.getPatientId() != null) {
+                        LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, chatUser.getUid())
+                                .eq(ChatUser::getTargetUid, chatUser.getTargetUid());
                         set.eq(ChatUser::getPatientId, origionMessage.getPatientId());
                         set.set(ChatUser::getLastChatTime, chatUser.getLastChatTime());
                         set.set(ChatUser::getChatCount, one.getChatCount());
                         set.set(ChatUser::getReceiverStatus, 1);
-                        set.set(ChatUser::getLastMsg, chatMsg.getMsg());
+                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
+                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
+                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        }
+                        chatUserService.update(set);
+                    } else {
+                        LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, chatUser.getUid())
+                                .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
+                                .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
+                                .set(ChatUser::getChatCount, one.getChatCount())
+                                .set(ChatUser::getReceiverStatus, 1);
+                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
+                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
+                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        }
+                        chatUserService.update(set);
                     }
                     log.info("ddddddd" + origionMessage.getPatientId());
-                    chatUserService.update(set);
+
                 } else {
-                    LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
-                            .eq(ChatUser::getUid, chatUser.getUid())
-                            .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
-                           ;
+
                     if (origionMessage.getPatientId() != null) {
+                        LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, chatUser.getUid())
+                                .eq(ChatUser::getTargetUid, chatUser.getTargetUid());
                         set.eq(ChatUser::getPatientId, origionMessage.getPatientId());
                         set.set(ChatUser::getLastChatTime, chatUser.getLastChatTime());
                         set.set(ChatUser::getChatCount, one.getChatCount());
                         set.set(ChatUser::getLastMsg, chatMsg.getMsg());
+                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
+                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
+                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        }
+                        chatUserService.update(set);
+                    } else {
+                        LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, chatUser.getUid())
+                                .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
+                                .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
+                                .set(ChatUser::getChatCount, one.getChatCount())
+                                .set(ChatUser::getLastMsg, chatMsg.getMsg());
+                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
+                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
+                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        }
+                        log.info("cccccccccccccc" + origionMessage.getPatientId());
+                        chatUserService.update(set);
                     }
-                    log.info("cccccccccccccc" + origionMessage.getPatientId());
-                    chatUserService.update(set);
+
                 }
 
 

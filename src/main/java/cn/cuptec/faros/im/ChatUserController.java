@@ -9,6 +9,7 @@ import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.hutool.http.HttpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -241,15 +242,30 @@ public class ChatUserController {
             chatUsers.add(toUserChat);
 
             chatUsers.forEach(c -> {
-                ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
-                if (one != null) {
+                LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid());
 
-                    chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
-                            .eq(ChatUser::getUid, c.getUid())
-                            .eq(ChatUser::getTargetUid, c.getTargetUid())
-                            .set(ChatUser::getServiceEndTime, LocalDateTime.now().minusDays(2))
-                            .set(ChatUser::getPatientOtherOrderStatus, 3)
-                    );
+                if (!StringUtils.isEmpty(chatUser.getPatientId())) {
+                    eq.eq(ChatUser::getPatientId, chatUser.getPatientId());
+                }
+                ChatUser one = chatUserService.getOne(eq);
+                if (one != null) {
+                    if (!StringUtils.isEmpty(chatUser.getPatientId())) {
+                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, c.getUid())
+                                .eq(ChatUser::getPatientId, chatUser.getPatientId())
+                                .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                .set(ChatUser::getServiceEndTime, LocalDateTime.now().minusDays(2))
+                                .set(ChatUser::getPatientOtherOrderStatus, 3)
+                        );
+                    } else {
+                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getUid, c.getUid())
+                                .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                .set(ChatUser::getServiceEndTime, LocalDateTime.now().minusDays(2))
+                                .set(ChatUser::getPatientOtherOrderStatus, 3)
+                        );
+                    }
+
                 }
             });
 

@@ -13,6 +13,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.github.binarywang.wxpay.bean.notify.WxPayOrderNotifyResult;
 import com.github.binarywang.wxpay.bean.notify.WxPayRefundNotifyResult;
@@ -335,7 +336,7 @@ public class WxPayController {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
-                        "购买支架链接", urlData.getUrl()+"record.html#/ucenter/recovery/externalLink");
+                        "购买支架链接", urlData.getUrl() + "record.html#/ucenter/recovery/externalLink");
             }
 //            String saleSpecDescIdList = userOrder.getSaleSpecDescIdList();
 //            List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
@@ -424,18 +425,38 @@ public class WxPayController {
                 chatUsers.add(toUserChat);
 
                 chatUsers.forEach(c -> {
-                    ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                    LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid());
+                    if (patientOtherOrder.getPatientId() != null) {
+                        eq.eq(ChatUser::getPatientId, patientOtherOrder.getPatientId());
+                    }
+                    ChatUser one = chatUserService.getOne(eq);
                     if (one != null) {
 
-                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
-                                .eq(ChatUser::getUid, c.getUid())
-                                .eq(ChatUser::getTargetUid, c.getTargetUid())
-                                .set(ChatUser::getChatDesc, "咨询")
-                                .set(ChatUser::getPatientOtherOrderStatus, "0")
-                                .set(ChatUser::getChatCount, 9)
-                                .set(ChatUser::getPatientOtherOrderNo, patientOtherOrder.getId() + "")
+                        if (patientOtherOrder.getPatientId() != null) {
+                            LambdaUpdateWrapper<ChatUser> wq = Wrappers.<ChatUser>lambdaUpdate()
+                                    .eq(ChatUser::getUid, c.getUid())
+                                    .eq(ChatUser::getPatientId, patientOtherOrder.getPatientId())
+                                    .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                    .set(ChatUser::getChatDesc, "咨询")
+                                    .set(ChatUser::getPatientOtherOrderStatus, "0")
+                                    .set(ChatUser::getChatCount, 9)
+                                    .set(ChatUser::getPatientOtherOrderNo, patientOtherOrder.getId() + "");
+                            chatUserService.update(
+                                    wq
+                            );
+                        } else {
+                            LambdaUpdateWrapper<ChatUser> wq = Wrappers.<ChatUser>lambdaUpdate()
+                                    .eq(ChatUser::getUid, c.getUid())
+                                    .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                    .set(ChatUser::getChatDesc, "咨询")
+                                    .set(ChatUser::getPatientOtherOrderStatus, "0")
+                                    .set(ChatUser::getChatCount, 9)
+                                    .set(ChatUser::getPatientOtherOrderNo, patientOtherOrder.getId() + "");
+                            chatUserService.update(
+                                    wq
+                            );
+                        }
 
-                        );
                     }
                 });
             } else {

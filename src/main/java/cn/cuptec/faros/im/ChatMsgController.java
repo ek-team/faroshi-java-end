@@ -11,6 +11,7 @@ import cn.cuptec.faros.service.*;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -93,7 +94,7 @@ public class ChatMsgController {
     @ApiOperation(value = "查询历史记录")
     @PostMapping("/queryChatMsgHistory")
     public RestResponse queryChatMsgHistory(@RequestBody SocketFrameTextMessage param) {
-        log.info("获取聊天记录开始==============================="+param.toString());
+        log.info("获取聊天记录开始===============================" + param.toString());
         Integer pageNum = param.getPageNum();
         Integer pageSize = param.getPageSize();
         if (param.getMyUserId() == null) {
@@ -107,8 +108,8 @@ public class ChatMsgController {
         }
         Integer patientId = param.getPatientId();
         LambdaQueryWrapper<ChatUser> eq = new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getUid, param.getMyUserId()).eq(ChatUser::getTargetUid, param.getTargetUid());
-        if(patientId!=null){
-            eq.eq(ChatUser::getPatientId,patientId);
+        if (patientId != null) {
+            eq.eq(ChatUser::getPatientId, patientId);
         }
         //查询清空历史记录
         ChatUser one = chatUserService.getOne(eq);
@@ -127,12 +128,12 @@ public class ChatMsgController {
                     .orderByDesc(ChatMsg::getCreateTime));
         } else {
             LambdaQueryWrapper<ChatMsg> chatMsgLambdaQueryWrapper;
-            if(patientId!=null){
-                       chatMsgLambdaQueryWrapper = Wrappers.<ChatMsg>lambdaQuery()
-                        .nested(query -> query.eq(ChatMsg::getToUid, param.getMyUserId()).eq(ChatMsg::getFromUid, param.getTargetUid()).eq(ChatMsg::getPatientId,patientId).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
-                        .or(query -> query.eq(ChatMsg::getToUid, param.getTargetUid()).eq(ChatMsg::getFromUid, param.getMyUserId()).eq(ChatMsg::getPatientId,patientId).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
+            if (patientId != null) {
+                chatMsgLambdaQueryWrapper = Wrappers.<ChatMsg>lambdaQuery()
+                        .nested(query -> query.eq(ChatMsg::getToUid, param.getMyUserId()).eq(ChatMsg::getFromUid, param.getTargetUid()).eq(ChatMsg::getPatientId, patientId).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
+                        .or(query -> query.eq(ChatMsg::getToUid, param.getTargetUid()).eq(ChatMsg::getFromUid, param.getMyUserId()).eq(ChatMsg::getPatientId, patientId).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
                         .orderByDesc(ChatMsg::getCreateTime);
-            }else {
+            } else {
                 chatMsgLambdaQueryWrapper = Wrappers.<ChatMsg>lambdaQuery()
                         .nested(query -> query.eq(ChatMsg::getToUid, param.getMyUserId()).eq(ChatMsg::getFromUid, param.getTargetUid()).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
                         .or(query -> query.eq(ChatMsg::getToUid, param.getTargetUid()).eq(ChatMsg::getFromUid, param.getMyUserId()).gt(ChatMsg::getCreateTime, df.format(param.getClearTime())))
@@ -340,10 +341,19 @@ public class ChatMsgController {
         patientOtherOrder.setEndTime(LocalDateTime.now().plusHours(24));
         patientOtherOrderService.updateById(patientOtherOrder);
         ChatUser byId = chatUserService.getById(chatUserId);
-        ChatMsg chatMsg = new ChatMsg();
-        chatMsg.setId(byId.getMsgId());
-        chatMsg.setStr2(str2);
-        chatMsgService.updateById(chatMsg);
+        if(!StringUtils.isEmpty(byId.getMsgId())){
+            ChatMsg chatMsg = new ChatMsg();
+            chatMsg.setId(byId.getMsgId());
+            chatMsg.setStr2(str2);
+            chatMsgService.updateById(chatMsg);
+        }else {
+            LambdaUpdateWrapper<ChatMsg> set = Wrappers.<ChatMsg>lambdaUpdate()
+                    .eq(ChatMsg::getStr1, patientOtherOrder.getId())
+                    .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                    .set(ChatMsg::getStr2, str2);
+            chatMsgService.update(set);
+        }
+
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
 
         if (str2.equals("1")) {
@@ -391,7 +401,11 @@ public class ChatMsgController {
                 chatUsers.add(toUserChat);
 
                 chatUsers.forEach(c -> {
-                    ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                    LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid());
+                    if (patientOtherOrder.getPatientId() != null) {
+                        eq.eq(ChatUser::getPatientId, patientOtherOrder.getPatientId());
+                    }
+                    ChatUser one = chatUserService.getOne(eq);
                     if (one != null) {
                         User byId1 = userService.getById(c.getUid());
                         Integer receiverId = 0;
@@ -399,14 +413,30 @@ public class ChatMsgController {
                             //代表是医生
                             receiverId = c.getUid();
                         }
-                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
-                                .eq(ChatUser::getUid, c.getUid())
-                                .eq(ChatUser::getTargetUid, c.getTargetUid())
-                                .set(ChatUser::getPatientOtherOrderStatus, str2)
-                                .set(ChatUser::getReceiverId, receiverId)
-                                .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
-                                .set(ChatUser::getServiceStartTime, LocalDateTime.now())
-                        );
+
+                        if (patientOtherOrder.getPatientId() != null) {
+                            LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                    .eq(ChatUser::getUid, c.getUid())
+                                    .eq(ChatUser::getPatientId, patientOtherOrder.getPatientId())
+                                    .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                    .set(ChatUser::getPatientOtherOrderStatus, str2)
+                                    .set(ChatUser::getReceiverId, receiverId)
+                                    .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
+                                    .set(ChatUser::getServiceStartTime, LocalDateTime.now());
+                            chatUserService.update(set
+                            );
+                        } else {
+                            LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                    .eq(ChatUser::getUid, c.getUid())
+                                    .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                    .set(ChatUser::getPatientOtherOrderStatus, str2)
+                                    .set(ChatUser::getReceiverId, receiverId)
+                                    .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
+                                    .set(ChatUser::getServiceStartTime, LocalDateTime.now());
+                            chatUserService.update(set
+                            );
+                        }
+
                     }
                 });
 
@@ -440,15 +470,34 @@ public class ChatMsgController {
                 chatUsers.add(toUserChat);
 
                 chatUsers.forEach(c -> {
-                    ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
+                    LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid());
+                    if (patientOtherOrder.getPatientId() != null) {
+                        eq.eq(ChatUser::getPatientId, patientOtherOrder.getPatientId());
+                    }
+                    ChatUser one = chatUserService.getOne(eq);
                     if (one != null) {
 
-                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
-                                .eq(ChatUser::getUid, c.getUid())
-                                .eq(ChatUser::getTargetUid, c.getTargetUid())
-                                .set(ChatUser::getPatientOtherOrderStatus, str2)
 
-                        );
+                        if (patientOtherOrder.getPatientId() != null) {
+                            LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                    .eq(ChatUser::getUid, c.getUid())
+                                    .eq(ChatUser::getPatientId, patientOtherOrder.getPatientId())
+                                    .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                    .set(ChatUser::getPatientOtherOrderStatus, str2);
+
+                            chatUserService.update(
+                                    set
+                            );
+                        } else {
+                            LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
+                                    .eq(ChatUser::getUid, c.getUid())
+                                    .eq(ChatUser::getTargetUid, c.getTargetUid())
+                                    .set(ChatUser::getPatientOtherOrderStatus, str2);
+                            chatUserService.update(
+                                    set
+                            );
+                        }
+
                     }
                 });
 
