@@ -317,8 +317,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         List<ChatUser> chatUsers = new ArrayList<>();
         chatUsers.add(fromUserChat);
         chatUsers.add(toUserChat);
-        log.info("就诊人id========="+origionMessage.getPatientId());
+
+
         chatUsers.forEach(chatUser -> {
+            log.info("就诊人id=========" + origionMessage.getPatientId() + "===" + origionMessage.getStr1() + "=====" + chatUser.getTargetUid() + "======" + chatUser.getUid());
             LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, chatUser.getTargetUid()).eq(ChatUser::getUid, chatUser.getUid());
 
             if (origionMessage.getPatientId() != null) {
@@ -341,9 +343,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         set.set(ChatUser::getLastChatTime, chatUser.getLastChatTime());
                         set.set(ChatUser::getChatCount, one.getChatCount());
                         set.set(ChatUser::getReceiverStatus, 1);
-                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
-                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
-                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        if (!StringUtils.isEmpty(chatUser.getPatientOtherOrderNo())) {
+                            set.set(ChatUser::getPatientOtherOrderNo, chatUser.getPatientOtherOrderNo());
+                            set.set(ChatUser::getPatientOtherOrderStatus, "0");
                         }
                         chatUserService.update(set);
                     } else {
@@ -353,9 +355,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                                 .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
                                 .set(ChatUser::getChatCount, one.getChatCount())
                                 .set(ChatUser::getReceiverStatus, 1);
-                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
-                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
-                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        if (!StringUtils.isEmpty(chatUser.getPatientOtherOrderNo())) {
+                            set.set(ChatUser::getPatientOtherOrderNo, chatUser.getPatientOtherOrderNo());
+                            set.set(ChatUser::getPatientOtherOrderStatus, "0");
                         }
                         chatUserService.update(set);
                     }
@@ -371,9 +373,10 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         set.set(ChatUser::getLastChatTime, chatUser.getLastChatTime());
                         set.set(ChatUser::getChatCount, one.getChatCount());
                         set.set(ChatUser::getLastMsg, chatMsg.getMsg());
-                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
-                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
-                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        log.info("哇哈哈哈" + chatUser.getPatientOtherOrderStatus());
+                        if (!StringUtils.isEmpty(chatUser.getPatientOtherOrderNo())) {
+                            set.set(ChatUser::getPatientOtherOrderNo, chatUser.getPatientOtherOrderNo());
+                            set.set(ChatUser::getPatientOtherOrderStatus, "0");
                         }
                         chatUserService.update(set);
                     } else {
@@ -383,9 +386,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                                 .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
                                 .set(ChatUser::getChatCount, one.getChatCount())
                                 .set(ChatUser::getLastMsg, chatMsg.getMsg());
-                        if(!StringUtils.isEmpty(chatUser.getPatientOtherOrderStatus())){
-                            set.set(ChatUser::getPatientOtherOrderNo,chatUser.getPatientOtherOrderStatus());
-                            set.set(ChatUser::getPatientOtherOrderStatus,"0");
+                        if (!StringUtils.isEmpty(chatUser.getPatientOtherOrderNo())) {
+                            set.set(ChatUser::getPatientOtherOrderNo, chatUser.getPatientOtherOrderNo());
+                            set.set(ChatUser::getPatientOtherOrderStatus, "0");
                         }
                         log.info("cccccccccccccc" + origionMessage.getPatientId());
                         chatUserService.update(set);
