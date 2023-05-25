@@ -114,7 +114,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         List<TbTrainUser> list = this.list(Wrappers.<TbTrainUser>lambdaQuery().in(TbTrainUser::getId, userIds));
 //        if (CollUtil.isEmpty(list)) list = CollUtil.toList();
         page.setRecords(list);
-        page.setTotal(userIds.size());
+        page.setTotal(list.size());
 
         return page;
 

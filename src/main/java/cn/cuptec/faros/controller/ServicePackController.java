@@ -652,8 +652,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                     Map<Integer, User> userMap = users.stream()
                             .collect(Collectors.toMap(User::getId, t -> t));
                     for (DoctorTeamPeople doctorTeamPeople : list) {
-                        doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
-                        doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+                        if (userMap.get(doctorTeamPeople.getUserId()) != null) {
+                            doctorTeamPeople.setUserName(userMap.get(doctorTeamPeople.getUserId()).getNickname());
+                            doctorTeamPeople.setAvatar(userMap.get(doctorTeamPeople.getUserId()).getAvatar());
+                        }
                     }
 
                     Map<Integer, List<DoctorTeamPeople>> doctorTeamPeopleMap = list.stream()
@@ -699,9 +701,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
         User user = userService.getById(SecurityUtils.getUser().getId());
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(user.getId());
-        if(aBoolean){
+        if (aBoolean) {
             return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id)));
-        }else {
+        } else {
             return RestResponse.ok(service.list(new QueryWrapper<ServicePack>().lambda().eq(ServicePack::getHospitalId, id).eq(ServicePack::getDeptId, user.getDeptId())));
 
         }
