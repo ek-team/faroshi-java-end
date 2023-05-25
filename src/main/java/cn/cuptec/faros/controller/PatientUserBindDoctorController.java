@@ -40,7 +40,8 @@ public class PatientUserBindDoctorController extends AbstractBaseController<Pati
         PatientUser patientUser = patientUserService.getById(patientUserBindDoctor.getPatientUserId());
 
         service.save(patientUserBindDoctor);
-        if (patientUserBindDoctor.getDoctorTeamId() != null) {
+        if (StringUtils.isEmpty(patientUserBindDoctor.getDoctorTeamId())) {
+            patientUserBindDoctor.setDoctorTeamId(patientUserBindDoctor.getDoctorTeamId().split("-")[0]);
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, patientUserBindDoctor.getDoctorTeamId()));
 
@@ -65,7 +66,7 @@ public class PatientUserBindDoctorController extends AbstractBaseController<Pati
                 chatUser1.setUserIds(chatUserId);
                 chatUser1.setGroupType(1);
                 chatUser1.setLastChatTime(new Date());
-                chatUser1.setTeamId(patientUserBindDoctor.getDoctorTeamId());
+                chatUser1.setTeamId(Integer.parseInt(patientUserBindDoctor.getDoctorTeamId()));
                 chatUser1.setTargetUid(patientUserBindDoctor.getUserId());
                 chatUser1.setPatientId(patientUser.getId());
                 chatUser1.setPatientName(patientUser.getName());
@@ -129,7 +130,7 @@ public class PatientUserBindDoctorController extends AbstractBaseController<Pati
                     doctorIds.add(patientUserBindDoctor.getDoctorId());
                 }
                 if (patientUserBindDoctor.getDoctorTeamId() != null) {
-                    doctorTeamIds.add(patientUserBindDoctor.getDoctorTeamId());
+                    doctorTeamIds.add(Integer.parseInt(patientUserBindDoctor.getDoctorTeamId()));
                 }
             }
             Map<Integer, User> userMap = new HashMap<>();

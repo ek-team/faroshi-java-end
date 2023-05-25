@@ -21,7 +21,7 @@ public class PatientUserBindDoctor {
     private Integer doctorId;//医生id
     @TableField(exist = false)
     private User doctor;
-    private Integer doctorTeamId;//医生团队id
+    private String doctorTeamId;//医生团队id
     @TableField(exist = false)
     private DoctorTeam doctorTeam;
 
