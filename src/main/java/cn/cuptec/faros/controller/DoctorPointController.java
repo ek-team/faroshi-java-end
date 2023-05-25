@@ -6,6 +6,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.DoctorPointCountResult;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.pay.PayResultData;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
@@ -28,8 +29,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -63,6 +66,8 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     public RedisTemplate redisTemplate;
     @Resource
     private PatientUserService patientUserService;
+    @Resource
+    private ChatMsgService chatMsgService;
 
     /**
      * 分页查询医生积分
@@ -181,6 +186,25 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         return RestResponse.ok();
     }
 
+    private static Date getStartTime() {
+        Calendar todayStart = Calendar.getInstance();
+        todayStart.set(Calendar.HOUR, 0);
+        todayStart.set(Calendar.MINUTE, 0);
+        todayStart.set(Calendar.SECOND, 0);
+        todayStart.set(Calendar.MILLISECOND, 0);
+        return todayStart.getTime();
+    }
+
+    private static Date getEndTime() {
+        Calendar todayEnd = Calendar.getInstance();
+        todayEnd.set(Calendar.HOUR, 23);
+        todayEnd.set(Calendar.MINUTE, 59);
+        todayEnd.set(Calendar.SECOND, 59);
+        todayEnd.set(Calendar.MILLISECOND, 999);
+        return todayEnd.getTime();
+    }
+
+
     /**
      * 患者图文咨询申请
      *
@@ -188,6 +212,44 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
      */
     @PostMapping("/addPatientOtherOrder")
     public RestResponse addPatientOtherOrder(@RequestBody PatientOtherOrder patientOtherOrder) {
+        //判断医生的接单数量
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        if (patientOtherOrder.getDoctorId() != null) {
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
+                    .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
+                    .isNull(DoctorUserAction::getTeamId));
+            Integer count = one.getCount();
+            int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getToUid, patientOtherOrder.getDoctorId())
+                    .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                    .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
+                    .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
+            if (count <= count1) {
+                return RestResponse.failed("超过医生接单次数");
+            }
+        } else {
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            Integer count = one.getCount();
+            List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTeamId, patientOtherOrder.getDoctorTeamId())
+            );
+            if (!CollectionUtils.isEmpty(list)) {
+                List<Integer> chatIds = list.stream().map(ChatUser::getId)
+                        .collect(Collectors.toList());
+                int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda()
+                        .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                        .in(ChatMsg::getChatUserId, chatIds)
+                        .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
+                        .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
+                if (count <= count1) {
+                    return RestResponse.failed("超过医生接单次数");
+                }
+            }
+
+        }
+
+
         patientOtherOrder.setUserId(SecurityUtils.getUser().getId());
         patientOtherOrder.setCreateTime(LocalDateTime.now());
         patientOtherOrder.setStatus(1);
@@ -332,6 +394,44 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
 
     @PostMapping("/addPatientOtherOrder1")
     public RestResponse addPatientOtherOrder1(@RequestBody PatientOtherOrder patientOtherOrder) {
+        //判断医生的接单数量
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        if (patientOtherOrder.getDoctorId() != null) {
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
+                    .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
+                    .isNull(DoctorUserAction::getTeamId));
+            Integer count = one.getCount();
+            int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getToUid, patientOtherOrder.getDoctorId())
+                    .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                    .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
+                    .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
+            if (count <= count1) {
+                return RestResponse.failed("超过医生接单次数");
+            }
+        } else {
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            Integer count = one.getCount();
+            List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTeamId, patientOtherOrder.getDoctorTeamId())
+            );
+            if (!CollectionUtils.isEmpty(list)) {
+                List<Integer> chatIds = list.stream().map(ChatUser::getId)
+                        .collect(Collectors.toList());
+                int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda()
+                        .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                        .in(ChatMsg::getChatUserId, chatIds)
+                        .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
+                        .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
+                if (count <= count1) {
+                    return RestResponse.failed("超过医生接单次数");
+                }
+            }
+
+        }
+
+
         patientOtherOrder.setUserId(SecurityUtils.getUser().getId());
         patientOtherOrder.setCreateTime(LocalDateTime.now());
         patientOtherOrder.setStatus(1);
@@ -550,24 +650,9 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
     }
 
     public static void main(String[] args) {
-        LocalDateTime d1 = LocalDateTime.now();
-        System.out.println(d1);
-
-
-        LocalDateTime d2 = LocalDateTime.now();
-        d2 = d2.plusHours(24);
-        d2 = d2.plusMinutes(5);
-        d2 = d2.plusSeconds(20);
-        System.out.println(d2);
-
-        Duration sjc = Duration.between(d2, d1);// 计算时间差
-        System.out.println(sjc.toString());
-        String s1 = new String(sjc.toString()).substring(3);// 转换成字符串类型，然后截取
-        String replace = s1.replace("H", "时");
-        String replace1 = replace.replace("M", "分");
-        String[] s = replace1.split("分");
-        String replace111 = s[0].replace("-", "");
-        System.out.println(replace111);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println(sdf.format(getStartTime()));
+        System.out.println(sdf.format(getEndTime()));
 
     }
 
