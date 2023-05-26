@@ -549,7 +549,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
     /**
      * 添加群聊
      */
-    public ChatUser saveGroupChatUser(List<Integer> userIds, Integer doctorTeamId, Integer patientUserId) {
+    public ChatUser saveGroupChatUser(List<Integer> userIds, Integer doctorTeamId, Integer patientUserId,Integer patientId,String patientName) {
         String chatUserId = "";
         for (Integer userId : userIds) {
             if (StringUtils.isEmpty(chatUserId)) {
@@ -559,7 +559,8 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
             }
         }
         LambdaQueryWrapper<ChatUser> wrapper = Wrappers.<ChatUser>lambdaQuery()
-                .eq(ChatUser::getTeamId, doctorTeamId);
+                .eq(ChatUser::getTeamId, doctorTeamId)
+                .eq(ChatUser::getPatientId, patientId);
         wrapper.like(ChatUser::getUserIds, patientUserId);
         List<ChatUser> list = list(wrapper);
         if (!CollectionUtils.isEmpty(list)) {
@@ -577,11 +578,15 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     }
                 }
                 chatUser.setUserIds(userIdStr);
+                chatUser.setPatientName(patientName);
+                chatUser.setPatientId(patientUserId+"");
                 updateById(chatUser);
                 return chatUser;
             }
         }
         ChatUser chatUser1 = new ChatUser();
+        chatUser1.setPatientId(patientUserId+"");
+        chatUser1.setPatientName(patientName);
         chatUser1.setUserIds(chatUserId);
         chatUser1.setGroupType(1);
         chatUser1.setLastChatTime(new Date());

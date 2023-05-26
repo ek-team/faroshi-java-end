@@ -559,6 +559,11 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         String efficientHour = patientOtherOrder.getEfficientHour();
         String replace = efficientHour.replace("-", "");
         patientOtherOrder.setEfficientHour(replace);
+        Integer patientId = patientOtherOrder.getPatientId();
+        if (patientId != null) {
+            PatientUser byId = patientUserService.getById(patientId);
+            patientOtherOrder.getUser().setPatientName(byId.getName());
+        }
         return RestResponse.ok(patientOtherOrder);
     }
 

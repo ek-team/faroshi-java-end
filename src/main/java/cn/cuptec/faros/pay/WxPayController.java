@@ -276,7 +276,7 @@ public class WxPayController {
             userDoctorRelationService.saveBatch(userDoctorRelationList);
 
             userIds.add(userOrder.getUserId());
-            ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId());
+            ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId(),patientUserId,byId.getName());
 
             //修改用户的病种
             Integer diseasesId = userOrder.getDiseasesId();
