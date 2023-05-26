@@ -63,6 +63,14 @@ public class AddressController {
 
     @PostMapping("/updateAddress")
     public RestResponse updateAddress(@RequestBody Address address) {
+        if (address.getIsDefault() == 1) {
+            // 将当前账号下其他默认地址全部修改为 o
+            addressService.update(Wrappers.<Address>lambdaUpdate()
+                    .eq(Address::getPatientId, address.getPatientId())
+                    .set(Address::getIsDefault, 0));
+
+        }
+
         addressService.updateById(address);
         return RestResponse.ok();
 
