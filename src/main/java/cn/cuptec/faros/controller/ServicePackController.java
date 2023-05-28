@@ -14,6 +14,7 @@ import cn.cuptec.faros.service.*;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
@@ -317,6 +318,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
         //回收规则
         List<RecyclingRule> recyclingRuleList = servicePack.getRecyclingRuleList();
+        recyclingRuleService.update(Wrappers.<RecyclingRule>lambdaUpdate()
+                .eq(RecyclingRule::getServicePackId, servicePack.getId())
+                .set(RecyclingRule::getServicePackId, -1)
+        );
         recyclingRuleService.remove(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, servicePack.getId()));
         if (!CollectionUtils.isEmpty(recyclingRuleList)) {
             for (RecyclingRule recyclingRule : recyclingRuleList) {

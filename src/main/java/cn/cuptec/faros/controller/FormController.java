@@ -174,8 +174,14 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                     if (formUserData.getScope() != null) {
                         scope = formUserData.getScope() + scope;
                     }
-                    form.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
-                    form.setDoctorName(userMap.get(formUserData.getDoctorId()).getNickname());
+                    if(userMap.get(formUserData.getUserId())!=null){
+                        form.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
+
+                    }
+                    if(userMap.get(formUserData.getDoctorId())!=null){
+                        form.setDoctorName(userMap.get(formUserData.getDoctorId()).getNickname());
+
+                    }
                 }
                 form.setId(formId);
                 form.setScope(scope);
