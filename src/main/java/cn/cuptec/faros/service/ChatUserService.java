@@ -579,13 +579,13 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                 }
                 chatUser.setUserIds(userIdStr);
                 chatUser.setPatientName(patientName);
-                chatUser.setPatientId(patientUserId+"");
+                chatUser.setPatientId(patientId+"");
                 updateById(chatUser);
                 return chatUser;
             }
         }
         ChatUser chatUser1 = new ChatUser();
-        chatUser1.setPatientId(patientUserId+"");
+        chatUser1.setPatientId(patientId+"");
         chatUser1.setPatientName(patientName);
         chatUser1.setUserIds(chatUserId);
         chatUser1.setGroupType(1);

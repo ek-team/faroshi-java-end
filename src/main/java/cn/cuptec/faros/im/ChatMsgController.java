@@ -341,18 +341,11 @@ public class ChatMsgController {
         patientOtherOrder.setEndTime(LocalDateTime.now().plusHours(24));
         patientOtherOrderService.updateById(patientOtherOrder);
         ChatUser byId = chatUserService.getById(chatUserId);
-        if(!StringUtils.isEmpty(byId.getMsgId())){
-            ChatMsg chatMsg = new ChatMsg();
-            chatMsg.setId(byId.getMsgId());
-            chatMsg.setStr2(str2);
-            chatMsgService.updateById(chatMsg);
-        }else {
-            LambdaUpdateWrapper<ChatMsg> set = Wrappers.<ChatMsg>lambdaUpdate()
-                    .eq(ChatMsg::getStr1, patientOtherOrder.getId())
-                    .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
-                    .set(ChatMsg::getStr2, str2);
-            chatMsgService.update(set);
-        }
+        LambdaUpdateWrapper<ChatMsg> set1 = Wrappers.<ChatMsg>lambdaUpdate()
+                .eq(ChatMsg::getStr1, patientOtherOrder.getId())
+                .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                .set(ChatMsg::getStr2, str2);
+        chatMsgService.update(set1);
 
         UserServicePackageInfo userServicePackageInfo = userServicePackageInfoService.getById(patientOtherOrder.getUserServiceId());
 
