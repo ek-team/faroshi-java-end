@@ -115,6 +115,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private final Url urlData;
     @Autowired
     public RedisTemplate redisTemplate;
+    @Resource
+    private RecyclingRuleService recyclingRuleService;
+
     /**
      * 查询订单的续租记录
      */
@@ -615,7 +618,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/shareOrder")
     public RestResponse shareOrder(@RequestParam("orderNo") String orderNo) {
         //生成一个图片返回
-        String url = urlData.getUrl()+"index.html#/transferPage/helpPay?orderNo=" + orderNo;
+        String url = urlData.getUrl() + "index.html#/transferPage/helpPay?orderNo=" + orderNo;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -778,6 +781,23 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //计算订单价格
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
+        userOrder.setSaleSpecRecoveryPrice(saleSpecGroup.getRecoveryPrice());
+        List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePack()));
+        if (!CollectionUtils.isEmpty(list)) {
+            String recycling = "";
+            for (RecyclingRule recyclingRule : list) {
+                if (StringUtils.isEmpty(recycling)) {
+                    recycling = recyclingRule.getId() + "";
+
+                } else {
+                    recycling = recycling + "/" + recyclingRule.getId();
+
+                }
+            }
+            userOrder.setRecyclingRuleList(recycling);
+        }
+
+
         Integer orderType = 2;//判断是租用还是购买
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
         if (servicePack.getRentBuy() != null) {
@@ -797,7 +817,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             return RestResponse.ok(userOrder);
         }
         //生成一个图片返回
-        String url = urlData.getUrl()+"index.html#/transferPage/helpPay?orderNo=" + userOrder.getOrderNo();
+        String url = urlData.getUrl() + "index.html#/transferPage/helpPay?orderNo=" + userOrder.getOrderNo();
         BufferedImage png = null;
         try {
             png = QrCodeUtil.orderImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -918,6 +938,20 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
         userOrder.setSaleSpecRecoveryPrice(saleSpecGroup.getRecoveryPrice());
+        List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePack()));
+        if (!CollectionUtils.isEmpty(list)) {
+            String recycling = "";
+            for (RecyclingRule recyclingRule : list) {
+                if (StringUtils.isEmpty(recycling)) {
+                    recycling = recyclingRule.getId() + "";
+
+                } else {
+                    recycling = recycling + "/" + recyclingRule.getId();
+
+                }
+            }
+            userOrder.setRecyclingRuleList(recycling);
+        }
         Integer orderType = 2;
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 

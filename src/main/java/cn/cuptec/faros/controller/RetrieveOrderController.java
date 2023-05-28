@@ -80,6 +80,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     @Resource
     private ReviewRefundOrderService reviewRefundOrderService;
     private final Url urlData;
+
     /**
      * 添加回收单审核设备信息
      */
@@ -286,7 +287,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url =urlData.getUrl()+ "index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
+                String url = urlData.getUrl() + "index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "业务员修改回收价格", "待您确认", url);
             }
         }
@@ -351,18 +352,23 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         BigDecimal amount = new BigDecimal(0);
         if (userOrder.getSaleSpecServiceEndTime() == null && rentDay != null) {
             Integer servicePackId = retrieveOrder.getServicePackId();
-            List<RecyclingRule> recyclingRuleList = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, servicePackId));
-            if (!CollectionUtils.isEmpty(recyclingRuleList)) {
-                Collections.sort(recyclingRuleList);
-                for (RecyclingRule recyclingRule : recyclingRuleList) {
-                    Integer day = recyclingRule.getDay();
-                    if (rentDay <= day) {
-                        amount = recyclingRule.getAmount();
-                        break;
-                    }
+            String recyclingRuleList1 = userOrder.getRecyclingRuleList();
+            if (!StringUtils.isEmpty(recyclingRuleList1)) {
+                List<String> ids = Arrays.asList(recyclingRuleList1.split("/"));
+                List<RecyclingRule> recyclingRuleList = (List<RecyclingRule>) recyclingRuleService.listByIds(ids);
+                if (!CollectionUtils.isEmpty(recyclingRuleList)) {
+                    Collections.sort(recyclingRuleList);
+                    for (RecyclingRule recyclingRule : recyclingRuleList) {
+                        Integer day = recyclingRule.getDay();
+                        if (rentDay <= day) {
+                            amount = recyclingRule.getAmount();
+                            break;
+                        }
 
+                    }
                 }
             }
+
 
         } else {
             amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice() + "");
@@ -453,7 +459,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = urlData.getUrl()+"index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
+                String url = urlData.getUrl() + "index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "用户确认邮寄", "用户确认邮寄", url);
             }
         }
@@ -494,7 +500,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = urlData.getUrl()+"index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
+                String url = urlData.getUrl() + "index.html#/ucenter/retrieveOrder/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "业务员已打款", "待您确认", url);
             }
         }
@@ -589,7 +595,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         params.put("weight", param.getWeight());
         params.put("remark", param.getRemark());
         params.put("salt", "123456");
-        params.put("callBackUrl", urlData.getUrl()+"retrieveOrder/kuaidicallback");
+        params.put("callBackUrl", urlData.getUrl() + "retrieveOrder/kuaidicallback");
         params.put("dayType", param.getDayType());
         params.put("pickupStartTime", param.getPickupStartTime());
         params.put("pickupEndTime", param.getPickupEndTime());

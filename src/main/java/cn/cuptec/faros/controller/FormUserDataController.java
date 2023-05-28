@@ -363,10 +363,16 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
                     List<String> strings = Arrays.asList(split);
                     if (formUserData.getType().equals("6")) {
                         List<Integer> ans = new ArrayList<>();
-                        for (String str : strings) {
-                            ans.add(Integer.parseInt(str));
+                        if(!CollectionUtils.isEmpty(strings)){
+                            for (String str : strings) {
+                                if(!StringUtils.isEmpty(str)){
+                                    ans.add(Integer.parseInt(str));
+
+                                }
+                            }
+                            formUserData.setAnswer(ans);
                         }
-                        formUserData.setAnswer(ans);
+
                     } else {
 
                         formUserData.setAnswer(strings);
