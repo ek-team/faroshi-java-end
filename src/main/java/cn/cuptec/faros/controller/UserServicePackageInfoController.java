@@ -67,7 +67,7 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
      * 根据就诊人身份证查询用户的服务
      */
     @GetMapping("/listByIdCard")
-    public RestResponse listByIdCard(@RequestParam(value = "idCard", required = false) String idCard) {
+    public RestResponse listByIdCard(@RequestParam(value = "idCard", required = false) String idCard,@RequestParam(value = "useStatus", required = false) Integer useStatus) {
         List<PatientUser> patientUserList = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
                 .eq(PatientUser::getIdCard, idCard));
         if (CollectionUtils.isEmpty(patientUserList)) {
@@ -78,7 +78,13 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
 
         LambdaQueryWrapper<UserServicePackageInfo> eq = new QueryWrapper<UserServicePackageInfo>().lambda()
                 .eq(UserServicePackageInfo::getUserId, userId).orderByAsc(UserServicePackageInfo::getUseCount);
-
+        if (useStatus != null) {
+            if (useStatus == 1) {
+                eq.eq(UserServicePackageInfo::getUseCount, 0);
+            } else {
+                eq.ne(UserServicePackageInfo::getUseCount, 0);
+            }
+        }
         List<UserServicePackageInfo> list = service.list(eq);
         if (!CollectionUtils.isEmpty(list)) {
             List<Integer> ids = list.stream().map(UserServicePackageInfo::getServicePackageInfoId)

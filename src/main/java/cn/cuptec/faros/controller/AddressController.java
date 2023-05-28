@@ -31,7 +31,7 @@ public class AddressController {
     @PostMapping("/saveAddress")
     public RestResponse saveAddress(@RequestBody Address address) {
         address.setPatientId(SecurityUtils.getUser().getId());
-        if (address.getIsDefault() == 1) {
+        if (address.getIsDefault() .equals(1)) {
             // 将当前账号下其他默认地址全部修改为 o
             addressService.update(Wrappers.<Address>lambdaUpdate()
                     .eq(Address::getPatientId, address.getPatientId())
@@ -63,10 +63,10 @@ public class AddressController {
 
     @PostMapping("/updateAddress")
     public RestResponse updateAddress(@RequestBody Address address) {
-        if (address.getIsDefault() == 1) {
+        if (address.getIsDefault() .equals(1)) {
             // 将当前账号下其他默认地址全部修改为 o
             addressService.update(Wrappers.<Address>lambdaUpdate()
-                    .eq(Address::getPatientId, address.getPatientId())
+                    .eq(Address::getPatientId, SecurityUtils.getUser().getId())
                     .set(Address::getIsDefault, 0));
 
         }

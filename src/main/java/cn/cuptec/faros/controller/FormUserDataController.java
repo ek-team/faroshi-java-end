@@ -156,7 +156,9 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
         ChatMsg chatMsg = new ChatMsg();
         chatMsg.setId(param.getStr() + "");
         chatMsg.setStr2(1 + "");
+        chatMsg.setStr4(groupId);
         chatMsgService.updateById(chatMsg);
+        byId1.setStr4(groupId);
         //默认再给医生发送一条信息 告诉医生 患者填写表单成功
         if (byId1 != null) {
             ChatMsg newChatMsg = new ChatMsg();
