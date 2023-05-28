@@ -39,6 +39,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     @Resource
     private ChatUserService chatUserService;
     @Resource
+    private DoctorTeamPeopleService doctorTeamPeopleService;
+    @Resource
     private UniAppPushService uniAppPushService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
@@ -101,7 +103,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
             //判断是否是群聊
             if (origionMessage.getChatUserId() != null) {
-
+                checkDoctorTeamChat(origionMessage.getChatUserId());
                 //群发消息
                 ChatUser byId = chatUserService.getById(origionMessage.getChatUserId());
                 //推送群聊的消息给所有人
@@ -142,6 +144,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (!fromUser.getId().equals(byId.getTargetUid())) {//代表是医生发送消息
                     saveUserFollowDoctor(fromUser, byId);
                 }
+                checkDoctorTeamChat(origionMessage.getChatUserId());
             } else {
                 origionMessage.setMyUserId(fromUser.getId());
                 Channel targetUserChannel = UserChannelManager.getUserChannel(origionMessage.getTargetUid());
@@ -224,6 +227,38 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         });
     }
 
+    /**
+     * 检查新加入的医生团队 ，然后加入到群聊当中
+     */
+    private void checkDoctorTeamChat(Integer chatUserId) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                ChatUser chatUser = chatUserService.getById(chatUserId);
+                if (chatUser != null) {
+                    Integer teamId = chatUser.getTeamId();
+                    List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                            .eq(DoctorTeamPeople::getTeamId, teamId));
+                    if (!CollectionUtils.isEmpty(list)) {
+
+                        List<Integer> doctorIds = list.stream().map(DoctorTeamPeople::getUserId)
+                                .collect(Collectors.toList());
+                        String userIds = chatUser.getUserIds();
+                        List<String> split = Arrays.asList(userIds.split(","));
+
+                        for (Integer doctorId : doctorIds) {
+                            if (!split.contains(doctorId + "")) {
+                                userIds = userIds + "," + doctorId;
+                            }
+                        }
+                        chatUser.setUserIds(userIds);
+                        chatUserService.updateById(chatUser);
+                    }
+
+                }
+            }
+        });
+    }
 
     private void updateChatReceiverStatus(SocketFrameTextMessage origionMessage, User fromUser) {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {

@@ -40,7 +40,7 @@ public class PatientUserBindDoctorController extends AbstractBaseController<Pati
         PatientUser patientUser = patientUserService.getById(patientUserBindDoctor.getPatientUserId());
 
         service.save(patientUserBindDoctor);
-        if (StringUtils.isEmpty(patientUserBindDoctor.getDoctorTeamId())) {
+        if (!StringUtils.isEmpty(patientUserBindDoctor.getDoctorTeamId())) {
             patientUserBindDoctor.setDoctorTeamId(patientUserBindDoctor.getDoctorTeamId().split("-")[0]);
             List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                     .eq(DoctorTeamPeople::getTeamId, patientUserBindDoctor.getDoctorTeamId()));
