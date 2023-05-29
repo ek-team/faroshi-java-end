@@ -337,7 +337,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.ge("user_order.delivery_date", startDeliveryDate);
         }
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
-
+        queryWrapper.eq("user_order.test",0);
         IPage<UserOrder> pageScoped = service.pageScoped(aBoolean, page, queryWrapper);
         if (CollUtil.isNotEmpty(pageScoped.getRecords())) {
             List<UserOrder> records = pageScoped.getRecords();
@@ -1411,6 +1411,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         if (!aBoolean) {
             queryWrapper.eq("user_order.dept_id", user.getDeptId());
         }
+        queryWrapper.eq("user_order.test",0);
         List<UserOrder> userOrders = service.scoped(queryWrapper);
         if (!CollectionUtils.isEmpty(userOrders)) {
             //服务包信息
