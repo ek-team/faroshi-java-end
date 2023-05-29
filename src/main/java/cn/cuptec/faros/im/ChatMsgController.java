@@ -48,6 +48,8 @@ public class ChatMsgController {
     @Resource
     private UserService userService;
     @Resource
+    private UserRoleService userRoleService;
+    @Resource
     private FollowUpPlanNoticeService followUpPlanNoticeService;
     @Resource
     private FollowUpPlanContentService followUpPlanContentService;
@@ -153,6 +155,23 @@ public class ChatMsgController {
             List<Integer> userIds = records.stream().map(ChatMsg::getFromUid)
                     .collect(Collectors.toList());
             List<User> users = (List<User>) userService.listByIds(userIds);
+            List<UserRole> userRoles = userRoleService.list(new QueryWrapper<UserRole>().lambda().in(UserRole::getUserId, userIds));
+            if (!CollectionUtils.isEmpty(userRoles)) {
+                Map<Integer, List<UserRole>> roleMap = userRoles.stream()
+                        .collect(Collectors.groupingBy(UserRole::getUserId));
+                for (User user : users) {
+                    List<UserRole> userRoles1 = roleMap.get(user.getId());
+                    if (!CollectionUtils.isEmpty(userRoles1)) {
+                        List<Integer> roleIds = userRoles1.stream().map(UserRole::getRoleId)
+                                .collect(Collectors.toList());
+                        if (roleIds.contains(20)) {
+                            user.setRoleType(20);
+                        }
+                    }
+
+                }
+
+            }
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
 

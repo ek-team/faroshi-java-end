@@ -175,6 +175,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             newChatMsg.setCreateTime(date);
             newChatMsg.setStr3(chatMsg.getId());
             newChatMsg.setStr2(1 + "");
+            newChatMsg.setReadUserIds(SecurityUtils.getUser().getId()+"");
             chatMsgService.save(newChatMsg);
         }
         //判断如果是随访计划 再发送一条表单消息
@@ -196,6 +197,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             newChatMsg.setCreateTime(date);
             newChatMsg.setStr3(updateFollowUpPlanNoticeId + "");
             newChatMsg.setStr2(1 + "");
+            newChatMsg.setReadUserIds(SecurityUtils.getUser().getId()+"");
             chatMsgService.save(newChatMsg);
         }
 

@@ -102,7 +102,8 @@ public class User extends Model<User> {
      */
     @TableField(exist = false)
     private Menu[] permissions;
-
+    @TableField(exist = false)
+    private int roleType=1;
     /**
      * 角色集合
      */

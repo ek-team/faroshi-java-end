@@ -275,7 +275,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                    @RequestParam(value = "productSn1", required = false) String productSn1,
                                    @RequestParam(value = "productSn2", required = false) String productSn2,
                                    @RequestParam(value = "productSn3", required = false) String productSn3,
-                                   @RequestParam(value = "startDeliveryDate", required = false) String startDeliveryDate) {
+                                   @RequestParam(value = "startDeliveryDate", required = false) String startDeliveryDate,
+                                   @RequestParam(value = "startDeliveryTime", required = false) String startDeliveryTime,
+                                   @RequestParam(value = "endDeliveryTime", required = false) String endDeliveryTime,
+                                   @RequestParam(value = "endRefundReviewTime", required = false) String endRefundReviewTime,
+                                   @RequestParam(value = "startRefundReviewTime", required = false) String startRefundReviewTime) {
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
@@ -327,7 +331,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.orderByDesc("user_order.pay_time", "user_order.create_time");
 
         }
-        if (!StringUtils.isEmpty(startDeliveryDate)) {
+        if (!StringUtils.isEmpty(startDeliveryDate)) {//期望发货时间
 
             LocalDateTime now = LocalDateTime.now();
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -336,8 +340,20 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.le("user_order.delivery_date", endDeliveryDate);
             queryWrapper.ge("user_order.delivery_date", startDeliveryDate);
         }
+
+        if (!StringUtils.isEmpty(startDeliveryTime) && !StringUtils.isEmpty(endDeliveryTime)) {//实际发货时间
+
+            queryWrapper.le("user_order.delivery_time", endDeliveryTime);
+            queryWrapper.ge("user_order.delivery_time", startDeliveryTime);
+        }
+
+        if (!StringUtils.isEmpty(startRefundReviewTime) && !StringUtils.isEmpty(endRefundReviewTime)) {//实际发货时间
+
+            queryWrapper.le("user_order.refund_review_time", endRefundReviewTime);
+            queryWrapper.ge("user_order.refund_review_time", startRefundReviewTime);
+        }
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
-        queryWrapper.eq("user_order.test",0);
+        queryWrapper.eq("user_order.test", 0);
         IPage<UserOrder> pageScoped = service.pageScoped(aBoolean, page, queryWrapper);
         if (CollUtil.isNotEmpty(pageScoped.getRecords())) {
             List<UserOrder> records = pageScoped.getRecords();
@@ -1411,7 +1427,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         if (!aBoolean) {
             queryWrapper.eq("user_order.dept_id", user.getDeptId());
         }
-        queryWrapper.eq("user_order.test",0);
+        queryWrapper.eq("user_order.test", 0);
         List<UserOrder> userOrders = service.scoped(queryWrapper);
         if (!CollectionUtils.isEmpty(userOrders)) {
             //服务包信息

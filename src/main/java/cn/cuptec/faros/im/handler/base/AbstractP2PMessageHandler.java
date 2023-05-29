@@ -57,6 +57,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     @Resource
     private ArticleService articleService;
 
+
     @Override
     @Transactional
     public void handle(Channel channel, SocketFrameTextMessage origionMessage) {
@@ -82,6 +83,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             }
             ChatMsg chatMsg = saveChatMsg(origionMessage, fromUser, false, new Date());
             if (origionMessage.getMsgType().equals(ChatProto.FORM)) {
+                origionMessage.setMsg("表单");
                 String formId = origionMessage.getStr1();
                 Form form = formService.getById(formId);
                 chatMsg.setForm(form);
@@ -90,22 +92,28 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             chatMsg.setMsg(origionMessage.getMsg());
             User byId1 = userService.getById(chatMsg.getFromUid());
             chatMsg.setUser(byId1);
-            if (origionMessage.getMsgType().equals(ChatProto.FORM)) {
-                Form form = formService.getById(origionMessage.getStr1());
-                chatMsg.setForm(form);
-            }
+
             if (origionMessage.getMsgType().equals(ChatProto.ARTICLE)) {
+                origionMessage.setMsg("文章");
                 Article article = articleService.getById(origionMessage.getStr1());
                 chatMsg.setArticle(article);
             }
-
+            if (origionMessage.getMsgType().equals(ChatProto.FOLLOW_UP_PLAN)) {
+                origionMessage.setMsg("随访计划");
+            }
+            if (origionMessage.getMsgType().equals(ChatProto.VIDEO)) {
+                origionMessage.setMsg("语音消息 ");
+            }
+            if (origionMessage.getMsgType().equals(ChatProto.VIDEO_URL)) {
+                origionMessage.setMsg("视频消息");
+            }
             channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.responseMessage(chatMsg))));
 
             //判断是否是群聊
             if (origionMessage.getChatUserId() != null) {
-                checkDoctorTeamChat(origionMessage.getChatUserId());
                 //群发消息
                 ChatUser byId = chatUserService.getById(origionMessage.getChatUserId());
+                log.info("团队聊天" + byId.toString());
                 //推送群聊的消息给所有人
                 String data = byId.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
@@ -138,7 +146,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     byId.setReceiverStatus(0);
                 }
                 byId.setLastChatTime(new Date());
-
+                log.info("团队聊天xiugai" + byId.toString());
                 chatUserService.updateById(byId);
                 //判断该患者是否在医生下面 否则添加到医生下面
                 if (!fromUser.getId().equals(byId.getTargetUid())) {//代表是医生发送消息

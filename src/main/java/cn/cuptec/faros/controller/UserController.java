@@ -112,13 +112,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
         myPatientUser.setUserId(myUSer.getId());
         patientUserService.save(myPatientUser);
 
-        UserOrder myUserOrder = new UserOrder();
-        BeanUtils.copyProperties(userOrder, myUserOrder, "id");
-        myUserOrder.setUserId(myUSer.getId());
-        myUserOrder.setPatientUserId(Integer.parseInt(myPatientUser.getId()));
-        myUserOrder.setOrderNo(myUserOrder.getOrderNo() + "mm");
-        userOrdertService.save(myUserOrder);
-
         Integer chatUserId = userOrder.getChatUserId();
         ChatUser chatUser = chatUserService.getById(chatUserId);
         chatUser.setUserIds(chatUser.getUserIds() + "," + SecurityUtils.getUser().getId());
