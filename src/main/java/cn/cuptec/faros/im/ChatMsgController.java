@@ -1,6 +1,7 @@
 package cn.cuptec.faros.im;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
@@ -17,6 +18,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.ApiOperation;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
+@AllArgsConstructor
 @RequestMapping("/chatMsg")
 public class ChatMsgController {
     @Resource
@@ -65,7 +68,7 @@ public class ChatMsgController {
     private DoctorPointService doctorPointService;
     @Resource
     private UpcomingService upcomingService;
-
+    private final Url urlData;
     @ApiOperation(value = "查询历史记录")
     @GetMapping("/testRead")
     public void tesetRead(@RequestParam("chatUserId") Integer chatUserId) {
@@ -464,7 +467,7 @@ public class ChatMsgController {
             //退款
             if (patientOtherOrder.getAmount() != null) {
                 Dept dept = deptService.getById(patientOtherOrder.getDeptId());
-                String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+                String url =urlData.getRefundUrl()+  "?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
                 String result = HttpUtil.get(url);
             }
             if (byId.getGroupType().equals(0)) {

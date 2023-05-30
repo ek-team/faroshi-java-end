@@ -798,7 +798,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
         userOrder.setSaleSpecRecoveryPrice(saleSpecGroup.getRecoveryPrice());
-        List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePack()));
+        List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePackId()));
+        log.info("回收规则 急速::"+list.size());
         if (!CollectionUtils.isEmpty(list)) {
             String recycling = "";
             for (RecyclingRule recyclingRule : list) {
@@ -954,7 +955,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
         userOrder.setSaleSpecRecoveryPrice(saleSpecGroup.getRecoveryPrice());
-        List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePack()));
+        log.info("回收规则 急速::"+userOrder.getServicePackId());
+        List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePackId()));
+        log.info("回收规则 急速::"+list.size());
         if (!CollectionUtils.isEmpty(list)) {
             String recycling = "";
             for (RecyclingRule recyclingRule : list) {

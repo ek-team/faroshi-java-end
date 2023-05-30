@@ -111,6 +111,7 @@ tx:
 
 com:
   payUrl: https://api.redadzukibeans.com/weChat/wxpayother/testotherOrder
+  refundUrl: https://api.redadzukibeans.com/weChat/wxpayother/testotherRefundOrder
   url: https://api.jhxiao-school.com/
   chatServer: 8018
 alipay:

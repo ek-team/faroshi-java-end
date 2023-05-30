@@ -21,6 +21,6 @@ public class RecyclingRule extends Model<RecyclingRule>  implements Comparable<R
     private BigDecimal amount;//金额
     @Override
     public int compareTo(RecyclingRule o) {
-        return this.amount.compareTo(o.amount);//根据时间降序
+        return o.amount.compareTo(this.amount);//根据时间降序
     }
 }

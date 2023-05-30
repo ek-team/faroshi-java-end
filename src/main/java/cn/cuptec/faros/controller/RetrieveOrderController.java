@@ -133,11 +133,15 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                                    @RequestParam(value = "nickname", required = false) String nickname,
                                    @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
                                    @RequestParam(value = "orderId", required = false) String orderId,
-                                   @RequestParam(value = "userOrderNo", required = false) String userOrderNo) {
+                                   @RequestParam(value = "userOrderNo", required = false) String userOrderNo,
+                                   @RequestParam(value = "retrieveOrderNo", required = false) String retrieveOrderNo) {
         Page<RetrieveOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
             queryWrapper.eq("service_pack.name", servicePackName);
+        }
+        if (!StringUtils.isEmpty(retrieveOrderNo)) {
+            queryWrapper.eq("retrieve_order.order_no", retrieveOrderNo);
         }
         if (!StringUtils.isEmpty(nickname)) {
             queryWrapper.eq("patient_user.name", nickname);
@@ -350,22 +354,20 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         Integer rentDay = retrieveOrder.getRentDay();
         retrieveAmountDto.setRentDay(rentDay);
         BigDecimal amount = new BigDecimal(0);
-        if (userOrder.getSaleSpecServiceEndTime() == null && rentDay != null) {
-            Integer servicePackId = retrieveOrder.getServicePackId();
-            String recyclingRuleList1 = userOrder.getRecyclingRuleList();
-            if (!StringUtils.isEmpty(recyclingRuleList1)) {
-                List<String> ids = Arrays.asList(recyclingRuleList1.split("/"));
-                List<RecyclingRule> recyclingRuleList = (List<RecyclingRule>) recyclingRuleService.listByIds(ids);
-                if (!CollectionUtils.isEmpty(recyclingRuleList)) {
-                    Collections.sort(recyclingRuleList);
-                    for (RecyclingRule recyclingRule : recyclingRuleList) {
-                        Integer day = recyclingRule.getDay();
-                        if (rentDay <= day) {
-                            amount = recyclingRule.getAmount();
-                            break;
-                        }
+        String recyclingRuleList1 = userOrder.getRecyclingRuleList();
 
+        if (!StringUtils.isEmpty(recyclingRuleList1)) {
+            List<String> ids = Arrays.asList(recyclingRuleList1.split("/"));
+            List<RecyclingRule> recyclingRuleList = (List<RecyclingRule>) recyclingRuleService.listByIds(ids);
+            if (!CollectionUtils.isEmpty(recyclingRuleList)) {
+                Collections.sort(recyclingRuleList);
+                for (RecyclingRule recyclingRule : recyclingRuleList) {
+                    Integer day = recyclingRule.getDay();
+                    if (rentDay <= day) {
+                        amount = recyclingRule.getAmount();
+                        break;
                     }
+
                 }
             }
 

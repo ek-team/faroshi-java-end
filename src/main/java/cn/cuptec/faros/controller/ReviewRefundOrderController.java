@@ -1,6 +1,7 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
@@ -11,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +24,7 @@ import java.util.Date;
 /**
  * 退款审核
  */
+@AllArgsConstructor
 @Slf4j
 @RestController
 @RequestMapping("/reviewRefundOrder")
@@ -39,7 +42,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
     private DeptService deptService;
     @Resource
     private UpdateOrderRecordService updateOrderRecordService;
-
+    private final Url urlData;
     @Override
     protected Class<ReviewRefundOrder> getEntityClass() {
         return ReviewRefundOrder.class;
@@ -94,7 +97,6 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         return RestResponse.ok();
     }
 
-
     /**
      * 审核
      *
@@ -136,7 +138,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
 
             Dept dept = deptService.getById(userOrder.getDeptId());
-            String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder?orderNo=" + retrieveOrder.getOrderNo() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
+            String url =urlData.getRefundUrl()+ "?orderNo=" + retrieveOrder.getOrderNo() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount+"").multiply(new BigDecimal(100)).intValue();
 
             //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
             String result = HttpUtil.get(url);

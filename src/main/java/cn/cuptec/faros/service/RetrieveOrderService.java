@@ -53,7 +53,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     private final Url urlData;
     @Resource
     private WxMpService wxMpService;
-
+    @Resource
+    private RecyclingRuleService recyclingRuleService;
     @Transactional
     public boolean saveRetrieveOrder(RetrieveOrder entity) {
         UserOrder userOrder = userOrdertService.getById(entity.getOrderId());
@@ -66,8 +67,33 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()
                 .eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
                 .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
+
+
+        BigDecimal amount = new BigDecimal(0);
+        String recyclingRuleList1 = userOrder.getRecyclingRuleList();
+        Integer rentDay = entity.getRentDay();
+        if (!StringUtils.isEmpty(recyclingRuleList1)) {
+            List<String> ids = Arrays.asList(recyclingRuleList1.split("/"));
+            List<RecyclingRule> recyclingRuleList = (List<RecyclingRule>) recyclingRuleService.listByIds(ids);
+            if (!CollectionUtils.isEmpty(recyclingRuleList)) {
+                Collections.sort(recyclingRuleList);
+                for (RecyclingRule recyclingRule : recyclingRuleList) {
+                    Integer day = recyclingRule.getDay();
+                    if (rentDay <= day) {
+                        amount = recyclingRule.getAmount();
+                        break;
+                    }
+
+                }
+            }
+
+
+        } else {
+            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice() + "");
+
+        }
         if (userOrder.getSaleSpecRecoveryPrice() != null) {
-            entity.setRetrieveAmount(new BigDecimal(userOrder.getSaleSpecRecoveryPrice()));//回收价格
+            entity.setRetrieveAmount(amount);//回收价格
         }
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 

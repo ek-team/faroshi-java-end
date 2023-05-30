@@ -38,6 +38,7 @@ public class HospitalInfoController extends AbstractBaseController<HospitalInfoS
         QueryWrapper<HospitalInfo> queryWrapper = getQueryWrapper(getEntityClass());
 
         Page<HospitalInfo> page = getPage();
+        queryWrapper.eq("","");
         IPage<HospitalInfo> page1 = service.page(page, queryWrapper);
         List<HospitalInfo> records = page1.getRecords();
         if (CollectionUtils.isEmpty(records)) {

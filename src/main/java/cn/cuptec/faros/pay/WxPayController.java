@@ -625,8 +625,9 @@ public class WxPayController {
     }
 
     public static void main(String[] args) {
-        Duration sjc = Duration.between(LocalDateTime.now(), LocalDateTime.now().plusMonths(1));// 计算时间差
-        System.out.println(sjc.toDays());
+        BigDecimal refundFee1 = new BigDecimal(1.00);
+        BigDecimal divide = refundFee1.divide(new BigDecimal(100));
+        System.out.println(divide);
     }
 
     @ApiOperation(value = "图文咨询订单申请退款")
