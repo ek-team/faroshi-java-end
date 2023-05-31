@@ -587,6 +587,14 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updateById")
     public RestResponse updateById(@RequestBody @Valid User user) {
+        if(!StringUtils.isEmpty(user.getPhone())){
+            User one = service.getOne(new QueryWrapper<User>().lambda().eq(User::getPhone, user.getPhone())
+          );
+            if(one!=null && !one.getId().equals(user.getId())){
+                return RestResponse.failed("手机号已被占用");
+            }
+
+        }
         if (!StringUtils.isEmpty(user.getNickname())) {
             if (user.getNickname().equals("微信用户")) {
                 User user1 = new User();
