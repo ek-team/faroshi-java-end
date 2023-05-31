@@ -815,15 +815,15 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
 
 
-        Integer orderType = 2;//判断是租用还是购买
+        Integer orderType = 1;//判断是租用还是购买
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
         if (servicePack.getRentBuy() != null) {
             orderType = servicePack.getRentBuy();
         } else {
             List<SaleSpecDesc> saleSpecDescList = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
             for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                if (saleSpecDesc.getName().equals("租赁")) {
-                    orderType = 1;
+                if (saleSpecDesc.getName().equals("购买")) {
+                    orderType = 2;
                 }
             }
         }
@@ -971,7 +971,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
             userOrder.setRecyclingRuleList(recycling);
         }
-        Integer orderType = 2;
+        Integer orderType = 1;
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 
 
@@ -980,8 +980,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         } else {
             List<SaleSpecDesc> saleSpecDescList = (List<SaleSpecDesc>) saleSpecDescService.listByIds(saleSpecDescIds);
             for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                if (saleSpecDesc.getName().equals("租赁")) {
-                    orderType = 1;
+                if (saleSpecDesc.getName().equals("购买")) {
+                    orderType = 2;
                 }
             }
         }
