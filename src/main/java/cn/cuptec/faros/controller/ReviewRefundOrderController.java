@@ -74,14 +74,16 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
     public RestResponse add(@RequestBody ReviewRefundOrder reviewRefundOrder) {
         reviewRefundOrder.setCreateTime(LocalDateTime.now());
         reviewRefundOrder.setStatus(3);
+        User byId = userService.getById(SecurityUtils.getUser().getId());
 
+        reviewRefundOrder.setCreateName(byId.getNickname());
         RetrieveOrder one = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
 
         UserOrder userOrder = new UserOrder();
         userOrder.setId(Integer.parseInt(one.getOrderId()));
         userOrder.setRefundInitiationTime(LocalDateTime.now());
-        userOrdertService.updateById(userOrder);
+
 
         UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
         updateOrderRecord.setOrderId(Integer.parseInt(one.getOrderId()));
@@ -90,6 +92,8 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         updateOrderRecord.setDescStr("退款审核");
         updateOrderRecordService.save(updateOrderRecord);
         service.save(reviewRefundOrder);
+        userOrder.setReviewRefundOrderId(reviewRefundOrder.getId());
+        userOrdertService.updateById(userOrder);
         retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
                 .set(RetrieveOrder::getStatus, 6)

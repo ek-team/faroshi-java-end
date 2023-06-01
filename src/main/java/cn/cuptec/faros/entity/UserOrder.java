@@ -156,6 +156,9 @@ public class UserOrder {
     private LocalDateTime recycleTime;//回收揽件时间
     private LocalDateTime acceptanceTime;//厂家验收时间
     private LocalDateTime refundInitiationTime;//退款发起时间
+    private Integer reviewRefundOrderId;//退款审核记录id
+    @TableField(exist = false)
+    private ReviewRefundOrder reviewRefundOrder;
     private LocalDateTime refundReviewTime;//平台退款审核时间
     private String productSn1;//设备序列号1
     private String productSn2;//设备序列号2

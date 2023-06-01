@@ -412,7 +412,10 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                             if (formUserData.getType().equals("6")) {
                                 List<Integer> ans = new ArrayList<>();
                                 for (String str : strings) {
-                                    ans.add(Integer.parseInt(str));
+                                    if(!StringUtils.isEmpty(str)){
+                                        ans.add(Integer.parseInt(str));
+
+                                    }
                                 }
                                 formUserData.setAnswer(ans);
                             } else {

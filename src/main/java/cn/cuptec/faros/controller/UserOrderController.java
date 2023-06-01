@@ -117,6 +117,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     public RedisTemplate redisTemplate;
     @Resource
     private RecyclingRuleService recyclingRuleService;
+    @Resource
+    private ReviewRefundOrderService reviewRefundOrderService;
 
     /**
      * 查询订单的续租记录
@@ -392,7 +394,24 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 rentRuleOrderMap = rentRuleOrderList.stream()
                         .collect(Collectors.groupingBy(RentRuleOrder::getUserOrderNo));
             }
+
+            //查询退款审核记录
+            List<Integer> reviewRefundOrderIds = records.stream().map(UserOrder::getReviewRefundOrderId)
+                    .collect(Collectors.toList());
+            Map<Integer, ReviewRefundOrder> reviewRefundOrderMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(reviewRefundOrderIds)) {
+                List<ReviewRefundOrder> reviewRefundOrders = (List<ReviewRefundOrder>) reviewRefundOrderService.listByIds(reviewRefundOrderIds);
+                reviewRefundOrderMap = reviewRefundOrders.stream()
+                        .collect(Collectors.toMap(ReviewRefundOrder::getId, t -> t));
+
+
+            }
             for (UserOrder userOrder : records) {
+                Integer reviewRefundOrderId = userOrder.getReviewRefundOrderId();
+                if (reviewRefundOrderId != null) {
+                    ReviewRefundOrder reviewRefundOrder = reviewRefundOrderMap.get(reviewRefundOrderId);
+                    userOrder.setReviewRefundOrder(reviewRefundOrder);
+                }
                 //回收时间
                 if (!userOrder.getStatus().equals(5)) {
                     //计算使用天数
@@ -799,7 +818,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setPayment(payment);
         userOrder.setSaleSpecRecoveryPrice(saleSpecGroup.getRecoveryPrice());
         List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePackId()));
-        log.info("回收规则 急速::"+list.size());
+        log.info("回收规则 急速::" + list.size());
         if (!CollectionUtils.isEmpty(list)) {
             String recycling = "";
             for (RecyclingRule recyclingRule : list) {
@@ -955,9 +974,9 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         BigDecimal payment = new BigDecimal(saleSpecGroup.getPrice());
         userOrder.setPayment(payment);
         userOrder.setSaleSpecRecoveryPrice(saleSpecGroup.getRecoveryPrice());
-        log.info("回收规则 急速::"+userOrder.getServicePackId());
+        log.info("回收规则 急速::" + userOrder.getServicePackId());
         List<RecyclingRule> list = recyclingRuleService.list(new QueryWrapper<RecyclingRule>().lambda().eq(RecyclingRule::getServicePackId, userOrder.getServicePackId()));
-        log.info("回收规则 急速::"+list.size());
+        log.info("回收规则 急速::" + list.size());
         if (!CollectionUtils.isEmpty(list)) {
             String recycling = "";
             for (RecyclingRule recyclingRule : list) {

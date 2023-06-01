@@ -17,6 +17,7 @@ public class ReviewRefundOrder {
     private Integer id;
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String  retrieveOrderNo;//回收单单号
+    private String createName;
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;//3=待审核  2 -已拒绝 1-退款
     private String reviewRefundDesc;//审核描述

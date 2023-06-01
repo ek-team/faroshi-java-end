@@ -56,7 +56,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     private UserGroupRelationUserService userGroupRelationUserService;
     @Resource
     private ArticleService articleService;
-
+    @Resource
+    private UserRoleService userRoleService;
 
     @Override
     @Transactional
@@ -91,6 +92,15 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             }
             chatMsg.setMsg(origionMessage.getMsg());
             User byId1 = userService.getById(chatMsg.getFromUid());
+            List<UserRole> userRoles = userRoleService.list(new QueryWrapper<UserRole>().lambda().eq(UserRole::getUserId, byId1.getId()));
+            if (!org.springframework.util.CollectionUtils.isEmpty(userRoles)) {
+                List<Integer> roleIds = userRoles.stream().map(UserRole::getRoleId)
+                        .collect(Collectors.toList());
+                if (roleIds.contains(20)) {
+                    byId1.setRoleType(20);
+                }
+
+            }
             chatMsg.setUser(byId1);
 
             if (origionMessage.getMsgType().equals(ChatProto.ARTICLE)) {
