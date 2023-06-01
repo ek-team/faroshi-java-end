@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
 @AllArgsConstructor
 @Service
 public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, RetrieveOrder> {
@@ -55,6 +56,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     private WxMpService wxMpService;
     @Resource
     private RecyclingRuleService recyclingRuleService;
+
     @Transactional
     public boolean saveRetrieveOrder(RetrieveOrder entity) {
         UserOrder userOrder = userOrdertService.getById(entity.getOrderId());
@@ -89,12 +91,14 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
 
 
         } else {
-            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice() + "");
+            if (userOrder.getSaleSpecRecoveryPrice() != null) {
+                amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice() + "");
+
+            }
 
         }
-        if (userOrder.getSaleSpecRecoveryPrice() != null) {
-            entity.setRetrieveAmount(amount);//回收价格
-        }
+        entity.setRetrieveAmount(amount);//回收价格
+
         ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
 
         entity.setProductName(servicePack.getName());
@@ -228,7 +232,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime time = LocalDateTime.now();
                 String localTime = df.format(time);
-                String url = urlData.getUrl()+"index.html#/salesmanOption/retrieveOrderDetail/" + retrieveOrder.getId();
+                String url = urlData.getUrl() + "index.html#/salesmanOption/retrieveOrderDetail/" + retrieveOrder.getId();
                 wxMpService.sendTopic(user.getMpOpenId(), "订单状态变更", localTime, "用户确认订单回收价格", "用户确认订单回收价格", url);
             }
         }

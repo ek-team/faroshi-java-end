@@ -373,7 +373,10 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
 
 
         } else {
-            amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice() + "");
+            if (userOrder.getSaleSpecRecoveryPrice() != null) {
+                amount = new BigDecimal(userOrder.getSaleSpecRecoveryPrice() + "");
+
+            }
 
         }
 
