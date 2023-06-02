@@ -406,7 +406,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
 
             }
+            List<Integer> userIds = records.stream().map(UserOrder::getUserId)
+                    .collect(Collectors.toList());
+            List<User> users = (List<User>) userService.listByIds(userIds);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
             for (UserOrder userOrder : records) {
+                userOrder.setUser(userMap.get(userOrder.getUserId()));
                 Integer reviewRefundOrderId = userOrder.getReviewRefundOrderId();
                 if (reviewRefundOrderId != null) {
                     ReviewRefundOrder reviewRefundOrder = reviewRefundOrderMap.get(reviewRefundOrderId);
