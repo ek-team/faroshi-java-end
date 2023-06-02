@@ -192,11 +192,15 @@ public class RedisKeyExpirationListener implements MessageListener {
                         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
                         String result = HttpUtil.get(url);
                     }
+                    patientOtherOrder.setAcceptStatus("2");
+                    patientOtherOrderService.updateById(patientOtherOrder);
                     //更改医生积分
                     doctorPointService.remove(new QueryWrapper<DoctorPoint>().lambda()
                             .eq(DoctorPoint::getOrderNo, patientOtherOrder.getOrderNo()));
 
                     ChatUser byId = chatUserService.getById(patientOtherOrder.getChatUserId());
+                    byId.setPatientOtherOrderStatus("2");
+                    chatUserService.updateById(byId);
                     if (byId.getGroupType().equals(0)) {
                         ChatUser fromUserChat = new ChatUser();
                         fromUserChat.setUid(byId.getUid());

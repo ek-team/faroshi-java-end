@@ -276,7 +276,7 @@ public class WxPayController {
             userDoctorRelationService.saveBatch(userDoctorRelationList);
 
             userIds.add(userOrder.getUserId());
-            ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId(),patientUserId,byId.getName());
+            ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, doctorTeamId, userOrder.getUserId(), patientUserId, byId.getName());
 
             //修改用户的病种
             Integer diseasesId = userOrder.getDiseasesId();
@@ -335,8 +335,11 @@ public class WxPayController {
                 //发送支架提醒
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
+                String time = df.format(now);
+                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "购买支架链接",patientName, time,
                         "购买支架链接", urlData.getUrl() + "record.html#/ucenter/recovery/externalLink");
+
+
             }
 //            String saleSpecDescIdList = userOrder.getSaleSpecDescIdList();
 //            List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()

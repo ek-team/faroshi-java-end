@@ -79,6 +79,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 channel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.authRequired())));
                 return;
             }
+            if (origionMessage.getMsgType().equals(ChatProto.MESSAGE_PIC)) {
+                origionMessage.setMsg("[图片]");
+            }
             //保存新消息到记录中
             if (origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
                 origionMessage.setMsg("图文咨询");

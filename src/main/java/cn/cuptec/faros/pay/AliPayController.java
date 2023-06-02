@@ -489,8 +489,10 @@ public class AliPayController {
                     //发送支架提醒
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "", doctorTeamName,
+                    String time = df.format(now);
+                    wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "购买支架链接", patientName, time,
                             "购买支架链接", urlData.getUrl() + "record.html#/ucenter/recovery/externalLink");
+
                 }
 //                String saleSpecDescIdList = userOrder.getSaleSpecDescIdList();
 //                List<SaleSpec> saleSpecList = saleSpecService.list(new QueryWrapper<SaleSpec>().lambda()
@@ -545,7 +547,7 @@ public class AliPayController {
 
         request.setBizContent(bizContent.toString());
         AlipayTradeRefundResponse response = alipayClient.execute(request);
-        if(response.isSuccess()){
+        if (response.isSuccess()) {
             System.out.println("调用成功");
         } else {
             System.out.println("调用失败");
