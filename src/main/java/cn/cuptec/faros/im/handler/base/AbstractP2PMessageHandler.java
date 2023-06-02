@@ -43,6 +43,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     @Resource
     private UniAppPushService uniAppPushService;
     @Resource
+    private PatientUserService patientUserService;
+    @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
     @Resource
     private UserService userService;
@@ -187,10 +189,21 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
                     User user = userService.getById(origionMessage.getTargetUid());
                     if (!StringUtils.isEmpty(user.getMpOpenId())) {
+                        Integer patientId = origionMessage.getPatientId();
+                        String name = "";
+                        if (StringUtils.isEmpty(user.getPatientName())) {
+                            name = user.getNickname();
+                        } else {
+                            name = user.getPatientName();
+                        }
+                        if (patientId != null) {
+                            PatientUser patientUser = patientUserService.getById(patientId);
+                            name = patientUser.getName();
+                        }
                         LocalDateTime now = LocalDateTime.now();
                         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         String time = df.format(now);
-                        wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
+                        wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", name, time, origionMessage.getMsg(), "/pages/news/news");
 
                     }
                 }
@@ -212,6 +225,12 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
             @Override
             public void run() {
+                Integer patientId = origionMessage.getPatientId();
+                String name = "";
+                if (patientId != null) {
+                    PatientUser patientUser = patientUserService.getById(patientId);
+                    name = patientUser.getName();
+                }
                 for (String userId : allUserIds) {
                     String replace = userId.replace("[", "");
                     userId = replace.replace("]", "");
@@ -229,11 +248,20 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                             uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), userId, "");
 
                             User user = userService.getById(userId);
+
                             if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {
                                 LocalDateTime now = LocalDateTime.now();
                                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                                 String time = df.format(now);
-                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "/pages/news/news");
+                                if (StringUtils.isEmpty(name)) {
+                                    if (StringUtils.isEmpty(user.getPatientName())) {
+                                        name = user.getNickname();
+                                    } else {
+                                        name = user.getPatientName();
+                                    }
+
+                                }
+                                wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", name, time, origionMessage.getMsg(), "/pages/news/news");
                                 //wxMpService.sendDoctorUrlTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
 
                             }

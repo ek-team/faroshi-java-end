@@ -48,6 +48,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @Resource
     private UserService userService;
     @Resource
+    private PlanUserService planUserService;
+    @Resource
     private PatientUserService patientUserService;
     @Resource
     private FormService formService;
@@ -1011,13 +1013,18 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @GetMapping("/getPatientDetail")
     public RestResponse getPatientDetail(@RequestParam("patientId") Integer patientId) {
         User user = userService.getById(patientId);
+        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, user.getId()));
+        if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+            TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+            user.setTbTrainUser(tbTrainUser);
+        }
         if (!com.baomidou.mybatisplus.core.toolkit.StringUtils.isEmpty(user.getPatientId())) {
             PatientUser patientUser = patientUserService.getById(user.getPatientId());
             if (patientUser != null) {
                 user.setIdCard(patientUser.getIdCard());
                 user.setPatientName(patientUser.getName());
 
-                if(patientUser.getCardType()!=null && patientUser.getCardType().equals(2)){
+                if (patientUser.getCardType() != null && patientUser.getCardType().equals(2)) {
                     user.setAge(patientUser.getAge());
 
                     user.setBirthday(patientUser.getAge());
@@ -1311,29 +1318,32 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         User user = userService.getById(electronicCase.getCreateUserId());
         electronicCase.setCreateUserName(user.getNickname());
         String followUpPlanIdList = electronicCase.getFollowUpPlanIdList();
-        String[] split = followUpPlanIdList.split(",");
-        List<String> followUpPlanIds = Arrays.asList(split);
-        if (!CollectionUtils.isEmpty(followUpPlanIds)) {
-            //查询随访计划
-            List<FollowUpPlan> followUpPlans = (List<FollowUpPlan>) service.listByIds(followUpPlanIds);
-            if (!CollectionUtils.isEmpty(followUpPlans)) {
-                List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
-                        .lambda().in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds)
-                        .eq(FollowUpPlanNoticeCount::getPatientUserId, electronicCase.getPatientId()));
-                if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
-                    Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
-                            .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
-                    for (FollowUpPlan followUpPlan : followUpPlans) {
-                        followUpPlan.setFollowUpPlanNoticeCount(followUpPlanNoticeCountMap.get(followUpPlan.getId()));
+        if (!StringUtils.isEmpty(followUpPlanIdList)) {
+            String[] split = followUpPlanIdList.split(",");
+            List<String> followUpPlanIds = Arrays.asList(split);
+            if (!CollectionUtils.isEmpty(followUpPlanIds)) {
+                //查询随访计划
+                List<FollowUpPlan> followUpPlans = (List<FollowUpPlan>) service.listByIds(followUpPlanIds);
+                if (!CollectionUtils.isEmpty(followUpPlans)) {
+                    List<FollowUpPlanNoticeCount> followUpPlanNoticeCounts = followUpPlanNoticeCountService.list(new QueryWrapper<FollowUpPlanNoticeCount>()
+                            .lambda().in(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanIds)
+                            .eq(FollowUpPlanNoticeCount::getPatientUserId, electronicCase.getPatientId()));
+                    if (!CollectionUtils.isEmpty(followUpPlanNoticeCounts)) {
+                        Map<Integer, FollowUpPlanNoticeCount> followUpPlanNoticeCountMap = followUpPlanNoticeCounts.stream()
+                                .collect(Collectors.toMap(FollowUpPlanNoticeCount::getFollowUpPlanId, t -> t));
+                        for (FollowUpPlan followUpPlan : followUpPlans) {
+                            followUpPlan.setFollowUpPlanNoticeCount(followUpPlanNoticeCountMap.get(followUpPlan.getId()));
+                        }
                     }
+
+
+                } else {
+                    followUpPlans = new ArrayList<>();
                 }
-
-
-            } else {
-                followUpPlans = new ArrayList<>();
+                electronicCase.setFollowUpPlans(followUpPlans);
             }
-            electronicCase.setFollowUpPlans(followUpPlans);
         }
+
 
         //查询问诊单信息
         List<Inquiry> inquiryList = inquiryService.list(new QueryWrapper<Inquiry>().lambda()

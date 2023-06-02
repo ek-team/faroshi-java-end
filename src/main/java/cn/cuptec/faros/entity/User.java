@@ -110,6 +110,8 @@ public class User extends Model<User> {
     @TableField(exist = false)
     private Role[] roles;
     @TableField(exist = false)
+    private  TbTrainUser tbTrainUser;
+    @TableField(exist = false)
     private String birthday;
     @TableField(exist = false)
     private String age;

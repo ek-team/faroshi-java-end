@@ -41,8 +41,11 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
     @Resource
     private DeptService deptService;
     @Resource
+    private AliPayService aliPayService;
+    @Resource
     private UpdateOrderRecordService updateOrderRecordService;
     private final Url urlData;
+
     @Override
     protected Class<ReviewRefundOrder> getEntityClass() {
         return ReviewRefundOrder.class;
@@ -142,10 +145,18 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
 
             Dept dept = deptService.getById(userOrder.getDeptId());
-            String url =urlData.getRefundUrl()+ "?orderNo=" + retrieveOrder.getOrderNo() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount+"").multiply(new BigDecimal(100)).intValue();
+            if (userOrder.getPayType() == null || userOrder.getPayType().equals(1)) {
+                //微信退款
+                String url = urlData.getRefundUrl() + "?orderNo=" + retrieveOrder.getOrderNo() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount + "").multiply(new BigDecimal(100)).intValue();
 
-            //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
-            String result = HttpUtil.get(url);
+                //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
+                String result = HttpUtil.get(url);
+            } else {
+                //支付宝退款
+                aliPayService.aliRefundOrder(userOrder.getTransactionId(), new BigDecimal(amount + ""),retrieveOrder.getOrderNo());
+
+            }
+
             retrieveOrder.setStatus(4);
             retrieveOrderService.updateById(retrieveOrder);
 

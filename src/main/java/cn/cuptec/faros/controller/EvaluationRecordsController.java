@@ -9,6 +9,7 @@ import cn.cuptec.faros.entity.TbPlan;
 import cn.cuptec.faros.entity.TbTrainUser;
 import cn.cuptec.faros.service.EvaluationRecordsService;
 import cn.cuptec.faros.service.PlanUserService;
+import cn.cuptec.faros.util.SnowflakeIdWorker;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -37,10 +38,15 @@ public class EvaluationRecordsController extends AbstractBaseController<Evaluati
         service.remove(new QueryWrapper<EvaluationRecords>().lambda().in(EvaluationRecords::getKeyId, keyIds));
         Long userId = list.get(0).getUserId();
         planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改评估记录上传标识
-                .eq(TbTrainUser::getUserId, userId+"")
+                .eq(TbTrainUser::getUserId, userId + "")
                 .set(TbTrainUser::getEvaluationRecordTag, 0)
         );
-
+        SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
+        for (EvaluationRecords evaluationRecords : list) {
+            if (evaluationRecords.getKeyId() == null) {
+                evaluationRecords.setKeyId(idUtil.nextId());
+            }
+        }
         service.saveBatch(list);
         return RestResponse.ok();
     }
@@ -74,6 +80,7 @@ public class EvaluationRecordsController extends AbstractBaseController<Evaluati
         }
         return RestResponse.ok(list);
     }
+
     @GetMapping("/getEvaluationRecordsUserId")
     public RestResponse getEvaluationRecordsUserId(@RequestParam("userId") Long userId) {
         TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, userId));
@@ -91,6 +98,7 @@ public class EvaluationRecordsController extends AbstractBaseController<Evaluati
         }
         return RestResponse.ok(list);
     }
+
     /**
      * 根据身份证查询评估记录
      *
@@ -99,12 +107,12 @@ public class EvaluationRecordsController extends AbstractBaseController<Evaluati
      * @return
      */
     @GetMapping("listGroupByPhoneAndIdCard")
-    public RestResponse listGroupByPhoneAndIdCard(@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard,@RequestParam(value = "userId", required = false) String userId) {
+    public RestResponse listGroupByPhoneAndIdCard(@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard, @RequestParam(value = "userId", required = false) String userId) {
 
         LambdaQueryWrapper<TbTrainUser> eq = new QueryWrapper<TbTrainUser>().lambda();
-        if(!StringUtils.isEmpty(idCard)){
+        if (!StringUtils.isEmpty(idCard)) {
             eq.eq(TbTrainUser::getIdCard, idCard);
-        }else if(!StringUtils.isEmpty(userId)){
+        } else if (!StringUtils.isEmpty(userId)) {
             eq.eq(TbTrainUser::getXtUserId, userId);
         }
 

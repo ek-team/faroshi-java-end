@@ -53,7 +53,7 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
         RetrieveOrder retrieveOrder = retrieveOrderService.getById(id);
         Assert.isTrue(retrieveOrder != null, "未查询到此订单");
         Assert.isTrue(StringUtils.isNotEmpty(retrieveOrder.getDeliverySn()), "未查询到物流信息");
-        MapExpressTrackVo mapExpressTrackVo = queryExpressData(retrieveOrder.getReceiverPhone(),retrieveOrder.getDeliveryCompanyCode(), retrieveOrder.getDeliverySn());
+        MapExpressTrackVo mapExpressTrackVo = queryExpressData(retrieveOrder.getReceiverPhone(), retrieveOrder.getDeliveryCompanyCode(), retrieveOrder.getDeliverySn());
         mapExpressTrackVo.setUserOrder(retrieveOrder);
         return mapExpressTrackVo;
     }
@@ -99,7 +99,7 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
         MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
         expressParam.setCom(com);
         expressParam.setNum(num);
-        if(!StringUtils.isEmpty(phone)){
+        if (!StringUtils.isEmpty(phone)) {
             expressParam.setPhone(phone);
 
         }
@@ -117,6 +117,9 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
             String expressResult = EntityUtils.toString(response.getEntity()); //输出json
             log.info(expressResult + "ppppppppppppppppppppppppppppppp");
             MapExpressTrackVo expressTrackVo = JSON.parseObject(expressResult, MapExpressTrackVo.class);
+            if (expressTrackVo.getStatus() == null) {
+                throw new RuntimeException(expressTrackVo.getMessage());
+            }
             if (expressTrackVo.getStatus() == 200) {
                 return expressTrackVo;
             } else {
@@ -125,7 +128,7 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException("未查询到物流信息");
+            throw new RuntimeException(e.getMessage());
         }
     }
 

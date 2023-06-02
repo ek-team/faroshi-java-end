@@ -18,7 +18,7 @@ import java.util.Date;
 public class EvaluationRecords extends Model<EvaluationRecords> implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
-    private long keyId;                 //唯一ID
+    private Long keyId;                 //唯一ID
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private long userId;//用户唯一id 静态方法获取唯一id编号
     private int evaluateResult;//评估结果
