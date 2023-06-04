@@ -5,11 +5,17 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.FormUserDataParam;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.StringUtils;
@@ -18,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.text.Collator;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,9 +44,17 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
     @Resource
     private FormOptionsService formOptionsService;
     @Resource
-    private UpcomingService upcomingService;
+    private ChatUserService chatUserService;
     @Resource
     private ChatMsgService chatMsgService;
+    @Resource
+    private WxMpService wxMpService;
+    @Resource
+    private UserService userService;
+    @Resource
+    private PatientUserService patientUserService;
+    @Resource
+    private UniAppPushService uniAppPushService;
 
     /**
      * 添加表单内容
@@ -167,16 +182,32 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             if (byId1.getChatUserId() == null) {
                 newChatMsg.setToUid(byId1.getFromUid());
             }
-            ZoneId zoneId = ZoneId.systemDefault();
-            LocalDateTime localDateTime = LocalDateTime.now().plusMinutes(1);
-            ZonedDateTime zdt = localDateTime.atZone(zoneId);
 
-            Date date = Date.from(zdt.toInstant());
-            newChatMsg.setCreateTime(date);
+            newChatMsg.setCreateTime(new Date());
             newChatMsg.setStr3(chatMsg.getId());
             newChatMsg.setStr2(1 + "");
-            newChatMsg.setReadUserIds(SecurityUtils.getUser().getId()+"");
+            newChatMsg.setReadUserIds(SecurityUtils.getUser().getId() + "");
             chatMsgService.save(newChatMsg);
+            if (newChatMsg.getChatUserId() != null) {
+                ChatUser chatUser = chatUserService.getById(newChatMsg.getChatUserId());
+                log.info("团队聊天" + byId.toString());
+                //推送群聊的消息给所有人
+                String data = chatUser.getUserIds();
+                List<String> allUserIds = Arrays.asList(data.split(","));
+                sendNotic(chatMsg, SecurityUtils.getUser().getId(), newChatMsg.getChatUserId(), allUserIds);
+
+            } else {
+                //单聊
+                Channel targetUserChannel = UserChannelManager.getUserChannel(byId1.getFromUid());
+                //向目标用户发送新消息提醒
+                User fromUser = userService.getById(SecurityUtils.getUser().getId());
+                SocketFrameTextMessage targetUserMessage
+                        = SocketFrameTextMessage.newMessageTip(SecurityUtils.getUser().getId(), fromUser.getNickname(), fromUser.getAvatar(), new Date(), ChatProto.FORM, JSON.toJSONString(chatMsg));
+
+                if (targetUserChannel != null) {
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                }
+            }
         }
         //判断如果是随访计划 再发送一条表单消息
         if (byId1 != null && followUpPlanNotice != null) {
@@ -188,7 +219,7 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
                 newChatMsg.setToUid(byId1.getFromUid());
             }
             ZoneId zoneId = ZoneId.systemDefault();
-            LocalDateTime localDateTime = LocalDateTime.now().plusMinutes(1);
+            LocalDateTime localDateTime = LocalDateTime.now();
             ZonedDateTime zdt = localDateTime.atZone(zoneId);
             newChatMsg.setMsgType(ChatProto.FORM);
             newChatMsg.setMsg("表单");
@@ -197,13 +228,56 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
             newChatMsg.setCreateTime(date);
             newChatMsg.setStr3(updateFollowUpPlanNoticeId + "");
             newChatMsg.setStr2(1 + "");
-            newChatMsg.setReadUserIds(SecurityUtils.getUser().getId()+"");
+            newChatMsg.setReadUserIds(SecurityUtils.getUser().getId() + "");
             chatMsgService.save(newChatMsg);
+            if (newChatMsg.getChatUserId() != null) {
+                ChatUser chatUser = chatUserService.getById(newChatMsg.getChatUserId());
+                log.info("团队聊天" + byId.toString());
+                //推送群聊的消息给所有人
+                String data = chatUser.getUserIds();
+                List<String> allUserIds = Arrays.asList(data.split(","));
+                sendNotic(chatMsg, SecurityUtils.getUser().getId(), newChatMsg.getChatUserId(), allUserIds);
+
+            } else {
+                //单聊
+                Channel targetUserChannel = UserChannelManager.getUserChannel(byId1.getFromUid());
+                //向目标用户发送新消息提醒
+                User fromUser = userService.getById(SecurityUtils.getUser().getId());
+                SocketFrameTextMessage targetUserMessage
+                        = SocketFrameTextMessage.newMessageTip(SecurityUtils.getUser().getId(), fromUser.getNickname(), fromUser.getAvatar(), new Date(), ChatProto.FORM, JSON.toJSONString(chatMsg));
+
+                if (targetUserChannel != null) {
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                }
+            }
         }
 
         return RestResponse.ok();
     }
 
+    private void sendNotic(ChatMsg chatMsg, Integer fromUserId, Integer chatUserId, List<String> allUserIds) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                for (String userId : allUserIds) {
+                    String replace = userId.replace("[", "");
+                    userId = replace.replace("]", "");
+                    userId = userId.trim();
+                    if (!userId.equals(fromUserId + "")) {
+
+                        Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
+                        //2.向目标用户发送新消息提醒
+                        SocketFrameTextMessage targetUserMessage
+                                = SocketFrameTextMessage.newGroupMessageTip(chatUserId, JSON.toJSONString(chatMsg));
+                        if (targetUserChannel != null) {
+                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                        }
+                    }
+
+                }
+            }
+        });
+    }
 
     /**
      * 查询 用户填写的表单数据 根据订单id
@@ -367,9 +441,9 @@ public class FormUserDataController extends AbstractBaseController<FormUserDataS
                     List<String> strings = Arrays.asList(split);
                     if (formUserData.getType().equals("6")) {
                         List<Integer> ans = new ArrayList<>();
-                        if(!CollectionUtils.isEmpty(strings)){
+                        if (!CollectionUtils.isEmpty(strings)) {
                             for (String str : strings) {
-                                if(!StringUtils.isEmpty(str)){
+                                if (!StringUtils.isEmpty(str)) {
                                     ans.add(Integer.parseInt(str));
 
                                 }

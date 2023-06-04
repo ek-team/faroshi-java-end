@@ -16,7 +16,7 @@ import java.util.List;
  * 医生团队
  */
 @Data
-public class DoctorTeam extends Model<DoctorTeam> {
+public class DoctorTeam extends Model<DoctorTeam>  implements Comparable<DoctorTeam>{
 
     @TableId(type = IdType.AUTO)
     private Integer id;
@@ -38,4 +38,9 @@ public class DoctorTeam extends Model<DoctorTeam> {
     private List<DoctorTeamPeople> doctorTeamPeopleList;
     @TableField(exist = false)
     private User leaderUser;
+
+    @Override
+    public int compareTo(DoctorTeam o) {
+        return o.name.compareTo(this.name);
+    }
 }

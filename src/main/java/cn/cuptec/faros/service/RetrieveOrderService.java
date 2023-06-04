@@ -63,7 +63,9 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
 
         List<ServicePackProductPic> list = servicePackProductPicService.list(new QueryWrapper<ServicePackProductPic>().lambda()
                 .eq(ServicePackProductPic::getServicePackId, userOrder.getServicePackId()));
-        entity.setProductPic(list.get(0).getImage());
+        if (!CollectionUtils.isEmpty(list)) {
+            entity.setProductPic(list.get(0).getImage());
+        }
         entity.setSaleSpecId(entity.getSaleSpecId());
 
         SaleSpecGroup saleSpecGroup = saleSpecGroupService.getOne(new QueryWrapper<SaleSpecGroup>().lambda()

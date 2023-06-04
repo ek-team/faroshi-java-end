@@ -475,7 +475,9 @@ public class AliPayController {
                         userServicePackageInfo.setChatUserId(chatUser.getId());
                         userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
                         userServicePackageInfo.setCreateTime(LocalDateTime.now());
-                        userServicePackageInfo.setExpiredTime(LocalDateTime.now().plusDays(servicePackageInfo.getExpiredDay()));
+                        if (servicePackageInfo.getExpiredDay() != null) {
+                            userServicePackageInfo.setExpiredTime(LocalDateTime.now().plusDays(servicePackageInfo.getExpiredDay()));
+                        }
                         userServicePackageInfos.add(userServicePackageInfo);
                     }
                     userServicePackageInfoService.saveBatch(userServicePackageInfos);

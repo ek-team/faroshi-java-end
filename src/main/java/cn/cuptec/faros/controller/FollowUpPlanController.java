@@ -1342,6 +1342,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 }
                 electronicCase.setFollowUpPlans(followUpPlans);
             }
+        } else {
+            electronicCase.setFollowUpPlans(new ArrayList<>());
         }
 
 

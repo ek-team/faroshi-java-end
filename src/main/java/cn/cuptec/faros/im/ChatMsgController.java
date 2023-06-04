@@ -68,7 +68,10 @@ public class ChatMsgController {
     private DoctorPointService doctorPointService;
     @Resource
     private UpcomingService upcomingService;
+    @Resource
+    private PatientUserService patientUserService;
     private final Url urlData;
+
     @ApiOperation(value = "查询历史记录")
     @GetMapping("/testRead")
     public void tesetRead(@RequestParam("chatUserId") Integer chatUserId) {
@@ -467,7 +470,7 @@ public class ChatMsgController {
             //退款
             if (patientOtherOrder.getAmount() != null) {
                 Dept dept = deptService.getById(patientOtherOrder.getDeptId());
-                String url =urlData.getRefundUrl()+  "?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
+                String url = urlData.getRefundUrl() + "?orderNo=" + patientOtherOrder.getOrderNo() + "&transactionId=" + patientOtherOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(patientOtherOrder.getAmount()).multiply(new BigDecimal(100)).intValue();
                 String result = HttpUtil.get(url);
             }
             if (byId.getGroupType().equals(0)) {
@@ -528,10 +531,20 @@ public class ChatMsgController {
         } else {
             msg = "医生已拒绝您的咨询";
         }
+        String name = "";
+        if (StringUtils.isEmpty(user.getPatientName())) {
+            name = user.getNickname();
+        } else {
+            name = user.getPatientName();
+        }
+        if (patientOtherOrder.getPatientId() != null) {
+            PatientUser patientUser = patientUserService.getById(patientOtherOrder.getPatientId());
+            name = patientUser.getName();
+        }
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String time = df.format(now);
-        wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", "", time, msg, "/pages/news/news");
+        wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", name, time, msg, "/pages/news/news");
         //修改代办事项状态
         upcomingService.update(Wrappers.<Upcoming>lambdaUpdate()
                 .eq(Upcoming::getOrderId, patientOtherOrder.getId())

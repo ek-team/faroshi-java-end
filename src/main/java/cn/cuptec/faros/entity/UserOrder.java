@@ -69,6 +69,7 @@ public class UserOrder {
     private String saleSpecId;//销售规格id
     @TableField(exist = false)
     private List<Integer> saleSpecDescIds;
+    @TableField(exist = false)
     private User user;
     @TableField(exist = false)
     private SaleSpecGroup saleSpecGroup;

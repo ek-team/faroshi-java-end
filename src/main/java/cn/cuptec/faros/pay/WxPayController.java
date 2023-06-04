@@ -321,7 +321,9 @@ public class WxPayController {
                     userServicePackageInfo.setChatUserId(chatUser.getId());
                     userServicePackageInfo.setServicePackageInfoId(servicePackageInfo.getId());
                     userServicePackageInfo.setCreateTime(LocalDateTime.now());
-                    userServicePackageInfo.setExpiredTime(LocalDateTime.now().plusDays(servicePackageInfo.getExpiredDay()));
+                    if (servicePackageInfo.getExpiredDay() != null) {
+                        userServicePackageInfo.setExpiredTime(LocalDateTime.now().plusDays(servicePackageInfo.getExpiredDay()));
+                    }
                     userServicePackageInfos.add(userServicePackageInfo);
                 }
                 userServicePackageInfoService.saveBatch(userServicePackageInfos);
@@ -336,7 +338,7 @@ public class WxPayController {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String time = df.format(now);
-                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "购买支架链接",patientName, time,
+                wxMpService.sendDoctorUrlTip(userById.getMpOpenId(), "购买支架链接", patientName, time,
                         "购买支架链接", urlData.getUrl() + "record.html#/ucenter/recovery/externalLink");
 
 

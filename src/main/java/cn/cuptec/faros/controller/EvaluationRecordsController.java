@@ -33,6 +33,13 @@ public class EvaluationRecordsController extends AbstractBaseController<Evaluati
      */
     @PostMapping("/addEvaluationRecords")
     public RestResponse addEvaluationRecords(@RequestBody List<EvaluationRecords> list) {
+        SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
+
+        for (EvaluationRecords evaluationRecords : list) {
+            if (evaluationRecords.getKeyId() == null) {
+                evaluationRecords.setKeyId(idUtil.nextId());
+            }
+        }
         List<Long> keyIds = list.stream().map(EvaluationRecords::getKeyId)
                 .collect(Collectors.toList());
         service.remove(new QueryWrapper<EvaluationRecords>().lambda().in(EvaluationRecords::getKeyId, keyIds));
@@ -41,12 +48,7 @@ public class EvaluationRecordsController extends AbstractBaseController<Evaluati
                 .eq(TbTrainUser::getUserId, userId + "")
                 .set(TbTrainUser::getEvaluationRecordTag, 0)
         );
-        SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
-        for (EvaluationRecords evaluationRecords : list) {
-            if (evaluationRecords.getKeyId() == null) {
-                evaluationRecords.setKeyId(idUtil.nextId());
-            }
-        }
+
         service.saveBatch(list);
         return RestResponse.ok();
     }

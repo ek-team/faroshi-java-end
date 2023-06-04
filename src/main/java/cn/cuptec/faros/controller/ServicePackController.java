@@ -669,7 +669,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                         doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
                     }
                 }
-
+                Collections.sort(doctorTeams);
                 return RestResponse.ok(doctorTeams);
             }
 
@@ -936,8 +936,15 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     }
 
     public static void main(String[] args) {
-        String a = "2,23,3";
-        System.out.println(a.indexOf("2"));
+       List<DoctorTeam> doctorTeams=new ArrayList<>();
+        DoctorTeam doctorTeam=new DoctorTeam();
+        doctorTeam.setName("娃哈哈");
+        DoctorTeam doctorTeam1=new DoctorTeam();
+        doctorTeam1.setName("焦恒");
+       doctorTeams.add(doctorTeam);
+        doctorTeams.add(doctorTeam1);
+        Collections.sort(doctorTeams);
+        System.out.println(doctorTeams.get(0).getName());
     }
 
     /**
