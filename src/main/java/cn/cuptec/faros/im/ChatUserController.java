@@ -99,13 +99,13 @@ public class ChatUserController {
                     byId.setPatientOtherOrderStatus("3");
                 }
             }
-            if (byId.getPatientOtherOrderStatus().equals("2")) {
-                //拒绝
-                PatientOtherOrder patientOtherOrder = patientOtherOrderService.getById(byId.getPatientOtherOrderNo());
-                if (patientOtherOrder.getCreateTime().plusHours(24).isBefore(LocalDateTime.now())) {
-                    byId.setPatientOtherOrderStatus("3");
-                }
-            }
+//            if (byId.getPatientOtherOrderStatus().equals("2")) {
+//                //拒绝
+//                PatientOtherOrder patientOtherOrder = patientOtherOrderService.getById(byId.getPatientOtherOrderNo());
+//                if (patientOtherOrder.getCreateTime().plusHours(24).isBefore(LocalDateTime.now())) {
+//                    byId.setPatientOtherOrderStatus("3");
+//                }
+//            }
             if (byId.getPatientOtherOrderStatus().equals("4")) {
                 //代表是会话随访
                 if (byId.getServiceEndTime().isBefore(LocalDateTime.now())) {
@@ -246,6 +246,8 @@ public class ChatUserController {
 
                 if (!StringUtils.isEmpty(chatUser.getPatientId())) {
                     eq.eq(ChatUser::getPatientId, chatUser.getPatientId());
+                }else {
+                    eq.isNull(ChatUser::getPatientId);
                 }
                 ChatUser one = chatUserService.getOne(eq);
                 if (one != null) {
@@ -260,6 +262,7 @@ public class ChatUserController {
                     } else {
                         chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
                                 .eq(ChatUser::getUid, c.getUid())
+                                .isNull(ChatUser::getPatientId)
                                 .eq(ChatUser::getTargetUid, c.getTargetUid())
                                 .set(ChatUser::getServiceEndTime, LocalDateTime.now().minusDays(2))
                                 .set(ChatUser::getPatientOtherOrderStatus, 3)

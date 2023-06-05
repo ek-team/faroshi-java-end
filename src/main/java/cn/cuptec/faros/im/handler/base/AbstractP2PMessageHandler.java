@@ -409,6 +409,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
             if (origionMessage.getPatientId() != null) {
                 eq.eq(ChatUser::getPatientId, origionMessage.getPatientId());
+            } else {
+                eq.isNull(ChatUser::getPatientId);
             }
 
             ChatUser one = chatUserService.getOne(eq);
@@ -435,6 +437,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                     } else {
                         LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
                                 .eq(ChatUser::getUid, chatUser.getUid())
+                                .isNull(ChatUser::getPatientId)
                                 .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
                                 .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
                                 .set(ChatUser::getChatCount, one.getChatCount())
@@ -467,6 +470,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
                                 .eq(ChatUser::getUid, chatUser.getUid())
                                 .eq(ChatUser::getTargetUid, chatUser.getTargetUid())
+                                .isNull(ChatUser::getPatientId)
                                 .set(ChatUser::getLastChatTime, chatUser.getLastChatTime())
                                 .set(ChatUser::getChatCount, one.getChatCount())
                                 .set(ChatUser::getLastMsg, chatMsg.getMsg());

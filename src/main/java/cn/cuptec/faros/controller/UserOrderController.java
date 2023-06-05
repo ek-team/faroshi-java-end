@@ -285,13 +285,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (!StringUtils.isEmpty(servicePackName)) {
-            queryWrapper.eq("service_pack.name", servicePackName);
+            queryWrapper.like("service_pack.name", servicePackName);
         }
         if (!StringUtils.isEmpty(nickname)) {
-            queryWrapper.eq("patient_user.name", nickname);
+            queryWrapper.like("patient_user.name", nickname);
         }
         if (!StringUtils.isEmpty(receiverPhone)) {
-            queryWrapper.eq("user_order.receiver_phone", receiverPhone);
+            queryWrapper.like("user_order.receiver_phone", receiverPhone);
         }
         if (!StringUtils.isEmpty(userOrderNo)) {
             String[] split = userOrderNo.split("-");

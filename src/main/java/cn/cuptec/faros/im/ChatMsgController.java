@@ -118,6 +118,8 @@ public class ChatMsgController {
         LambdaQueryWrapper<ChatUser> eq = new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getUid, param.getMyUserId()).eq(ChatUser::getTargetUid, param.getTargetUid());
         if (patientId != null) {
             eq.eq(ChatUser::getPatientId, patientId);
+        }else {
+            eq.isNull(ChatUser::getPatientId);
         }
         //查询清空历史记录
         ChatUser one = chatUserService.getOne(eq);
@@ -422,6 +424,8 @@ public class ChatMsgController {
                     LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid());
                     if (patientOtherOrder.getPatientId() != null) {
                         eq.eq(ChatUser::getPatientId, patientOtherOrder.getPatientId());
+                    }else {
+                        eq.isNull(ChatUser::getPatientId);
                     }
                     ChatUser one = chatUserService.getOne(eq);
                     if (one != null) {
@@ -446,6 +450,7 @@ public class ChatMsgController {
                         } else {
                             LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
                                     .eq(ChatUser::getUid, c.getUid())
+                                    .isNull(ChatUser::getPatientId)
                                     .eq(ChatUser::getTargetUid, c.getTargetUid())
                                     .set(ChatUser::getPatientOtherOrderStatus, str2)
                                     .set(ChatUser::getReceiverId, receiverId)
@@ -491,6 +496,8 @@ public class ChatMsgController {
                     LambdaQueryWrapper<ChatUser> eq = Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid());
                     if (patientOtherOrder.getPatientId() != null) {
                         eq.eq(ChatUser::getPatientId, patientOtherOrder.getPatientId());
+                    }else {
+                        eq.isNull(ChatUser::getPatientId);
                     }
                     ChatUser one = chatUserService.getOne(eq);
                     if (one != null) {
@@ -509,6 +516,7 @@ public class ChatMsgController {
                         } else {
                             LambdaUpdateWrapper<ChatUser> set = Wrappers.<ChatUser>lambdaUpdate()
                                     .eq(ChatUser::getUid, c.getUid())
+                                    .isNull(ChatUser::getPatientId)
                                     .eq(ChatUser::getTargetUid, c.getTargetUid())
                                     .set(ChatUser::getPatientOtherOrderStatus, str2);
                             chatUserService.update(

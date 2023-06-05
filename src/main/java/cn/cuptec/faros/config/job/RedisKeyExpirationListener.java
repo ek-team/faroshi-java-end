@@ -202,33 +202,12 @@ public class RedisKeyExpirationListener implements MessageListener {
                     byId.setPatientOtherOrderStatus("2");
                     chatUserService.updateById(byId);
                     if (byId.getGroupType().equals(0)) {
-                        ChatUser fromUserChat = new ChatUser();
-                        fromUserChat.setUid(byId.getUid());
-                        fromUserChat.setTargetUid(byId.getTargetUid());
+                        chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
+                                .eq(ChatUser::getPatientOtherOrderNo, patientOtherOrder.getId())
+                                .set(ChatUser::getPatientOtherOrderStatus, 2)
+                                .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
 
-
-                        ChatUser toUserChat = new ChatUser();
-                        toUserChat.setUid(byId.getTargetUid());
-                        toUserChat.setTargetUid(byId.getUid());
-
-                        List<ChatUser> chatUsers = new ArrayList<>();
-                        chatUsers.add(fromUserChat);
-                        chatUsers.add(toUserChat);
-
-                        chatUsers.forEach(c -> {
-                            ChatUser one = chatUserService.getOne(Wrappers.<ChatUser>lambdaQuery().eq(ChatUser::getTargetUid, c.getTargetUid()).eq(ChatUser::getUid, c.getUid()));
-                            if (one != null) {
-
-                                chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
-                                        .eq(ChatUser::getUid, c.getUid())
-                                        .eq(ChatUser::getTargetUid, c.getTargetUid())
-                                        .set(ChatUser::getPatientOtherOrderStatus, 2)
-                                        .set(ChatUser::getServiceEndTime, LocalDateTime.now().plusHours(24))
-
-                                );
-                            }
-                        });
-
+                        );
 
                     }
                 }

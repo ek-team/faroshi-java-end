@@ -16,9 +16,8 @@ import java.util.List;
 @Service
 public class ServicePackService extends ServiceImpl<ServicePackMapper, ServicePack> {
     public IPage<ServicePack> pageScoped(Boolean admin, IPage<ServicePack> page, Wrapper<ServicePack> queryWrapper) {
-        DataScope dataScope = new DataScope();
-        dataScope.setIsOnly(!admin);
-        return baseMapper.pageScoped(page, queryWrapper, dataScope);
+
+        return baseMapper.pageScoped(page, queryWrapper);
     }
 
     public List<ServicePack> listScoped(Wrapper<ServicePack> queryWrapper) {

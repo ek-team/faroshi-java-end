@@ -30,6 +30,9 @@ public class ServicePack extends Model<ServicePack> {
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String name;
     private String showName;
+    private String deptIdList;//所属代理商
+
+    private String deptName;//所属代理商
     private Integer deptId;
     private Integer createUserId;
     private LocalDateTime createTime;

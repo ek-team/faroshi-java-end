@@ -38,61 +38,15 @@ public class TestController {
     @Resource
     private RentRuleOrderService rentRuleOrderService;
     @Resource
-    private UserOrdertService userOrdertService;
+    private DeptService deptService;
     @Resource
-    private UserServicePackageInfoService userServicePackageInfoService;
+    private ServicePackService servicePackService;
+
     @GetMapping("user")
     public RestResponse customUserInfo() {
+        List<ServicePack> servicePacks = servicePackService.list();
 
-        RentRuleOrder rentRuleOrder = rentRuleOrderService.getOne(new QueryWrapper<RentRuleOrder>().lambda().eq(RentRuleOrder::getRentRuleOrderNo, "1654674697675079680"));
-        if (rentRuleOrder != null) {
-            if (rentRuleOrder.getStatus().equals(2)) {
-                return RestResponse.ok();
-            }
-            rentRuleOrder.setStatus(2);
-            rentRuleOrder.setTransactionId("4200001835202305066288764118");
-            rentRuleOrderService.updateById(rentRuleOrder);
-            UserOrder userOrderOne = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, rentRuleOrder.getUserOrderNo()));
-            List<UserServicePackageInfo> userServicePackageInfos = userServicePackageInfoService.list(new QueryWrapper<UserServicePackageInfo>().lambda().eq(UserServicePackageInfo::getOrderId, userOrderOne.getId()));
-            if (!CollectionUtils.isEmpty(userServicePackageInfos)) {
-                for (UserServicePackageInfo userServicePackageInfo : userServicePackageInfos) {
-                    LocalDateTime expiredTime = userServicePackageInfo.getExpiredTime();
-                    LocalDateTime now = LocalDateTime.now();
-                    if (expiredTime.isAfter(now)) {
-                        //没过期
-                        Long aLong = Long.getLong(rentRuleOrder.getDay());
-
-                        userServicePackageInfo.setExpiredTime(expiredTime.plusDays(aLong));
-                    } else {
-                        //过期
-                        userServicePackageInfo.setExpiredTime(now.plusDays(Long.getLong(rentRuleOrder.getDay())));
-
-                    }
-                    if (rentRuleOrder.getServiceCount() != null) {
-                        userServicePackageInfo.setTotalCount(userServicePackageInfo.getTotalCount() + rentRuleOrder.getServiceCount());
-                    }
-                }
-                userServicePackageInfoService.updateBatchById(userServicePackageInfos);
-            }
-
-
-        }
-//        List<HospitalInfo> list = hospitalInfoService.list();
-//        for (HospitalInfo importDoctor : list) {
-//            String hospitalInfoStr = importDoctor.getProvince() + importDoctor.getCity() + importDoctor.getArea() + importDoctor.getName();
-//
-//            importDoctor.setHospitalInfoStr(hospitalInfoStr);
-//        }
-//        hospitalInfoService.updateBatchById(list);
-
-//        List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
-//
-//                .isNull(TbTrainUser::getIdCard).or().eq(TbTrainUser::getIdCard, ""));
-//        for (TbTrainUser tbTrainUser : list) {
-//            tbTrainUser.setIdCard(tbTrainUser.getCaseHistoryNo());
-//        }
-//        planUserService.updateBatchById(list);
-        return RestResponse.ok();
+        return RestResponse.ok(servicePacks.get(0));
     }
 
 

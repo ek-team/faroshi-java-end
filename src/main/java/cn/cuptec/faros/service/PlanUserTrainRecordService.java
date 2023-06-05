@@ -94,14 +94,11 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
         }
 
         //更改使用设备序列号
-        List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().
-                lambda().eq(ProductStock::getMacAddress, userTrainRecordList.get(0).getUserId()).eq(ProductStock::getDel, 1));
-        if (!com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(productStocks)) {
-            planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()
-                    .eq(TbTrainUser::getUserId, userTrainRecordList.get(0).getUserId())
-                    .set(TbTrainUser::getUseProductSn, productStocks.get(0).getProductSn())
-            );
-        }
+        planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()
+                .eq(TbTrainUser::getUserId, userTrainRecordList.get(0).getUserId())
+                .set(TbTrainUser::getUseProductSn, userTrainRecordList.get(0).getProductSn())
+        );
+
         for (TbUserTrainRecord record : userTrainRecordList) {
             if (CollUtil.isNotEmpty(record.getTrainDataList())) {
                 record.getTrainDataList().forEach(data -> data.setRecordId(record.getId()));

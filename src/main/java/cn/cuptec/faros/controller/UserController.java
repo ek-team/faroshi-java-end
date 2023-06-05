@@ -128,85 +128,34 @@ public class UserController extends AbstractBaseController<UserService, User> {
     @GetMapping("/addPatientDoctorGroup")
     public RestResponse addPatientDoctorGroup(@RequestParam("doctorId") String doctorId) {
 
-//        //添加患者和医生的好友
-//        if (doctorId.indexOf("-") < 0) {
-//            //个人二维码
-//            chatUserService.saveOrUpdateChatUser(Integer.parseInt(doctorId), SecurityUtils.getUser().getId(), "");
-//
-//            UserFollowDoctor userFollowDoctor = userFollowDoctorService.getOne(new QueryWrapper<UserFollowDoctor>().lambda()
-//                    .eq(UserFollowDoctor::getDoctorId, doctorId)
-//                    .eq(UserFollowDoctor::getUserId, SecurityUtils.getUser().getId()));
-//            if (userFollowDoctor == null) {
-//                userFollowDoctor = new UserFollowDoctor();
-//                userFollowDoctor.setDoctorId(Integer.parseInt(doctorId));
-//                userFollowDoctor.setUserId(SecurityUtils.getUser().getId());
-//                userFollowDoctorService.save(userFollowDoctor);
-//            }
-//            UserDoctorRelation userDoctorRelation = userDoctorRelationService.getOne(new QueryWrapper<UserDoctorRelation>().lambda()
-//                    .eq(UserDoctorRelation::getDoctorId, doctorId)
-//                    .eq(UserDoctorRelation::getUserId, SecurityUtils.getUser().getId()));
-//            if (userDoctorRelation == null) {
-//                userDoctorRelation = new UserDoctorRelation();
-//                userDoctorRelation.setUserId(SecurityUtils.getUser().getId());
-//                userDoctorRelation.setDoctorId(Integer.parseInt(doctorId));
-//                userDoctorRelationService.save(userDoctorRelation);
-//            }
-//        } else {
-//            Integer userId = SecurityUtils.getUser().getId();
-//            //团队二维码
-//            log.info("团队id//////////////////////////" + doctorId);
-//            String[] split = doctorId.split("-");
-//            Integer teamId = Integer.parseInt(split[0]);
-//            log.info("团队id================" + teamId);
-//            List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
-//                    .eq(DoctorTeamPeople::getTeamId, teamId));
-//
-//            List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
-//                    .collect(Collectors.toList());
-//
-//            List<UserFollowDoctor> one = userFollowDoctorService.list(new QueryWrapper<UserFollowDoctor>().lambda()
-//                    .eq(UserFollowDoctor::getUserId, userId)
-//                    .in(UserFollowDoctor::getTeamId, teamId));
-//            if (CollectionUtils.isEmpty(one)) {
-//                //添加医生团队的好友关系
-//                UserFollowDoctor userFollowDoctor = new UserFollowDoctor();
-//                userFollowDoctor.setTeamId(teamId);
-//                userFollowDoctor.setUserId(userId);
-//                userFollowDoctorService.save(userFollowDoctor);
-//            }
-//            //患者和团队的关系
-//            patientRelationTeamService.remove(new QueryWrapper<PatientRelationTeam>().lambda()
-//                    .eq(PatientRelationTeam::getPatientId, userId)
-//                    .eq(PatientRelationTeam::getTeamId, teamId));
-//            PatientRelationTeam patientRelationTeam = new PatientRelationTeam();
-//
-//            patientRelationTeam.setPatientId(userId);
-//            patientRelationTeam.setTeamId(teamId);
-//            patientRelationTeamService.save(patientRelationTeam);
-//            //添加医生和患者的关系
-//            List<UserDoctorRelation> userDoctorRelationList = new ArrayList<>();
-//            userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
-//                    .eq(UserDoctorRelation::getUserId, userId)
-//                    .in(UserDoctorRelation::getDoctorId, userIds));
-//
-//
-//            for (Integer doctorId1 : userIds) {
-//                UserDoctorRelation userDoctorRelation = new UserDoctorRelation();
-//                userDoctorRelation.setDoctorId(doctorId1);
-//                userDoctorRelation.setUserId(userId);
-//                userDoctorRelationList.add(userDoctorRelation);
-//            }
-//            userDoctorRelationService.saveBatch(userDoctorRelationList);
-//
-//            userIds.add(userId);
-//            ChatUser chatUser = chatUserService.saveGroupChatUser(userIds, teamId, userId);
-//
-//
-//        }
 
         return RestResponse.ok();
     }
+    /**
+     * 患者添加医生好友
+     */
+    @GetMapping("/addPatientUserByIdCard")
+    public RestResponse addPatientUserByIdCard(@RequestParam("idCard") String idCard) {
+        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, idCard));
 
+        List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
+                .eq(PatientUser::getUserId, SecurityUtils.getUser().getId())
+                .eq(PatientUser::getIdCard, idCard));
+        if(CollectionUtils.isEmpty(list)){
+           PatientUser patientUser=new PatientUser();
+            patientUser.setUserId(SecurityUtils.getUser().getId());
+            patientUser.setIdCard(idCard);
+            patientUser.setCardType(1);
+            if(!CollectionUtils.isEmpty(tbTrainUsers)){
+                TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+
+                patientUser.setName(tbTrainUser.getName());
+                patientUser.setPhone(tbTrainUser.getTelePhone());
+            }
+            patientUserService.save(patientUser);
+        }
+        return RestResponse.ok();
+    }
     /**
      * 获取医生个人二维码 和医生所在团队二维码 患者扫码 添加
      */

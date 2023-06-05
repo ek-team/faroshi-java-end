@@ -2,7 +2,6 @@ package cn.cuptec.faros.common;
 
 import cn.cuptec.faros.common.constrants.CommonConstants;
 import com.alibaba.fastjson.annotation.JSONField;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -11,6 +10,7 @@ import java.io.Serializable;
 /**
  * 响应信息主体
  */
+
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor

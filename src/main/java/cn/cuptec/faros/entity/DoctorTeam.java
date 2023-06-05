@@ -38,9 +38,10 @@ public class DoctorTeam extends Model<DoctorTeam>  implements Comparable<DoctorT
     private List<DoctorTeamPeople> doctorTeamPeopleList;
     @TableField(exist = false)
     private User leaderUser;
-
+    @TableField(exist = false)
+    private  String pingYin;
     @Override
     public int compareTo(DoctorTeam o) {
-        return o.name.compareTo(this.name);
+        return this.pingYin.compareTo(o.pingYin);
     }
 }

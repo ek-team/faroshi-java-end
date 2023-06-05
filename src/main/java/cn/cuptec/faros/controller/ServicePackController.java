@@ -18,6 +18,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.bean.result.WxMpQrCodeTicket;
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -48,7 +53,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @Resource
     private UserRoleService userRoleService;
     @Resource
-    private ProductSpecService productSpecService;//产品规格
+    private DeptService deptService;
 
     @Resource
     private ProductSpecDescService productSpecDescService;//产品规格描述
@@ -168,6 +173,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     public RestResponse save(@RequestBody ServicePack servicePack) {
         User byId = userService.getById(SecurityUtils.getUser().getId());
         servicePack.setDeptId(byId.getDeptId());
+        servicePack.setDeptIdList(byId.getDeptId() + "");
+        Dept byId1 = deptService.getById(byId.getDeptId());
+
+        servicePack.setDeptName(byId1.getName());
         servicePack.setCreateTime(LocalDateTime.now());
         servicePack.setCreateUserId(byId.getId());
         service.save(servicePack);
@@ -532,11 +541,81 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             queryWrapper.ge("service_pack.create_time", startTime);
         }
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+        if (!aBoolean) {
+            User userDept = userService.getById(SecurityUtils.getUser().getId());
 
+            queryWrapper.eq("service_pack.dept_id", userDept.getDeptId());
+
+        }
         IPage<ServicePack> servicePackIPage = service.pageScoped(aBoolean, page, queryWrapper);
+        List<ServicePack> records = servicePackIPage.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
+            List<Integer> deptIds = records.stream().map(ServicePack::getDeptId)
+                    .collect(Collectors.toList());
+            List<Dept> depts = (List<Dept>) deptService.listByIds(deptIds);
+            Map<Integer, Dept> deptMap = depts.stream()
+                    .collect(Collectors.toMap(Dept::getId, t -> t));
+            for (ServicePack servicePack : records) {
+                Dept dept = deptMap.get(servicePack.getDeptId());
+                if (dept != null) {
+                    servicePack.setDeptName(dept.getName());
+                }
+            }
+        }
 
         return RestResponse.ok(servicePackIPage);
     }
+
+    /**
+     * 添加所属代理商
+     */
+    @GetMapping("/updateDept")
+    public RestResponse addDept(@RequestParam("servicePackId") Integer servicePackId, @RequestParam("deptId") Integer deptId) {
+        ServicePack servicePack = service.getById(servicePackId);
+        servicePack.setDeptId(deptId);
+
+        service.updateById(servicePack);
+        return RestResponse.ok();
+    }
+
+    /**
+     * 删除所属代理商
+     */
+    @GetMapping("/deleteDept")
+    public RestResponse deleteDept(@RequestParam("servicePackId") Integer servicePackId, @RequestParam("deptId") Integer deptId) {
+        ServicePack servicePack = service.getById(servicePackId);
+        String deptIdList = servicePack.getDeptIdList();
+        List<String> split = Arrays.asList(deptIdList.split("/"));
+        String newDeptIds = "";
+        for (String deptIdSplit : split) {
+            if (!deptIdSplit.equals(deptId + "")) {
+                if (StringUtils.isEmpty(newDeptIds)) {
+                    newDeptIds = deptIdSplit;
+                } else {
+                    newDeptIds = newDeptIds + "/" + deptIdSplit;
+                }
+            }
+
+
+        }
+        servicePack.setDeptIdList(newDeptIds);
+        service.updateById(servicePack);
+        return RestResponse.ok();
+    }
+
+    /**
+     * 查询所属代理商
+     */
+    @GetMapping("/getDept")
+    public RestResponse getDept(@RequestParam("servicePackId") Integer servicePackId) {
+        ServicePack servicePack = service.getById(servicePackId);
+        String deptIdList = servicePack.getDeptIdList();
+        List<String> deptIds = Arrays.asList(deptIdList.split("/"));
+        List<Dept> depts = (List<Dept>) deptService.listByIds(deptIds);
+
+        return RestResponse.ok(depts);
+    }
+
 
     /**
      * 服务包列表查询不分页
@@ -667,6 +746,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                             .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
                     for (DoctorTeam doctorTeam : doctorTeams) {
                         doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleMap.get(doctorTeam.getId()));
+                        String pingYin = getPingYin(doctorTeam.getName());
+                        doctorTeam.setPingYin(pingYin);
                     }
                 }
                 Collections.sort(doctorTeams);
@@ -935,17 +1016,36 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
 
     }
 
-    public static void main(String[] args) {
-       List<DoctorTeam> doctorTeams=new ArrayList<>();
-        DoctorTeam doctorTeam=new DoctorTeam();
-        doctorTeam.setName("娃哈哈");
-        DoctorTeam doctorTeam1=new DoctorTeam();
-        doctorTeam1.setName("焦恒");
-       doctorTeams.add(doctorTeam);
-        doctorTeams.add(doctorTeam1);
-        Collections.sort(doctorTeams);
-        System.out.println(doctorTeams.get(0).getName());
+    public static String getPingYin(String userName) {
+        if (StringUtils.isEmpty(userName)) {
+            return "#";
+        }
+        String name = userName.substring(0, 1);
+        char[] charArray = name.toCharArray();
+        StringBuilder pinyin = new StringBuilder();
+        HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
+        // 设置大小写格式
+        defaultFormat.setCaseType(HanyuPinyinCaseType.UPPERCASE);
+        // 设置声调格式：
+        defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        for (int i = 0; i < charArray.length; i++) {
+            // 匹配中文,非中文转换会转换成null
+            if (Character.toString(charArray[i]).matches("[\\u4E00-\\u9FA5]+")) {
+                String[] hanyuPinyinStringArray = new String[0];
+                try {
+                    hanyuPinyinStringArray = PinyinHelper
+                            .toHanyuPinyinStringArray(charArray[i], defaultFormat);
+                } catch (BadHanyuPinyinOutputFormatCombination e) {
+                    e.printStackTrace();
+                }
+                if (hanyuPinyinStringArray != null) {
+                    pinyin.append(hanyuPinyinStringArray[0].charAt(0));
+                }
+            }
+        }
+        return StringUtils.isEmpty(pinyin.toString()) ? "#" : pinyin.toString();
     }
+
 
     /**
      * 删除服务包
