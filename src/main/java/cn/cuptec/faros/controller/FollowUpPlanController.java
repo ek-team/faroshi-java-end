@@ -91,15 +91,33 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     /**
      * 查询随访计划模板
      */
-    @GetMapping("/getTemplate")
-    public RestResponse getTemplate() {
+    @GetMapping("/copyFollowUpPlan")
+    public RestResponse copyFollowUpPlan(@RequestParam("followUpPlanId") Integer followUpPlanId) {
+
         User byId = userService.getById(SecurityUtils.getUser().getId());
-        List<FollowUpPlan> list = service.list(new QueryWrapper<FollowUpPlan>().lambda()
-                .eq(FollowUpPlan::getDeptId, byId.getDeptId()));
-        if (CollectionUtils.isEmpty(list)) {
-            list = new ArrayList<>();
+        FollowUpPlan followUpPlan = service.getById(followUpPlanId);
+
+        FollowUpPlan newFollowUpPlan = new FollowUpPlan();
+        BeanUtils.copyProperties(followUpPlan, newFollowUpPlan, "id");
+        newFollowUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
+        service.save(newFollowUpPlan);
+
+        List<FollowUpPlanContent> followUpPlanContents = followUpPlanContentService.list(new QueryWrapper<FollowUpPlanContent>().lambda()
+                .eq(FollowUpPlanContent::getFollowUpPlanId, followUpPlanId));
+        List<FollowUpPlanContent> newFollowUpPlanContents = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(followUpPlanContents)) {
+            for (FollowUpPlanContent followUpPlanContent : followUpPlanContents) {
+                FollowUpPlanContent newFollowUpPlanContent = new FollowUpPlanContent();
+                BeanUtils.copyProperties(followUpPlanContent, newFollowUpPlanContent, "id");
+                newFollowUpPlanContent.setFollowUpPlanId(newFollowUpPlan.getId());
+                newFollowUpPlanContents.add(newFollowUpPlanContent);
+            }
+
+
+            followUpPlanContentService.saveBatch(newFollowUpPlanContents);
         }
-        return RestResponse.ok(list);
+
+        return RestResponse.ok();
     }
 
 
