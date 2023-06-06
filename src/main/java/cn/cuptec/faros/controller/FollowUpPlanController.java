@@ -136,9 +136,22 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     }
                     pushDay = date.atTime(hour, 0);
                 }
+                followUpPlanContent.setPushDay(pushDay);
                 followUpPlanContent.setDay(formatter.format(pushDay));
             }
             followUpPlanContentService.saveBatch(followUpPlanContentList);
+        }
+        followUpPlanContentList.sort(Comparator.comparing(FollowUpPlanContent::getPushDay));
+
+        LocalDateTime day1 = followUpPlanContentList.get(0).getPushDay();
+        LocalDateTime day2 = followUpPlanContentList.get(followUpPlanContentList.size() - 1).getPushDay();
+        if (followUpPlanContentList.size() == 1) {
+            LocalDateTime now = LocalDateTime.now();
+            Duration duration = Duration.between(now, followUpPlanContentList.get(0).getPushDay());
+            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
+        } else {
+            Duration duration = Duration.between(day1, day2);
+            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
         }
 
         List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
@@ -290,6 +303,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     }
                     pushDay = date.atTime(hour, 0);
                 }
+                followUpPlanContent.setPushDay(pushDay);
                 followUpPlanContent.setDay(formatter.format(pushDay));
                 if (followUpPlanContent.getId() == null) {
                     followUpPlanContent.setAddStatus(1);
@@ -299,6 +313,19 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 }
 
             }
+            //计算节点周期
+            followUpPlanContentList.sort(Comparator.comparing(FollowUpPlanContent::getPushDay));
+            LocalDateTime day1 = followUpPlanContentList.get(0).getPushDay();
+            LocalDateTime day2 = followUpPlanContentList.get(followUpPlanContentList.size() - 1).getPushDay();
+            if (followUpPlanContentList.size() == 1) {
+                LocalDateTime now = LocalDateTime.now();
+                Duration duration = Duration.between(now, followUpPlanContentList.get(0).getPushDay());
+                followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
+            } else {
+                Duration duration = Duration.between(day1, day2);
+                followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
+            }
+
             if (!CollectionUtils.isEmpty(updateFollowUpPlanContentList)) {
                 followUpPlanContentService.updateBatchById(updateFollowUpPlanContentList);
             }
