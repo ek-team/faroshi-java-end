@@ -539,6 +539,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             queryWrapper.eq("create_type", createType);
         } else {
             queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
+            queryWrapper.eq("create_type", 0);
         }
 
         queryWrapper.orderByDesc("create_time");
