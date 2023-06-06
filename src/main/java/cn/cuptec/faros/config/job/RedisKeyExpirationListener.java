@@ -7,6 +7,7 @@ import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.bean.template.WxMpTemplateData;
@@ -201,6 +202,11 @@ public class RedisKeyExpirationListener implements MessageListener {
                     ChatUser byId = chatUserService.getById(patientOtherOrder.getChatUserId());
                     byId.setPatientOtherOrderStatus("2");
                     chatUserService.updateById(byId);
+                    LambdaUpdateWrapper<ChatMsg> set1 = Wrappers.<ChatMsg>lambdaUpdate()
+                            .eq(ChatMsg::getStr1, patientOtherOrder.getId())
+                            .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                            .set(ChatMsg::getStr2, "2");
+                    chatMsgService.update(set1);
                     if (byId.getGroupType().equals(0)) {
                         chatUserService.update(Wrappers.<ChatUser>lambdaUpdate()
                                 .eq(ChatUser::getPatientOtherOrderNo, patientOtherOrder.getId())
