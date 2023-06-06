@@ -302,6 +302,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber,
                                 String productSn1, String productSn2, String productSn3) {
         UserOrder userOrder = super.getById(orderId);
+
         if (!StringUtils.isEmpty(productSn1)) {
             Integer userId = userOrder.getUserId();
             TbTrainUser infoByUXtUserId = planUserService.getInfoByUXtUserId(userId);
@@ -336,6 +337,10 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         userOrder.setDeliverySn(deliveryNumber);
         userOrder.setDeliveryNumber(deliveryNumber);
         userOrder.setDeliveryTime(new Date());
+        if(userOrder.getOrderType()!=null && userOrder.getOrderType().equals(1)){
+
+            userOrder.setMoveTime(LocalDateTime.now());
+        }
         super.updateById(userOrder);
         SubscribeVO subscribeVO = new SubscribeVO();
         subscribeVO.setLogisticsNo(deliveryNumber);
