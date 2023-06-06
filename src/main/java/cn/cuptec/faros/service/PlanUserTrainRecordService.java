@@ -93,11 +93,6 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
             );
         }
 
-        //更改使用设备序列号
-        planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()
-                .eq(TbTrainUser::getUserId, userTrainRecordList.get(0).getUserId())
-                .set(TbTrainUser::getUseProductSn, userTrainRecordList.get(0).getProductSn())
-        );
 
         for (TbUserTrainRecord record : userTrainRecordList) {
             if (CollUtil.isNotEmpty(record.getTrainDataList())) {
@@ -107,7 +102,17 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
 
         }
 
+        List<ProductStock> list1 = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                .eq(ProductStock::getProductSn, userTrainRecordList.get(0).getProductSn())
+                .eq(ProductStock::getDel, 1));
+        if (!CollectionUtils.isEmpty(list1)) {
+            //更改使用设备序列号
+            planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()
+                    .eq(TbTrainUser::getUserId, userTrainRecordList.get(0).getUserId())
+                    .set(TbTrainUser::getUseProductSn, userTrainRecordList.get(0).getProductSn() + "/" + list1.get(0).getMacAddress())
+            );
 
+        }
     }
 
     public IPage<TbUserTrainRecord> pageByUid(Page<TbUserTrainRecord> page, String uid) {

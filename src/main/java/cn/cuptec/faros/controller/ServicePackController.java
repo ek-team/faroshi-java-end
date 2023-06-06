@@ -725,8 +725,12 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                     }
                 }
             }
+            ServicePack servicePack = service.getById(servicePackId);
+
             if (!CollectionUtils.isEmpty(teamIds)) {
-                List<DoctorTeam> doctorTeams = (List<DoctorTeam>) doctorTeamService.listByIds(teamIds);
+                List<DoctorTeam> doctorTeams = doctorTeamService.list(new QueryWrapper<DoctorTeam>().lambda()
+                        .in(DoctorTeam::getId, teamIds)
+                        .eq(DoctorTeam::getHospitalId, servicePack.getHospitalId()));
 
                 List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda().in(DoctorTeamPeople::getTeamId, teamIds));
                 if (!CollectionUtils.isEmpty(list)) {

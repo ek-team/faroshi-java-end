@@ -21,12 +21,8 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     private Integer deptId;//记录部门下的随访模板
     private LocalDateTime createTime;
     private String name;
-    private Integer joinType; //加入模式 1-自动加入 2-手动管理
-    private Integer pushType;// 推送时间 1-首次加入推送 2-固定时间推送
-    private Integer pushHour;//首次推送时
-    private Integer pushMinute;//首次推送分
-    private Integer lastPushHour;//后续推送时
-    private Integer lastPushMinute;//后续推送分
+    private String optionName; //填写的手术名称
+    private Integer createType;//0 个人，1 公用
     private Integer patientUserCount;//患者数量
     private Integer teamId;//团队id
     @TableField(exist = false)

@@ -25,11 +25,13 @@ public class FollowUpPlanContent extends Model<FollowUpPlanContent> {
     private Integer numberType;//1=立即提醒，2-天，3-周，4-月，5-年
     private Integer hour;//几小时后
     private Integer formId;//表单id
+    private Integer articleId;//文章id
     private Integer status = 0;//0-正常执行 1-停止执行
     @TableField(exist = false)
     private Form form;//
-
     @TableField(exist = false)
-    private Integer addStatus=0;//
+    private Article article;
+    @TableField(exist = false)
+    private Integer addStatus = 0;//
 
 }
