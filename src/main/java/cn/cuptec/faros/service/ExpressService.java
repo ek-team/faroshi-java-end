@@ -31,9 +31,11 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
     private RetrieveOrderService retrieveOrderService;
 
     //快递100
-    private static String customer = "85D6BC13E972F4D077748A8DF0768C2A";
-    private static String key = "kpDqiQJf634";
-
+//    private static String customer = "85D6BC13E972F4D077748A8DF0768C2A";
+//    private static String key = "kpDqiQJf634";
+    //快递100
+    private static String customer = "94F96E20C049C1232DBF02B729F710B0";
+    private static String key = "JAnUGrLl5945";
     /**
      * 获取用户订单物流轨迹信息
      *
@@ -81,10 +83,10 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
             if (expressTrackVo.getStatus() == 200) {
                 return expressTrackVo;
             } else {
-                throw new RuntimeException(expressTrackVo.getMessage());
+                throw new RuntimeException("物流公司返回结果："+expressTrackVo.getMessage());
             }
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("物流公司返回结果："+e.getMessage());
         }
     }
 
@@ -118,25 +120,25 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
             log.info(expressResult + "ppppppppppppppppppppppppppppppp");
             MapExpressTrackVo expressTrackVo = JSON.parseObject(expressResult, MapExpressTrackVo.class);
             if (expressTrackVo.getStatus() == null) {
-                throw new RuntimeException(expressTrackVo.getMessage());
+                throw new RuntimeException("物流公司返回结果："+expressTrackVo.getMessage());
             }
             if (expressTrackVo.getStatus() == 200) {
                 return expressTrackVo;
             } else {
-                throw new RuntimeException(expressTrackVo.getMessage());
+                throw new RuntimeException("物流公司返回结果："+expressTrackVo.getMessage());
             }
         } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("物流公司返回结果："+e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException("物流公司返回结果："+e.getMessage());
         }
     }
 
     public static void main(String[] args) {
         MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
         expressParam.setCom("shunfeng");
-        expressParam.setNum("SF1138935062341");
-        expressParam.setPhone("15990010125");
+        expressParam.setNum("279646798813");
+        expressParam.setPhone("13862406341");
         String expressParamStr = JSON.toJSONString(expressParam);
         String signOrigion = expressParamStr + key + customer;
         String sign = DigestUtils.md5Hex(signOrigion).toUpperCase();

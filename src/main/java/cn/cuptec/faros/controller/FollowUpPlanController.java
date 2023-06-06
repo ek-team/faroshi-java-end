@@ -18,12 +18,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.text.Collator;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -134,11 +136,11 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     }
                     pushDay = date.atTime(hour, 0);
                 }
-
                 followUpPlanContent.setDay(formatter.format(pushDay));
             }
             followUpPlanContentService.saveBatch(followUpPlanContentList);
         }
+
         List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
         if (!CollectionUtils.isEmpty(userIds)) {
             userIds = userIds.stream().distinct().collect(Collectors.toList());

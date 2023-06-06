@@ -20,9 +20,10 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     private Integer createUserId;
     private Integer deptId;//记录部门下的随访模板
     private LocalDateTime createTime;
+    private Integer serviceDay;//计划周期
     private String name;
     private String optionName; //填写的手术名称
-    private Integer createType;//0 个人，1 公用
+    private Integer createType=0;//0 个人，1 公用
     private Integer patientUserCount;//患者数量
     private Integer teamId;//团队id
     @TableField(exist = false)

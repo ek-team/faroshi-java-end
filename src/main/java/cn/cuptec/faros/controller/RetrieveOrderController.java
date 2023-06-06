@@ -663,7 +663,6 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         RetrieveOrder one = service.getOne(new QueryWrapper<RetrieveOrder>().lambda().eq(RetrieveOrder::getTaskId, taskId));
         one.setKuAiDiStatus(Integer.parseInt(kuaiDiCallBackParam.getData().getStatus()));
         one.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
-
         service.updateById(one);
         //判断快递状态 修改状态为待审核
         if (kuaiDiCallBackParam.getData().getStatus().equals("13")) {

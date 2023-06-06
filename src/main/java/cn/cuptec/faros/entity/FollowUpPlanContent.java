@@ -33,5 +33,7 @@ public class FollowUpPlanContent extends Model<FollowUpPlanContent> {
     private Article article;
     @TableField(exist = false)
     private Integer addStatus = 0;//
+    @TableField(exist = false)
+    private LocalDateTime pushDay;
 
 }
