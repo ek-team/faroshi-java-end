@@ -532,10 +532,15 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
      * @return
      */
     @GetMapping("/page")
-    public RestResponse pageScoped() {
+    public RestResponse pageScoped(@RequestParam(value = "createType", required = false) Integer createType) {
         Page<FollowUpPlan> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-        queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
+        if (createType != null) {
+            queryWrapper.eq("create_type", createType);
+        } else {
+            queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
+        }
+
         queryWrapper.orderByDesc("create_time");
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();
