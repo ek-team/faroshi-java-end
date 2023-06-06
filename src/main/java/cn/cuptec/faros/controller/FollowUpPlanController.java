@@ -54,6 +54,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @Resource
     private FormService formService;
     @Resource
+    private ArticleService articleService;
+    @Resource
     private UserFollowDoctorService userFollowDoctorService;//医生和患者的好友表
     @Resource
     private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
@@ -98,94 +100,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         return RestResponse.ok(list);
     }
 
-//    /**
-//     * 根据随访计划模板生成计划
-//     */
-//    @GetMapping("/byTemplateInitPlan")
-//    public RestResponse byTemplateInitPlan(@RequestParam("planId") Integer planId,
-//                                           @RequestParam("userId") Integer userId) {
-//        FollowUpPlan followUpPlan = service.getById(planId);
-//
-//        FollowUpPlan newFollowUpPlan = new FollowUpPlan();
-//        BeanUtils.copyProperties(followUpPlan, newFollowUpPlan, "id");
-//        newFollowUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
-//        service.save(newFollowUpPlan);
-//
-//        List<FollowUpPlanContent> followUpPlanContents = followUpPlanContentService.list(new QueryWrapper<FollowUpPlanContent>().lambda()
-//                .eq(FollowUpPlanContent::getFollowUpPlanId, planId));
-//        //复制计划
-//        List<FollowUpPlanContent> newFollowUpPlanContents = new ArrayList<>();
-//
-//        if (!CollectionUtils.isEmpty(followUpPlanContents)) {
-//            LocalDateTime now = LocalDateTime.now();
-//            for (FollowUpPlanContent followUpPlanContent : followUpPlanContents) {
-//                LocalDateTime localDateTime = now.plusDays(followUpPlanContent.getDayAfter() - 1);
-//                FollowUpPlanContent newFollowUpPlanContent = new FollowUpPlanContent();
-//                BeanUtils.copyProperties(followUpPlanContent, newFollowUpPlanContent, "id");
-//                newFollowUpPlanContent.setFollowUpPlanId(newFollowUpPlan.getId());
-//                newFollowUpPlanContent.setDay(localDateTime);
-//                newFollowUpPlanContents.add(newFollowUpPlanContent);
-//            }
-//
-//            followUpPlanContentService.saveBatch(newFollowUpPlanContents);
-//        }
-//        //复制患者
-//        FollowUpPlanPatientUser followUpPlanPatientUser = new FollowUpPlanPatientUser();
-//        followUpPlanPatientUser.setFollowUpPlanId(newFollowUpPlan.getId());
-//        followUpPlanPatientUser.setUserId(userId);
-//        followUpPlanPatientUserService.save(followUpPlanPatientUser);
-//        //添加通知记录
-//        List<FollowUpPlanNotice> followUpPlanNoticeList = new ArrayList<>();
-//        List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
-//        for (FollowUpPlanContent followUpPlanContent : newFollowUpPlanContents) {
-//
-//            //随访计划记录
-//            LocalDateTime pushDay = followUpPlanContent.getDay();
-//
-//            FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
-//            followUpPlanNotice.setFollowUpPlanId(newFollowUpPlan.getId());
-//            followUpPlanNotice.setPatientUserId(userId);
-//            followUpPlanNotice.setNoticeTime(pushDay);
-//
-//            followUpPlanNotice.setDoctorId(newFollowUpPlan.getCreateUserId());
-//            followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
-//
-//
-//            followUpPlanNoticeList.add(followUpPlanNotice);
-//
-//            //通知次数记录
-//            FollowUpPlanNoticeCount count = new FollowUpPlanNoticeCount();
-//            count.setTotalPush(newFollowUpPlanContents.size());
-//            count.setDoctorId(newFollowUpPlan.getCreateUserId());
-//            count.setPush(0);
-//            count.setFollowUpPlanId(newFollowUpPlan.getId());
-//            count.setPatientUserId(userId);
-//            followUpPlanNoticeCountList.add(count);
-//
-//
-//        }
-//        //存入redis定时器
-//        followUpPlanNoticeCountService.saveBatch(followUpPlanNoticeCountList);
-//        if (!CollectionUtils.isEmpty(followUpPlanNoticeList)) {
-//            followUpPlanNoticeService.saveBatch(followUpPlanNoticeList);
-//            for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
-//                LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
-//                LocalDateTime thisNow = LocalDateTime.now();
-//                if (noticeTime.isBefore(thisNow)) {
-//                    noticeTime = noticeTime.plusMinutes(3);
-//                }
-//                java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
-//                long hours = duration.toMinutes();//分钟
-//                String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-//                redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
-//
-//            }
-//
-//        }
-//
-//        return RestResponse.ok();
-//    }
-//
 
     /**
      * 添加随访计划
@@ -324,74 +238,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         return RestResponse.ok(followUpPlan);
     }
 
-    private void pushFollowUpPlan(Integer doctorUserId) {
-
-        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
-            @Override
-            public void run() {
-                User doctorUser = userService.getById(doctorUserId);
-                List<User> users = new ArrayList<>();
-                users.add(doctorUser);
-                hospitalInfoService.getHospitalByUser(users);
-                doctorUser = users.get(0);
-                LocalDate now = LocalDate.now();
-                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                String format = df.format(now);
-                String startTime = format + " 00:00:00";
-                String endTime = format + " 24:00:00";
-                List<FollowUpPlanNotice> followUpPlanNoticeList = followUpPlanNoticeService.list(new QueryWrapper<FollowUpPlanNotice>().lambda()
-                        .ge(FollowUpPlanNotice::getNoticeTime, startTime)
-                        .le(FollowUpPlanNotice::getNoticeTime, endTime)
-                        .le(FollowUpPlanNotice::getDoctorId, doctorUserId));
-                //推送计划给患者
-                //发送公众号随访计划提醒
-
-                if (!CollectionUtils.isEmpty(followUpPlanNoticeList)) {
-                    List<Integer> patientUserIds = followUpPlanNoticeList.stream().map(FollowUpPlanNotice::getPatientUserId)
-                            .collect(Collectors.toList());
-                    List<User> users1 = (List<User>) userService.listByIds(patientUserIds);
-                    Map<Integer, User> userMap = users1.stream()
-                            .collect(Collectors.toMap(User::getId, t -> t));
-                    for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
-                        wxMpService.sendFollowUpPlanNotice(userMap.get(followUpPlanNotice.getPatientUserId()).getMpOpenId(), "新的康复计划提醒", doctorUser.getNickname(), doctorUser.getHospitalName(), "/pages/news/news");
-                        //生成聊天记录
-                        List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
-                                .eq(ChatUser::getUid, followUpPlanNotice.getPatientUserId())
-                                .eq(ChatUser::getTargetUid, followUpPlanNotice.getDoctorId()));
-                        if (CollectionUtils.isEmpty(chatUsers)) {
-                            //创建聊天对象
-                            chatUserService.saveOrUpdateChatUser(followUpPlanNotice.getDoctorId(), followUpPlanNotice.getPatientUserId(), "随访计划提醒");
-                        }
-                        ChatMsg chatMsg = new ChatMsg();
-                        chatMsg.setFromUid(followUpPlanNotice.getDoctorId());
-                        chatMsg.setToUid(followUpPlanNotice.getPatientUserId());
-                        chatMsg.setMsg("随访计划提醒");
-                        chatMsg.setCreateTime(new Date());
-                        chatMsg.setMsgType(ChatProto.FOLLOW_UP_PLAN);
-                        chatMsg.setStr1(followUpPlanNotice.getId() + "");
-                        chatMsg.setReadStatus(0);
-                        chatMsgService.save(chatMsg);
-
-                        //修改发送次数
-                        FollowUpPlanNoticeCount one = followUpPlanNoticeCountService.getOne(new QueryWrapper<FollowUpPlanNoticeCount>()
-                                .lambda().eq(FollowUpPlanNoticeCount::getFollowUpPlanId, followUpPlanNotice.getFollowUpPlanId())
-                                .eq(FollowUpPlanNoticeCount::getPatientUserId, followUpPlanNotice.getPatientUserId()));
-                        one.setPush(one.getPush() + 1);
-                        followUpPlanNoticeCountService.updateById(one);
-                    }
-
-                }
-
-            }
-        });
-
-
-    }
-
-    public static void main(String[] args) {
-        LocalDate date = LocalDate.now();
-        System.out.println(date.plusDays(1));
-    }
 
     /**
      * 测试redis通知
@@ -693,13 +539,35 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 .eq(FollowUpPlanContent::getFollowUpPlanId, id));
         if (!CollectionUtils.isEmpty(followUpPlanContentList)) {
             //查询表单信息
-            List<Integer> formIds = followUpPlanContentList.stream().map(FollowUpPlanContent::getFormId)
-                    .collect(Collectors.toList());
-            List<Form> forms = (List<Form>) formService.listByIds(formIds);
-            Map<Integer, Form> formMap = forms.stream()
-                    .collect(Collectors.toMap(Form::getId, t -> t));
+            List<Integer> formIds = new ArrayList<>();
+            List<Integer> articleIds = new ArrayList<>();
+            for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
+                if (followUpPlanContent.getFormId() != null) {
+                    formIds.add(followUpPlanContent.getFormId());
+
+                }
+                if (followUpPlanContent.getArticleId() != null) {
+                    articleIds.add(followUpPlanContent.getArticleId());
+
+                }
+            }
+            Map<Integer, Form> formMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(formIds)) {
+                List<Form> forms = (List<Form>) formService.listByIds(formIds);
+                formMap = forms.stream()
+                        .collect(Collectors.toMap(Form::getId, t -> t));
+            }
+            //查询文章信息
+            Map<Integer, Article> articleMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(articleIds)) {
+                List<Article> articles = (List<Article>) articleService.listByIds(articleIds);
+                articleMap = articles.stream()
+                        .collect(Collectors.toMap(Article::getId, t -> t));
+            }
+
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
                 followUpPlanContent.setForm(formMap.get(followUpPlanContent.getFormId()));
+                followUpPlanContent.setArticle(articleMap.get(followUpPlanContent.getArticleId()));
             }
         }
         followUpPlan.setFollowUpPlanPatientUserList(followUpPlanPatientUsers);

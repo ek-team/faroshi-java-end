@@ -223,6 +223,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
             Integer count = one.getCount();
             int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getToUid, patientOtherOrder.getDoctorId())
                     .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                    .ne(ChatMsg::getStr2, 2)
                     .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
                     .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
             if (count <= count1) {
@@ -240,6 +241,7 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                 int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda()
                         .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
                         .in(ChatMsg::getChatUserId, chatIds)
+                        .ne(ChatMsg::getStr2, 2)
                         .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
                         .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
                 if (count <= count1) {
