@@ -96,6 +96,9 @@ public class RedisKeyExpirationListener implements MessageListener {
                 String followUpPlanNoticeId = str[1];
                 log.info("redis过期监听：：=============" + followUpPlanNoticeId);
                 FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeService.getById(followUpPlanNoticeId);
+                if(followUpPlanNotice==null){
+                    return;
+                }
                 if (followUpPlanNotice.getStatus().equals(1)) {
                     return;
                 }

@@ -18,12 +18,13 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private Integer createUserId;
+    private Integer followUpStatus = 0;//0可编辑1不可编辑
     private Integer deptId;//记录部门下的随访模板
     private LocalDateTime createTime;
     private Integer serviceDay;//计划周期
     private String name;
     private String optionName; //填写的手术名称
-    private Integer createType=0;//0 个人，1 公用
+    private Integer createType = 0;//0 个人，1 公用
     private Integer joinType; //加入模式 1-自动加入 2-手动管理
     private Integer pushType;// 推送时间 1-首次加入推送 2-固定时间推送
     private Integer pushHour;//首次推送时

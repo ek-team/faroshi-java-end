@@ -221,7 +221,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     }
 
     public static void main(String[] args) {
-        String a = "13307637744";
+        String a = "13816810426";
         System.out.println(a.substring(5, 11));
     }
 
