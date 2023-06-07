@@ -539,13 +539,27 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         }
         List<Integer> userIds = list.stream().map(UserDoctorRelation::getUserId)
                 .collect(Collectors.toList());
+        //查询手术名称
+        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, userIds));
+        Map<Integer, List<TbTrainUser>> map=new HashMap<>();
+        if(!CollectionUtils.isEmpty(tbTrainUsers)){
+           map = tbTrainUsers.stream()
+                    .collect(Collectors.groupingBy(TbTrainUser::getXtUserId));
+
+        }
+
         List<User> users = (List<User>) userService.listByIds(userIds);
         if (!CollectionUtils.isEmpty(users)) {
             for (User user : users) {
                 if (!StringUtils.isEmpty(user.getPatientName())) {
                     user.setNickname(user.getPatientName());
-                }
 
+                }
+                List<TbTrainUser> tbTrainUsers1 = map.get(user.getId());
+                if(!CollectionUtils.isEmpty(tbTrainUsers1)){
+                    TbTrainUser tbTrainUser = tbTrainUsers1.get(0);
+                    user.setDiagnosis(tbTrainUser.getDiagnosis());
+                }
             }
 
 

@@ -78,7 +78,8 @@ public class User extends Model<User> {
 
     @JSONField(deserialize = false)
     private Boolean isSubscribe;
-
+    @TableField(exist = false)
+    private String diagnosis;       //诊断结果
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer deptId;
 
