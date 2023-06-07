@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.Duration;
@@ -39,7 +40,8 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
     private UserOrdertService userOrdertService;
     @Autowired
     public RedisTemplate redisTemplate;
-
+    @Resource
+    private PatientUserService patientUserService;
 
     @Transactional(rollbackFor = Exception.class)
     public void saveAndData(List<TbUserTrainRecord> userTrainRecordList) {
@@ -56,6 +58,22 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
                     .set(TbTrainUser::getFirstTrainTime, LocalDateTime.now())
             );
             TbTrainUser one = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
+            if (!StringUtils.isEmpty(one.getIdCard())) {
+                List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
+                        .eq(PatientUser::getIdCard, one.getIdCard()));
+                if (!CollectionUtils.isEmpty(patientUsers)) {
+                    PatientUser patientUser = patientUsers.get(0);
+                    List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getPatientUserId, patientUser.getId()).orderByDesc(UserOrder::getPayTime));
+                    if (!CollectionUtils.isEmpty(userOrders)) {
+                        UserOrder userOrder = userOrders.get(0);
+                        if (userOrder.getOrderType() != null && userOrder.getOrderType().equals(2)) {
+                            userOrder.setMoveTime(LocalDateTime.now());
+                            userOrdertService.updateById(userOrder);
+                        }
+
+                    }
+                }
+            }
 
             List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getUserId, one.getXtUserId()).orderByDesc(UserOrder::getPayTime));
             if (!CollectionUtils.isEmpty(userOrders)) {

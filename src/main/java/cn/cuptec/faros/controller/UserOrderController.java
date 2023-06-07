@@ -1332,6 +1332,10 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 if (!CollectionUtils.isEmpty(userOrders)) {
 
                     for (UserOrder userOrder : userOrders) {
+                        if (userOrder.getOrderType() != null && userOrder.getOrderType().equals(1)) {
+
+                            userOrder.setMoveTime(LocalDateTime.now());
+                        }
                         DeliveryMoBan deliveryMoBan = deliveryMoBanmap.get(userOrder.getOrderNo());
                         String deliveryCompanyCode = "";
                         switch (deliveryMoBan.getName()) {
@@ -1479,7 +1483,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             try {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 DateTimeFormatter df1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                cFileName = URLEncoder.encode("Pharos-" + df.format(LocalDateTime.now()) + "-order", "UTF-8");
+                LocalDateTime now1 = LocalDateTime.now();
+                cFileName = URLEncoder.encode("Pharos-" + now1.getYear() + "-" + now1.getMonthValue() + "-" + now1.getDayOfMonth() + "-order", "UTF-8");
                 List<UserOrderExcel> userOrderExcels = new ArrayList<>();
                 for (UserOrder userOrder : userOrders) {
                     UserOrderExcel userOrderExcel = new UserOrderExcel();
