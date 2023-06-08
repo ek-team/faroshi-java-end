@@ -135,6 +135,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         followUpPlan.setCreateTime(LocalDateTime.now());
 
         service.save(followUpPlan);
+        String serviceDay = "0";//计划周期
         List<FollowUpPlanContent> followUpPlanContentList = followUpPlan.getFollowUpPlanContentList();
         if (!CollectionUtils.isEmpty(followUpPlanContentList)) {
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
@@ -147,12 +148,16 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 if (!numberType.equals(1)) {
                     LocalDate date = LocalDate.now();
                     if (numberType.equals(2)) {
+                        serviceDay = number + "天";
                         date = date.plusDays(number);
                     } else if (numberType.equals(3)) {
+                        serviceDay = number + "周";
                         date = date.plusWeeks(number);
                     } else if (numberType.equals(4)) {
+                        serviceDay = number + "月";
                         date = date.plusMonths(number);
                     } else if (numberType.equals(5)) {
+                        serviceDay = number + "年";
                         date = date.plusYears(number);
                     }
                     pushDay = date.atTime(hour, 0);
@@ -167,12 +172,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         LocalDateTime day1 = followUpPlanContentList.get(0).getPushDay();
         LocalDateTime day2 = followUpPlanContentList.get(followUpPlanContentList.size() - 1).getPushDay();
         if (followUpPlanContentList.size() == 1) {
-            LocalDateTime now = LocalDateTime.now();
-            Duration duration = Duration.between(now, followUpPlanContentList.get(0).getPushDay());
-            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
+            followUpPlan.setServiceDay(serviceDay);
         } else {
             Duration duration = Duration.between(day1, day2);
-            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
+            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + "") + "天");
         }
 
 
@@ -362,8 +365,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         followUpPlanContentService.remove(new QueryWrapper<FollowUpPlanContent>().lambda()
                 .eq(FollowUpPlanContent::getFollowUpPlanId, followUpPlan.getId()));
         List<FollowUpPlanContent> followUpPlanContents = followUpPlan.getFollowUpPlanContentList();
+        String serviceDay = "0";//计划周期
         if (!CollectionUtils.isEmpty(followUpPlanContents)) {
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContents) {
+
                 followUpPlanContent.setFollowUpPlanId(followUpPlan.getId());
                 Integer number = followUpPlanContent.getNumber();
                 Integer numberType = followUpPlanContent.getNumberType();
@@ -372,12 +377,16 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 if (!numberType.equals(1)) {
                     LocalDate date = LocalDate.now();
                     if (numberType.equals(2)) {
+                        serviceDay = number + "天";
                         date = date.plusDays(number);
                     } else if (numberType.equals(3)) {
+                        serviceDay = number + "周";
                         date = date.plusWeeks(number);
                     } else if (numberType.equals(4)) {
+                        serviceDay = number + "月";
                         date = date.plusMonths(number);
                     } else if (numberType.equals(5)) {
+                        serviceDay = number + "年";
                         date = date.plusYears(number);
                     }
                     pushDay = date.atTime(hour, 0);
@@ -392,12 +401,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         LocalDateTime day1 = followUpPlanContents.get(0).getPushDay();
         LocalDateTime day2 = followUpPlanContents.get(followUpPlanContents.size() - 1).getPushDay();
         if (followUpPlanContents.size() == 1) {
-            LocalDateTime now = LocalDateTime.now();
-            Duration duration = Duration.between(now, followUpPlanContents.get(0).getPushDay());
-            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
+            followUpPlan.setServiceDay(serviceDay);
         } else {
             Duration duration = Duration.between(day1, day2);
-            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
+            followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + "") + "天");
         }
 
 

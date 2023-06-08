@@ -21,7 +21,7 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     private Integer followUpStatus = 0;//0可编辑1不可编辑
     private Integer deptId;//记录部门下的随访模板
     private LocalDateTime createTime;
-    private Integer serviceDay;//计划周期
+    private String serviceDay;//计划周期
     private String name;
     private String optionName; //填写的手术名称
     private Integer createType = 0;//0 个人，1 公用
