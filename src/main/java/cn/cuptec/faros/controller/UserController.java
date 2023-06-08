@@ -130,6 +130,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
         return RestResponse.ok();
     }
+
     /**
      * 患者添加医生好友
      */
@@ -140,12 +141,12 @@ public class UserController extends AbstractBaseController<UserService, User> {
         List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
                 .eq(PatientUser::getUserId, SecurityUtils.getUser().getId())
                 .eq(PatientUser::getIdCard, idCard));
-        if(CollectionUtils.isEmpty(list)){
-           PatientUser patientUser=new PatientUser();
+        if (CollectionUtils.isEmpty(list)) {
+            PatientUser patientUser = new PatientUser();
             patientUser.setUserId(SecurityUtils.getUser().getId());
             patientUser.setIdCard(idCard);
             patientUser.setCardType(1);
-            if(!CollectionUtils.isEmpty(tbTrainUsers)){
+            if (!CollectionUtils.isEmpty(tbTrainUsers)) {
                 TbTrainUser tbTrainUser = tbTrainUsers.get(0);
 
                 patientUser.setName(tbTrainUser.getName());
@@ -155,6 +156,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         }
         return RestResponse.ok();
     }
+
     /**
      * 获取医生个人二维码 和医生所在团队二维码 患者扫码 添加
      */
@@ -535,10 +537,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updateById")
     public RestResponse updateById(@RequestBody @Valid User user) {
-        if(!StringUtils.isEmpty(user.getPhone())){
+        if (!StringUtils.isEmpty(user.getPhone())) {
             User one = service.getOne(new QueryWrapper<User>().lambda().eq(User::getPhone, user.getPhone())
-          );
-            if(one!=null && !one.getId().equals(user.getId())){
+            );
+            if (one != null && !one.getId().equals(user.getId())) {
                 return RestResponse.failed("手机号已被占用");
             }
 
@@ -779,9 +781,30 @@ public class UserController extends AbstractBaseController<UserService, User> {
         if (deptId == null) {
             return RestResponse.failed("没有查询到当前登录用户所属部门");
         }
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(user.getId());
+        if (aBoolean) {
+            List<User> users = service.list();
+            if (CollUtil.isNotEmpty(users)) {
+                List<Integer> userIds = users.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                List<Integer> integers = CollUtil.toList(18);
+                List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
+                        .in(UserRole::getRoleId, integers).in(UserRole::getUserId, userIds));
+                if (CollUtil.isNotEmpty(userRoles)) {
+                    List<Integer> collect = userRoles.stream().map(UserRole::getUserId).collect(Collectors.toList());
 
-        List<User> list = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18));
-        return RestResponse.ok(list);
+                    List<User> collect1 = users.stream().filter(u -> collect.contains(u.getId())).collect(Collectors.toList());
+
+                    return RestResponse.ok(collect1);
+                }
+            }
+            return RestResponse.ok(new ArrayList<>());
+
+        } else {
+            List<User> list = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18));
+            return RestResponse.ok(list);
+
+        }
 
 
     }
