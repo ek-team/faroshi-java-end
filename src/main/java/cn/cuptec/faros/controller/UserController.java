@@ -36,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.CollectionUtils;
@@ -573,7 +572,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @SysLog("添加用户")
     @PostMapping("/manage/add")
-    @PreAuthorize("@pms.hasPermission('user_add')")
     public RestResponse<User> user(@RequestBody User user) {
         service.save(user);
         return RestResponse.ok();
@@ -655,7 +653,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @SysLog("删除用户信息")
     @DeleteMapping("/manage/{id}")
-    @PreAuthorize("@pms.hasPermission('user_del')")
     public RestResponse userDel(@PathVariable Integer id) {
         User user = new User();
         user.setId(id);
@@ -680,7 +677,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @SysLog("更新用户信息")
     @PutMapping("/manage/update")
-    @PreAuthorize("@pms.hasPermission('user_edit')")
     public RestResponse updateUser(@Valid @RequestBody User user) {
         return service.updateUser(user) ? RestResponse.ok(DATA_UPDATE_SUCCESS, null) : RestResponse.failed(DATA_UPDATE_FAILED, null);
     }
@@ -733,7 +729,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
     }
 
 
-    @PreAuthorize("@pms.hasPermission('user_manage')")
     @GetMapping("/manage/page")
     public RestResponse<IPage<User>> getUserPage(@RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
         Page<User> page = getPage();
@@ -797,7 +792,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return RestResponse.ok(userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18)));
     }
 
-    @PreAuthorize("@pms.hasPermission('user_manage')")
     @GetMapping("/manage/{id}")
     public RestResponse<User> user(@PathVariable Integer id) {
         return RestResponse.ok(service.selectUserVoById(id));
