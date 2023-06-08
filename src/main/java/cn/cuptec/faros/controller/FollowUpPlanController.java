@@ -507,7 +507,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
      * @return
      */
     @GetMapping("/page")
-    public RestResponse pageScoped(@RequestParam(value = "createType", required = false) Integer createType) {
+    public RestResponse pageScoped(@RequestParam(value = "name", required = false) String name,@RequestParam(value = "createType", required = false) Integer createType) {
         Page<FollowUpPlan> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (createType != null) {
@@ -516,7 +516,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
             queryWrapper.eq("create_type", 0);
         }
+        if(!StringUtils.isEmpty(name)){
+            queryWrapper.like("name", name);
 
+        }
         queryWrapper.orderByDesc("create_time");
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();
