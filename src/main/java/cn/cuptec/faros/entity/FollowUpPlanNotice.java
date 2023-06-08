@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * 随访计划通知类

@@ -25,14 +25,13 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.text.Collator;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static java.util.Calendar.DAY_OF_MONTH;
 
 /**
  * 随访计划管理
@@ -131,7 +130,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     @PostMapping("/save")
     public RestResponse save(@RequestBody FollowUpPlan followUpPlan) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
+        List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
         followUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
         followUpPlan.setCreateTime(LocalDateTime.now());
 
@@ -139,6 +138,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         List<FollowUpPlanContent> followUpPlanContentList = followUpPlan.getFollowUpPlanContentList();
         if (!CollectionUtils.isEmpty(followUpPlanContentList)) {
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
+
                 followUpPlanContent.setFollowUpPlanId(followUpPlan.getId());
                 Integer number = followUpPlanContent.getNumber();
                 Integer numberType = followUpPlanContent.getNumberType();
@@ -175,7 +175,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             followUpPlan.setServiceDay(Integer.parseInt(duration.toDays() + ""));
         }
 
-        List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
+
         if (!CollectionUtils.isEmpty(userIds)) {
             followUpPlan.setFollowUpStatus(1);
             userIds = userIds.stream().distinct().collect(Collectors.toList());
@@ -200,6 +200,16 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     }
 
     public void addRecord(List<FollowUpPlanContent> followUpPlanContentList, FollowUpPlan followUpPlan, List<Integer> userIds, DateTimeFormatter formatter) {
+        Map<Integer, List<TbTrainUser>> trainUserMap = new HashMap<>();
+        if (!CollectionUtils.isEmpty(userIds)) {
+            List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, userIds));
+            if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+                trainUserMap = tbTrainUsers.stream()
+                        .collect(Collectors.groupingBy(TbTrainUser::getXtUserId));
+
+
+            }
+        }
         //添加随访计划通知记录
         List<FollowUpPlanNotice> followUpPlanNoticeList = new ArrayList<>();
         List<FollowUpPlanNoticeCount> followUpPlanNoticeCountList = new ArrayList<>();
@@ -219,10 +229,42 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             for (FollowUpPlanContent followUpPlanContent : followUpPlanContentList) {
 
                 for (Integer userId : userIds) {
-                    //随访计划通知时间
-                    String day = followUpPlanContent.getDay();
-                    LocalDateTime pushDay = LocalDateTime.parse(day, formatter);
                     FollowUpPlanNotice followUpPlanNotice = new FollowUpPlanNotice();
+
+                    List<TbTrainUser> tbTrainUsers = trainUserMap.get(userId);
+                    if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+                        TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+                        Date dateTime = tbTrainUser.getDate();
+                        if (dateTime != null) {
+                            Calendar calendar = Calendar.getInstance();
+                            calendar.setTime(dateTime);
+                            LocalDate date = LocalDate.of(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(DAY_OF_MONTH)).plusMonths(1);
+                            LocalDateTime localDateTime = LocalDateTime.ofInstant(dateTime.toInstant(), ZoneId.systemDefault());
+                            Integer number = followUpPlanContent.getNumber();
+                            Integer numberType = followUpPlanContent.getNumberType();
+                            Integer hour = followUpPlanContent.getHour();
+                            LocalDateTime pushDay = localDateTime.plusMinutes(2);
+//                            if (!numberType.equals(1)) {
+//                                if (numberType.equals(2)) {
+//                                    date = date.plusDays(number);
+//                                } else if (numberType.equals(3)) {
+//                                    date = date.plusWeeks(number);
+//                                } else if (numberType.equals(4)) {
+//                                    date = date.plusMonths(number);
+//                                } else if (numberType.equals(5)) {
+//                                    date = date.plusYears(number);
+//                                }
+//                                pushDay = date.atTime(hour, 0);
+//                            }
+                            //随访计划通知时间
+                            if (pushDay.isAfter(LocalDateTime.now())) {
+                                followUpPlanNotice.setNoticeTime(pushDay);
+                            }
+
+                        }
+
+                    }
+
                     ChatUser chatUser = chatUserMap.get(userId);
                     if (chatUser != null) {
                         followUpPlanNotice.setChatUserId(chatUser.getId());
@@ -230,7 +272,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
                     followUpPlanNotice.setFollowUpPlanId(followUpPlan.getId());
                     followUpPlanNotice.setPatientUserId(userId);
-                    followUpPlanNotice.setNoticeTime(pushDay);
 
                     followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                     followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
@@ -261,15 +302,18 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 followUpPlanNoticeService.saveBatch(followUpPlanNoticeList);
                 for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
                     LocalDateTime noticeTime = followUpPlanNotice.getNoticeTime();
-                    LocalDateTime thisNow = LocalDateTime.now();
-                    if (noticeTime.isBefore(thisNow)) {
-                        noticeTime = noticeTime.plusMinutes(3);
+                    if (noticeTime != null) {
+                        LocalDateTime thisNow = LocalDateTime.now();
+                        if (noticeTime.isBefore(thisNow)) {
+                            noticeTime = noticeTime.plusMinutes(3);
+                        }
+                        Duration duration = Duration.between(thisNow, noticeTime);
+                        long hours = duration.toMinutes();//分钟
+                        log.info("添加随访计划redis时间" + hours + "========" + noticeTime + "====" + thisNow);
+                        String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
+                        redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
+
                     }
-                    java.time.Duration duration = java.time.Duration.between(thisNow, noticeTime);
-                    long hours = duration.toMinutes();//分钟
-                    log.info("添加随访计划redis时间" + hours + "========" + noticeTime + "====" + thisNow);
-                    String keyRedis = String.valueOf(StrUtil.format("{}{}", "followUpPlanNotice:", followUpPlanNotice.getId()));
-                    redisTemplate.opsForValue().set(keyRedis, followUpPlanNotice.getId(), hours, TimeUnit.MINUTES);//设置过期时间
 
                 }
 
@@ -278,6 +322,17 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
         }
 
+    }
+
+    public static void main(String[] args) {
+        Date date = new Date();
+        // Date 转 LocalDate
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        LocalDate localDate = LocalDate.of(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(DAY_OF_MONTH));
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+
+        System.out.println(localDateTime);
     }
 
     /**
@@ -346,7 +401,6 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         }
 
 
-
         List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
         List<FollowUpPlanPatientUser> followUpPlanPatientUserList = followUpPlanPatientUserService.list(new QueryWrapper<FollowUpPlanPatientUser>().lambda()
                 .eq(FollowUpPlanPatientUser::getFollowUpPlanId, followUpPlan.getId()));
@@ -404,7 +458,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     removePatientUserIds.add(userId);
                 }
             }
-            if(!CollectionUtils.isEmpty(addPatientUserIds)){
+            if (!CollectionUtils.isEmpty(addPatientUserIds)) {
                 for (Integer userId : addPatientUserIds) {
                     FollowUpPlanPatientUser followUpPlanPatientUser = new FollowUpPlanPatientUser();
                     followUpPlanPatientUser.setFollowUpPlanId(followUpPlan.getId());
@@ -413,17 +467,17 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
                 }
                 followUpPlanPatientUserService.saveBatch(followUpPlanPatientUserList);
-                addRecord(followUpPlanContents, followUpPlan, userIds, formatter);
+                addRecord(followUpPlanContents, followUpPlan, addPatientUserIds, formatter);
             }
-            if(!CollectionUtils.isEmpty(removePatientUserIds)){
+            if (!CollectionUtils.isEmpty(removePatientUserIds)) {
                 followUpPlanPatientUserService.remove(new QueryWrapper<FollowUpPlanPatientUser>().lambda()
                         .eq(FollowUpPlanPatientUser::getFollowUpPlanId, followUpPlan.getId())
-                .in(FollowUpPlanPatientUser::getUserId,removePatientUserIds));
+                        .in(FollowUpPlanPatientUser::getUserId, removePatientUserIds));
 
                 //修改所有通知记录为已取消
                 List<FollowUpPlanNotice> followUpPlanNoticeList = followUpPlanNoticeService.list(new QueryWrapper<FollowUpPlanNotice>().lambda()
                         .eq(FollowUpPlanNotice::getFollowUpPlanId, followUpPlan.getId())
-                .in(FollowUpPlanNotice::getPatientUserId,removePatientUserIds));
+                        .in(FollowUpPlanNotice::getPatientUserId, removePatientUserIds));
                 if (!CollectionUtils.isEmpty(followUpPlanNoticeList)) {
                     for (FollowUpPlanNotice followUpPlanNotice : followUpPlanNoticeList) {
                         followUpPlanNotice.setStatus(2);
@@ -541,9 +595,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 .collect(Collectors.toList());
         //查询手术名称
         List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, userIds));
-        Map<Integer, List<TbTrainUser>> map=new HashMap<>();
-        if(!CollectionUtils.isEmpty(tbTrainUsers)){
-           map = tbTrainUsers.stream()
+        Map<Integer, List<TbTrainUser>> map = new HashMap<>();
+        if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+            map = tbTrainUsers.stream()
                     .collect(Collectors.groupingBy(TbTrainUser::getXtUserId));
 
         }
@@ -556,7 +610,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
                 }
                 List<TbTrainUser> tbTrainUsers1 = map.get(user.getId());
-                if(!CollectionUtils.isEmpty(tbTrainUsers1)){
+                if (!CollectionUtils.isEmpty(tbTrainUsers1)) {
                     TbTrainUser tbTrainUser = tbTrainUsers1.get(0);
                     user.setDiagnosis(tbTrainUser.getDiagnosis());
                 }
