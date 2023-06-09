@@ -536,16 +536,16 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             if (saleSpec != null) {
                 List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
                         .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
-                List<String> saleSpecDescIdList=new ArrayList<>();
-                for(SaleSpecDesc saleSpecDesc:saleSpecDescList){
-                    saleSpecDescIdList.add(saleSpecDesc.getId()+"");
+                List<String> saleSpecDescIdList = new ArrayList<>();
+                for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
+                    saleSpecDescIdList.add(saleSpecDesc.getId() + "");
                 }
 
                 saleSpecDescIdList.retainAll(split);
                 String saleSpecDescId = saleSpecDescIdList.get(0);
                 if (StringUtils.isEmpty(saleSpecDescId)) {
                     for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                        if (saleSpecDescId.equals(saleSpecDesc.getSaleSpecId()+"")) {
+                        if (saleSpecDescId.equals(saleSpecDesc.getSaleSpecId() + "")) {
                             String name = saleSpecDesc.getName();
                             String regEx = "[^0-9]";
                             Pattern p = Pattern.compile(regEx);
@@ -565,7 +565,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     return RestResponse.ok("10");
                 }
                 LocalDateTime payTime = tbTrainUser.getFirstTrainTime();
-                LocalDateTime localDateTime = payTime.plusDays(rentDay);
+                LocalDateTime localDateTime = payTime.plusDays(rentDay + 30);
                 if (localDateTime.isBefore(LocalDateTime.now())) {
                     return RestResponse.ok("10");
                 }
