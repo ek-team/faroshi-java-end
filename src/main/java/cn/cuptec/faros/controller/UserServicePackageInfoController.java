@@ -185,7 +185,10 @@ public class UserServicePackageInfoController extends AbstractBaseController<Use
 
         }
         DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
-        doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleList);
+        if(doctorTeam!=null){
+            doctorTeam.setDoctorTeamPeopleList(doctorTeamPeopleList);
+        }
+
         userServicePackageInfo.setDoctorTeam(doctorTeam);
         List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
                 .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
