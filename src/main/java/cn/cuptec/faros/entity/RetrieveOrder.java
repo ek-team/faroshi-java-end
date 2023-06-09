@@ -143,6 +143,8 @@ public class RetrieveOrder {
     //设备外观图
     @TableField(exist = false)
     private String[] albumPic;
+    @TableField(exist = false)
+    private String productSn1;
 
     //region
     public String[] getAlbumPic() {

@@ -545,7 +545,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 String saleSpecDescId = saleSpecDescIdList.get(0);
                 if (!StringUtils.isEmpty(saleSpecDescId)) {
                     for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                        if (saleSpecDescId.equals(saleSpecDesc.getSaleSpecId() + "")) {
+                        if (saleSpecDescId.equals(saleSpecDesc.getId() + "")) {
                             String name = saleSpecDesc.getName();
                             String regEx = "[^0-9]";
                             Pattern p = Pattern.compile(regEx);

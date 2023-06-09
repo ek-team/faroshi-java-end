@@ -17,6 +17,7 @@ import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.PutObjectResult;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -242,7 +243,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
         doctorTeam.setCreateTime(LocalDateTime.now());
         service.save(doctorTeam);
         //生成一个图片返回
-        String url = urlData.getUrl()+"index.html#/newPlatform/addFriends?doctorId=" + doctorTeam.getId() + "-";
+        String url = urlData.getUrl() + "index.html#/newPlatform/addFriends?doctorId=" + doctorTeam.getId() + "-";
         BufferedImage png = null;
         try {
             png = QrCodeUtil.doctorImage(ServletUtils.getResponse().getOutputStream(), "", url, 300);
@@ -375,7 +376,10 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
      */
     @GetMapping("/deleteById")
     public RestResponse deleteById(@RequestParam("id") int id) {
-        service.removeById(id);
+        service.update(Wrappers.<DoctorTeam>lambdaUpdate()
+                .set(DoctorTeam::getId, id)
+                .eq(DoctorTeam::getDel, 1));
+
         doctorTeamPeopleService.remove(new QueryWrapper<DoctorTeamPeople>().lambda().eq(DoctorTeamPeople::getTeamId, id));
         return RestResponse.ok();
     }
@@ -440,6 +444,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             queryWrapper.like("doctor_team.dept_id_list", userDept.getDeptId());
 
         }
+        queryWrapper.eq("del", 0);
         IPage<DoctorTeam> doctorTeamIPage = service.pageScoped(page, queryWrapper);
         return RestResponse.ok(doctorTeamIPage);
     }

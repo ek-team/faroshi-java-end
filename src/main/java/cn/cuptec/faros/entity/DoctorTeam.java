@@ -34,6 +34,7 @@ public class DoctorTeam extends Model<DoctorTeam>  implements Comparable<DoctorT
     private LocalDateTime createTime;
     private Integer leaderId;//队长id
     private Integer model;//1-抢单模式 2-非抢单模式
+    private Integer del=0;// 0正常 1-删除
     @TableField(exist = false)
     private List<DoctorTeamPeople> doctorTeamPeopleList;
     @TableField(exist = false)

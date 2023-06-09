@@ -20,7 +20,7 @@ public interface RetrieveOrderMapper extends BaseMapper<RetrieveOrder> {
             "${ew.customSqlSegment} ORDER BY retrieve_order.create_time desc")
     IPage<RetrieveOrder> pageRetrieveOrder(IPage<RetrieveOrder> page, @Param(Constants.WRAPPER) Wrapper<RetrieveOrder> queryWrapper);
 
-    @Select("SELECT retrieve_order.*,user_order.payment as payment,patient_user.name as patientUserName, dept.name as deptName,retrieve_order_review_data.review_data as reviewData from retrieve_order " +
+    @Select("SELECT user_order.product_sn1 as productSn1,retrieve_order.*,user_order.payment as payment,patient_user.name as patientUserName, dept.name as deptName,retrieve_order_review_data.review_data as reviewData from retrieve_order " +
             "LEFT JOIN dept ON retrieve_order.dept_id = dept.id " +
             "LEFT JOIN user_order ON retrieve_order.order_id = user_order.id " +
             "LEFT JOIN retrieve_order_review_data ON retrieve_order.id = retrieve_order_review_data.retrieve_order_id " +

@@ -33,6 +33,6 @@ public interface DoctorTeamMapper extends BaseMapper<DoctorTeam> {
 
     @Select( "SELECT doctor_team.dept_id_list,doctor_team.`name`,doctor_team.id from doctor_team LEFT JOIN doctor_team_people on doctor_team.id= " +
             "doctor_team_people.team_id WHERE doctor_team_people.id is not null and doctor_team.dept_id_list LIKE CONCAT('%',#{deptId},'%') " +
-            "and doctor_team.status=1")
+            "and doctor_team.status=1 and doctor_team.del=0 ")
     List<DoctorTeam> pageScopedHavePeople(@Param("deptId") String deptId);
 }
