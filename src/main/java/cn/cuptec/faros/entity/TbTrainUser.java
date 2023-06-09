@@ -66,6 +66,7 @@ public class TbTrainUser {
     private String hospitalName;           //医院名称
     private String hospitalId;           //医院名称
     private String hospitalAddress;           //医院地址
+    private Integer userType=0;   //0骨科用户，1康复科用户
     private String department;//科室信息
     private String macAdd; //mac地址
     private String address;         //联系地址
