@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -506,6 +507,16 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
     public RestResponse updateDataById(@RequestBody ProductStock productStock) {
 
         service.updateById(productStock);
+        return RestResponse.ok();
+    }
+
+    @PostMapping("/updateDataByMacAdd")
+    public RestResponse updateDataByMacAdd(@RequestBody ProductStock productStock) {
+
+        service.update(Wrappers.<ProductStock>lambdaUpdate()
+                .eq(ProductStock::getMacAddress, productStock.getMacAddress())
+                .set(ProductStock::getPlanUserTrainRecordStatus, productStock.getPlanUserTrainRecordStatus())
+        );
         return RestResponse.ok();
     }
 

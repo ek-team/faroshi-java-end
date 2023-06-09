@@ -174,7 +174,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/uniAppPush/send",
                         "/alipay/pay",
                         "/alipay/payqrcode",
-                        "/productStock/updateDataById"
+                        "/productStock/updateDataByMacAdd"
 
                 )
                 .permitAll()
