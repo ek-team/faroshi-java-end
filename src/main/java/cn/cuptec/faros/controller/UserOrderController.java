@@ -1163,7 +1163,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
         }
         userOrder.setServicePack(servicePack);
-        userOrder.setDoctorTeamName(doctorTeamService.getById(userOrder.getDoctorTeamId()).getName());
+        DoctorTeam doctorTeam = doctorTeamService.getById(userOrder.getDoctorTeamId());
+        if(doctorTeam!=null){
+            userOrder.setDoctorTeamName(doctorTeam.getName());
+
+        }
         //重新组装订单号
         String orderNo = userOrder.getOrderNo();
         LocalDateTime createTime = userOrder.getCreateTime();

@@ -106,17 +106,21 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
             if (hospitalDoctorRelation == null) return page;
             hospitalId = hospitalDoctorRelation.getHospitalId();
         }
+        LambdaQueryWrapper<TbTrainUser> eq = Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getHospitalId, hospitalId);
+        if (hospitalId != null) {
+            HospitalInfo byId = hospitalInfoService.getById(hospitalId);
+            eq.eq(TbTrainUser::getHospitalId, hospitalId);
+            if (byId != null) {
+                eq.or();
+                eq.eq(TbTrainUser::getHospitalName, byId.getName());
+            }
+        }
 
-        List userIds = hospitalDoctorRelationService.getUserIdsByHospitalId(new Page(page.getCurrent(), page.getSize()), hospitalId);
-        //List<Integer> userIds = userDoctorRelationService.getUserIdsByDoctorId(new Page(page.getCurrent(),page.getSize()),doctorId);
-        if (CollUtil.isEmpty(userIds)) return page;
+        IPage page1 = this.page(new Page(page.getCurrent(), page.getSize()), eq);
 
-        List<TbTrainUser> list = this.list(Wrappers.<TbTrainUser>lambdaQuery().in(TbTrainUser::getId, userIds));
-//        if (CollUtil.isEmpty(list)) list = CollUtil.toList();
-        page.setRecords(list);
-        page.setTotal(list.size());
+//
 
-        return page;
+        return page1;
 
     }
 
