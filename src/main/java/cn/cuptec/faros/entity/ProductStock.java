@@ -31,6 +31,7 @@ public class ProductStock {
     private String productDeviceType;
     private String productSerialNumber;
     private String iccId;
+    private Integer planUserTrainRecordStatus;//1-训练 2-未训练
     //医院id
     private Integer hospitalId;
     @TableField(exist = false)
