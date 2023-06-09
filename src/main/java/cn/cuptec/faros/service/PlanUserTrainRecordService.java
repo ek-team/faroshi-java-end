@@ -46,7 +46,7 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
     @Transactional(rollbackFor = Exception.class)
     public void saveAndData(List<TbUserTrainRecord> userTrainRecordList) {
         if (CollUtil.isEmpty(userTrainRecordList)) return;
-        this.saveBatch(userTrainRecordList);
+
         String userId = userTrainRecordList.get(0).getUserId();
         //判断是否是第一次上传训练记录
         List<TbUserTrainRecord> list = list(new QueryWrapper<TbUserTrainRecord>().lambda().eq(TbUserTrainRecord::getUserId, userId));
@@ -103,13 +103,13 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
             }
 
 
-        } else {
-
-            planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改训练记录上传标识
-                    .eq(TbTrainUser::getUserId, userId)
-                    .set(TbTrainUser::getTrainRecordTag, 0)
-            );
         }
+
+        this.saveBatch(userTrainRecordList);
+        planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改训练记录上传标识
+                .eq(TbTrainUser::getUserId, userId)
+                .set(TbTrainUser::getTrainRecordTag, 0)
+        );
 
 
         for (TbUserTrainRecord record : userTrainRecordList) {
