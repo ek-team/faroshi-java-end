@@ -26,7 +26,7 @@ public class TbTrainUser {
     private static final long serialVersionUID = 1L;
 
     private String doctorTeam;
-    private int doctorTeamId;
+    private Integer doctorTeamId;
     private String birthday;
     private Integer cardType; //1-身份证 2-其他
     private String treatmentMethodId;//治疗方法Id

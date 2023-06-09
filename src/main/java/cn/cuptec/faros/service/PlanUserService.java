@@ -36,10 +36,10 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
     private ProductStockService productStockService;
 
     @Resource
-    private NaLiUserInfoService naLiUserInfoService;
+    private DoctorTeamService doctorTeamService;
 
     @Resource
-    private PlanUserTrainRecordService planUserTrainRecordService;
+    private HospitalInfoService hospitalInfoService;
     @Resource
     private DeviceScanSignLogService deviceScanSignLogService;
 
@@ -161,6 +161,17 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+                if (tbTrainUser.getDoctorTeamId() != null) {
+                    DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
+                    if (doctorTeam != null) {
+                        tbTrainUser.setHospitalId(doctorTeam.getHospitalId() + "");
+                        HospitalInfo hospitalInfo = hospitalInfoService.getById(doctorTeam.getHospitalId());
+                        if (hospitalInfo != null) {
+                            tbTrainUser.setHospitalName(hospitalInfo.getName());
+                        }
+                    }
+                }
+
                 if (StringUtils.isEmpty(tbTrainUser.getIdCard()) && !StringUtils.isEmpty(tbTrainUser.getCaseHistoryNo())) {
                     tbTrainUser.setIdCard(tbTrainUser.getCaseHistoryNo());
                 }
@@ -210,6 +221,18 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+                if (tbTrainUser.getDoctorTeamId() != null) {
+                    DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
+                    if (doctorTeam != null) {
+                        tbTrainUser.setHospitalId(doctorTeam.getHospitalId() + "");
+                        HospitalInfo hospitalInfo = hospitalInfoService.getById(doctorTeam.getHospitalId());
+                        if (hospitalInfo != null) {
+                            tbTrainUser.setHospitalName(hospitalInfo.getName());
+                        }
+                    }
+                }
+
+
                 if (StringUtils.isEmpty(tbTrainUser.getIdCard()) && !StringUtils.isEmpty(tbTrainUser.getCaseHistoryNo())) {
                     tbTrainUser.setIdCard(tbTrainUser.getCaseHistoryNo());
                 }

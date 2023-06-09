@@ -174,9 +174,13 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                     ChatUserVO chatUserVO = new ChatUserVO();
                     chatUserVO.setPatientId(chatUser.getPatientId());
                     DoctorTeam doctorTeam = doctorTeamMap.get(chatUser.getTeamId());
-                    List<DoctorTeamPeople> doctorTeamPeopleList1 = doctorTeam.getDoctorTeamPeopleList();
-                    chatUserVO.setDoctorTeamPeopleList(doctorTeamPeopleList1);
-                    chatUserVO.setNickname(doctorTeam.getName());
+                    if(doctorTeam!=null){
+                        List<DoctorTeamPeople> doctorTeamPeopleList1 = doctorTeam.getDoctorTeamPeopleList();
+                        chatUserVO.setDoctorTeamPeopleList(doctorTeamPeopleList1);
+                        chatUserVO.setNickname(doctorTeam.getName());
+                    }
+
+
                     User user = userMap.get(chatUser.getTargetUid());
                     if (user != null) {
                         String patientName = user.getPatientName();
