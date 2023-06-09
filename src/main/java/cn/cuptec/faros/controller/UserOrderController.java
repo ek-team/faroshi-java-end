@@ -447,7 +447,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
                 LocalDateTime createTime = userOrder.getCreateTime();
 
-                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
+                userOrder.setOrderNo("KF" + orderNo);
             }
         }
 
@@ -1094,8 +1094,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 userOrder.setRentRuleOrderList(rentRuleOrderList1);
 
                 LocalDateTime createTime = userOrder.getCreateTime();
-
-                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
+                userOrder.setOrderNo("KF" + orderNo);
+                //userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
             }
         }
         return RestResponse.ok(iPage);
@@ -1167,8 +1167,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         //重新组装订单号
         String orderNo = userOrder.getOrderNo();
         LocalDateTime createTime = userOrder.getCreateTime();
-
-        userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
+        userOrder.setOrderNo("KF" + orderNo);
+        //userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
         List<SaleSpecGroup> saleSpecGroupList = saleSpecGroupService.list(new QueryWrapper<SaleSpecGroup>().lambda().eq(SaleSpecGroup::getQuerySaleSpecIds, userOrder.getQuerySaleSpecIds())
                 .eq(SaleSpecGroup::getServicePackId, userOrder.getServicePackId()));
         if (!CollectionUtils.isEmpty(saleSpecGroupList)) {
@@ -1476,8 +1476,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 userOrder.setServicePack(servicePackMap.get(userOrder.getServicePackId()));
                 String orderNo = userOrder.getOrderNo();
                 LocalDateTime createTime = userOrder.getCreateTime();
-
-                userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
+                userOrder.setOrderNo("KF" + orderNo);
+                //userOrder.setOrderNo("KF" + createTime.getYear() + createTime.getMonthValue() + createTime.getDayOfMonth() + "-" + orderNo);
 
             }
 
