@@ -278,7 +278,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
                     followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                     followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
+                    if(followUpPlanContent.getArticleId()!=null){
+                        followUpPlanNotice.setArticleId(followUpPlanContent.getArticleId());
 
+                    }
 
                     followUpPlanNoticeList.add(followUpPlanNotice);
 
@@ -518,7 +521,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         }
         if(!StringUtils.isEmpty(name)){
             queryWrapper.like("name", name);
-
+            queryWrapper.or();
+            queryWrapper.like("option_name", name);
         }
         queryWrapper.orderByDesc("create_time");
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);

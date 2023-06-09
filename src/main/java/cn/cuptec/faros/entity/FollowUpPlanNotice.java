@@ -25,6 +25,7 @@ public class FollowUpPlanNotice extends Model<FollowUpPlanNotice> {
     private Integer totalPush;//总的推送次数
     private Integer chatUserId;
     private Integer push;//已推送次数
+    private Integer articleId;//文章id
     private Integer status = 0;//0-待推送 1-已推送 2-已取消
     private Integer form=0;//0-待填写表单 1-已填写表单
     @TableField(exist = false)

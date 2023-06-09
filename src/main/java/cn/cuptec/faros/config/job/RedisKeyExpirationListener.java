@@ -96,7 +96,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                 String followUpPlanNoticeId = str[1];
                 log.info("redis过期监听：：=============" + followUpPlanNoticeId);
                 FollowUpPlanNotice followUpPlanNotice = followUpPlanNoticeService.getById(followUpPlanNoticeId);
-                if(followUpPlanNotice==null){
+                if (followUpPlanNotice == null) {
                     return;
                 }
                 if (followUpPlanNotice.getStatus().equals(1)) {
@@ -118,6 +118,8 @@ public class RedisKeyExpirationListener implements MessageListener {
                 users.add(doctorUser);
                 hospitalInfoService.getHospitalByUser(users);
                 doctorUser = users.get(0);
+
+
                 if (!CollectionUtils.isEmpty(chatUsers)) {
                     ChatUser chatUser = chatUsers.get(0);
                     ChatMsg chatMsg = new ChatMsg();
@@ -135,6 +137,23 @@ public class RedisKeyExpirationListener implements MessageListener {
                     chatUser.setLastChatTime(new Date());
                     chatUser.setLastMsg("随访计划");
                     chatUserService.updateById(chatUser);
+                    if (followUpPlanNotice.getArticleId() != null) {
+                        ChatMsg articleMsg = new ChatMsg();
+                        articleMsg.setChatUserId(chatUser.getId());
+                        articleMsg.setFromUid(doctorUser.getId());
+
+//                    chatMsg.setToUid(patientUser.getId());
+                        articleMsg.setMsg("文章");
+                        articleMsg.setCreateTime(new Date());
+                        articleMsg.setMsgType(ChatProto.ARTICLE);
+                        articleMsg.setStr1(followUpPlanNotice.getArticleId() + "");
+                        articleMsg.setReadStatus(0);
+                        articleMsg.setReadUserIds(followUpPlanNotice.getDoctorId() + "");
+                        chatMsgService.save(articleMsg);
+
+                    }
+
+
                     DoctorTeam byId = doctorTeamService.getById(chatUser.getTeamId());
                     wxMpService.sendFollowUpPlanNotice(patientUser.getMpOpenId(), "新的康复计划提醒", byId.getName() + "的随访", doctorUser.getHospitalName(), "/pages/news/news");
 
@@ -161,6 +180,22 @@ public class RedisKeyExpirationListener implements MessageListener {
                     chatMsg.setStr1(followUpPlanNoticeId);
                     chatMsg.setReadStatus(0);
                     chatMsgService.save(chatMsg);
+                    if (followUpPlanNotice.getArticleId() != null) {
+                        ChatMsg articleMsg = new ChatMsg();
+                        articleMsg.setFromUid(doctorUser.getId());
+                        articleMsg.setToUid(patientUser.getId());
+
+//                    chatMsg.setToUid(patientUser.getId());
+                        articleMsg.setMsg("文章");
+                        articleMsg.setCreateTime(new Date());
+                        articleMsg.setMsgType(ChatProto.ARTICLE);
+                        articleMsg.setStr1(followUpPlanNotice.getArticleId() + "");
+                        articleMsg.setReadStatus(0);
+                        articleMsg.setReadUserIds(followUpPlanNotice.getDoctorId() + "");
+                        chatMsgService.save(articleMsg);
+
+                    }
+
                 }
 
 
