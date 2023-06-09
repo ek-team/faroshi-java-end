@@ -543,7 +543,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
                 saleSpecDescIdList.retainAll(split);
                 String saleSpecDescId = saleSpecDescIdList.get(0);
-                if (StringUtils.isEmpty(saleSpecDescId)) {
+                if (!StringUtils.isEmpty(saleSpecDescId)) {
                     for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
                         if (saleSpecDescId.equals(saleSpecDesc.getSaleSpecId() + "")) {
                             String name = saleSpecDesc.getName();
