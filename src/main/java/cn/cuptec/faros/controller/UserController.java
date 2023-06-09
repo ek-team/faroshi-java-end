@@ -36,7 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.CollectionUtils;
@@ -131,6 +130,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
         return RestResponse.ok();
     }
+
     /**
      * 患者添加医生好友
      */
@@ -141,12 +141,12 @@ public class UserController extends AbstractBaseController<UserService, User> {
         List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().lambda()
                 .eq(PatientUser::getUserId, SecurityUtils.getUser().getId())
                 .eq(PatientUser::getIdCard, idCard));
-        if(CollectionUtils.isEmpty(list)){
-           PatientUser patientUser=new PatientUser();
+        if (CollectionUtils.isEmpty(list)) {
+            PatientUser patientUser = new PatientUser();
             patientUser.setUserId(SecurityUtils.getUser().getId());
             patientUser.setIdCard(idCard);
             patientUser.setCardType(1);
-            if(!CollectionUtils.isEmpty(tbTrainUsers)){
+            if (!CollectionUtils.isEmpty(tbTrainUsers)) {
                 TbTrainUser tbTrainUser = tbTrainUsers.get(0);
 
                 patientUser.setName(tbTrainUser.getName());
@@ -156,6 +156,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         }
         return RestResponse.ok();
     }
+
     /**
      * 获取医生个人二维码 和医生所在团队二维码 患者扫码 添加
      */
@@ -536,10 +537,10 @@ public class UserController extends AbstractBaseController<UserService, User> {
      */
     @PostMapping("/updateById")
     public RestResponse updateById(@RequestBody @Valid User user) {
-        if(!StringUtils.isEmpty(user.getPhone())){
+        if (!StringUtils.isEmpty(user.getPhone())) {
             User one = service.getOne(new QueryWrapper<User>().lambda().eq(User::getPhone, user.getPhone())
-          );
-            if(one!=null && !one.getId().equals(user.getId())){
+            );
+            if (one != null && !one.getId().equals(user.getId())) {
                 return RestResponse.failed("手机号已被占用");
             }
 
@@ -573,7 +574,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @SysLog("添加用户")
     @PostMapping("/manage/add")
-    @PreAuthorize("@pms.hasPermission('user_add')")
     public RestResponse<User> user(@RequestBody User user) {
         service.save(user);
         return RestResponse.ok();
@@ -655,7 +655,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @SysLog("删除用户信息")
     @DeleteMapping("/manage/{id}")
-    @PreAuthorize("@pms.hasPermission('user_del')")
     public RestResponse userDel(@PathVariable Integer id) {
         User user = new User();
         user.setId(id);
@@ -680,7 +679,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
 
     @SysLog("更新用户信息")
     @PutMapping("/manage/update")
-    @PreAuthorize("@pms.hasPermission('user_edit')")
     public RestResponse updateUser(@Valid @RequestBody User user) {
         return service.updateUser(user) ? RestResponse.ok(DATA_UPDATE_SUCCESS, null) : RestResponse.failed(DATA_UPDATE_FAILED, null);
     }
@@ -733,7 +731,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
     }
 
 
-    @PreAuthorize("@pms.hasPermission('user_manage')")
     @GetMapping("/manage/page")
     public RestResponse<IPage<User>> getUserPage(@RequestParam(required = false, value = "nickname") String nickname, @RequestParam(required = false, value = "phone") String phone) {
         Page<User> page = getPage();
@@ -784,9 +781,30 @@ public class UserController extends AbstractBaseController<UserService, User> {
         if (deptId == null) {
             return RestResponse.failed("没有查询到当前登录用户所属部门");
         }
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(user.getId());
+        if (aBoolean) {
+            List<User> users = service.list();
+            if (CollUtil.isNotEmpty(users)) {
+                List<Integer> userIds = users.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                List<Integer> integers = CollUtil.toList(18);
+                List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
+                        .in(UserRole::getRoleId, integers).in(UserRole::getUserId, userIds));
+                if (CollUtil.isNotEmpty(userRoles)) {
+                    List<Integer> collect = userRoles.stream().map(UserRole::getUserId).collect(Collectors.toList());
 
-        List<User> list = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18));
-        return RestResponse.ok(list);
+                    List<User> collect1 = users.stream().filter(u -> collect.contains(u.getId())).collect(Collectors.toList());
+
+                    return RestResponse.ok(collect1);
+                }
+            }
+            return RestResponse.ok(new ArrayList<>());
+
+        } else {
+            List<User> list = userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18));
+            return RestResponse.ok(list);
+
+        }
 
 
     }
@@ -797,7 +815,6 @@ public class UserController extends AbstractBaseController<UserService, User> {
         return RestResponse.ok(userRoleService.getUsersByDeptIdAndRoleds(deptId, CollUtil.toList(18)));
     }
 
-    @PreAuthorize("@pms.hasPermission('user_manage')")
     @GetMapping("/manage/{id}")
     public RestResponse<User> user(@PathVariable Integer id) {
         return RestResponse.ok(service.selectUserVoById(id));
