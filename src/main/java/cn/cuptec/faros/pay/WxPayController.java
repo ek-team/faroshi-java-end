@@ -116,7 +116,7 @@ public class WxPayController {
     @ApiOperation(value = "调用统一下单接口")
     @GetMapping("/unifiedOrder")
     public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo, @RequestParam(value = "tradeType", required = false) String tradeType) {
-        String[] split = orderNo.split("-");
+        String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
         } else {
@@ -125,6 +125,7 @@ public class WxPayController {
         return wxPayFarosService.unifiedOrder(orderNo, tradeType);
 
     }
+
 
     /**
      * 支付图文咨询申请
@@ -262,9 +263,13 @@ public class WxPayController {
             patientRelationTeamService.save(patientRelationTeam);
             //添加医生和患者的关系
             List<UserDoctorRelation> userDoctorRelationList = new ArrayList<>();
-            userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
-                    .eq(UserDoctorRelation::getUserId, userOrder.getUserId())
-                    .in(UserDoctorRelation::getDoctorId, userIds));
+            if(!CollectionUtils.isEmpty(userIds)){
+                userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
+                        .eq(UserDoctorRelation::getUserId, userOrder.getUserId())
+                        .in(UserDoctorRelation::getDoctorId, userIds));
+
+            }
+
 
 
             for (Integer doctorId : userIds) {
@@ -630,9 +635,15 @@ public class WxPayController {
     }
 
     public static void main(String[] args) {
-        BigDecimal refundFee1 = new BigDecimal(1.00);
-        BigDecimal divide = refundFee1.divide(new BigDecimal(100));
-        System.out.println(divide);
+      String a="KF123123";
+        String[] split = a.split("KF");
+        if (split.length == 1) {
+            a = split[0];
+        } else {
+            a = split[1];
+        }
+
+        System.out.println(a);
     }
 
     @ApiOperation(value = "图文咨询订单申请退款")

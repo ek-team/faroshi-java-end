@@ -38,7 +38,11 @@ public class BillController {
         userOrder.setBillId(bill.getId());
         String orderNo = bill.getOrderNo();
         String[] split = orderNo.split("-");
-        orderNo = split[1];
+        if (split.length == 1) {
+            orderNo = split[0];
+        } else {
+            orderNo = split[1];
+        }
         userOrdertService.update(Wrappers.<UserOrder>lambdaUpdate()
                 .eq(UserOrder::getOrderNo, orderNo)
                 .set(UserOrder::getBillId, bill.getId()));

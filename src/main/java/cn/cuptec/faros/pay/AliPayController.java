@@ -115,7 +115,7 @@ public class AliPayController {
 
     @RequestMapping("/payqrcode")
     public RestResponse payqrcode(@RequestParam("orderNo") String orderNo) {
-        String[] split = orderNo.split("-");
+        String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
         } else {
@@ -191,7 +191,7 @@ public class AliPayController {
 
     @RequestMapping("/pay")
     public RestResponse pay(@RequestParam("orderNo") String orderNo) {
-        String[] split = orderNo.split("-");
+        String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
         } else {
