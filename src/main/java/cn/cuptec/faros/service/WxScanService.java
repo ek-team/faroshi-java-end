@@ -98,10 +98,11 @@ public class WxScanService {
         }
 
         if (userWxInfo != null) {
+            log.info("扫码关注公众号====" + userWxInfo.getUnionId());
             //添加关注用户到本地数据库
-            User user = userService.getBaseMapper().getMpOpenIdIsExist(userWxInfo.getOpenId());
+            User user = userService.getBaseMapper().getUnionIdIsExist(userWxInfo.getUnionId());
 
-            if (user == null || !"0".equals(user.getDelFlag())) {
+            if (user == null) {
                 log.info("用户不存在，将新增");
                 User u = new User();
                 u.setPhone(userWxInfo.getOpenId());
@@ -114,6 +115,7 @@ public class WxScanService {
                 u.setCity(userWxInfo.getCity());
                 u.setLanguage(userWxInfo.getLanguage());
                 u.setIsSubscribe(true);
+                u.setDelFlag(CommonConstants.STATUS_NORMAL);
                 if (user == null) userService.save(u);
                 else {
                     u.setDelFlag(CommonConstants.STATUS_NORMAL);
@@ -128,8 +130,8 @@ public class WxScanService {
                 user.setIsSubscribe(true);
                 userService.updateById(user);
                 //查询该用户的权限
-                    List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
-                            .in(UserRole::getUserId, user.getId()));
+                List<UserRole> userRoles = userRoleService.list(Wrappers.<UserRole>lambdaQuery()
+                        .in(UserRole::getUserId, user.getId()));
 
                 wxMpTagService.batchTaggings(userRoles, user.getId());
             }
@@ -143,14 +145,14 @@ public class WxScanService {
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String time = df.format(now);
                 wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctor.getNickname(), time,
-                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token+"&doctorId="+doctor.getId());
+                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token + "&doctorId=" + doctor.getId());
             }
             if (doctorTeam != null) {
                 LocalDateTime now = LocalDateTime.now();
                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 String time = df.format(now);
                 wxMpService.patientAddDoctor(user.getMpOpenId(), "您添加医生成功", doctorTeam.getName(), time,
-                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token+"&doctorTeamId="+doctorTeam.getId());
+                        "点击查看详情", "/pages/savePersonInfo/savePersonInfo?token=" + token + "&doctorTeamId=" + doctorTeam.getId());
             }
         }
 
