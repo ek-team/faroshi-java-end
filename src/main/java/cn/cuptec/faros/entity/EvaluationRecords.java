@@ -23,6 +23,9 @@ public class EvaluationRecords extends Model<EvaluationRecords> implements Seria
     private long userId;//用户唯一id 静态方法获取唯一id编号
     private int evaluateResult;//评估结果
     private long createDate;
+    private  String macAddress;
+    private String bleMacAddress;
+    private String bleName;
     private long updateDate;
     private int vas;//耐受等级
     private float firstValue;

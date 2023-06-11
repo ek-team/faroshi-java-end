@@ -28,6 +28,9 @@ public class TbUserTrainRecord {
     private Long keyId;                 //唯一ID
     private Integer successTime;//成功次数
     private Integer warningTime;//警告次数
+    private  String macAddress;
+    private String bleMacAddress;
+    private String bleName;
     private Integer trainTime;//训练时间
     private Integer score;//得分
     private Integer painLevel;//疼痛等级
