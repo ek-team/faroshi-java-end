@@ -705,7 +705,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @GetMapping("/cancelOrder")
     public RestResponse cancelOrder(@RequestParam("orderNo") String orderNo) {
-        String[] split = orderNo.split("-");
+        String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
         } else {
@@ -1198,7 +1198,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @GetMapping("/user/orderDetailByOrderNo")
     public RestResponse orderDetailByOrderNo(@RequestParam("orderNo") String orderNo) {
-        String[] split = orderNo.split("-");
+        String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
         } else {
@@ -1310,7 +1310,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 Map<String, DeliveryMoBan> deliveryMoBanmap = new HashMap<>();
                 for (DeliveryMoBan deliveryMoBan : deliveryMoBans) {
                     String orderNo = deliveryMoBan.getOrderNo();
-                    String[] split = orderNo.split("-");
+                    String[] split = orderNo.split("KF");
                     if (split.length == 1) {
                         orderNo = split[0];
                     } else {
@@ -1325,7 +1325,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         .collect(Collectors.toList());
                 List<String> orderNos1 = new ArrayList<>();
                 for (String orderNo : orderNos) {
-                    String[] split = orderNo.split("-");
+                    String[] split = orderNo.split("KF");
                     if (split.length == 1) {
                         orderNo = split[0];
                     } else {
