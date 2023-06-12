@@ -42,7 +42,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
     @Resource
     private UserRoleService userRoleService;
     @Resource
-    private UserController sysUserController;
+    private DeptService deptService;
     @Resource
     private HospitalInfoService hospitalInfoService;
     @Resource
@@ -242,7 +242,19 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
             List<LiveQrCode> liveQrCodes = (List<LiveQrCode>) liveQrCodeService.listByIds(qrcodeIds);
             Map<String, LiveQrCode> liveQrCodeMap = liveQrCodes.stream()
                     .collect(Collectors.toMap(LiveQrCode::getId, t -> t));
+
+            List<Integer> deptIds = records.stream().map(ProductStock::getDeptId)
+                    .collect(Collectors.toList());
+            List<Dept> depts = (List<Dept>) deptService.listByIds(deptIds);
+
+            Map<Integer, Dept> deptMap = depts.stream()
+                    .collect(Collectors.toMap(Dept::getId, t -> t));
+
             for (ProductStock productStock : records) {
+                Dept dept = deptMap.get(productStock.getDeptId());
+                if(dept!=null){
+                    productStock.setDeptName(dept.getName());
+                }
                 if (!StringUtils.isEmpty(productStock.getLiveQrCodeId())) {
                     LiveQrCode liveQrCode = liveQrCodeMap.get(productStock.getLiveQrCodeId());
                     if (liveQrCode != null) {
