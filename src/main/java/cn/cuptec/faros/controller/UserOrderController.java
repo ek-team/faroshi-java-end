@@ -107,7 +107,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private PlanUserService planUserService;
     @Resource
-    private OrderRefundInfoService orderRefundInfoService;
+    private BillService billService;
     @Resource
     private ProductStockService productStockService;
     @Resource
@@ -381,6 +381,17 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     }
                 }
             }
+            //查询开票信息
+            List<Integer> billIds = records.stream().map(UserOrder::getBillId)
+                    .collect(Collectors.toList());
+            Map<Integer, Bill> billMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(billIds)) {
+                List<Bill> bills = (List<Bill>) billService.listByIds(billIds);
+                billMap = bills.stream()
+                        .collect(Collectors.toMap(Bill::getId, t -> t));
+
+            }
+
             Map<Integer, ServicePack> servicePackMap = servicePacks.stream()
                     .collect(Collectors.toMap(ServicePack::getId, t -> t));
 
@@ -412,6 +423,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
             for (UserOrder userOrder : records) {
+                if (userOrder.getBillId() != null) {
+                    Bill bill = billMap.get(userOrder.getBillId());
+                    userOrder.setBill(bill);
+                }
+
                 userOrder.setUser(userMap.get(userOrder.getUserId()));
                 Integer reviewRefundOrderId = userOrder.getReviewRefundOrderId();
                 if (reviewRefundOrderId != null) {
@@ -1164,7 +1180,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         userOrder.setServicePack(servicePack);
         DoctorTeam doctorTeam = doctorTeamService.getById(userOrder.getDoctorTeamId());
-        if(doctorTeam!=null){
+        if (doctorTeam != null) {
             userOrder.setDoctorTeamName(doctorTeam.getName());
 
         }

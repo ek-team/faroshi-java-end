@@ -83,6 +83,8 @@ public class UserOrder {
     private Integer serviceCount;//图文咨询次数
     @TableField(exist = false)
     private String hospitalName;//医院名字
+    @TableField(exist = false)
+    private Bill bill;
     private String productSpec;//选择的产品规格信息 字符串拼接多个
     private Integer addressId;//收货人地址id
     //快递单号

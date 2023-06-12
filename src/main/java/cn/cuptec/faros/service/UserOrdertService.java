@@ -95,7 +95,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 
 
     public static void main(String[] args) {
-        for(int i=1;i<4;i++){
+        for (int i = 1; i < 4; i++) {
             System.out.println(i);
         }
     }
@@ -325,7 +325,6 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         }
 
 
-
         Assert.notNull(userOrder, "订单不存在");
 
         Assert.isTrue(userOrder.getStatus() == 2, "订单非待发货状态");
@@ -337,7 +336,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         userOrder.setDeliverySn(deliveryNumber);
         userOrder.setDeliveryNumber(deliveryNumber);
         userOrder.setDeliveryTime(new Date());
-        if(userOrder.getOrderType()!=null && userOrder.getOrderType().equals(1)){
+        if (userOrder.getOrderType() != null && userOrder.getOrderType().equals(1)) {
 
             userOrder.setMoveTime(LocalDateTime.now());
         }
@@ -387,25 +386,27 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         }
         //发送公众号通知
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        wxMpService.shipNotice(byId.getMpOpenId(), "您的订单已发货", userOrder.getOrderNo(), deliveryCompany, deliveryNumber,
-                df.format(LocalDateTime.now()), "点击查看详情", "pages/myOrder/myOrder");
+        if (byId != null) {
+            wxMpService.shipNotice(byId.getMpOpenId(), "您的订单已发货", userOrder.getOrderNo(), deliveryCompany, deliveryNumber,
+                    df.format(LocalDateTime.now()), "点击查看详情", "pages/myOrder/myOrder");
+        }
 
 
         //判断是租赁和订单，从设备发货，确定“开始使用时间” 加入倒计时推送
         if (userOrder.getOrderType().equals(1)) {
-            for(int i=1;i<4;i++){
-                String keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice"+i+"3:", userOrder.getId()));
+            for (int i = 1; i < 4; i++) {
+                String keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice" + i + "3:", userOrder.getId()));
                 LocalDateTime localDateTime = LocalDateTime.now().plusMonths(i);
                 LocalDateTime localDateTime3 = localDateTime.minusDays(3);
                 Duration sjc = Duration.between(LocalDateTime.now(), localDateTime3);// 计算时间差
                 redisTemplate.opsForValue().set(keyRedis, userOrder.getId(), sjc.toDays(), TimeUnit.DAYS);//设置过期时间
                 //5天
-                keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice"+i+"5:", userOrder.getId()));
+                keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice" + i + "5:", userOrder.getId()));
                 LocalDateTime localDateTime5 = localDateTime.minusDays(5);
                 Duration sjc5 = Duration.between(LocalDateTime.now(), localDateTime5);// 计算时间差
                 redisTemplate.opsForValue().set(keyRedis, userOrder.getId(), sjc5.toDays(), TimeUnit.DAYS);//设置过期时间
                 //7天
-                keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice"+i+"7:", userOrder.getId()));
+                keyRedis = String.valueOf(StrUtil.format("{}{}", "serviceNotice" + i + "7:", userOrder.getId()));
                 LocalDateTime localDateTime7 = localDateTime.minusDays(7);
                 Duration sjc7 = Duration.between(LocalDateTime.now(), localDateTime7);// 计算时间差
                 redisTemplate.opsForValue().set(keyRedis, userOrder.getId(), sjc7.toDays(), TimeUnit.DAYS);//设置过期时间
