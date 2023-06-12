@@ -1,12 +1,11 @@
 package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
+import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
-import cn.cuptec.faros.entity.ChatUser;
-import cn.cuptec.faros.entity.HospitalInfo;
-import cn.cuptec.faros.entity.ServicePack;
-import cn.cuptec.faros.entity.ServicePackStatusCheck;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.HospitalInfoService;
+import cn.cuptec.faros.service.OperationRecordService;
 import cn.cuptec.faros.service.ServicePackService;
 import cn.cuptec.faros.service.ServicePackStatusCheckService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -32,7 +31,8 @@ public class ServicePackStatusCheckController extends AbstractBaseController<Ser
     private ServicePackService servicePackService;
     @Resource
     private HospitalInfoService hospitalInfoService;
-
+    @Resource
+    private OperationRecordService operationRecordService;
     /**
      * 停用服务包
      *
@@ -41,6 +41,14 @@ public class ServicePackStatusCheckController extends AbstractBaseController<Ser
      */
     @GetMapping("/stopServicePack")
     public RestResponse endedServicePack(@RequestParam("id") Integer id) {
+        //添加修改记录
+        OperationRecord operationRecord = new OperationRecord();
+        operationRecord.setStr(id + "");
+        operationRecord.setType(3);
+        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+        operationRecord.setCreateTime(new Date());
+        operationRecord.setText("停用服务包");
+        operationRecordService.save(operationRecord);
 
         servicePackService.update(Wrappers.<ServicePack>lambdaUpdate()
                 .eq(ServicePack::getId, id)
@@ -59,7 +67,13 @@ public class ServicePackStatusCheckController extends AbstractBaseController<Ser
      */
     @GetMapping("/startServicePack")
     public RestResponse startServicePack(@RequestParam("servicePackId") Integer servicePackId) {
-
+        OperationRecord operationRecord = new OperationRecord();
+        operationRecord.setStr(servicePackId + "");
+        operationRecord.setType(3);
+        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+        operationRecord.setCreateTime(new Date());
+        operationRecord.setText("启用服务包");
+        operationRecordService.save(operationRecord);
         servicePackService.update(Wrappers.<ServicePack>lambdaUpdate()
                 .eq(ServicePack::getId, servicePackId)
                 .set(ServicePack::getStatus, 2)
@@ -80,6 +94,13 @@ public class ServicePackStatusCheckController extends AbstractBaseController<Ser
      */
     @GetMapping("/verifyServicePack")
     public RestResponse verifyServicePack(@RequestParam("servicePackId") Integer servicePackId) {
+        OperationRecord operationRecord = new OperationRecord();
+        operationRecord.setStr(servicePackId + "");
+        operationRecord.setType(3);
+        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+        operationRecord.setCreateTime(new Date());
+        operationRecord.setText("审核服务包");
+        operationRecordService.save(operationRecord);
 
         servicePackService.update(Wrappers.<ServicePack>lambdaUpdate()
                 .eq(ServicePack::getId, servicePackId)

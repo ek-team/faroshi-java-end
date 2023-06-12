@@ -16,13 +16,13 @@ public class ReviewRefundOrder {
     @TableId
     private Integer id;
     @Queryable(queryLogical = QueryLogical.LIKE)
-    private String  retrieveOrderNo;//回收单单号
+    private String retrieveOrderNo;//回收单单号
     private String createName;
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer status;//3=待审核  2 -已拒绝 1-退款
     private String reviewRefundDesc;//审核描述
     private String refundReason;//退款原因
-    private BigDecimal refundFee;//退款金额
+    private BigDecimal refundFee = new BigDecimal("0");//退款金额
     private Integer deptId;
     private LocalDateTime createTime;
 }

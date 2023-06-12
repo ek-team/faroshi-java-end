@@ -26,8 +26,8 @@ public class OperationRecord {
     private String oldMacAdd;
     private String productSn;
     private String text;
-    private Integer type=1; //1=设备操作记录 2-设备用户操作记录
-    private String str; //备用 type=2为设备用户id
+    private Integer type=1; //1=设备操作记录 2-设备用户操作记录 3-服务包操作记录
+    private String str; //备用 type=2为设备用户id type=3为服务包id
     @TableField(exist = false)
     private String userName;
 }

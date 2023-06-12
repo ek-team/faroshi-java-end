@@ -29,6 +29,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     @Resource
     private ServicePackProductSpecService servicePackProductSpecService;//产品规格
     @Resource
-    private ServicePackSaleSpecService servicePackSaleSpecService;//销售规格
+    private OperationRecordService operationRecordService;
     @Resource
     private ServicePackageInfoService servicePackageInfoService;//服务信息
     @Resource
@@ -171,6 +172,17 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
      */
     @PostMapping("/save")
     public RestResponse save(@RequestBody ServicePack servicePack) {
+        //添加修改记录
+        OperationRecord operationRecord = new OperationRecord();
+        operationRecord.setStr(servicePack.getId() + "");
+        operationRecord.setType(3);
+        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+        operationRecord.setCreateTime(new Date());
+        operationRecord.setText("创建服务包");
+        operationRecordService.save(operationRecord);
+
+
+
         User byId = userService.getById(SecurityUtils.getUser().getId());
         servicePack.setDeptId(byId.getDeptId());
         servicePack.setDeptIdList(byId.getDeptId() + "");
@@ -307,15 +319,82 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
     }
 
     /**
+     * 获取所有属性，包括父类
+     *
+     * @param object
+     * @return
+     */
+    public static Field[] getAllFields(Object object) {
+        Class clazz = object.getClass();
+        List<Field> fieldList = new ArrayList<>();
+        while (clazz != null) {
+            fieldList.addAll(new ArrayList<>(Arrays.asList(clazz.getDeclaredFields())));
+            clazz = clazz.getSuperclass();
+        }
+        Field[] fields = new Field[fieldList.size()];
+        fieldList.toArray(fields);
+        return fields;
+    }
+
+    public static StringBuilder compareContractServicePack(ServicePack sign, ServicePack existSign) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            Field[] fields = getAllFields(sign);
+            for (int j = 0; j < fields.length; j++) {
+                Field field = fields[j];
+                field.setAccessible(true);
+                // 字段值
+                if (field.get(sign) != null && fields[j].get(existSign) != null && !field.get(sign).equals(fields[j].get(existSign))) {
+
+
+                    stringBuilder.append(fields[j].getName() + "字段从" + fields[j].get(existSign) + "修改为" + field.get(sign) + ",");
+                }
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return stringBuilder;
+    }
+
+    public static StringBuilder compareContractServicePackageInfo(ServicePackageInfo sign, ServicePackageInfo existSign) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            Field[] fields = getAllFields(sign);
+            for (int j = 0; j < fields.length; j++) {
+                Field field = fields[j];
+                field.setAccessible(true);
+                // 字段值
+                if (field.get(sign) != null && fields[j].get(existSign) != null && !field.get(sign).equals(fields[j].get(existSign))) {
+
+
+                    stringBuilder.append(fields[j].getName() + "字段从" + fields[j].get(existSign) + "修改为" + field.get(sign) + ",");
+                }
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return stringBuilder;
+    }
+
+    /**
      * 编辑服务包
      *
      * @return
      */
     @PostMapping("/edit")
     public RestResponse edit(@RequestBody ServicePack servicePack) {
-        service.updateById(servicePack);
+        //添加修改记录
+        OperationRecord operationRecord = new OperationRecord();
+        operationRecord.setStr(servicePack.getId() + "");
+        operationRecord.setType(3);
+        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+        operationRecord.setCreateTime(new Date());
+        operationRecord.setText("修改服务包");
+        operationRecordService.save(operationRecord);
+
 
         servicePackProductPicService.remove(new QueryWrapper<ServicePackProductPic>().lambda().eq(ServicePackProductPic::getServicePackId, servicePack.getId()));
+        service.updateById(servicePack);
 
         List<ServicePackProductPic> servicePackProductPics = servicePack.getServicePackProductPics();
         if (!CollectionUtils.isEmpty(servicePackProductPics)) {
@@ -348,24 +427,24 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             rentRuleService.saveBatch(rentRuleList);
         }
 
-
-        //添加病种
-        List<Diseases> diseasesList = servicePack.getDiseasesList();
-        servicePackDiseasesService.remove(new QueryWrapper<ServicePackDiseases>().lambda()
-                .eq(ServicePackDiseases::getServicePackId, servicePack.getId()));
-        if (!CollectionUtils.isEmpty(diseasesList)) {
-            List<Integer> diseasesIds = diseasesList.stream().map(Diseases::getId)
-                    .collect(Collectors.toList());
-            List<ServicePackDiseases> servicePackDiseases = new ArrayList<>();
-            for (Integer diseasesId : diseasesIds) {
-                ServicePackDiseases diseases = new ServicePackDiseases();
-                diseases.setDiseasesId(diseasesId);
-                diseases.setServicePackId(servicePack.getId());
-                servicePackDiseases.add(diseases);
-            }
-            servicePackDiseasesService.saveBatch(servicePackDiseases);
-
-        }
+//
+//        //添加病种
+//        List<Diseases> diseasesList = servicePack.getDiseasesList();
+//        servicePackDiseasesService.remove(new QueryWrapper<ServicePackDiseases>().lambda()
+//                .eq(ServicePackDiseases::getServicePackId, servicePack.getId()));
+//        if (!CollectionUtils.isEmpty(diseasesList)) {
+//            List<Integer> diseasesIds = diseasesList.stream().map(Diseases::getId)
+//                    .collect(Collectors.toList());
+//            List<ServicePackDiseases> servicePackDiseases = new ArrayList<>();
+//            for (Integer diseasesId : diseasesIds) {
+//                ServicePackDiseases diseases = new ServicePackDiseases();
+//                diseases.setDiseasesId(diseasesId);
+//                diseases.setServicePackId(servicePack.getId());
+//                servicePackDiseases.add(diseases);
+//            }
+//            servicePackDiseasesService.saveBatch(servicePackDiseases);
+//
+//        }
 
         //添加销售规格
         List<SaleSpec> saleSpecs = servicePack.getSaleSpec();
@@ -443,6 +522,8 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         List<ServicePackageInfo> servicePackageInfos = servicePack.getServicePackageInfos();
         if (!CollectionUtils.isEmpty(servicePackageInfos)) {
             for (ServicePackageInfo servicePackageInfo : servicePackageInfos) {
+
+
                 servicePackageInfo.setServicePackageId(servicePack.getId());
                 List<Integer> doctorTeamIds = servicePackageInfo.getDoctorTeamIds();
                 if (!CollectionUtils.isEmpty(doctorTeamIds)) {
@@ -490,7 +571,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             servicePackDetailService.remove(new QueryWrapper<ServicePackDetail>().lambda()
                     .eq(ServicePackDetail::getServicePackId, servicePack.getId()));
         }
-
+        operationRecordService.save(operationRecord);
         return RestResponse.ok();
     }
 
@@ -1099,6 +1180,15 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
      */
     @GetMapping("/copyServicePack")
     public RestResponse copyServicePack(@RequestParam("id") Integer id) {
+        //添加修改记录
+        OperationRecord operationRecord = new OperationRecord();
+        operationRecord.setStr(id + "");
+        operationRecord.setType(3);
+        operationRecord.setUserId(SecurityUtils.getUser().getId() + "");
+        operationRecord.setCreateTime(new Date());
+        operationRecord.setText("复制服务包");
+        operationRecordService.save(operationRecord);
+
         ServicePack servicePack = service.getById(id);
         servicePack.setName(servicePack.getName() + "复制");
         ServicePack newServicePack = new ServicePack();
