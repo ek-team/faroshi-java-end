@@ -96,6 +96,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         updateOrderRecordService.save(updateOrderRecord);
         service.save(reviewRefundOrder);
         userOrder.setReviewRefundOrderId(reviewRefundOrder.getId());
+        userOrder.setStatus(13);
         userOrdertService.updateById(userOrder);
         retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
@@ -117,6 +118,8 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         Double amount = reviewRefundOrder.getRefundFee().doubleValue();
         RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
+        UserOrder updateUserOrder = new UserOrder();
+
         if (reviewStatus.equals(1)) {
             //退款
 
@@ -153,11 +156,12 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                 String result = HttpUtil.get(url);
             } else {
                 //支付宝退款
-                aliPayService.aliRefundOrder(userOrder.getTransactionId(), new BigDecimal(amount + ""),retrieveOrder.getOrderNo());
+                aliPayService.aliRefundOrder(userOrder.getTransactionId(), new BigDecimal(amount + ""), retrieveOrder.getOrderNo());
 
             }
 
             retrieveOrder.setStatus(4);
+            updateUserOrder.setStatus(11);
             retrieveOrderService.updateById(retrieveOrder);
 
             UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
@@ -171,17 +175,17 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             //拒绝
             retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                     .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
-                    .set(RetrieveOrder::getStatus, 3));
+                    .set(RetrieveOrder::getStatus, 7));
+            updateUserOrder.setStatus(14);
         }
         reviewRefundOrder.setStatus(reviewStatus);
         reviewRefundOrder.setReviewRefundDesc(reviewRefundDesc);
         service.updateById(reviewRefundOrder);
 
 
-        UserOrder userOrder = new UserOrder();
-        userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
-        userOrder.setRefundReviewTime(LocalDateTime.now());
-        userOrdertService.updateById(userOrder);
+        updateUserOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
+        updateUserOrder.setRefundReviewTime(LocalDateTime.now());
+        userOrdertService.updateById(updateUserOrder);
         return RestResponse.ok();
     }
 

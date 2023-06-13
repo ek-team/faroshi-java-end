@@ -97,6 +97,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         UserOrder userOrder = new UserOrder();
         userOrder.setId(Integer.parseInt(retrieveOrderOne.getOrderId()));
         userOrder.setAcceptanceTime(LocalDateTime.now());
+        userOrder.setStatus(10);
         userOrdertService.updateById(userOrder);
 
         UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
@@ -626,6 +627,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
                 day = duration.toDays();
                 userOrder.setUseDay(day.intValue());
+                userOrder.setStatus(8);
                 userOrdertService.updateById(userOrder);
             }
             RetrieveOrder retrieveOrder = new RetrieveOrder();
@@ -664,17 +666,20 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         one.setKuAiDiStatus(Integer.parseInt(kuaiDiCallBackParam.getData().getStatus()));
         one.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
         service.updateById(one);
+        UserOrder userOrder = new UserOrder();
         //判断快递状态 修改状态为待审核
         if (kuaiDiCallBackParam.getData().getStatus().equals("13")) {
             one.setStatus(2);
+            userOrder.setStatus(9);
             service.updateById(one);
         }
         if (kuaiDiCallBackParam.getData().getStatus().equals("10")) {
-            UserOrder userOrder = new UserOrder();
+
             userOrder.setId(Integer.parseInt(one.getOrderId()));
             userOrder.setRecycleTime(LocalDateTime.now());
-            userOrdertService.updateById(userOrder);
+
         }
+        userOrdertService.updateById(userOrder);
         KuaiDiCallBackResult kuaiDiCallBackResult = new KuaiDiCallBackResult();
         kuaiDiCallBackResult.setResult(true);
         kuaiDiCallBackResult.setMessage("成功");

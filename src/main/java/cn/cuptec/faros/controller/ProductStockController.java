@@ -494,19 +494,19 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
                 byId.getProductSn() + "改为" + productStock.getProductSn());
         productStockRepairRecordService.save(record);
 
-        //如果locatorId不为空，设置其所属部门
-        if (productStock.getLocatorId() != null) {
-            Locator locator = locatorService.getById(productStock.getLocatorId());
-            productStock.setDeptId(locator.getDeptId());
-        }
+//        //如果locatorId不为空，设置其所属部门
+//        if (productStock.getLocatorId() != null) {
+//            Locator locator = locatorService.getById(productStock.getLocatorId());
+//            productStock.setDeptId(locator.getDeptId());
+//        }
         //如果业务员id不为空指定业务员所在的部门
-        if (productStock.getSalesmanId() != null) {
-            User user1 = userService.getById(productStock.getSalesmanId());
-            if (user1 != null) {
-                productStock.setDeptId(user1.getDeptId());
-
-            }
-        }
+//        if (productStock.getSalesmanId() != null) {
+//            User user1 = userService.getById(productStock.getSalesmanId());
+//            if (user1 != null) {
+//                productStock.setDeptId(user1.getDeptId());
+//
+//            }
+//        }
         if (StrUtil.isNotEmpty(productStock.getMacAddress())) {
             productStock.setMacAddress(productStock.getMacAddress().toLowerCase());
         }
