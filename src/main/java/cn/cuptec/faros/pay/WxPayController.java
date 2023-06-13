@@ -611,7 +611,6 @@ public class WxPayController {
                     userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
                     userOrder.setActualRetrieveAmount(divide);
                     userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
-                    userOrder.setStatus(12);
                     userOrdertService.updateById(userOrder);
                     User userById = userService.getById(retrieveOrder.getUserId());
                     //发送公众号通知

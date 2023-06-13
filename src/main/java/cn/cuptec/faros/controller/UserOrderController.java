@@ -422,7 +422,37 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             List<User> users = (List<User>) userService.listByIds(userIds);
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
+
+            //查询回收单
+            List<RetrieveOrder> retrieveOrders = retrieveOrderService.list(new QueryWrapper<RetrieveOrder>().lambda().in(RetrieveOrder::getUserOrderNo, userOrderNos));
+            Map<String, RetrieveOrder> retrieveOrderMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(retrieveOrders)) {
+                retrieveOrderMap = retrieveOrders.stream()
+                        .collect(Collectors.toMap(RetrieveOrder::getUserOrderNo, t -> t));
+            }
             for (UserOrder userOrder : records) {
+                RetrieveOrder retrieveOrder = retrieveOrderMap.get(userOrder.getOrderNo());
+                if (retrieveOrder != null) {
+                    //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成 6-退款待审核  7-退款拒绝
+                    Integer status = retrieveOrder.getStatus();
+                    //回收单状态 8-回收单待收货 9-回收单待审核 10-回收单待打款 11回收单收款 12-回收单回收完成 13-回收单退款待审核  14-回收单退款拒绝
+                    if (status.equals(1)) {
+                        userOrder.setStatus(8);
+                    } else if (status.equals(2)) {
+                        userOrder.setStatus(9);
+                    } else if (status.equals(3)) {
+                        userOrder.setStatus(10);
+                    } else if (status.equals(4)) {
+                        userOrder.setStatus(11);
+                    } else if (status.equals(5)) {
+                        userOrder.setStatus(12);
+                    } else if (status.equals(6)) {
+                        userOrder.setStatus(13);
+                    } else if (status.equals(7)) {
+                        userOrder.setStatus(14);
+                    }
+                }
+
                 if (userOrder.getBillId() != null) {
                     Bill bill = billMap.get(userOrder.getBillId());
                     userOrder.setBill(bill);

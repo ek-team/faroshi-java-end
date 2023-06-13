@@ -96,7 +96,6 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         updateOrderRecordService.save(updateOrderRecord);
         service.save(reviewRefundOrder);
         userOrder.setReviewRefundOrderId(reviewRefundOrder.getId());
-        userOrder.setStatus(13);
         userOrdertService.updateById(userOrder);
         retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
@@ -161,7 +160,6 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             }
 
             retrieveOrder.setStatus(4);
-            updateUserOrder.setStatus(11);
             retrieveOrderService.updateById(retrieveOrder);
 
             UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
@@ -176,7 +174,6 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                     .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
                     .set(RetrieveOrder::getStatus, 7));
-            updateUserOrder.setStatus(14);
         }
         reviewRefundOrder.setStatus(reviewStatus);
         reviewRefundOrder.setReviewRefundDesc(reviewRefundDesc);
