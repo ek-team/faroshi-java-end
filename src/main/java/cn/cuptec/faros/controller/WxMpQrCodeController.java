@@ -41,7 +41,7 @@ public class WxMpQrCodeController {
      * @throws WxErrorException
      */
     @GetMapping("/introduceSubscribeQrCode")
-    public RestResponse getProductQrcode(@RequestParam("servicePackId") int servicePackId,@RequestParam(value = "token",required = false) String token) throws WxErrorException {
+    public RestResponse getProductQrcode(@RequestParam(value = "servicePackId",required = false) int servicePackId,@RequestParam(value = "token",required = false) String token) throws WxErrorException {
 
         StringBuilder sb = new StringBuilder();
         sb.append(servicePackId);

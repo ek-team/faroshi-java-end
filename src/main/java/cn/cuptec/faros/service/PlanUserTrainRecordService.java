@@ -104,7 +104,9 @@ public class PlanUserTrainRecordService extends ServiceImpl<PlanUserTrainRecordM
 
 
         }
-
+        List<Long> keyIds = userTrainRecordList.stream().map(TbUserTrainRecord::getKeyId)
+                .collect(Collectors.toList());
+        remove(new QueryWrapper<TbUserTrainRecord>().lambda().in(TbUserTrainRecord::getKeyId, keyIds));
         this.saveBatch(userTrainRecordList);
         planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改训练记录上传标识
                 .eq(TbTrainUser::getUserId, userId)
