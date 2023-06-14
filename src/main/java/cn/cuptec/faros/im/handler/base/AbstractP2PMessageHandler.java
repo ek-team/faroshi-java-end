@@ -247,23 +247,24 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         if (targetUserChannel != null) {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                         } else {
-
-                            uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), userId, "");
-
                             User user = userService.getById(userId);
+
+                            if (StringUtils.isEmpty(name)) {
+                                if (StringUtils.isEmpty(user.getPatientName())) {
+                                    name = user.getNickname();
+                                } else {
+                                    name = user.getPatientName();
+                                }
+
+                            }
+                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "");
+
 
                             if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {
                                 LocalDateTime now = LocalDateTime.now();
                                 DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                                 String time = df.format(now);
-                                if (StringUtils.isEmpty(name)) {
-                                    if (StringUtils.isEmpty(user.getPatientName())) {
-                                        name = user.getNickname();
-                                    } else {
-                                        name = user.getPatientName();
-                                    }
 
-                                }
                                 wxMpService.sendDoctorTip(user.getMpOpenId(), "您有新的医生消息", name, time, origionMessage.getMsg(), "/pages/news/news");
                                 //wxMpService.sendDoctorUrlTip(user.getMpOpenId(), "您有新的医生消息", "", time, origionMessage.getMsg(), "https://pharos3.ewj100.com/record.html#/ucenter/recovery/externalLink");
 
