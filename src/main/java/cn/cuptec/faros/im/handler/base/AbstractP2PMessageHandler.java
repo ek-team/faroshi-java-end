@@ -202,7 +202,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         PatientUser patientUser = patientUserService.getById(patientId);
                         name = patientUser.getName();
                     }
-                    uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
+                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
                     if (!StringUtils.isEmpty(user.getMpOpenId())) {
 
                         LocalDateTime now = LocalDateTime.now();
