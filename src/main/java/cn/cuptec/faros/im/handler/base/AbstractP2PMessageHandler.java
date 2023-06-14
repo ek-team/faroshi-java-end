@@ -189,20 +189,22 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                 } else {
-                    uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
+                    Integer patientId = origionMessage.getPatientId();
                     User user = userService.getById(origionMessage.getTargetUid());
+
+                    String name = "";
+                    if (StringUtils.isEmpty(user.getPatientName())) {
+                        name = user.getNickname();
+                    } else {
+                        name = user.getPatientName();
+                    }
+                    if (patientId != null) {
+                        PatientUser patientUser = patientUserService.getById(patientId);
+                        name = patientUser.getName();
+                    }
+                    uniAppPushService.send("法罗适", fromUser.getPatientName() + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
                     if (!StringUtils.isEmpty(user.getMpOpenId())) {
-                        Integer patientId = origionMessage.getPatientId();
-                        String name = "";
-                        if (StringUtils.isEmpty(user.getPatientName())) {
-                            name = user.getNickname();
-                        } else {
-                            name = user.getPatientName();
-                        }
-                        if (patientId != null) {
-                            PatientUser patientUser = patientUserService.getById(patientId);
-                            name = patientUser.getName();
-                        }
+
                         LocalDateTime now = LocalDateTime.now();
                         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                         String time = df.format(now);
