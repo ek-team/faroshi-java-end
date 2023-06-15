@@ -126,7 +126,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/queryRentRuleOrder")
     public RestResponse queryRentRuleOrder(
             @RequestParam("userOrderNo") String userOrderNo) {
-        String[] split = userOrderNo.split("-");
+        String[] split = userOrderNo.split("KF");
         if (split.length == 1) {
             userOrderNo = split[0];
         } else {
@@ -160,7 +160,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     public RestResponse rentRuleOrder(@RequestParam("rentRuleId") Integer rentRuleId,
                                       @RequestParam("userOrderNo") String userOrderNo) {
         RentRule rentRule = rentRuleService.getById(rentRuleId);
-        String[] split = userOrderNo.split("-");
+        String[] split = userOrderNo.split("KF");
         if (split.length == 1) {
             userOrderNo = split[0];
         } else {
@@ -294,7 +294,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.like("user_order.receiver_phone", receiverPhone);
         }
         if (!StringUtils.isEmpty(userOrderNo)) {
-            String[] split = userOrderNo.split("-");
+            String[] split = userOrderNo.split("KF");
             if (split.length == 1) {
                 userOrderNo = split[0];
             } else {

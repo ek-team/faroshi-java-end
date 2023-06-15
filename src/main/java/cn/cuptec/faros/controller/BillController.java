@@ -37,7 +37,7 @@ public class BillController {
         userOrder.setOrderNo(bill.getOrderNo());
         userOrder.setBillId(bill.getId());
         String orderNo = bill.getOrderNo();
-        String[] split = orderNo.split("-");
+        String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
         } else {
