@@ -214,7 +214,10 @@ public class ProductStockService extends ServiceImpl<ProductStockMapper, Product
                 retrieveOrderData.add(productStockHistory);
             }
         }
-        userOrderData.stream().sorted(Comparator.comparing(ProductStockHistory::getOperateTime)).collect(Collectors.toList());
+        if(!CollectionUtils.isEmpty(userOrderData)){
+           // userOrderData.stream().sorted(Comparator.comparing(ProductStockHistory::getOperateTime)).collect(Collectors.toList());
+
+        }
         retrieveOrderData.stream().sorted(Comparator.comparing(ProductStockHistory::getOperateTime)).collect(Collectors.toList());
         //预收单和回收单交错排序
         List<ProductStockHistory> result = new ArrayList<>();
