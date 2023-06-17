@@ -355,7 +355,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             queryWrapper.ge("user_order.refund_review_time", startRefundReviewTime);
         }
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
-        queryWrapper.eq("user_order.test", 0);
+        //queryWrapper.eq("user_order.test", 0);
         IPage<UserOrder> pageScoped = service.pageScoped(aBoolean, page, queryWrapper);
         if (CollUtil.isNotEmpty(pageScoped.getRecords())) {
             List<UserOrder> records = pageScoped.getRecords();
