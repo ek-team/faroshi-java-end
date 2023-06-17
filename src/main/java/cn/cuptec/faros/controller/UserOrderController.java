@@ -572,50 +572,25 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             }
         } else {
             //购买
-            Integer servicePackId = userOrder.getServicePackId();
-            SaleSpec saleSpec = saleSpecService.getOne(new QueryWrapper<SaleSpec>().lambda()
-                    .eq(SaleSpec::getServicePackId, servicePackId)
-                    .eq(SaleSpec::getName, "服务周期"));
-            String saleSpecDescIdList1 = userOrder.getSaleSpecDescIdList();
-            List<String> split = Arrays.asList(saleSpecDescIdList1.split(","));
             Integer rentDay = 0;
-            if (saleSpec != null) {
-                List<SaleSpecDesc> saleSpecDescList = saleSpecDescService.list(new QueryWrapper<SaleSpecDesc>().lambda()
-                        .eq(SaleSpecDesc::getSaleSpecId, saleSpec.getId()));
-                List<String> saleSpecDescIdList = new ArrayList<>();
-                for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                    saleSpecDescIdList.add(saleSpecDesc.getId() + "");
-                }
-
-                saleSpecDescIdList.retainAll(split);
-                String saleSpecDescId = saleSpecDescIdList.get(0);
-                if (!StringUtils.isEmpty(saleSpecDescId)) {
-                    for (SaleSpecDesc saleSpecDesc : saleSpecDescList) {
-                        if (saleSpecDescId.equals(saleSpecDesc.getId() + "")) {
-                            String name = saleSpecDesc.getName();
-                            String regEx = "[^0-9]";
-                            Pattern p = Pattern.compile(regEx);
-                            Matcher m = p.matcher(name);
-                            String result = m.replaceAll("").trim();
-                            rentDay = Integer.parseInt(result);
-                        }
-                    }
-
-                }
-                List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, userOrder.getUserId()));
-                if (CollectionUtils.isEmpty(tbTrainUsers)) {
-                    return RestResponse.ok("10");
-                }
-                TbTrainUser tbTrainUser = tbTrainUsers.get(0);
-                if (tbTrainUser.getFirstTrainTime() == null) {
-                    return RestResponse.ok("10");
-                }
-                LocalDateTime payTime = tbTrainUser.getFirstTrainTime();
-                LocalDateTime localDateTime = payTime.plusDays(rentDay + 30);
-                if (localDateTime.isBefore(LocalDateTime.now())) {
-                    return RestResponse.ok("10");
-                }
+            if (userOrder.getSaleSpecServiceEndTime() != null) {
+                rentDay = userOrder.getSaleSpecServiceEndTime();
             }
+
+            List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, userOrder.getUserId()));
+            if (CollectionUtils.isEmpty(tbTrainUsers)) {
+                return RestResponse.ok("10");
+            }
+            TbTrainUser tbTrainUser = tbTrainUsers.get(0);
+            if (tbTrainUser.getFirstTrainTime() == null) {
+                return RestResponse.ok("10");
+            }
+            LocalDateTime payTime = tbTrainUser.getFirstTrainTime();
+            LocalDateTime localDateTime = payTime.plusDays(rentDay + 30);
+            if (localDateTime.isBefore(LocalDateTime.now())) {
+                return RestResponse.ok("10");
+            }
+
 
         }
 

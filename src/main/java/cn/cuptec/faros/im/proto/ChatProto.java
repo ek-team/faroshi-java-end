@@ -50,5 +50,6 @@ public class ChatProto {
     public static final String CONFIRM_STATUS = "CONFIRM_STATUS"; //咨询消息医生确认消息
     public static final String FORM = "FORM"; //表单消息
     public static final String ARTICLE = "ARTICLE"; //表单消息
+    public static final String CATH = "CATH"; //异常消息
 }
 

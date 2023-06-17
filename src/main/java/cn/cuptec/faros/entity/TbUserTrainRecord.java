@@ -29,6 +29,7 @@ public class TbUserTrainRecord {
     private Integer successTime;//成功次数
     private Integer warningTime;//警告次数
     private  String macAddress;
+    private  Integer totalTrainStep;
     private String bleMacAddress;
     private String bleName;
     private Integer trainTime;//训练时间

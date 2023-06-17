@@ -5,12 +5,19 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.GetTrainRecordDTO;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.UserChannelManager;
+import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +25,7 @@ import javax.annotation.Resource;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +41,16 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     private SubPlanService subPlanService;
     @Resource
     private PlanUserService planUserService;
+    @Resource
+    private PatientUserService patientUserService;
+    @Resource
+    private UserService userService;
+    @Resource
+    private UniAppPushService uniAppPushService;
+    @Resource
+    private ChatUserService chatUserService;
+    @Resource
+    private ChatMsgService chatMsgService;
 
     @GetMapping("/pageByUid/{uid}")
     public RestResponse pageByUid(@PathVariable String uid) {
@@ -44,8 +62,174 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
     @PostMapping("/save")
     public RestResponse<TbUserTrainRecord> saveAndData(@RequestBody List<TbUserTrainRecord> userTrainRecordList) {
+        //判断异常 推送给医生
+        String userId = userTrainRecordList.get(0).getUserId();
+        List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
+        pushData(list, userTrainRecordList);
+
+
         service.saveAndData(userTrainRecordList);
         return RestResponse.ok();
+    }
+
+    private void pushData(List<TbTrainUser> list, List<TbUserTrainRecord> userTrainRecordList) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                if (!CollectionUtils.isEmpty(list)) {
+                    TbTrainUser tbTrainUser = list.get(0);
+                    Integer xtUserId = tbTrainUser.getXtUserId();
+                    if (xtUserId != null) {
+                        User user = userService.getById(xtUserId);
+                        if (user != null) {
+                            List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTargetUid, xtUserId));
+                            if (!CollectionUtils.isEmpty(chatUsers)) {
+                                for (TbUserTrainRecord tbUserTrainRecord : userTrainRecordList) {
+                                    Long keyId = tbUserTrainRecord.getKeyId();
+                                    Integer painLevel = tbUserTrainRecord.getPainLevel();//vas值
+                                    if (painLevel != null) {
+                                        if (painLevel > 2) {
+                                            //发送信息
+                                            push(chatUsers, "VAS异常", tbUserTrainRecord.getKeyId(), user.getId());
+                                        }
+                                    }
+                                    String adverseReactions = tbUserTrainRecord.getAdverseReactions();//异常反馈
+                                    if (adverseReactions != null) {
+                                        //发送信息
+                                        push(chatUsers, "异常反馈", tbUserTrainRecord.getKeyId(), user.getId());
+                                    }
+                                    Integer successTime = tbUserTrainRecord.getSuccessTime();
+                                    Integer warningTime = tbUserTrainRecord.getWarningTime();
+                                    Integer time = 0;
+                                    if (warningTime != null) {
+                                        time = time + warningTime;
+                                    }
+                                    if (successTime != null) {
+                                        time = time + warningTime;
+                                    }
+                                    if (time != 0 && tbUserTrainRecord.getTotalTrainStep() != null) {
+                                        //发送信息
+                                        push(chatUsers, "踩踏次数异常", tbUserTrainRecord.getKeyId(), user.getId());
+                                    }
+                                }
+
+
+                            }
+
+                        }
+
+                    }
+                }
+            }
+        });
+    }
+
+    private void push(List<ChatUser> chatUsers, String msg, Long keyId, Integer fromUserId) {
+        List<ChatMsg> list = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getStr1, keyId));
+        if (!CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (ChatUser chatUser : chatUsers) {
+            //添加一条聊天记录Integer targetUid, Long keyId, String msg, String
+            // msgType, Integer fromUserId, Integer patientId, Date date, Integer chatUserId
+            ChatMsg chatMsg = saveChatMsg(chatUser.getUid(), keyId, msg, ChatProto.CATH, fromUserId, chatUser.getPatientId()
+                    , new Date(), chatUser.getId());
+            if (chatUser.getGroupType().equals(1)) {
+                //群聊
+                String data = chatUser.getUserIds();
+                List<String> allUserIds = Arrays.asList(data.split(","));
+                sendNotic(chatMsg, fromUserId, chatUser.getPatientId(), allUserIds, chatUser.getId());
+            } else {
+                //单聊
+                Channel targetUserChannel = UserChannelManager.getUserChannel(chatUser.getUid());
+                //向目标用户发送新消息提醒
+                SocketFrameTextMessage targetUserMessage
+                        = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), chatMsg.getMsgType(), JSON.toJSONString(chatMsg));
+
+                if (targetUserChannel != null) {
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                } else {
+                    String patientId = chatUser.getPatientId();
+                    User user = userService.getById(fromUserId);
+
+                    String name = "";
+                    if (StringUtils.isEmpty(user.getPatientName())) {
+                        name = user.getNickname();
+                    } else {
+                        name = user.getPatientName();
+                    }
+                    if (StringUtils.isEmpty(patientId)) {
+                        PatientUser patientUser = patientUserService.getById(patientId);
+                        name = patientUser.getName();
+                    }
+                    uniAppPushService.send("法罗适", name + ": " + chatMsg.getMsg(), chatUser.getUid() + "", "");
+
+                }
+            }
+
+        }
+
+    }
+
+    public ChatMsg saveChatMsg(Integer targetUid, Long keyId, String msg, String msgType, Integer fromUserId, String patientId, Date date, Integer chatUserId) {
+        ChatMsg chatMsg = new ChatMsg();
+        chatMsg.setMsgType(msgType);
+        chatMsg.setFromUid(fromUserId);
+        if (!StringUtils.isEmpty(patientId)) {
+            chatMsg.setPatientId(patientId + "");
+
+        }
+        chatMsg.setToUid(targetUid);
+        chatMsg.setMsg(msg);
+        chatMsg.setCreateTime(date);
+        chatMsg.setCanceled(0);
+        chatMsg.setPushed(0);
+        chatMsg.setReadStatus(0);
+        chatMsg.setStr1(keyId + "");
+        chatMsg.setChatUserId(chatUserId);
+        chatMsg.setReadUserIds(fromUserId + "");
+        chatMsgService.save(chatMsg);
+        return chatMsg;
+    }
+
+    private void sendNotic(ChatMsg chatMsg, Integer fromUserId,
+                           String patientId, List<String> allUserIds, Integer chatUserId) {
+
+        String name = "";
+        if (!StringUtils.isEmpty(patientId)) {
+            PatientUser patientUser = patientUserService.getById(patientId);
+            name = patientUser.getName();
+        }
+        for (String userId : allUserIds) {
+            String replace = userId.replace("[", "");
+            userId = replace.replace("]", "");
+            userId = userId.trim();
+            if (!userId.equals(fromUserId + "")) {
+
+                Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
+                //2.向目标用户发送新消息提醒
+                SocketFrameTextMessage targetUserMessage
+                        = SocketFrameTextMessage.newGroupMessageTip(chatUserId, JSON.toJSONString(chatMsg));
+                if (targetUserChannel != null) {
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                } else {
+                    User user = userService.getById(userId);
+
+                    if (StringUtils.isEmpty(name)) {
+                        if (StringUtils.isEmpty(user.getPatientName())) {
+                            name = user.getNickname();
+                        } else {
+                            name = user.getPatientName();
+                        }
+
+                    }
+                    uniAppPushService.send("法罗适", name + ": " + chatMsg.getMsg(), userId, "");
+
+                }
+            }
+
+        }
+
     }
 
     @GetMapping("/pageTrainRecordByXtUserId")
