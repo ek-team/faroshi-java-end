@@ -246,7 +246,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
             dataScope.setIsOnly(true);
         }
 
-        List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery(), dataScope);
+        List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery().eq(UserOrder::getTest,0), dataScope);
         // count0 = userOrders.stream().filter(it -> it.getStatus() == 0).count();
         long count1 = userOrders.stream().filter(it -> it.getStatus() == 1).count();
         long count2 = userOrders.stream().filter(it -> it.getStatus() == 2).count();
