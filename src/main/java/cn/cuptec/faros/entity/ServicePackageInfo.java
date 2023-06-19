@@ -1,5 +1,6 @@
 package cn.cuptec.faros.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -24,6 +25,7 @@ public class ServicePackageInfo extends Model<ServicePackageInfo> {
     private Integer count;//服务次数
     private String serviceDetail;
     private Integer expiredDay;//过期天数
+    @TableField(strategy = FieldStrategy.IGNORED)
     private String doctorTeamId;//医生团队id
     @TableField(exist = false)
     private List<Integer> doctorTeamIds;//医生团队id

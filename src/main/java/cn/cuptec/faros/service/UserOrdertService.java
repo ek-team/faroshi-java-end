@@ -236,25 +236,32 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 
 
     public UOrderStatuCountVo countScoped() {
-
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
         LocalDate now = LocalDate.now().plusDays(1);
 
         DataScope dataScope = new DataScope();
-        dataScope.setIsOnly(true);
+        if (aBoolean) {
+            dataScope.setIsOnly(false);
+        } else {
+            dataScope.setIsOnly(true);
+        }
+
         List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery(), dataScope);
-        long count0 = userOrders.stream().filter(it -> it.getStatus() == 0).count();
+        // count0 = userOrders.stream().filter(it -> it.getStatus() == 0).count();
         long count1 = userOrders.stream().filter(it -> it.getStatus() == 1).count();
         long count2 = userOrders.stream().filter(it -> it.getStatus() == 2).count();
         long count3 = userOrders.stream().filter(it -> it.getStatus() == 3).count();
         long count4 = userOrders.stream().filter(it -> it.getStatus() == 4).count();
+        long count6 = userOrders.stream().filter(it -> it.getStatus() == 5).count();
         long count5 = userOrders.stream().filter(it -> it.getDeliveryDate().isBefore(now) && it.getStatus() == 2).count();
         UOrderStatuCountVo vo = new UOrderStatuCountVo();
-        vo.setStatu0(count0);
-        vo.setStatu1(count1);
-        vo.setStatu2(count2);
-        vo.setStatu3(count3);
-        vo.setStatu4(count4);
-        vo.setStatu5(count5);
+        vo.setStatu0(userOrders.stream().count());//全部
+        vo.setStatu1(count1);//待付款
+        vo.setStatu2(count2);//待发货
+        vo.setStatu3(count3);//待收货
+        vo.setStatu4(count4);//已收货
+        vo.setStatu5(count5);//期待今日发货
+        vo.setStatu6(count6);//已回收
         return vo;
     }
 

@@ -65,7 +65,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         //判断异常 推送给医生
         String userId = userTrainRecordList.get(0).getUserId();
         List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-        pushData(list, userTrainRecordList);
+       // pushData(list, userTrainRecordList);
 
 
         service.saveAndData(userTrainRecordList);

@@ -31,6 +31,7 @@ public class TbUserTrainRecord {
     private  String macAddress;
     private  Integer totalTrainStep;
     private String bleMacAddress;
+    private String source;
     private String bleName;
     private Integer trainTime;//训练时间
     private Integer score;//得分

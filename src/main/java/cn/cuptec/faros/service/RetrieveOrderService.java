@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -50,7 +51,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     @Resource
     private UserOrdertService userOrdertService;
     @Resource
-    private SaleSpecService saleSpecService;
+    private UserRoleService userRoleService;
     private final Url urlData;
     @Resource
     private WxMpService wxMpService;
@@ -124,14 +125,32 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     }
 
     public RetrieveOrderCountVo countScoped() {
-        List<RetrieveOrder> tbUserOrders = baseMapper.listScoped(Wrappers.<RetrieveOrder>lambdaQuery(), new DataScope());
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+
+        DataScope dataScope = new DataScope();
+        if (aBoolean) {
+            dataScope.setIsOnly(false);
+        } else {
+            dataScope.setIsOnly(true);
+        }
+        List<RetrieveOrder> tbUserOrders = baseMapper.listScoped(Wrappers.<RetrieveOrder>lambdaQuery(), dataScope);
         RetrieveOrderCountVo vo = new RetrieveOrderCountVo();
         if (!CollectionUtils.isEmpty(tbUserOrders)) {
-            long count0 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 0).count();
-            long count9 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 9).count();
+            long count1 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 0).count();
+            long count2 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 1).count();
+            long count3 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 2).count();
+            long count4 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 3).count();
+            long count5 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 4).count();
+            long count6 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 5).count();
 
-            vo.setStatu0(count0);
-            vo.setStatu9(count9);
+
+            vo.setStatu0(tbUserOrders.stream().count());//全部
+            vo.setStatu1(count1);//待邮寄
+            vo.setStatu2(count2);//待收货
+            vo.setStatu3(count3);//待审核
+            vo.setStatu4(count4);//待打款
+            vo.setStatu5(count5);//待收款
+            vo.setStatu6(count6);//回收完成
 
         }
         return vo;

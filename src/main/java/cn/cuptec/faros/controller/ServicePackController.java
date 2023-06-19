@@ -182,7 +182,6 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
         operationRecordService.save(operationRecord);
 
 
-
         User byId = userService.getById(SecurityUtils.getUser().getId());
         servicePack.setDeptId(byId.getDeptId());
         servicePack.setDeptIdList(byId.getDeptId() + "");
@@ -537,6 +536,9 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
                         }
                     }
                     servicePackageInfo.setDoctorTeamId(doctorTeamId);
+                } else {
+                    servicePackageInfo.setDoctorTeamId(null);
+
                 }
 
             }

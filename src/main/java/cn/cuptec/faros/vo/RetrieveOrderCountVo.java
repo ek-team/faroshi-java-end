@@ -6,7 +6,11 @@ import lombok.Data;
 public class RetrieveOrderCountVo {
 
     private Long statu0;
-
-    private Long statu9;
+    private Long statu1;
+    private Long statu2;
+    private Long statu3;
+    private Long statu4;
+    private Long statu5;
+    private Long statu6;
 
 }
