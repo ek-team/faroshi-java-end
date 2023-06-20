@@ -49,7 +49,15 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
         mapExpressTrackVo.setUserOrder(userOrder);
         return mapExpressTrackVo;
     }
-
+    public MapExpressTrackVo getUserOrderMapTraceNoMessage(int id) {
+        UserOrder userOrder = userOrdertService.getById(id);
+        MapExpressTrackVo mapExpressTrackVo = queryExpressDataNoMessage(userOrder.getReceiverPhone(), userOrder.getDeliveryCompanyCode(), userOrder.getDeliverySn());
+        if(mapExpressTrackVo==null){
+            return null;
+        }
+        mapExpressTrackVo.setUserOrder(userOrder);
+        return mapExpressTrackVo;
+    }
     //获取用户回收单物流信息
     public MapExpressTrackVo queryRetrieveOrderExpressInfo(int id) {
         RetrieveOrder retrieveOrder = retrieveOrderService.getById(id);
@@ -133,7 +141,42 @@ public class ExpressService extends ServiceImpl<ExpressMapper, Express> {
             throw new RuntimeException("物流公司返回结果："+e.getMessage());
         }
     }
+    private MapExpressTrackVo queryExpressDataNoMessage(String phone, String com, String num) {
+        MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
+        expressParam.setCom(com);
+        expressParam.setNum(num);
+        if (!StringUtils.isEmpty(phone)) {
+            expressParam.setPhone(phone);
 
+        }
+        String expressParamStr = JSON.toJSONString(expressParam);
+        String signOrigion = expressParamStr + key + customer;
+        String sign = DigestUtils.md5Hex(signOrigion).toUpperCase();
+
+        String url = "https://poll.kuaidi100.com/poll/maptrack.do?customer=" + customer + "&sign= " + sign + "&param=" + expressParamStr;
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("customer", customer);
+        paramMap.put("sign", sign);
+        paramMap.put("param", expressParamStr);
+        try {
+            HttpResponse response = HttpUtils.doGet("https://poll.kuaidi100.com", "/poll/query.do", "get", new HashMap<>(), paramMap);
+            String expressResult = EntityUtils.toString(response.getEntity()); //输出json
+            log.info(expressResult + "ppppppppppppppppppppppppppppppp");
+            MapExpressTrackVo expressTrackVo = JSON.parseObject(expressResult, MapExpressTrackVo.class);
+            if (expressTrackVo.getStatus() == null) {
+               return null;
+            }
+            if (expressTrackVo.getStatus() == 200) {
+                return expressTrackVo;
+            } else {
+                return null;
+            }
+        } catch (RuntimeException e) {
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
     public static void main(String[] args) {
         MapExpressTrackVo.ExpressParam expressParam = new MapExpressTrackVo.ExpressParam();
         expressParam.setCom("shunfeng");

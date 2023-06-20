@@ -40,6 +40,8 @@ public class DoctorTeam extends Model<DoctorTeam>  implements Comparable<DoctorT
     @TableField(exist = false)
     private User leaderUser;
     @TableField(exist = false)
+    private HospitalInfo hospitalInfo;
+    @TableField(exist = false)
     private  String pingYin;
     @Override
     public int compareTo(DoctorTeam o) {

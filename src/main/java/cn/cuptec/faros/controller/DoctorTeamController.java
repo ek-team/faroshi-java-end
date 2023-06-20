@@ -649,6 +649,18 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
                     .in(DoctorTeamPeople::getTeamId, teamIds));
 
 
+            List<Integer> hospitalIds = doctorTeams.stream().map(DoctorTeam::getHospitalId)
+                    .collect(Collectors.toList());
+            List<HospitalInfo> hospitalInfos = (List<HospitalInfo>) hospitalInfoService.listByIds(hospitalIds);
+            Map<Integer, HospitalInfo> hospitalInfoMap=new HashMap<>();
+            if(!CollectionUtils.isEmpty(hospitalInfos)){
+               hospitalInfoMap = hospitalInfos.stream()
+                        .collect(Collectors.toMap(HospitalInfo::getId, t -> t));
+
+
+            }
+
+            Map<Integer, List<DoctorTeamPeople>> map=new HashMap<>();
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
@@ -662,14 +674,15 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
 
                     }
                 }
-                Map<Integer, List<DoctorTeamPeople>> map = doctorTeamPeopleList.stream()
+                map= doctorTeamPeopleList.stream()
                         .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
 
-                for (DoctorTeam doctorTeam : doctorTeams) {
-                    doctorTeam.setDoctorTeamPeopleList(map.get(doctorTeam.getId()));
-                }
             }
 
+            for (DoctorTeam doctorTeam : doctorTeams) {
+                doctorTeam.setDoctorTeamPeopleList(map.get(doctorTeam.getId()));
+                doctorTeam.setHospitalInfo(hospitalInfoMap.get(doctorTeam.getHospitalId()));
+            }
         }
         return RestResponse.ok(doctorTeams);
     }

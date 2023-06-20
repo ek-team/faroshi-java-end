@@ -37,15 +37,14 @@ public class DeliveryTime {
                 .isNull(UserOrder::getLogisticsDeliveryTime));
         if (!CollectionUtils.isEmpty(list)) {
             for (UserOrder userOrder : list) {
-                MapExpressTrackVo userOrderMapTrace = expressService.getUserOrderMapTrace(userOrder.getId());
-                MapExpressTrackVo.ExpressData[] data = userOrderMapTrace.getData();
-                MapExpressTrackVo.ExpressData datum = data[data.length - 1];
-                String time = datum.getTime();
-                LocalDateTime ldt = LocalDateTime.parse(time, df);
-                userOrder.setLogisticsDeliveryTime(ldt);
-                Integer state = userOrderMapTrace.getState();
-                if (state.equals(3)) {
-                    userOrder.setStatus(4);
+                MapExpressTrackVo userOrderMapTrace = expressService.getUserOrderMapTraceNoMessage(userOrder.getId());
+                if(userOrderMapTrace!=null){
+                    MapExpressTrackVo.ExpressData[] data = userOrderMapTrace.getData();
+                    MapExpressTrackVo.ExpressData datum = data[data.length - 1];
+                    String time = datum.getTime();
+                    LocalDateTime ldt = LocalDateTime.parse(time, df);
+                    userOrder.setLogisticsDeliveryTime(ldt);
+
                 }
             }
             userOrdertService.updateBatchById(list);
