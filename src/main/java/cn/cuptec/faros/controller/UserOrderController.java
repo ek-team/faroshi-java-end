@@ -556,20 +556,23 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/checkOrderBill")
     public RestResponse checkOrderBill(@RequestParam("id") Integer id) {
         UserOrder userOrder = service.getById(id);
+        if(userOrder.getStatus().equals(1)){
+            return RestResponse.ok(10);
+        }
         if (userOrder.getOrderType().equals(1)) {
             //租用
             RetrieveOrder one = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getOrderId, id));
             if (one == null) {
-                return RestResponse.ok("10");
+                return RestResponse.ok("20");
             }
-            if (!one.getStatus().equals(5)) {
-                return RestResponse.ok("10");
+            if (one.getStatus().equals(5)) {
+                LocalDateTime retrieveEndTime = one.getRetrieveEndTime();
+                if (retrieveEndTime.plusDays(30).isBefore(LocalDateTime.now())) {
+                    return RestResponse.ok("10");
+                }
             }
-            LocalDateTime retrieveEndTime = one.getRetrieveEndTime();
-            if (retrieveEndTime.plusDays(30).isBefore(LocalDateTime.now())) {
-                return RestResponse.ok("10");
-            }
+
         } else {
             //购买
             Integer rentDay = 0;
@@ -579,11 +582,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
             List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getXtUserId, userOrder.getUserId()));
             if (CollectionUtils.isEmpty(tbTrainUsers)) {
-                return RestResponse.ok("10");
+                return RestResponse.ok("20");
             }
             TbTrainUser tbTrainUser = tbTrainUsers.get(0);
             if (tbTrainUser.getFirstTrainTime() == null) {
-                return RestResponse.ok("10");
+                return RestResponse.ok("20");
             }
             LocalDateTime payTime = tbTrainUser.getFirstTrainTime();
             LocalDateTime localDateTime = payTime.plusDays(rentDay + 30);

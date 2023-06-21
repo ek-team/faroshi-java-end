@@ -131,7 +131,10 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     public RestResponse save(@RequestBody FollowUpPlan followUpPlan) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
-        followUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
+        if(followUpPlan.getCreateUserId()!=null){
+            followUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
+
+        }
         followUpPlan.setCreateTime(LocalDateTime.now());
 
         service.save(followUpPlan);
@@ -527,6 +530,28 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         queryWrapper.orderByDesc("create_time");
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();
+        return RestResponse.ok(followUpPlanIPage);
+    }
+    @GetMapping("/pcpage")
+    public RestResponse pcpageScoped(@RequestParam(value = "name", required = false) String name,@RequestParam(value = "createType", required = false) Integer createType) {
+        Page<FollowUpPlan> page = getPage();
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+
+        queryWrapper.orderByDesc("create_time");
+        IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
+        List<FollowUpPlan> records = followUpPlanIPage.getRecords();
+        if(!CollectionUtils.isEmpty(records)){
+            List<Integer> creatUserId=new ArrayList<>();
+            for(FollowUpPlan followUpPlan:records){
+                creatUserId.add(followUpPlan.getCreateUserId());
+            }
+            List<User> users = (List<User>) userService.listByIds(creatUserId);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+            for(FollowUpPlan followUpPlan:records){
+                followUpPlan.setCreateUser(userMap.get(followUpPlan.getCreateUserId()));
+            }
+        }
         return RestResponse.ok(followUpPlanIPage);
     }
 

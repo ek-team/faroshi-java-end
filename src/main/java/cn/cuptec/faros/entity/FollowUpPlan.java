@@ -17,7 +17,7 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
 
     @TableId(type = IdType.AUTO)
     private Integer id;
-    private Integer createUserId;
+    private Integer createUserId;//所属人
     private Integer followUpStatus = 0;//0可编辑1不可编辑
     private Integer deptId;//记录部门下的随访模板
     private LocalDateTime createTime;
@@ -41,4 +41,6 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     private List<FollowUpPlanPatientUser> followUpPlanPatientUserList;//随访计划患者
     @TableField(exist = false)
     private FollowUpPlanNoticeCount followUpPlanNoticeCount;
+    @TableField(exist = false)
+    private User createUser;
 }
