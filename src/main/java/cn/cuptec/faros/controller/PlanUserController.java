@@ -101,6 +101,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     private final Url urlData;
     @Resource
     private OperationRecordService operationRecordService;
+    @Resource
+    private SysTemNoticService sysTemNoticService;
 
     //查看设备用户计划审核状态
     @GetMapping("/getPlanStatus")
@@ -108,13 +110,20 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
         return RestResponse.ok(tbTrainUser.getPlanCheckStatus());
     }
+
     //修改设备用户计划审核状态
     @GetMapping("/updatePlanStatus")
-    public RestResponse updatePlanStatus(@RequestParam("userId") String userId,@RequestParam("status") Integer status) {
-        TbTrainUser tbTrainUser = new TbTrainUser();
-        tbTrainUser.setUserId(userId);
+    public RestResponse updatePlanStatus(@RequestParam("userId") String userId, @RequestParam("status") Integer status) {
+        TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
         tbTrainUser.setPlanCheckStatus(status);
         service.updateById(tbTrainUser);
+
+        sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
+                .eq(SysTemNotic::getPatientUserId, userId)
+                .eq(SysTemNotic::getType, 2)
+                .set(SysTemNotic::getCheckStatus, status)
+
+        );
         return RestResponse.ok();
     }
 
@@ -366,7 +375,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
      */
     @GetMapping("/getQrCode")
     public RestResponse getQrCode(@RequestParam("userId") String userId) {
-        String url =urlData.getUrl()+ "user/srBindAdress/" + userId;
+        String url = urlData.getUrl() + "user/srBindAdress/" + userId;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.drawLogoQRCode(ServletUtils.getResponse().getOutputStream(), "png", "", url, "", 300, "", 2);
@@ -383,7 +392,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
      */
     @GetMapping("/getRegisterPlanUserQrCode")
     public RestResponse getRegisterPlanUserQrCode(@RequestParam("macAdd") String macAdd) {
-        String url = urlData.getUrl()+"palnUser/registerPlanUser/" + macAdd;
+        String url = urlData.getUrl() + "palnUser/registerPlanUser/" + macAdd;
         BufferedImage png = null;
         try {
             png = QrCodeUtil.drawLogoQRCode(ServletUtils.getResponse().getOutputStream(), "png", "", url, "", 300, "", 2);
