@@ -102,6 +102,22 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @Resource
     private OperationRecordService operationRecordService;
 
+    //查看设备用户计划审核状态
+    @GetMapping("/getPlanStatus")
+    public RestResponse getPlanStatus(@RequestParam("userId") String userId) {
+        TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
+        return RestResponse.ok(tbTrainUser.getPlanCheckStatus());
+    }
+    //修改设备用户计划审核状态
+    @GetMapping("/updatePlanStatus")
+    public RestResponse updatePlanStatus(@RequestParam("userId") String userId,@RequestParam("status") Integer status) {
+        TbTrainUser tbTrainUser = new TbTrainUser();
+        tbTrainUser.setUserId(userId);
+        tbTrainUser.setPlanCheckStatus(status);
+        service.updateById(tbTrainUser);
+        return RestResponse.ok();
+    }
+
     @GetMapping("/page")
     public RestResponse pageList(@RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
                                  @RequestParam(value = "maxHeight", required = false) Integer maxHeight, @RequestParam(value = "miniHeight", required = false) Integer miniHeight,

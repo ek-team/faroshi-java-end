@@ -3,14 +3,13 @@ package cn.cuptec.faros.controller;
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
-import cn.cuptec.faros.entity.ListByUidPlanResult;
-import cn.cuptec.faros.entity.OperationRecord;
-import cn.cuptec.faros.entity.TbPlan;
-import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.OperationRecordService;
 import cn.cuptec.faros.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.Data;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -35,14 +34,15 @@ public class OperationRecordController extends AbstractBaseController<OperationR
     public RestResponse listByUid(@RequestParam(value = "str", required = false) String str,
                                   @RequestParam(value = "type", required = false) Integer type) {
         LambdaQueryWrapper<OperationRecord> eq = new QueryWrapper<OperationRecord>().lambda();
-
+        Page<OperationRecord> page = getPage();
         if (!StringUtils.isEmpty(str)) {
             eq.eq(OperationRecord::getStr, str);
         }
         if (type != null) {
             eq.eq(OperationRecord::getType, type);
         }
-        List<OperationRecord> list = operationRecordService.list(eq);
+        IPage<OperationRecord> page1 = operationRecordService.page(page, eq);
+        List<OperationRecord> list = page1.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return RestResponse.ok();
         }
@@ -60,7 +60,7 @@ public class OperationRecordController extends AbstractBaseController<OperationR
             }
 
         }
-        return RestResponse.ok(list);
+        return RestResponse.ok(page1);
     }
 
     @PostMapping("/save")

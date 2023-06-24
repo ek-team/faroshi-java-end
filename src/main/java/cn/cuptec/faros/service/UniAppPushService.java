@@ -50,7 +50,7 @@ public class UniAppPushService {
         uniAppPushData.setTitle(title);
         uniAppPushData.setRequest_id(IdUtil.getSnowflake(0, 0).nextIdStr());
         String params = JSONObject.toJSONString(uniAppPushData);
-        String post = HttpUtil.post("https://fc-mp-92cdf782-3569-4cfa-9ee7-91f1d7befa00.next.bspapp.com/pharosPush", params);
+        String post = HttpUtil.post("https://fc-mp-5bbd77c6-0a7c-4cbe-a7c5-66ab25fa9c70.next.bspapp.com/pharosPush", params);
         log.info("发送通知消息结果" + post);
         //        PushApi pushApi = PushApiInit.getPushApi();
 //        //根据cid进行单推

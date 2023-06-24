@@ -51,6 +51,8 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     private ChatUserService chatUserService;
     @Resource
     private ChatMsgService chatMsgService;
+    @Resource
+    private SysTemNoticService sysTemNoticService;
 
     @GetMapping("/pageByUid/{uid}")
     public RestResponse pageByUid(@PathVariable String uid) {
@@ -125,26 +127,26 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     }
 
     private void push(List<ChatUser> chatUsers, String msg, Long keyId, Integer fromUserId) {
-        List<ChatMsg> list = chatMsgService.list(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getStr1, keyId));
+        List<SysTemNotic> list = sysTemNoticService.list(new QueryWrapper<SysTemNotic>().lambda().eq(SysTemNotic::getKeyId, keyId));
         if (!CollectionUtils.isEmpty(list)) {
             return;
         }
         for (ChatUser chatUser : chatUsers) {
             //添加一条聊天记录Integer targetUid, Long keyId, String msg, String
             // msgType, Integer fromUserId, Integer patientId, Date date, Integer chatUserId
-            ChatMsg chatMsg = saveChatMsg(chatUser.getUid(), keyId, msg, ChatProto.CATH, fromUserId, chatUser.getPatientId()
-                    , new Date(), chatUser.getId());
+         saveSystemNotic( keyId, msg,  chatUser.getPatientId(),
+                   chatUser.getId(),chatUser.getTeamId(),chatUser.getUid());
             if (chatUser.getGroupType().equals(1)) {
                 //群聊
                 String data = chatUser.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
-                sendNotic(chatMsg, fromUserId, chatUser.getPatientId(), allUserIds, chatUser.getId());
+                sendNotic(msg,fromUserId, chatUser.getPatientId(), allUserIds, chatUser.getId());
             } else {
                 //单聊
                 Channel targetUserChannel = UserChannelManager.getUserChannel(chatUser.getUid());
                 //向目标用户发送新消息提醒
                 SocketFrameTextMessage targetUserMessage
-                        = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), chatMsg.getMsgType(), JSON.toJSONString(chatMsg));
+                        = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), ChatProto.SYSTEM_NOTIC, "");
 
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
@@ -162,7 +164,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                         PatientUser patientUser = patientUserService.getById(patientId);
                         name = patientUser.getName();
                     }
-                    uniAppPushService.send("法罗适", name + ": " + chatMsg.getMsg(), chatUser.getUid() + "", "");
+                    uniAppPushService.send("法罗适", name + ": " + msg, chatUser.getUid() + "", "");
 
                 }
             }
@@ -171,28 +173,23 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
     }
 
-    public ChatMsg saveChatMsg(Integer targetUid, Long keyId, String msg, String msgType, Integer fromUserId, String patientId, Date date, Integer chatUserId) {
-        ChatMsg chatMsg = new ChatMsg();
-        chatMsg.setMsgType(msgType);
-        chatMsg.setFromUid(fromUserId);
-        if (!StringUtils.isEmpty(patientId)) {
-            chatMsg.setPatientId(patientId + "");
+    public void saveSystemNotic( Long keyId, String msg, String patientId, Integer chatUserId,Integer teamId,Integer doctorId) {
+        SysTemNotic sysTemNotic = new SysTemNotic();
+        sysTemNotic.setCreateTime(LocalDateTime.now());
+        sysTemNotic.setContent(msg);
+        sysTemNotic.setTitle(msg);
 
-        }
-        chatMsg.setToUid(targetUid);
-        chatMsg.setMsg(msg);
-        chatMsg.setCreateTime(date);
-        chatMsg.setCanceled(0);
-        chatMsg.setPushed(0);
-        chatMsg.setReadStatus(0);
-        chatMsg.setStr1(keyId + "");
-        chatMsg.setChatUserId(chatUserId);
-        chatMsg.setReadUserIds(fromUserId + "");
-        chatMsgService.save(chatMsg);
-        return chatMsg;
+        sysTemNotic.setDoctorId(doctorId);
+        sysTemNotic.setTeamId(teamId);
+        sysTemNotic.setReadStatus(1);
+        sysTemNotic.setType(1);
+        sysTemNotic.setPatientUserId(patientId);
+        sysTemNotic.setKeyId(keyId+"");
+        sysTemNotic.setChatUserId(chatUserId);
+        sysTemNoticService.save(sysTemNotic);
     }
 
-    private void sendNotic(ChatMsg chatMsg, Integer fromUserId,
+    private void sendNotic(String msg, Integer fromUserId,
                            String patientId, List<String> allUserIds, Integer chatUserId) {
 
         String name = "";
@@ -209,7 +206,8 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                 Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
                 //2.向目标用户发送新消息提醒
                 SocketFrameTextMessage targetUserMessage
-                        = SocketFrameTextMessage.newGroupMessageTip(chatUserId, JSON.toJSONString(chatMsg));
+                        = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), ChatProto.SYSTEM_NOTIC, "");
+
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
                 } else {
@@ -223,7 +221,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                         }
 
                     }
-                    uniAppPushService.send("法罗适", name + ": " + chatMsg.getMsg(), userId, "");
+                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "");
 
                 }
             }
