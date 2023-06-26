@@ -131,7 +131,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     public RestResponse save(@RequestBody FollowUpPlan followUpPlan) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
-        if(followUpPlan.getCreateUserId()!=null){
+        if(followUpPlan.getCreateUserId()==null){
             followUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
 
         }

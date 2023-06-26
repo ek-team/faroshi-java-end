@@ -560,7 +560,25 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 
         return RestResponse.ok(subPlans);
     }
+    @GetMapping("/updatePlanLnValid")
+    public RestResponse<List<TbSubPlan>> updatePlanLnValid(@RequestParam("userId") String userId,@RequestParam("planInvalid") Integer planInvalid) {
+        Page<TbSubPlan> page = new Page<>();
+        page.setSize(1);
+        page.setCurrent(1);
+        QueryWrapper queryWrapper = new QueryWrapper<TbSubPlan>();
+        queryWrapper.eq("user_id", userId);
+        queryWrapper.orderByAsc("version");
+        IPage page1 = service.page(page, queryWrapper);
+        List<TbSubPlan> subPlans = page1.getRecords();
+        if (!CollectionUtils.isEmpty(subPlans)) {
+           for(TbSubPlan tbSubPlan:subPlans){
+               tbSubPlan.setPlanInvalid(planInvalid);
+           }
+            service.updateBatchById(subPlans);
+        }
 
+        return RestResponse.ok(subPlans);
+    }
     @GetMapping("/getOneByIdCard")
     public RestResponse<List<TbSubPlan>> getOneByIdCard(@RequestParam(value = "idCard", required = false) String idCard, @RequestParam(value = "xtUserId", required = false) String xtUserId) {
 

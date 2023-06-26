@@ -176,7 +176,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/alipay/payqrcode",
                         "/productStock/updateDataByMacAdd",
                         "/palnUser/getPlanStatus",
-                        "/palnUser/updatePlanStatus"
+                        "/palnUser/updatePlanStatus",
+                        "/subPlan/updatePlanLnValid"
 
                 )
                 .permitAll()
