@@ -65,7 +65,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
     private final OssProperties ossProperties;
     @Resource
-    private DeptService deptService;
+    private LoginLogService loginLogService;
     @Resource
     private DoctorTeamPeopleService doctorTeamPeopleService;
     @Resource
@@ -93,6 +93,16 @@ public class UserController extends AbstractBaseController<UserService, User> {
     private final Url urlData;
     @Resource
     private PatientUserBindDoctorService patientUserBindDoctorService;
+
+    @GetMapping("/saveLoginLog")
+    public RestResponse saveLoginLog(@RequestParam("data") String data) {
+        LoginLog loginLog = new LoginLog();
+        loginLog.setData(data);
+        loginLog.setCreateTime(LocalDateTime.now());
+        loginLogService.save(loginLog);
+        return RestResponse.ok();
+    }
+
 
     @GetMapping("/copyUser")
     public RestResponse copyUser(@RequestParam("id") Integer id) {
@@ -650,7 +660,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         QueryWrapper<User> queryWrapper = getQueryWrapper(getEntityClass());
         List<Integer> roleIds = new ArrayList<>();
         roleIds.add(18);
-        queryWrapper.eq("user.del_flag",0);
+        queryWrapper.eq("user.del_flag", 0);
         return RestResponse.ok(service.queryUserByRole(roleIds, queryWrapper, page));
     }
 
