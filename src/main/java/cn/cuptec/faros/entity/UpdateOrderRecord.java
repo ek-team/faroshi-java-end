@@ -1,6 +1,7 @@
 package cn.cuptec.faros.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
@@ -21,4 +22,6 @@ public class UpdateOrderRecord {
     private Integer createUserId;
 
     private String descStr;
+    @TableField(exist = false)
+    private User createUser;
 }

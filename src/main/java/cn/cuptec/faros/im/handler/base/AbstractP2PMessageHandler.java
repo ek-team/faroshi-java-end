@@ -53,7 +53,7 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
     @Resource
     private UserFollowDoctorService userFollowDoctorService;
     @Resource
-    private UserGroupService userGroupService;
+    private PatientOtherOrderService patientOtherOrderService;
     @Resource
     private UserGroupRelationUserService userGroupRelationUserService;
     @Resource
@@ -137,6 +137,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (fromUser.getId().equals(byId.getTargetUid())) {
                     if (!byId.getChatCount().equals(0)) {
                         byId.setChatCount(byId.getChatCount() - 1);
+                        String patientOtherOrderNo = byId.getPatientOtherOrderNo();
+                        if (!StringUtils.isEmpty(patientOtherOrderNo)) {
+                            PatientOtherOrder patientOtherOrder = new PatientOtherOrder();
+                            patientOtherOrder.setId(Integer.parseInt(patientOtherOrderNo));
+                            patientOtherOrder.setNewMsg(1);
+                            patientOtherOrderService.updateById(patientOtherOrder);
+
+                        }
                     }
 
                 } else {
@@ -421,6 +429,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
             if (one != null) {
                 if (!one.getChatCount().equals(0)) {
                     one.setChatCount(one.getChatCount() - 1);
+                    String patientOtherOrderNo = one.getPatientOtherOrderNo();
+                    if(!StringUtils.isEmpty(patientOtherOrderNo)){
+                        PatientOtherOrder patientOtherOrder=new PatientOtherOrder();
+                        patientOtherOrder.setId(Integer.parseInt(patientOtherOrderNo));
+                        patientOtherOrder.setNewMsg(1);
+                        patientOtherOrderService.updateById(patientOtherOrder);
+
+                    }
                 }
                 if (origionMessage.getType() != null && origionMessage.getType().equals(1) && chatUser.getUid().equals(fromUser.getId())) {
 

@@ -74,8 +74,8 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
 
     //设备端主动发送通知
     @GetMapping("/sendNotic")
-    public RestResponse sendNotic(@RequestParam("userId")Integer userId,@RequestParam("content")String content) {
-        TbTrainUser infoByUXtUserId = planUserService.getInfoByUXtUserId(userId);
+    public RestResponse sendNotic(@RequestParam("userId")String userId,@RequestParam("content")String content) {
+        TbTrainUser infoByUXtUserId = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
 
 
         SysTemNotic sysTemNotic = new SysTemNotic();
@@ -87,7 +87,7 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
         sysTemNotic.setTitle(content);
         sysTemNotic.setReadStatus(1);
         sysTemNotic.setType(2);
-        sysTemNotic.setPatientUserId(userId+"");
+        sysTemNotic.setPatientUserId(infoByUXtUserId.getXtUserId()+"");
         service.save(sysTemNotic);
 
         List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
@@ -99,7 +99,7 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
                 //群聊
                 String data = chatUser.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
-                sendNotic1(content,userId, chatUser.getPatientId(), allUserIds, chatUser.getId());
+                sendNotic1(content,infoByUXtUserId.getXtUserId(), chatUser.getPatientId(), allUserIds, chatUser.getId());
             }
 
         }

@@ -533,10 +533,39 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         return RestResponse.ok(followUpPlanIPage);
     }
     @GetMapping("/pcpage")
-    public RestResponse pcpageScoped(@RequestParam(value = "name", required = false) String name,@RequestParam(value = "createType", required = false) Integer createType) {
+    public RestResponse pcpageScoped(@RequestParam(value = "name", required = false) String name,
+                                     @RequestParam(value = "startCreateTime", required = false) String startCreateTime,
+                                     @RequestParam(value = "endCreateTime", required = false) String endCreateTime,
+                                     @RequestParam(value = "createName", required = false) String createName,
+                                     @RequestParam(value = "optionName", required = false) String optionName,
+                                     @RequestParam(value = "createType", required = false) Integer createType) {
         Page<FollowUpPlan> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        if(!StringUtils.isEmpty(name)){
+            queryWrapper.like("name",name);
+        }
+        if(!StringUtils.isEmpty(optionName)){
+            queryWrapper.like("option_name",optionName);
+        }
+        if(!StringUtils.isEmpty(createName)){
+            List<User> userList = userService.list(new QueryWrapper<User>().lambda().like(User::getNickname, createName)
+            );
+            if(!CollectionUtils.isEmpty(userList)){
+                List<Integer> userIds = userList.stream().map(User::getId)
+                        .collect(Collectors.toList());
+                queryWrapper.in("create_user_id",userIds);
 
+            }
+        }
+        if (!StringUtils.isEmpty(startCreateTime)) {
+            if (StringUtils.isEmpty(endCreateTime)) {
+                LocalDateTime now = LocalDateTime.now();
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                endCreateTime = df.format(now);
+            }
+            queryWrapper.le("create_time", endCreateTime);
+            queryWrapper.ge("create_time", startCreateTime);
+        }
         queryWrapper.orderByDesc("create_time");
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();

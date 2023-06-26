@@ -455,7 +455,14 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                             chatUserVO.setTargetUid(chatUser.getTargetUid());
                             chatUserVO.setPatientId(chatUser.getPatientId());
                             User tenantUser = userMap.get(chatUser.getTargetUid());
-                            String patientName = tenantUser.getPatientName();
+                            String patientName="";
+                            if(tenantUser!=null){
+                                 patientName = tenantUser.getPatientName();
+                                chatUserVO.setAvatar(tenantUser.getAvatar());
+                                chatUserVO.setPatientAvatar(tenantUser.getAvatar());
+                                chatUserVO.setNickname(tenantUser.getNickname());
+
+                            }
                             if (!StringUtils.isEmpty(chatUser.getPatientName())) {
                                 patientName = chatUser.getPatientName();
                             }
@@ -466,10 +473,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                             chatUserVO.setPatientName(patientName);
 
                             chatUserVO.setPatientName(patientName);
-                            chatUserVO.setAvatar(tenantUser.getAvatar());
-                            chatUserVO.setPatientAvatar(tenantUser.getAvatar());
-                            chatUserVO.setNickname(tenantUser.getNickname());
-                            chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
+                              chatUserVO.setServiceEndTime(chatUser.getServiceEndTime());
                             chatUserVO.setServiceStartTime(chatUser.getServiceStartTime());
                             chatUserVO.setRemark(chatUser.getRemark());
                             chatUserVO.setClearTime(chatUser.getClearTime());
@@ -484,7 +488,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
                             int count;
                             if (!StringUtils.isEmpty(chatUser.getPatientId())) {
                                 LambdaQueryWrapper<ChatMsg> eq = Wrappers.<ChatMsg>lambdaQuery()
-                                        .eq(ChatMsg::getFromUid, tenantUser.getId())
+                                        .eq(ChatMsg::getFromUid, chatUser.getTargetUid())
                                         .eq(ChatMsg::getToUid, param.getMyUserId())
                                         .eq(ChatMsg::getPatientId, chatUser.getPatientId())
                                         .eq(ChatMsg::getReadStatus, 0);
@@ -494,7 +498,7 @@ public class ChatUserService extends ServiceImpl<ChatUserMapper, ChatUser> {
 
                             } else {
                                 LambdaQueryWrapper<ChatMsg> eq = Wrappers.<ChatMsg>lambdaQuery()
-                                        .eq(ChatMsg::getFromUid, tenantUser.getId())
+                                        .eq(ChatMsg::getFromUid, chatUser.getTargetUid())
                                         .eq(ChatMsg::getToUid, param.getMyUserId())
                                         .eq(ChatMsg::getReadStatus, 0);
                                 count =

@@ -70,6 +70,8 @@ public class User extends Model<User> {
     private String realName;
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private LocalDateTime operationTime;//手术时间
+    @TableField(exist = false)
+    private Date date;            //手术时间
     private String operationName;//手术名字
     private Double weight;      // 体重
 
