@@ -42,6 +42,7 @@ public class TbSubPlan implements Comparable<TbSubPlan>{
     private Date updateDate;//更新时间
     //版本记录
     private Integer version;
+    private Integer planInvalid=0;// 0合法 1-不合法
     private Integer tbPlanId;
     private Integer trainTime;//训练时间
     private Integer trainStep;//训练步数 踩踏次数

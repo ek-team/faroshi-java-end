@@ -339,7 +339,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String endDeliveryDate = df.format(now);
 
-            queryWrapper.le("user_order.delivery_date", endDeliveryDate);
+//            queryWrapper.le("user_order.delivery_date", endDeliveryDate);
             queryWrapper.ge("user_order.delivery_date", startDeliveryDate);
         }
 
@@ -542,7 +542,17 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             eq.eq(UpdateOrderRecord::getOrderId, id);
         }
         IPage<UpdateOrderRecord> page1 = updateOrderRecordService.page(page, eq);
-
+        List<UpdateOrderRecord> records = page1.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
+            List<Integer> creatUserIds = records.stream().map(UpdateOrderRecord::getCreateUserId)
+                    .collect(Collectors.toList());
+            List<User> users = (List<User>) userService.listByIds(creatUserIds);
+            Map<Integer, User> userMap = users.stream()
+                    .collect(Collectors.toMap(User::getId, t -> t));
+            for (UpdateOrderRecord updateOrderRecord : records) {
+                updateOrderRecord.setCreateUser(userMap.get(updateOrderRecord.getCreateUserId()));
+            }
+        }
         return RestResponse.ok(page1);
     }
 
@@ -556,7 +566,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/checkOrderBill")
     public RestResponse checkOrderBill(@RequestParam("id") Integer id) {
         UserOrder userOrder = service.getById(id);
-        if(userOrder.getStatus().equals(1)){
+        if (userOrder.getStatus().equals(1)) {
             return RestResponse.ok(10);
         }
         if (userOrder.getOrderType().equals(1)) {

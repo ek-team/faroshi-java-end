@@ -19,6 +19,7 @@ public class PatientOtherOrder {
     private Integer id;
     private Integer userId;
     private String transactionId;
+    private Integer newMsg=0;//判断发送消息之后是否有新的 9条消息 0-没有 1-有
     private Integer deptId;
     private Integer chatUserId;
     private Integer hour;//过期时间

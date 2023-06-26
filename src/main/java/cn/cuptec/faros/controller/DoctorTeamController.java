@@ -377,8 +377,8 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     @GetMapping("/deleteById")
     public RestResponse deleteById(@RequestParam("id") int id) {
         service.update(Wrappers.<DoctorTeam>lambdaUpdate()
-                .set(DoctorTeam::getId, id)
-                .eq(DoctorTeam::getDel, 1));
+                .eq(DoctorTeam::getId, id)
+                .set(DoctorTeam::getDel, 1));
 
         doctorTeamPeopleService.remove(new QueryWrapper<DoctorTeamPeople>().lambda().eq(DoctorTeamPeople::getTeamId, id));
         return RestResponse.ok();

@@ -45,6 +45,8 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
     @Resource
     private UserService userService;
     @Resource
+    private PlanUserService planUserService;
+    @Resource
     private UserDoctorRelationService userDoctorRelationService;
     @Resource
     private DoctorTeamPeopleService doctorTeamPeopleService;
@@ -634,24 +636,45 @@ public class UserGroupController extends AbstractBaseController<UserGroupService
      * @return
      */
     @GetMapping("/getUserNoGroup")
-    public RestResponse getUserNoGroup(@RequestParam(value = "teamId", required = false) Integer teamId) {
+    public RestResponse getUserNoGroup(@RequestParam(value = "teamId", required = false) Integer teamId,
+                                       @RequestParam(value = "groupId", required = false) Integer groupId) {
 
-        //查询未分组数量
-        LambdaQueryWrapper<UserFollowDoctor> eq = new QueryWrapper<UserFollowDoctor>().lambda();
-        if (teamId != null) {
-            eq.eq(UserFollowDoctor::getTeamId, teamId);
-        } else {
-            eq.eq(UserFollowDoctor::getDoctorId, SecurityUtils.getUser().getId());
-        }
-
-        List<UserFollowDoctor> userFollowDoctorList = userFollowDoctorService.list(eq);
-        if (CollectionUtils.isEmpty(userFollowDoctorList)) {
+        //查询所有患者
+        List<UserDoctorRelation> userDoctorRelationList = userDoctorRelationService.list(new QueryWrapper<UserDoctorRelation>().lambda()
+                .eq(UserDoctorRelation::getDoctorId, SecurityUtils.getUser().getId()));
+        if(CollectionUtils.isEmpty(userDoctorRelationList)){
             return RestResponse.ok();
         }
-        List<Integer> userIds = userFollowDoctorList.stream().map(UserFollowDoctor::getUserId)
-                .collect(Collectors.toList());
 
-        return RestResponse.ok(userService.listByIds(userIds));
+
+        List<Integer> userIds = userDoctorRelationList.stream().map(UserDoctorRelation::getUserId)
+                .collect(Collectors.toList());
+        List<User> users = (List<User>) userService.listByIds(userIds);
+        if(!CollectionUtils.isEmpty(users)){
+            List<Integer> userIdList = users.stream().map(User::getId)
+                    .collect(Collectors.toList());
+            //查询手术名称
+            List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, userIdList));
+            Map<Integer, List<TbTrainUser>> map = new HashMap<>();
+            if (!org.springframework.util.CollectionUtils.isEmpty(tbTrainUsers)) {
+                map = tbTrainUsers.stream()
+                        .collect(Collectors.groupingBy(TbTrainUser::getXtUserId));
+                for (User user : users) {
+                    if (!org.apache.commons.lang3.StringUtils.isEmpty(user.getPatientName())) {
+                        user.setNickname(user.getPatientName());
+
+                    }
+                    List<TbTrainUser> tbTrainUsers1 = map.get(user.getId());
+                    if (!org.springframework.util.CollectionUtils.isEmpty(tbTrainUsers1)) {
+                        TbTrainUser tbTrainUser = tbTrainUsers1.get(0);
+                        user.setDiagnosis(tbTrainUser.getDiagnosis());
+                        user.setDate(tbTrainUser.getDate());
+                    }
+                }
+            }
+
+        }
+        return RestResponse.ok(users);
     }
 
     @GetMapping("/getAllPatient")

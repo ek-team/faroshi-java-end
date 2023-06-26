@@ -33,6 +33,10 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     @Resource
     private FormOptionsService formOptionsService;
     @Resource
+    private FollowUpPlanPatientUserService followUpPlanPatientUserService;
+    @Resource
+    private FollowUpPlanContentService followUpPlanContentService;
+    @Resource
     private FormSettingService formSettingService;
     @Resource
     private UserService userService;
@@ -146,12 +150,48 @@ public class FormController extends AbstractBaseController<FormService, Form> {
 
     /**
      * 查询某一表单用户填写的数据
+     * 查询随访计划对应的患者
      */
     @GetMapping("/pageFormUserData")
-    public RestResponse pageFormUserData(@RequestParam("formId") Integer formId) {
-        List<FormUserData> formUserDataList = formUserDataService.list(new QueryWrapper<FormUserData>().lambda()
-                .eq(FormUserData::getFormId, formId)
+    public RestResponse pageFormUserData(@RequestParam(value = "formId", required = false) Integer formId,
+                                         @RequestParam(value = "folloUpPlanId", required = false) Integer folloUpPlanId) {
+        LambdaQueryWrapper<FormUserData> eq = new QueryWrapper<FormUserData>().lambda();
+        List<Integer> formIds = new ArrayList<>();
+        if (folloUpPlanId != null) {
+            List<FollowUpPlanContent> followUpPlanContents = followUpPlanContentService.list(new QueryWrapper<FollowUpPlanContent>().lambda()
+                    .eq(FollowUpPlanContent::getFollowUpPlanId, folloUpPlanId));
+
+            if (CollectionUtils.isEmpty(followUpPlanContents)) {
+                return RestResponse.ok();
+            }
+
+            for (FollowUpPlanContent followUpPlanContent : followUpPlanContents) {
+                if (followUpPlanContent.getFormId() != null) {
+                    formIds.add(followUpPlanContent.getFormId());
+                }
+            }
+            if (CollectionUtils.isEmpty(formIds)) {
+                return RestResponse.ok();
+            }
+            List<FollowUpPlanPatientUser> followUpPlanPatientUsers = followUpPlanPatientUserService.list(new QueryWrapper<FollowUpPlanPatientUser>().lambda()
+                    .eq(FollowUpPlanPatientUser::getFollowUpPlanId, folloUpPlanId));
+            if (CollectionUtils.isEmpty(followUpPlanPatientUsers)) {
+                return RestResponse.ok();
+            }
+            List<Integer> userIds = followUpPlanPatientUsers.stream().map(FollowUpPlanPatientUser::getUserId)
+                    .collect(Collectors.toList());
+            eq.in(FormUserData::getUserId, userIds);
+            eq.in(FormUserData::getFormId, formIds);
+        } else {
+            eq.eq(FormUserData::getFormId, formId);
+            formIds.add(formId);
+        }
+        List<FormUserData> formUserDataList = formUserDataService.list(eq
         );
+
+        List<Form> forms = (List<Form>) service.listByIds(formIds);
+        Map<Integer, Form> formMap = forms.stream()
+                .collect(Collectors.toMap(Form::getId, t -> t));
         if (!CollectionUtils.isEmpty(formUserDataList)) {
             List<Integer> userIds = new ArrayList<>();
             for (FormUserData formUserData : formUserDataList) {
@@ -167,18 +207,25 @@ public class FormController extends AbstractBaseController<FormService, Form> {
             List<Form> formDatas = new ArrayList<>();
             for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
                 Form form = new Form();
+
+
                 form.setGroupId(formUserDatas.get(0).getGroupId());
                 form.setCreateTime(formUserDatas.get(0).getCreateTime());
                 Double scope = 0.0;
                 for (FormUserData formUserData : formUserDatas) {
+                    Form form1 = formMap.get(formUserData.getFormId());
+                    if(form1!=null){
+                        form.setTitle(form1.getTitle());
+
+                    }
                     if (formUserData.getScope() != null) {
                         scope = formUserData.getScope() + scope;
                     }
-                    if(userMap.get(formUserData.getUserId())!=null){
+                    if (userMap.get(formUserData.getUserId()) != null) {
                         form.setUserName(userMap.get(formUserData.getUserId()).getPatientName());
 
                     }
-                    if(userMap.get(formUserData.getDoctorId())!=null){
+                    if (userMap.get(formUserData.getDoctorId()) != null) {
                         form.setDoctorName(userMap.get(formUserData.getDoctorId()).getNickname());
 
                     }
@@ -412,7 +459,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                             if (formUserData.getType().equals("6")) {
                                 List<Integer> ans = new ArrayList<>();
                                 for (String str : strings) {
-                                    if(!StringUtils.isEmpty(str)){
+                                    if (!StringUtils.isEmpty(str)) {
                                         ans.add(Integer.parseInt(str));
 
                                     }

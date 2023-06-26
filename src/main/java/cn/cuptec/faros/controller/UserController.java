@@ -650,6 +650,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
         QueryWrapper<User> queryWrapper = getQueryWrapper(getEntityClass());
         List<Integer> roleIds = new ArrayList<>();
         roleIds.add(18);
+        queryWrapper.eq("user.del_flag",0);
         return RestResponse.ok(service.queryUserByRole(roleIds, queryWrapper, page));
     }
 
