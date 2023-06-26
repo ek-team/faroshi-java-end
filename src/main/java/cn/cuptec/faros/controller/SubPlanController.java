@@ -560,7 +560,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 
         return RestResponse.ok(subPlans);
     }
-    @GetMapping("/updatePlanLnValid")
+    @GetMapping("/updatePlanInvalid")
     public RestResponse<List<TbSubPlan>> updatePlanLnValid(@RequestParam("userId") String userId,@RequestParam("planInvalid") Integer planInvalid) {
         Page<TbSubPlan> page = new Page<>();
         page.setSize(1);

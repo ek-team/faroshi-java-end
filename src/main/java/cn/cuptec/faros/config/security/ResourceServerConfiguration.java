@@ -177,7 +177,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/productStock/updateDataByMacAdd",
                         "/palnUser/getPlanStatus",
                         "/palnUser/updatePlanStatus",
-                        "/subPlan/updatePlanLnValid"
+                        "/subPlan/updatePlanInvalid"
 
                 )
                 .permitAll()
