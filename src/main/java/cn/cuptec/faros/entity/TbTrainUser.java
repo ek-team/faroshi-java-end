@@ -27,7 +27,7 @@ public class TbTrainUser {
 
     private String doctorTeam;
     private Integer doctorTeamId;
-    private Integer planCheckStatus=1;//1待审核 2审核通过
+    private Integer planCheckStatus;//1待审核 2审核通过
     private String birthday;
     private Integer cardType; //1-身份证 2-其他
     private String treatmentMethodId;//治疗方法Id
