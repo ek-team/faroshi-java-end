@@ -35,11 +35,11 @@ public class SocialAuthenticationProvider implements AuthenticationProvider {
 		String principal = socialAuthenticationToken.getPrincipal().toString();
 		UserDetails userDetails = userDetailsService.loadUserBySocial(principal);
 		if (userDetails == null) {
-			log.debug("Authentication failed: no credentials provided");
+			log.info("构建用户为空");
 
 			throw new BadCredentialsException(messages.getMessage(
 					"AbstractUserDetailsAuthenticationProvider.noopBindAccount",
-					"Noop Bind Account"));
+					"构建用户为空"));
 		}
 
 		// 检查账号状态

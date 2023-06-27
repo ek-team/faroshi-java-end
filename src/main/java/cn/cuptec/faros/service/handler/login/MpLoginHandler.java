@@ -62,11 +62,11 @@ public class MpLoginHandler extends AbstractLoginHandler {
 
             wxMpService = WxMpConfiguration.getWxMp1Service();
         }
-
+        //MA@casjkdhaskjdhaskdj
         WxMpOAuth2AccessToken accessToken = wxMpService.oauth2getAccessToken(identify);
-        log.info("accessToken={}", JSON.toJSONString(accessToken));
+        log.info("公众号获取用户信息accessToken={}", JSON.toJSONString(accessToken));
         WxMpUser wxMpUser = wxMpService.oauth2getUserInfo(accessToken, null);
-        log.info("wxMpUser={}", JSON.toJSONString(wxMpUser));
+        log.info("公众号获取用户信息={}", JSON.toJSONString(wxMpUser));
         if (wxMpUser != null) {
             User user = userService.getBaseMapper().getUnionIdIsExist(wxMpUser.getUnionId());
             if (user == null) {

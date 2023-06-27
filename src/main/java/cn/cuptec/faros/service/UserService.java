@@ -483,7 +483,8 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     /**
      * 根据入参查询用户信息
-     *
+     * @MP:qsueidaudhaskjd
+     * @MA:sadkaskjldjklsd
      * @param inStr TYPE@code
      * @return
      */
