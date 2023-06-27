@@ -54,7 +54,7 @@ public class AliPayService {
         AlipayTradeRefundResponse response = null;
         try {
             response = alipayClient.execute(request);
-            log.info("支付宝退款返回结果" + request.toString());
+            log.info("支付宝退款返回结果" + response.toString());
         } catch (AlipayApiException e) {
             e.printStackTrace();
         }
@@ -63,40 +63,34 @@ public class AliPayService {
             System.out.println("调用成功");
             String outTradeNo = response.getOutTradeNo();//回收单号
             String refundFee = response.getRefundFee();//实际退款金额
-            OrderRefundInfo orderRefundInfo = orderRefundInfoService.getOne(new QueryWrapper<OrderRefundInfo>().lambda()
-                    .eq(OrderRefundInfo::getOrderId, outTradeNo));
-            if (orderRefundInfo != null) {
-                orderRefundInfo.setErrCodeDes(response.getMsg());
-                orderRefundInfo.setSuccessTime(new Date());
-                orderRefundInfo.setRefundStatus(2);
-                orderRefundInfoService.updateById(orderRefundInfo);
-                RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                        .eq(RetrieveOrder::getOrderNo, outTradeNo));
-                BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
-                BigDecimal divide = refundFee1.divide(new BigDecimal(100));
-                if (retrieveOrder != null) {
-                    //修改订单的实际回收价
-                    retrieveOrder.setRetrieveAmount(divide);
-                    retrieveOrder.setRetrieveEndTime(LocalDateTime.now());
-                    retrieveOrder.setStatus(5);
-                    retrieveOrderService.updateById(retrieveOrder);
+            log.info("支付宝退款返回结果===" + outTradeNo + "==" + refundFee);
 
-                    UserOrder byId = userOrdertService.getById(Integer.parseInt(retrieveOrder.getOrderId()));
+            RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                    .eq(RetrieveOrder::getOrderNo, userOrderNo));
 
-                    UserOrder userOrder = new UserOrder();
-                    userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
-                    userOrder.setActualRetrieveAmount(divide);
-                    userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
-                    userOrdertService.updateById(userOrder);
-                    User userById = userService.getById(retrieveOrder.getUserId());
-                    //发送公众号通知
-                    DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            BigDecimal divide = amount;
+            if (retrieveOrder != null) {
+                //修改订单的实际回收价
+                retrieveOrder.setRetrieveAmount(divide);
+                retrieveOrder.setRetrieveEndTime(LocalDateTime.now());
+                retrieveOrder.setStatus(5);
+                retrieveOrderService.updateById(retrieveOrder);
 
-                    wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
-                            "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
-                }
+                UserOrder byId = userOrdertService.getById(Integer.parseInt(retrieveOrder.getOrderId()));
 
+                UserOrder userOrder = new UserOrder();
+                userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
+                userOrder.setActualRetrieveAmount(divide);
+                userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
+                userOrdertService.updateById(userOrder);
+                User userById = userService.getById(retrieveOrder.getUserId());
+                //发送公众号通知
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                wxMpService.refundNotice(userById.getMpOpenId(), "您的订单已退款", divide + "元", df.format(LocalDateTime.now()), df.format(LocalDateTime.now()),
+                        "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
             }
+
 
         } else {
             System.out.println("调用失败");

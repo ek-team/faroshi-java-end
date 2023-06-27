@@ -70,10 +70,10 @@ public class CustomUserDetailsServiceImpl implements CustomUserDetailsService {
     @Override
     @SneakyThrows
     public UserDetails loadUserBySocial(String inStr) {
-        log.info("小程序登录===================" + inStr);
+        log.info("登录===================" + inStr + "====" + inStr);
         User user = userService.getBySocialParam(inStr);
         UserDetails userDetails = getUserDetails(user);
-        log.info("小程序登录返回===================" + userDetails.toString());
+        log.info("登录返回===================" + inStr + "======" + userDetails.toString());
         return userDetails;
     }
 

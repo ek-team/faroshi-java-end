@@ -25,10 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -50,102 +47,66 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
     private UniAppPushService uniAppPushService;
 
     @GetMapping("/page")
-    public RestResponse page() {
+    public RestResponse page(@RequestParam(value = "type", required = false) Integer type) {
         Page<SysTemNotic> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
         List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                 .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
-        queryWrapper.eq("doctor_id",SecurityUtils.getUser().getId());
+        queryWrapper.eq("doctor_id", SecurityUtils.getUser().getId());
         if (!CollectionUtils.isEmpty(list)) {
             List<Integer> teamIds = list.stream().map(DoctorTeamPeople::getTeamId)
                     .collect(Collectors.toList());
             queryWrapper.or();
-            queryWrapper.in("team_id",teamIds);
+            queryWrapper.in("team_id", teamIds);
 
         }
-        queryWrapper.orderByDesc("create_time","read_status");
+        queryWrapper.eq("check_status", 1);
+        if (type != null) {
+            if (type.equals(1)) {
+                queryWrapper.eq("type", 1);
+            }
+            if (type.equals(2)) {
+                queryWrapper.eq("type", 2);
+            }
+        }
+
+        queryWrapper.orderByDesc("create_time", "read_status");
 
 
         IPage page1 = service.page(page, queryWrapper);
+        List<SysTemNotic> records = page1.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
+            List<String> stockUserIds = new ArrayList<>();
+            for (SysTemNotic sysTemNotic : records) {
+
+                if (!StringUtils.isEmpty(sysTemNotic.getStockUserId())) {
+                    stockUserIds.add(sysTemNotic.getStockUserId());
+                }
+            }
+            Map<String, TbTrainUser> tbTrainUserMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(stockUserIds)) {
+                List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getUserId, stockUserIds));
+                tbTrainUserMap = tbTrainUsers.stream()
+                        .collect(Collectors.toMap(TbTrainUser::getUserId, t -> t));
+            }
+            for (SysTemNotic sysTemNotic : records) {
+                sysTemNotic.setTbTrainUser(tbTrainUserMap.get(sysTemNotic.getStockUserId()));
+
+            }
+        }
         return RestResponse.ok(page1);
 
     }
 
     //设备端主动发送通知
     @GetMapping("/sendNotic")
-    public RestResponse sendNotic(@RequestParam("userId")String userId,@RequestParam("content")String content) {
-        TbTrainUser infoByUXtUserId = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-
-
-        SysTemNotic sysTemNotic = new SysTemNotic();
-        if(infoByUXtUserId!=null){
-            sysTemNotic.setTeamId(infoByUXtUserId.getDoctorTeamId());
-        }
-        sysTemNotic.setCreateTime(LocalDateTime.now());
-        sysTemNotic.setContent(content);
-        sysTemNotic.setTitle(content);
-        sysTemNotic.setReadStatus(1);
-        sysTemNotic.setType(2);
-        sysTemNotic.setPatientUserId(infoByUXtUserId.getXtUserId()+"");
-        service.save(sysTemNotic);
-
-        List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
-                .eq(ChatUser::getTargetUid, userId)
-                .eq(ChatUser::getTeamId,infoByUXtUserId.getDoctorTeamId()));
-        for (ChatUser chatUser : chatUsers) {
-
-            if (chatUser.getGroupType().equals(1)) {
-                //群聊
-                String data = chatUser.getUserIds();
-                List<String> allUserIds = Arrays.asList(data.split(","));
-                sendNotic1(content,infoByUXtUserId.getXtUserId(), chatUser.getPatientId(), allUserIds, chatUser.getId());
-            }
-
-        }
+    public RestResponse sendNotic(@RequestParam("userId") String userId, @RequestParam("content") String content) {
+        service.sendNotic(userId, content);
         return RestResponse.ok();
 
     }
-    private void sendNotic1(String msg, Integer fromUserId,
-                           String patientId, List<String> allUserIds, Integer chatUserId) {
 
-        String name = "";
-        if (!StringUtils.isEmpty(patientId)) {
-            PatientUser patientUser = patientUserService.getById(patientId);
-            name = patientUser.getName();
-        }
-        for (String userId : allUserIds) {
-            String replace = userId.replace("[", "");
-            userId = replace.replace("]", "");
-            userId = userId.trim();
-            if (!userId.equals(fromUserId + "")) {
-
-                Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
-                //2.向目标用户发送新消息提醒
-                SocketFrameTextMessage targetUserMessage
-                        = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), ChatProto.SYSTEM_NOTIC, "");
-
-                if (targetUserChannel != null) {
-                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                } else {
-                    User user = userService.getById(userId);
-
-                    if (StringUtils.isEmpty(name)) {
-                        if (StringUtils.isEmpty(user.getPatientName())) {
-                            name = user.getNickname();
-                        } else {
-                            name = user.getPatientName();
-                        }
-
-                    }
-                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "");
-
-                }
-            }
-
-        }
-
-    }
     @Override
     protected Class<SysTemNotic> getEntityClass() {
         return SysTemNotic.class;

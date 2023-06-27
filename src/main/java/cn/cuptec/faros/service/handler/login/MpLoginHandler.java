@@ -21,6 +21,9 @@ import me.chanjar.weixin.mp.bean.result.WxMpOAuth2AccessToken;
 import me.chanjar.weixin.mp.bean.result.WxMpUser;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * 公众号登录
  */
@@ -31,7 +34,7 @@ public class MpLoginHandler extends AbstractLoginHandler {
 
     private final UserService userService;
     private final UserRoleService userRoleService;
-
+    private final Lock lock = new ReentrantLock();
     @Override
     public boolean check(String loginStr) {
 //        String[] loginParameter = loginStr.split(StringPool.COLON);
@@ -62,12 +65,14 @@ public class MpLoginHandler extends AbstractLoginHandler {
 
             wxMpService = WxMpConfiguration.getWxMp1Service();
         }
-
+        //MA@casjkdhaskjdhaskdj
         WxMpOAuth2AccessToken accessToken = wxMpService.oauth2getAccessToken(identify);
-        log.info("accessToken={}", JSON.toJSONString(accessToken));
+        log.info("公众号获取用户信息accessToken={}", JSON.toJSONString(accessToken));
         WxMpUser wxMpUser = wxMpService.oauth2getUserInfo(accessToken, null);
-        log.info("wxMpUser={}", JSON.toJSONString(wxMpUser));
+        log.info("公众号获取用户信息={}", JSON.toJSONString(wxMpUser));
         if (wxMpUser != null) {
+            lock.lock();
+            try {
             User user = userService.getBaseMapper().getUnionIdIsExist(wxMpUser.getUnionId());
             if (user == null) {
                 user = new User();
@@ -90,18 +95,21 @@ public class MpLoginHandler extends AbstractLoginHandler {
                 user.setId(user.getId());
                 userService.getBaseMapper().updateUserById(user);
             }
+                if (StringUtils.isEmpty(user.getMpOpenId())) {
+                    //若公众号openId为空，更新
+                    user.setMpOpenId(wxMpUser.getOpenId());
+                    userService.updateById(user);
+                }
 
-            if (StringUtils.isEmpty(user.getMpOpenId())) {
-                //若公众号openId为空，更新
-                user.setMpOpenId(wxMpUser.getOpenId());
+                //若小程序Uniond为空，更新
+                user.setUnionId(wxMpUser.getUnionId());
                 userService.updateById(user);
+
+                return userService.refactByUser(user);
+            } finally {
+                lock.unlock();
             }
 
-            //若小程序Uniond为空，更新
-            user.setUnionId(wxMpUser.getUnionId());
-            userService.updateById(user);
-
-            return userService.refactByUser(user);
         }
         return null;
     }

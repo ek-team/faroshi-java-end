@@ -1,6 +1,7 @@
 package cn.cuptec.faros.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
@@ -21,7 +22,10 @@ public class SysTemNotic {
     private Integer teamId;
     private Integer readStatus;//1-未读 0-已读
     private String patientUserId;//用户id
+    private String stockUserId;//设备用户id
     private String keyId;
     private Integer chatUserId;
     private Integer checkStatus=1;//1待审核 2审核通过
+    @TableField(exist = false)
+    private TbTrainUser tbTrainUser;
 }

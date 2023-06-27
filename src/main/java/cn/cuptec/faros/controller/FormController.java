@@ -46,6 +46,8 @@ public class FormController extends AbstractBaseController<FormService, Form> {
     private ChatMsgService chatMsgService;
     @Resource
     private FollowUpPlanNoticeService followUpPlanNoticeService;
+    @Resource
+    private PatientUserService patientUserService;
 
     /**
      * 添加
@@ -154,6 +156,10 @@ public class FormController extends AbstractBaseController<FormService, Form> {
      */
     @GetMapping("/pageFormUserData")
     public RestResponse pageFormUserData(@RequestParam(value = "formId", required = false) Integer formId,
+                                         @RequestParam(value = "name", required = false) String name,
+                                         @RequestParam(value = "userName", required = false) String userName,
+                                         @RequestParam(value = "startTime", required = false) String startTime,
+                                         @RequestParam(value = "endTime", required = false) String endTime,
                                          @RequestParam(value = "folloUpPlanId", required = false) Integer folloUpPlanId) {
         LambdaQueryWrapper<FormUserData> eq = new QueryWrapper<FormUserData>().lambda();
         List<Integer> formIds = new ArrayList<>();
@@ -182,6 +188,26 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                     .collect(Collectors.toList());
             eq.in(FormUserData::getUserId, userIds);
             eq.in(FormUserData::getFormId, formIds);
+            if (!StringUtils.isEmpty(startTime)) {
+                eq.le(FormUserData::getCreateTime, endTime);
+                eq.ge(FormUserData::getCreateTime, startTime);
+            }
+            if (!StringUtils.isEmpty(userName)) {
+                List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda().like(PatientUser::getName, userName));
+                if (!CollectionUtils.isEmpty(patientUsers)) {
+                    List<Integer> userIdList = patientUsers.stream().map(PatientUser::getUserId)
+                            .collect(Collectors.toList());
+                    eq.in(FormUserData::getUserId, userIdList);
+                }
+            }
+            if (!StringUtils.isEmpty(name)) {
+                List<Form> formList = service.list(new QueryWrapper<Form>().lambda().like(Form::getTitle, name));
+                if (!CollectionUtils.isEmpty(formList)) {
+                    List<Integer> formIdList = formList.stream().map(Form::getId)
+                            .collect(Collectors.toList());
+                    eq.in(FormUserData::getFormId, formIdList);
+                }
+            }
         } else {
             eq.eq(FormUserData::getFormId, formId);
             formIds.add(formId);
@@ -214,7 +240,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                 Double scope = 0.0;
                 for (FormUserData formUserData : formUserDatas) {
                     Form form1 = formMap.get(formUserData.getFormId());
-                    if(form1!=null){
+                    if (form1 != null) {
                         form.setTitle(form1.getTitle());
 
                     }
