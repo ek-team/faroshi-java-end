@@ -131,7 +131,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
     public RestResponse save(@RequestBody FollowUpPlan followUpPlan) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<Integer> userIds = followUpPlan.getFollowUpPlanPatientUsers();
-        if(followUpPlan.getCreateUserId()==null){
+        if (followUpPlan.getCreateUserId() == null) {
             followUpPlan.setCreateUserId(SecurityUtils.getUser().getId());
 
         }
@@ -190,6 +190,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 FollowUpPlanPatientUser followUpPlanPatientUser = new FollowUpPlanPatientUser();
                 followUpPlanPatientUser.setFollowUpPlanId(followUpPlan.getId());
                 followUpPlanPatientUser.setUserId(userId);
+                followUpPlanPatientUser.setCreateTime(LocalDateTime.now());
                 followUpPlanPatientUsers.add(followUpPlanPatientUser);
 
 
@@ -281,7 +282,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
                     followUpPlanNotice.setDoctorId(followUpPlan.getCreateUserId());
                     followUpPlanNotice.setFollowUpPlanContentId(followUpPlanContent.getId());
-                    if(followUpPlanContent.getArticleId()!=null){
+                    if (followUpPlanContent.getArticleId() != null) {
                         followUpPlanNotice.setArticleId(followUpPlanContent.getArticleId());
 
                     }
@@ -425,6 +426,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                 FollowUpPlanPatientUser followUpPlanPatientUser = new FollowUpPlanPatientUser();
                 followUpPlanPatientUser.setFollowUpPlanId(followUpPlan.getId());
                 followUpPlanPatientUser.setUserId(userId);
+                followUpPlanPatientUser.setCreateTime(LocalDateTime.now());
                 followUpPlanPatientUserList.add(followUpPlanPatientUser);
 
             }
@@ -476,6 +478,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                     FollowUpPlanPatientUser followUpPlanPatientUser = new FollowUpPlanPatientUser();
                     followUpPlanPatientUser.setFollowUpPlanId(followUpPlan.getId());
                     followUpPlanPatientUser.setUserId(userId);
+                    followUpPlanPatientUser.setCreateTime(LocalDateTime.now());
                     followUpPlanPatientUserList.add(followUpPlanPatientUser);
 
                 }
@@ -513,7 +516,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
      * @return
      */
     @GetMapping("/page")
-    public RestResponse pageScoped(@RequestParam(value = "name", required = false) String name,@RequestParam(value = "createType", required = false) Integer createType) {
+    public RestResponse pageScoped(@RequestParam(value = "name", required = false) String name, @RequestParam(value = "createType", required = false) Integer createType) {
         Page<FollowUpPlan> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         if (createType != null) {
@@ -522,7 +525,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             queryWrapper.eq("create_user_id", SecurityUtils.getUser().getId());
             queryWrapper.eq("create_type", 0);
         }
-        if(!StringUtils.isEmpty(name)){
+        if (!StringUtils.isEmpty(name)) {
             queryWrapper.like("name", name);
             queryWrapper.or();
             queryWrapper.like("option_name", name);
@@ -532,6 +535,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();
         return RestResponse.ok(followUpPlanIPage);
     }
+
     @GetMapping("/pcpage")
     public RestResponse pcpageScoped(@RequestParam(value = "name", required = false) String name,
                                      @RequestParam(value = "startCreateTime", required = false) String startCreateTime,
@@ -541,19 +545,19 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                                      @RequestParam(value = "createType", required = false) Integer createType) {
         Page<FollowUpPlan> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
-        if(!StringUtils.isEmpty(name)){
-            queryWrapper.like("name",name);
+        if (!StringUtils.isEmpty(name)) {
+            queryWrapper.like("name", name);
         }
-        if(!StringUtils.isEmpty(optionName)){
-            queryWrapper.like("option_name",optionName);
+        if (!StringUtils.isEmpty(optionName)) {
+            queryWrapper.like("option_name", optionName);
         }
-        if(!StringUtils.isEmpty(createName)){
+        if (!StringUtils.isEmpty(createName)) {
             List<User> userList = userService.list(new QueryWrapper<User>().lambda().like(User::getNickname, createName)
             );
-            if(!CollectionUtils.isEmpty(userList)){
+            if (!CollectionUtils.isEmpty(userList)) {
                 List<Integer> userIds = userList.stream().map(User::getId)
                         .collect(Collectors.toList());
-                queryWrapper.in("create_user_id",userIds);
+                queryWrapper.in("create_user_id", userIds);
 
             }
         }
@@ -569,15 +573,15 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         queryWrapper.orderByDesc("create_time");
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();
-        if(!CollectionUtils.isEmpty(records)){
-            List<Integer> creatUserId=new ArrayList<>();
-            for(FollowUpPlan followUpPlan:records){
+        if (!CollectionUtils.isEmpty(records)) {
+            List<Integer> creatUserId = new ArrayList<>();
+            for (FollowUpPlan followUpPlan : records) {
                 creatUserId.add(followUpPlan.getCreateUserId());
             }
             List<User> users = (List<User>) userService.listByIds(creatUserId);
             Map<Integer, User> userMap = users.stream()
                     .collect(Collectors.toMap(User::getId, t -> t));
-            for(FollowUpPlan followUpPlan:records){
+            for (FollowUpPlan followUpPlan : records) {
                 followUpPlan.setCreateUser(userMap.get(followUpPlan.getCreateUserId()));
             }
         }

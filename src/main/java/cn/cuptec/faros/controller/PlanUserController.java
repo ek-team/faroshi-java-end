@@ -111,19 +111,25 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         return RestResponse.ok(tbTrainUser.getPlanCheckStatus());
     }
 
-    //修改设备用户计划审核状态
+    //修改设备用户计划审核状态 status;//1-待审核 2-审核通过
     @GetMapping("/updatePlanStatus")
     public RestResponse updatePlanStatus(@RequestParam("userId") String userId, @RequestParam("status") Integer status) {
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
+        if (status.equals(1) && tbTrainUser.getPlanCheckStatus().equals(2)) {
+            sysTemNoticService.sendNotic(userId, "审核提醒");
+        }
+
         tbTrainUser.setPlanCheckStatus(status);
         service.updateById(tbTrainUser);
+        if (status.equals(2)) {
+            sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
+                    .eq(SysTemNotic::getStockUserId, userId)
+                    .eq(SysTemNotic::getType, 2)
+                    .set(SysTemNotic::getCheckStatus, status)
 
-        sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
-                .eq(SysTemNotic::getStockUserId, userId)
-                .eq(SysTemNotic::getType, 2)
-                .set(SysTemNotic::getCheckStatus, status)
+            );
+        }
 
-        );
         return RestResponse.ok();
     }
 
