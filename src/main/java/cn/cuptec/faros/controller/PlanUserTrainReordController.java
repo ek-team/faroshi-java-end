@@ -67,7 +67,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         //判断异常 推送给医生
         String userId = userTrainRecordList.get(0).getUserId();
         List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-        //pushData(list, userTrainRecordList);
+        pushData(list, userTrainRecordList);
 
 
         service.saveAndData(userTrainRecordList);
@@ -134,13 +134,13 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         for (ChatUser chatUser : chatUsers) {
             //添加一条聊天记录Integer targetUid, Long keyId, String msg, String
             // msgType, Integer fromUserId, Integer patientId, Date date, Integer chatUserId
-         saveSystemNotic( keyId, msg,  chatUser.getPatientId(),
-                   chatUser.getId(),chatUser.getTeamId(),chatUser.getUid());
+            saveSystemNotic(keyId, msg, chatUser.getPatientId(),
+                    chatUser.getId(), chatUser.getTeamId(), chatUser.getUid());
             if (chatUser.getGroupType().equals(1)) {
                 //群聊
                 String data = chatUser.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
-                sendNotic(msg,fromUserId, chatUser.getPatientId(), allUserIds, chatUser.getId());
+                sendNotic(msg, fromUserId, chatUser.getPatientId(), allUserIds, chatUser.getId());
             } else {
                 //单聊
                 Channel targetUserChannel = UserChannelManager.getUserChannel(chatUser.getUid());
@@ -173,7 +173,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
     }
 
-    public void saveSystemNotic( Long keyId, String msg, String patientId, Integer chatUserId,Integer teamId,Integer doctorId) {
+    public void saveSystemNotic(Long keyId, String msg, String patientId, Integer chatUserId, Integer teamId, Integer doctorId) {
         SysTemNotic sysTemNotic = new SysTemNotic();
         sysTemNotic.setCreateTime(LocalDateTime.now());
         sysTemNotic.setContent(msg);
@@ -184,7 +184,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         sysTemNotic.setReadStatus(1);
         sysTemNotic.setType(1);
         sysTemNotic.setPatientUserId(patientId);
-        sysTemNotic.setKeyId(keyId+"");
+        sysTemNotic.setKeyId(keyId + "");
         sysTemNotic.setChatUserId(chatUserId);
         sysTemNoticService.save(sysTemNotic);
     }
