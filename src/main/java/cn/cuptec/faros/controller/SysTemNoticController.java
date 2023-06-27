@@ -25,10 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -56,30 +53,51 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
 
         List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                 .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
-        queryWrapper.eq("doctor_id",SecurityUtils.getUser().getId());
+        queryWrapper.eq("doctor_id", SecurityUtils.getUser().getId());
         if (!CollectionUtils.isEmpty(list)) {
             List<Integer> teamIds = list.stream().map(DoctorTeamPeople::getTeamId)
                     .collect(Collectors.toList());
             queryWrapper.or();
-            queryWrapper.in("team_id",teamIds);
+            queryWrapper.in("team_id", teamIds);
 
         }
-        queryWrapper.orderByDesc("create_time","read_status");
+        queryWrapper.eq("check_status",1);
+        queryWrapper.orderByDesc("create_time", "read_status");
 
 
         IPage page1 = service.page(page, queryWrapper);
+        List<SysTemNotic> records = page1.getRecords();
+        if (!CollectionUtils.isEmpty(records)) {
+            List<String> stockUserIds = new ArrayList<>();
+            for (SysTemNotic sysTemNotic : records) {
+
+                if (!StringUtils.isEmpty(sysTemNotic.getStockUserId())) {
+                    stockUserIds.add(sysTemNotic.getStockUserId());
+                }
+            }
+            Map<String, TbTrainUser> tbTrainUserMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(stockUserIds)) {
+                List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getUserId, stockUserIds));
+                tbTrainUserMap = tbTrainUsers.stream()
+                        .collect(Collectors.toMap(TbTrainUser::getUserId, t -> t));
+            }
+            for (SysTemNotic sysTemNotic : records) {
+                sysTemNotic.setTbTrainUser(tbTrainUserMap.get(sysTemNotic.getStockUserId()));
+
+            }
+        }
         return RestResponse.ok(page1);
 
     }
 
     //设备端主动发送通知
     @GetMapping("/sendNotic")
-    public RestResponse sendNotic(@RequestParam("userId")String userId,@RequestParam("content")String content) {
+    public RestResponse sendNotic(@RequestParam("userId") String userId, @RequestParam("content") String content) {
         TbTrainUser infoByUXtUserId = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
 
 
         SysTemNotic sysTemNotic = new SysTemNotic();
-        if(infoByUXtUserId!=null){
+        if (infoByUXtUserId != null) {
             sysTemNotic.setTeamId(infoByUXtUserId.getDoctorTeamId());
         }
         sysTemNotic.setCreateTime(LocalDateTime.now());
@@ -87,27 +105,29 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
         sysTemNotic.setTitle(content);
         sysTemNotic.setReadStatus(1);
         sysTemNotic.setType(2);
-        sysTemNotic.setPatientUserId(infoByUXtUserId.getXtUserId()+"");
+        sysTemNotic.setPatientUserId(infoByUXtUserId.getXtUserId() + "");
+        sysTemNotic.setStockUserId(userId);
         service.save(sysTemNotic);
 
         List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
                 .eq(ChatUser::getTargetUid, userId)
-                .eq(ChatUser::getTeamId,infoByUXtUserId.getDoctorTeamId()));
+                .eq(ChatUser::getTeamId, infoByUXtUserId.getDoctorTeamId()));
         for (ChatUser chatUser : chatUsers) {
 
             if (chatUser.getGroupType().equals(1)) {
                 //群聊
                 String data = chatUser.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
-                sendNotic1(content,infoByUXtUserId.getXtUserId(), chatUser.getPatientId(), allUserIds, chatUser.getId());
+                sendNotic1(content, infoByUXtUserId.getXtUserId(), chatUser.getPatientId(), allUserIds, chatUser.getId());
             }
 
         }
         return RestResponse.ok();
 
     }
+
     private void sendNotic1(String msg, Integer fromUserId,
-                           String patientId, List<String> allUserIds, Integer chatUserId) {
+                            String patientId, List<String> allUserIds, Integer chatUserId) {
 
         String name = "";
         if (!StringUtils.isEmpty(patientId)) {
@@ -146,6 +166,7 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
         }
 
     }
+
     @Override
     protected Class<SysTemNotic> getEntityClass() {
         return SysTemNotic.class;

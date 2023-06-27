@@ -119,7 +119,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         service.updateById(tbTrainUser);
 
         sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
-                .eq(SysTemNotic::getPatientUserId, userId)
+                .eq(SysTemNotic::getStockUserId, userId)
                 .eq(SysTemNotic::getType, 2)
                 .set(SysTemNotic::getCheckStatus, status)
 
