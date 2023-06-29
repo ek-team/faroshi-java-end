@@ -24,6 +24,7 @@ public class SysTemNotic {
     private String patientUserId;//用户id
     private String stockUserId;//设备用户id
     private String keyId;
+    private Integer keyIdType;//1VAS 2疼痛异常 3踩踏次数异常
     private Integer chatUserId;
     private Integer checkStatus=1;//1待审核 2审核通过
     @TableField(exist = false)

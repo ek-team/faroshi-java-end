@@ -37,19 +37,21 @@ public class SysTemNoticService extends ServiceImpl<SysTemNoticMapper, SysTemNot
     public void sendNotic(String userId, String content) {
         TbTrainUser infoByUXtUserId = planUserService.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
 
-
-        SysTemNotic sysTemNotic = new SysTemNotic();
-        if (infoByUXtUserId != null) {
-            sysTemNotic.setTeamId(infoByUXtUserId.getDoctorTeamId());
+        if (infoByUXtUserId.getPlanCheckStatus()==null || infoByUXtUserId.getPlanCheckStatus().equals(2)) {
+            SysTemNotic sysTemNotic = new SysTemNotic();
+            if (infoByUXtUserId != null) {
+                sysTemNotic.setTeamId(infoByUXtUserId.getDoctorTeamId());
+            }
+            sysTemNotic.setCreateTime(LocalDateTime.now());
+            sysTemNotic.setContent(content);
+            sysTemNotic.setTitle(content);
+            sysTemNotic.setReadStatus(1);
+            sysTemNotic.setType(2);
+            sysTemNotic.setPatientUserId(infoByUXtUserId.getXtUserId() + "");
+            sysTemNotic.setStockUserId(userId);
+            save(sysTemNotic);
         }
-        sysTemNotic.setCreateTime(LocalDateTime.now());
-        sysTemNotic.setContent(content);
-        sysTemNotic.setTitle(content);
-        sysTemNotic.setReadStatus(1);
-        sysTemNotic.setType(2);
-        sysTemNotic.setPatientUserId(infoByUXtUserId.getXtUserId() + "");
-        sysTemNotic.setStockUserId(userId);
-        save(sysTemNotic);
+
 
         List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
                 .eq(ChatUser::getTargetUid, userId)

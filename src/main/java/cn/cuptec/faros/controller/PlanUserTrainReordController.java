@@ -50,7 +50,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     @Resource
     private ChatUserService chatUserService;
     @Resource
-    private ChatMsgService chatMsgService;
+    private DoctorTeamPeopleService doctorTeamPeopleService;
     @Resource
     private SysTemNoticService sysTemNoticService;
 
@@ -80,155 +80,101 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
             public void run() {
                 if (!CollectionUtils.isEmpty(list)) {
                     TbTrainUser tbTrainUser = list.get(0);
-                    Integer xtUserId = tbTrainUser.getXtUserId();
-                    if (xtUserId != null) {
-                        User user = userService.getById(xtUserId);
-                        if (user != null) {
-                            List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTargetUid, xtUserId));
-                            if (!CollectionUtils.isEmpty(chatUsers)) {
-                                for (TbUserTrainRecord tbUserTrainRecord : userTrainRecordList) {
-                                    Long keyId = tbUserTrainRecord.getKeyId();
-                                    Integer painLevel = tbUserTrainRecord.getPainLevel();//vas值
-                                    if (painLevel != null) {
-                                        if (painLevel > 2) {
-                                            //发送信息
-                                            push(chatUsers, "VAS异常", tbUserTrainRecord.getKeyId(), user.getId());
-                                        }
-                                    }
-                                    String adverseReactions = tbUserTrainRecord.getAdverseReactions();//异常反馈
-                                    if (adverseReactions != null) {
-                                        //发送信息
-                                        push(chatUsers, "异常反馈", tbUserTrainRecord.getKeyId(), user.getId());
-                                    }
-                                    Integer successTime = tbUserTrainRecord.getSuccessTime();
-                                    Integer warningTime = tbUserTrainRecord.getWarningTime();
-                                    Integer time = 0;
-                                    if (warningTime != null) {
-                                        time = time + warningTime;
-                                    }
-                                    if (successTime != null) {
-                                        time = time + warningTime;
-                                    }
-                                    if (time != 0 && tbUserTrainRecord.getTotalTrainStep() != null) {
-                                        //发送信息
-                                        push(chatUsers, "踩踏次数异常", tbUserTrainRecord.getKeyId(), user.getId());
-                                    }
-                                }
-
-
+                    String userId = tbTrainUser.getUserId();
+                    List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
+                            .eq(DoctorTeamPeople::getTeamId, tbTrainUser.getDoctorTeamId()));
+                    List<Integer> doctorIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
+                            .collect(Collectors.toList());
+                    for (TbUserTrainRecord tbUserTrainRecord : userTrainRecordList) {
+                        Long keyId = tbUserTrainRecord.getKeyId();
+                        Integer painLevel = tbUserTrainRecord.getPainLevel();//vas值
+                        if (painLevel != null) {
+                            if (painLevel > 2) {
+                                //发送信息String stockUserName,String keyId,String stockUserId,Integer xtUserId,String msg,List<Integer> doctorIds,Integer teamId
+                                push(1,tbTrainUser.getName(), keyId + "", userId, tbTrainUser.getXtUserId(), "VAS异常", doctorIds, tbTrainUser.getDoctorTeamId());
                             }
+                        }
+                        String adverseReactions = tbUserTrainRecord.getAdverseReactions();//异常反馈
+                        if (adverseReactions != null) {
+                            //发送信息
+                            push(2,tbTrainUser.getName(), keyId + "", userId, tbTrainUser.getXtUserId(), adverseReactions, doctorIds, tbTrainUser.getDoctorTeamId());
 
                         }
+                        Integer successTime = tbUserTrainRecord.getSuccessTime();
+                        Integer warningTime = tbUserTrainRecord.getWarningTime();
+                        Integer time = 0;
+                        if (warningTime != null) {
+                            time = time + warningTime;
+                        }
+                        if (successTime != null) {
+                            time = time + successTime;
+                        }
+                        if (time != 0 && tbUserTrainRecord.getTotalTrainStep() != null
+                        && time< tbUserTrainRecord.getTotalTrainStep()/2) {
+                            //发送信息
+                            push(3,tbTrainUser.getName(), keyId + "", userId, tbTrainUser.getXtUserId(), "踩踏次数异常", doctorIds, tbTrainUser.getDoctorTeamId());
 
+                        }
                     }
+
                 }
             }
         });
     }
 
-    private void push(List<ChatUser> chatUsers, String msg, Long keyId, Integer fromUserId) {
-        List<SysTemNotic> list = sysTemNoticService.list(new QueryWrapper<SysTemNotic>().lambda().eq(SysTemNotic::getKeyId, keyId));
-        if (!CollectionUtils.isEmpty(list)) {
+    private void push(Integer type,String stockUserName, String keyId, String stockUserId, Integer xtUserId, String msg, List<Integer> doctorIds, Integer teamId) {
+        List<SysTemNotic> sysTemNotics = sysTemNoticService.list(new QueryWrapper<SysTemNotic>().lambda()
+                .eq(SysTemNotic::getKeyId, keyId)
+        .eq(SysTemNotic::getKeyIdType,type));
+        if (!CollectionUtils.isEmpty(sysTemNotics)) {
             return;
         }
-        for (ChatUser chatUser : chatUsers) {
-            //添加一条聊天记录Integer targetUid, Long keyId, String msg, String
-            // msgType, Integer fromUserId, Integer patientId, Date date, Integer chatUserId
-            saveSystemNotic(keyId, msg, chatUser.getPatientId(),
-                    chatUser.getId(), chatUser.getTeamId(), chatUser.getUid());
-            if (chatUser.getGroupType().equals(1)) {
-                //群聊
-                String data = chatUser.getUserIds();
-                List<String> allUserIds = Arrays.asList(data.split(","));
-                sendNotic(msg, fromUserId, chatUser.getPatientId(), allUserIds, chatUser.getId());
-            } else {
-                //单聊
-                Channel targetUserChannel = UserChannelManager.getUserChannel(chatUser.getUid());
-                //向目标用户发送新消息提醒
-                SocketFrameTextMessage targetUserMessage
-                        = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), ChatProto.SYSTEM_NOTIC, "");
 
-                if (targetUserChannel != null) {
-                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                } else {
-                    String patientId = chatUser.getPatientId();
-                    User user = userService.getById(fromUserId);
-
-                    String name = "";
-                    if (StringUtils.isEmpty(user.getPatientName())) {
-                        name = user.getNickname();
-                    } else {
-                        name = user.getPatientName();
-                    }
-                    if (StringUtils.isEmpty(patientId)) {
-                        PatientUser patientUser = patientUserService.getById(patientId);
-                        name = patientUser.getName();
-                    }
-                    uniAppPushService.send("法罗适", name + ": " + msg, chatUser.getUid() + "", "");
-
-                }
-            }
-
+        List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
+                .eq(ChatUser::getTeamId, teamId)
+                .eq(ChatUser::getTargetUid, xtUserId));
+        Integer chatUserId = null;
+        if (!CollectionUtils.isEmpty(chatUsers)) {
+            chatUserId = chatUsers.get(0).getId();
         }
+        saveSystemNotic(type,xtUserId, keyId, msg, stockUserId, chatUserId, teamId);
 
+        for (Integer doctorId : doctorIds) {
+            //发送消息
+
+            Channel targetUserChannel = UserChannelManager.getUserChannel(doctorId);
+            //2.向目标用户发送新消息提醒
+            SocketFrameTextMessage targetUserMessage
+                    = SocketFrameTextMessage.newMessageTip(xtUserId, "", "", new Date(), ChatProto.SYSTEM_NOTIC, "");
+
+            if (targetUserChannel != null) {
+                targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+            } else {
+
+
+                uniAppPushService.send("法罗适", stockUserName + ": " + msg, doctorId + "", "");
+
+            }
+        }
     }
 
-    public void saveSystemNotic(Long keyId, String msg, String patientId, Integer chatUserId, Integer teamId, Integer doctorId) {
+
+    public void saveSystemNotic(Integer keyIdType,Integer xtUserId, String keyId, String msg, String stockUserId, Integer chatUserId, Integer teamId) {
         SysTemNotic sysTemNotic = new SysTemNotic();
+        sysTemNotic.setKeyIdType(keyIdType);
         sysTemNotic.setCreateTime(LocalDateTime.now());
         sysTemNotic.setContent(msg);
         sysTemNotic.setTitle(msg);
-
-        sysTemNotic.setDoctorId(doctorId);
         sysTemNotic.setTeamId(teamId);
         sysTemNotic.setReadStatus(1);
         sysTemNotic.setType(1);
-        sysTemNotic.setPatientUserId(patientId);
+        sysTemNotic.setPatientUserId(xtUserId + "");
+        sysTemNotic.setStockUserId(stockUserId);
         sysTemNotic.setKeyId(keyId + "");
         sysTemNotic.setChatUserId(chatUserId);
         sysTemNoticService.save(sysTemNotic);
     }
 
-    private void sendNotic(String msg, Integer fromUserId,
-                           String patientId, List<String> allUserIds, Integer chatUserId) {
-
-        String name = "";
-        if (!StringUtils.isEmpty(patientId)) {
-            PatientUser patientUser = patientUserService.getById(patientId);
-            name = patientUser.getName();
-        }
-        for (String userId : allUserIds) {
-            String replace = userId.replace("[", "");
-            userId = replace.replace("]", "");
-            userId = userId.trim();
-            if (!userId.equals(fromUserId + "")) {
-
-                Channel targetUserChannel = UserChannelManager.getUserChannel(Integer.parseInt(userId));
-                //2.向目标用户发送新消息提醒
-                SocketFrameTextMessage targetUserMessage
-                        = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), ChatProto.SYSTEM_NOTIC, "");
-
-                if (targetUserChannel != null) {
-                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                } else {
-                    User user = userService.getById(userId);
-
-                    if (StringUtils.isEmpty(name)) {
-                        if (StringUtils.isEmpty(user.getPatientName())) {
-                            name = user.getNickname();
-                        } else {
-                            name = user.getPatientName();
-                        }
-
-                    }
-                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "");
-
-                }
-            }
-
-        }
-
-    }
 
     @GetMapping("/pageTrainRecordByXtUserId")
     public RestResponse pageTrainRecordByXtUserId(@RequestParam(value = "xtUserId", required = false) Integer xtUserId) {

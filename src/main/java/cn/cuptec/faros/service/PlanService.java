@@ -31,10 +31,10 @@ public class PlanService extends ServiceImpl<PlanMapper, TbPlan> {
     @Transactional(rollbackFor = Exception.class)
     public void saveList(List<TbPlan> planList) {
 
-
         if (CollUtil.isEmpty(planList)) return;
         TbPlan tbPlan = planList.get(0);
         Long userId = tbPlan.getUserId();
+
         //删除改用户之前的计划
         this.remove(new QueryWrapper<TbPlan>().lambda().eq(TbPlan::getUserId, userId));
         this.saveBatch(planList);

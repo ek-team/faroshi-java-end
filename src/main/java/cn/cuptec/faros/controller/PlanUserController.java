@@ -115,9 +115,13 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @GetMapping("/updatePlanStatus")
     public RestResponse updatePlanStatus(@RequestParam("userId") String userId, @RequestParam("status") Integer status) {
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-        if (status.equals(1) && tbTrainUser.getPlanCheckStatus().equals(2)) {
-            sysTemNoticService.sendNotic(userId, "审核提醒");
+        if (tbTrainUser.getPlanCheckStatus()!=null && status.equals(1) && tbTrainUser.getPlanCheckStatus().equals(2)) {
+            sysTemNoticService.sendNotic(userId, "计划审核");
+        }else if(tbTrainUser.getPlanCheckStatus()==null && status.equals(1)){
+            sysTemNoticService.sendNotic(userId, "计划审核");
+
         }
+
 
         tbTrainUser.setPlanCheckStatus(status);
         service.updateById(tbTrainUser);

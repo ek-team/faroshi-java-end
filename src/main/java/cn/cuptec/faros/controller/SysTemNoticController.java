@@ -47,7 +47,7 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
     private UniAppPushService uniAppPushService;
 
     @GetMapping("/page")
-    public RestResponse page(@RequestParam(value = "type", required = false) Integer type) {
+    public RestResponse page(@RequestParam(value = "name", required = false) String name,@RequestParam(value = "type", required = false) Integer type) {
         Page<SysTemNotic> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
@@ -72,7 +72,15 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
         }
 
         queryWrapper.orderByDesc("create_time", "read_status");
-
+        if(!StringUtils.isEmpty(name)){
+            List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+                    .like(TbTrainUser::getName, name));
+            if(!CollectionUtils.isEmpty(tbTrainUsers)){
+                List<String> userIds = tbTrainUsers.stream().map(TbTrainUser::getUserId)
+                        .collect(Collectors.toList());
+                queryWrapper.in("stock_user_id",userIds);
+            }
+        }
 
         IPage page1 = service.page(page, queryWrapper);
         List<SysTemNotic> records = page1.getRecords();
@@ -102,6 +110,9 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
     //设备端主动发送通知
     @GetMapping("/sendNotic")
     public RestResponse sendNotic(@RequestParam("userId") String userId, @RequestParam("content") String content) {
+        if (StringUtils.isEmpty(content)) {
+            content = "计划审核";
+        }
         service.sendNotic(userId, content);
         return RestResponse.ok();
 
