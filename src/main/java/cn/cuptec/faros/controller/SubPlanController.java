@@ -567,7 +567,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         page.setCurrent(1);
         QueryWrapper queryWrapper = new QueryWrapper<TbSubPlan>();
         queryWrapper.eq("user_id", userId);
-        queryWrapper.orderByAsc("version");
+        queryWrapper.orderByDesc("version");
         IPage page1 = service.page(page, queryWrapper);
         List<TbSubPlan> subPlans = page1.getRecords();
         if (!CollectionUtils.isEmpty(subPlans)) {

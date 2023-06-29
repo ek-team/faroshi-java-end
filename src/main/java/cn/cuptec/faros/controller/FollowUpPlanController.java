@@ -588,6 +588,78 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         return RestResponse.ok(followUpPlanIPage);
     }
 
+    //搜索随访计划的患者列表
+    @GetMapping("/searchUserByFollId")
+    public RestResponse searchUserByFollId(@RequestParam("followUpPlanId") Integer followUpPlanId,
+                                           @RequestParam(value = "name", required = false) String name,
+                                           @RequestParam(value = "operationName", required = false) String operationName) {
+        List<FollowUpPlanPatientUser> followUpPlanPatientUsers = followUpPlanPatientUserService.list(new QueryWrapper<FollowUpPlanPatientUser>().lambda()
+                .eq(FollowUpPlanPatientUser::getFollowUpPlanId, followUpPlanId));
+        if (CollectionUtils.isEmpty(followUpPlanPatientUsers)) {
+            return RestResponse.ok();
+        }
+        List<Integer> userIds = followUpPlanPatientUsers.stream().map(FollowUpPlanPatientUser::getUserId)
+                .collect(Collectors.toList());
+        List<User> userList = new ArrayList<>();
+        if (!StringUtils.isEmpty(name)) {
+            List<User> list = userService.list(new QueryWrapper<User>().lambda().like(User::getPatientName, name)
+                    .in(User::getId, userIds));
+            if (CollectionUtils.isEmpty(list)) {
+                userList.addAll(list);
+
+            }
+        }
+        if (!StringUtils.isEmpty(operationName)) {
+
+            List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().like(TbTrainUser::getDiagnosis, operationName)
+                    .in(TbTrainUser::getXtUserId, userIds));
+            if (!CollectionUtils.isEmpty(list)) {
+                List<Integer> xtUserIds = list.stream().map(TbTrainUser::getXtUserId)
+                        .collect(Collectors.toList());
+                List<User> users = userService.list(new QueryWrapper<User>().lambda().in(User::getId, xtUserIds)
+                );
+                if (CollectionUtils.isEmpty(users)) {
+                    userList.addAll(users);
+
+                }
+            }
+        }
+        if (!CollectionUtils.isEmpty(userList)) {
+            List<Integer> resultUserIds = followUpPlanPatientUsers.stream().map(FollowUpPlanPatientUser::getUserId)
+                    .collect(Collectors.toList());
+            //查询手术名称
+            List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().in(TbTrainUser::getXtUserId, resultUserIds));
+            Map<Integer, List<TbTrainUser>> map = new HashMap<>();
+            if (!CollectionUtils.isEmpty(tbTrainUsers)) {
+                map = tbTrainUsers.stream()
+                        .collect(Collectors.groupingBy(TbTrainUser::getXtUserId));
+
+            }
+            Map<Integer, List<FollowUpPlanPatientUser>> followUpPlanPatientUserMap = followUpPlanPatientUsers.stream()
+                    .collect(Collectors.groupingBy(FollowUpPlanPatientUser::getUserId));
+            for (User user : userList) {
+                if (!StringUtils.isEmpty(user.getPatientName())) {
+                    user.setNickname(user.getPatientName());
+
+                }
+                List<TbTrainUser> tbTrainUsers1 = map.get(user.getId());
+                if (!CollectionUtils.isEmpty(tbTrainUsers1)) {
+                    TbTrainUser tbTrainUser = tbTrainUsers1.get(0);
+                    user.setDiagnosis(tbTrainUser.getDiagnosis());
+                    user.setDate(tbTrainUser.getDate());
+
+                }
+                List<FollowUpPlanPatientUser> followUpPlanPatientUsers1 = followUpPlanPatientUserMap.get(user.getId());
+                if (!CollectionUtils.isEmpty(followUpPlanPatientUsers1)) {
+                    user.setJoinPlanTime(followUpPlanPatientUsers1.get(0).getCreateTime());
+                }
+
+            }
+            return RestResponse.ok(userList);
+        }
+        return RestResponse.ok();
+    }
+
     /**
      * 查询随访计划详情
      *

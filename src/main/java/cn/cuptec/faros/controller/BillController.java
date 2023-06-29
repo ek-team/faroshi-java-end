@@ -4,6 +4,8 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.Bill;
 import cn.cuptec.faros.entity.QueryCompanyResult;
+import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.service.UserService;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import cn.cuptec.faros.entity.UserOrder;
@@ -42,6 +44,8 @@ public class BillController {
     private BillService billService;
     @Resource
     private UserOrdertService userOrdertService;
+    @Resource
+    private UserService userService;
     private static final CloseableHttpClient httpclient = HttpClients.createDefault();
     private static final String userAgent = "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.87 Safari/537.36";
 
@@ -57,6 +61,16 @@ public class BillController {
 
     @GetMapping("/getCompany")
     public RestResponse getCompany(@RequestParam("name") String name) {
+
+        User myUSer = userService.getById(SecurityUtils.getUser().getId());
+        if (myUSer.getQueryCompanyCount() <= 0) {
+            return RestResponse.failed("今日查询次数大于10次");
+        }
+        userService.update(Wrappers.<User>lambdaUpdate()
+                .eq(User::getId, SecurityUtils.getUser().getId())
+                .set(User::getQueryCompanyCount, myUSer.getQueryCompanyCount() - 1)
+
+        );
         String url = "https://api.qichacha.com/FuzzySearch/GetList?key=96d04ac2d59d46ffbfa79eb6af6e69d5&searchKey=" + name;
         HttpGet httpGet = new HttpGet(url);
         httpGet.setHeader("User-Agent", userAgent);

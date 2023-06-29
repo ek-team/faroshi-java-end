@@ -23,6 +23,7 @@ public class User extends Model<User> {
 
     private static final long serialVersionUID = 1L;
     private String showName;//显示名字
+    private Integer queryCompanyCount;
     private String lever;//级别
     private String hospitalInfoName;
     private String department;//科室
@@ -72,6 +73,8 @@ public class User extends Model<User> {
     private LocalDateTime operationTime;//手术时间
     @TableField(exist = false)
     private Date date;            //手术时间
+    @TableField(exist = false)
+    private LocalDateTime joinPlanTime;            //加入计划时间
     private String operationName;//手术名字
     private Double weight;      // 体重
 

@@ -26,6 +26,8 @@ public class TbTrainUser {
     private static final long serialVersionUID = 1L;
 
     private String doctorTeam;
+    private String bodyPartName;//手术部位
+    private String secondDiseaseName;//疾病名称
     private Integer doctorTeamId;
     private Integer planCheckStatus;//1待审核 2审核通过
     private String birthday;
@@ -60,7 +62,7 @@ public class TbTrainUser {
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer sex;                //性别  男-1  女-0
     @Queryable(queryLogical = QueryLogical.EQUAL)
-    private String diagnosis;       //诊断结果
+    private String diagnosis;       //诊断结果  治疗方法
     private String photo;
     private String doctor;           //医生
     @Queryable(queryLogical = QueryLogical.LIKE)
