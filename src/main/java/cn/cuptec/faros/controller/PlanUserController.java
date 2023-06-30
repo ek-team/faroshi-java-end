@@ -115,9 +115,12 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @GetMapping("/updatePlanStatus")
     public RestResponse updatePlanStatus(@RequestParam("userId") String userId, @RequestParam("status") Integer status) {
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-        if (tbTrainUser.getPlanCheckStatus()!=null && status.equals(1) && tbTrainUser.getPlanCheckStatus().equals(2)) {
+        if (tbTrainUser.getDoctorTeamId() == null) {
+            return RestResponse.failed("团队id为空");
+        }
+        if (tbTrainUser.getPlanCheckStatus() != null && status.equals(1) && tbTrainUser.getPlanCheckStatus().equals(2)) {
             sysTemNoticService.sendNotic(userId, "计划审核");
-        }else if(tbTrainUser.getPlanCheckStatus()==null && status.equals(1)){
+        } else if (tbTrainUser.getPlanCheckStatus() == null && status.equals(1)) {
             sysTemNoticService.sendNotic(userId, "计划审核");
 
         }
@@ -138,7 +141,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     }
 
     @GetMapping("/page")
-    public RestResponse pageList(@RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
+    public RestResponse pageList(@RequestParam(value = "idCard", required = false) String idCard, @RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
                                  @RequestParam(value = "maxHeight", required = false) Integer maxHeight, @RequestParam(value = "miniHeight", required = false) Integer miniHeight,
                                  @RequestParam(value = "startDate", required = false) String startDate, @RequestParam(value = "endDate", required = false) String endDate,
                                  @RequestParam(value = "startOnsetTime", required = false) String startOnsetTime, @RequestParam(value = "endOnsetTime", required = false) String endOnsetTime,
@@ -148,6 +151,10 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         if (maxAge != null && miniAge != null) {
             queryWrapper.le("age", maxAge);
             queryWrapper.ge("age", miniAge);
+
+        }
+        if (!StringUtils.isEmpty(idCard)) {
+            queryWrapper.like("id_card", idCard);
 
         }
         if (maxHeight != null && miniHeight != null) {
