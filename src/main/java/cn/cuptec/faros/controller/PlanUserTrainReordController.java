@@ -81,6 +81,15 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                 if (!CollectionUtils.isEmpty(list)) {
                     TbTrainUser tbTrainUser = list.get(0);
                     String userId = tbTrainUser.getUserId();
+                    String idCard = tbTrainUser.getIdCard();
+                    Integer xtUserId = tbTrainUser.getXtUserId();
+                    List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda().eq(PatientUser::getIdCard, idCard));
+                    String patientId = null;
+                    if (!CollectionUtils.isEmpty(patientUsers)) {
+                        PatientUser patientUser = patientUsers.get(0);
+                        patientId = patientUser.getId();
+                        xtUserId = patientUser.getUserId();
+                    }
                     List<DoctorTeamPeople> doctorTeamPeopleList = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                             .eq(DoctorTeamPeople::getTeamId, tbTrainUser.getDoctorTeamId()));
                     List<Integer> doctorIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
@@ -91,13 +100,13 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                         if (painLevel != null) {
                             if (painLevel > 2) {
                                 //发送信息String stockUserName,String keyId,String stockUserId,Integer xtUserId,String msg,List<Integer> doctorIds,Integer teamId
-                                push(1,tbTrainUser.getName(), keyId + "", userId, tbTrainUser.getXtUserId(), "VAS异常", doctorIds, tbTrainUser.getDoctorTeamId());
+                                push(patientId, 1, tbTrainUser.getName(), keyId + "", userId, xtUserId, "训练VAS值超过预期", doctorIds, tbTrainUser.getDoctorTeamId());
                             }
                         }
                         String adverseReactions = tbUserTrainRecord.getAdverseReactions();//异常反馈
                         if (adverseReactions != null) {
                             //发送信息
-                            push(2,tbTrainUser.getName(), keyId + "", userId, tbTrainUser.getXtUserId(), adverseReactions, doctorIds, tbTrainUser.getDoctorTeamId());
+                            push(patientId, 2, tbTrainUser.getName(), keyId + "", userId, xtUserId, adverseReactions, doctorIds, tbTrainUser.getDoctorTeamId());
 
                         }
                         Integer successTime = tbUserTrainRecord.getSuccessTime();
@@ -110,9 +119,9 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                             time = time + successTime;
                         }
                         if (time != 0 && tbUserTrainRecord.getTotalTrainStep() != null
-                        && time< tbUserTrainRecord.getTotalTrainStep()/2) {
+                                && time < tbUserTrainRecord.getTotalTrainStep() / 2) {
                             //发送信息
-                            push(3,tbTrainUser.getName(), keyId + "", userId, tbTrainUser.getXtUserId(), "踩踏次数异常", doctorIds, tbTrainUser.getDoctorTeamId());
+                            push(patientId, 3, tbTrainUser.getName(), keyId + "", userId, xtUserId, "踩踏次数异常", doctorIds, tbTrainUser.getDoctorTeamId());
 
                         }
                     }
@@ -122,22 +131,23 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         });
     }
 
-    private void push(Integer type,String stockUserName, String keyId, String stockUserId, Integer xtUserId, String msg, List<Integer> doctorIds, Integer teamId) {
+    private void push(String patientId, Integer type, String stockUserName, String keyId, String stockUserId, Integer xtUserId, String msg, List<Integer> doctorIds, Integer teamId) {
         List<SysTemNotic> sysTemNotics = sysTemNoticService.list(new QueryWrapper<SysTemNotic>().lambda()
                 .eq(SysTemNotic::getKeyId, keyId)
-        .eq(SysTemNotic::getKeyIdType,type));
+                .eq(SysTemNotic::getKeyIdType, type));
         if (!CollectionUtils.isEmpty(sysTemNotics)) {
             return;
         }
 
         List<ChatUser> chatUsers = chatUserService.list(new QueryWrapper<ChatUser>().lambda()
                 .eq(ChatUser::getTeamId, teamId)
+                .eq(ChatUser::getPatientId, patientId)
                 .eq(ChatUser::getTargetUid, xtUserId));
         Integer chatUserId = null;
         if (!CollectionUtils.isEmpty(chatUsers)) {
             chatUserId = chatUsers.get(0).getId();
         }
-        saveSystemNotic(type,xtUserId, keyId, msg, stockUserId, chatUserId, teamId);
+        saveSystemNotic(type, xtUserId, keyId, msg, stockUserId, chatUserId, teamId);
 
         for (Integer doctorId : doctorIds) {
             //发送消息
@@ -159,7 +169,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     }
 
 
-    public void saveSystemNotic(Integer keyIdType,Integer xtUserId, String keyId, String msg, String stockUserId, Integer chatUserId, Integer teamId) {
+    public void saveSystemNotic(Integer keyIdType, Integer xtUserId, String keyId, String msg, String stockUserId, Integer chatUserId, Integer teamId) {
         SysTemNotic sysTemNotic = new SysTemNotic();
         sysTemNotic.setKeyIdType(keyIdType);
         sysTemNotic.setCreateTime(LocalDateTime.now());

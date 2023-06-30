@@ -504,6 +504,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
     @PostMapping("/add")
     public RestResponse add(@RequestBody TbTrainUser tbTrainUser) {
+
         if (tbTrainUser.getCardType() != null && tbTrainUser.getCardType().equals(1)) {
             if (!StringUtils.isEmpty(tbTrainUser.getIdCard())) {
 
