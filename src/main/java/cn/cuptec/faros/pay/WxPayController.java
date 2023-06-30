@@ -116,6 +116,8 @@ public class WxPayController {
     @ApiOperation(value = "调用统一下单接口")
     @GetMapping("/unifiedOrder")
     public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo, @RequestParam(value = "tradeType", required = false) String tradeType) {
+        log.info("支付类型" + tradeType);
+        tradeType="";
         String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
@@ -263,13 +265,12 @@ public class WxPayController {
             patientRelationTeamService.save(patientRelationTeam);
             //添加医生和患者的关系
             List<UserDoctorRelation> userDoctorRelationList = new ArrayList<>();
-            if(!CollectionUtils.isEmpty(userIds)){
+            if (!CollectionUtils.isEmpty(userIds)) {
                 userDoctorRelationService.remove(new QueryWrapper<UserDoctorRelation>().lambda()
                         .eq(UserDoctorRelation::getUserId, userOrder.getUserId())
                         .in(UserDoctorRelation::getDoctorId, userIds));
 
             }
-
 
 
             for (Integer doctorId : userIds) {
@@ -635,7 +636,7 @@ public class WxPayController {
     }
 
     public static void main(String[] args) {
-      String a="KF123123";
+        String a = "KF123123";
         String[] split = a.split("KF");
         if (split.length == 1) {
             a = split[0];
