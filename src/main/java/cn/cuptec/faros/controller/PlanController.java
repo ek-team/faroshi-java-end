@@ -34,6 +34,16 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
     @PostMapping("/save")
     public RestResponse<TbPlan> addPlan(@RequestBody List<TbPlan> planList) {
         service.saveList(planList);
+        Long userId = planList.get(0).getUserId();
+
+        TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, userId));
+        if(one!=null){
+            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+            }
+
+        }
         return RestResponse.ok();
     }
 
@@ -92,7 +102,16 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
     @PutMapping("updateList")
     public RestResponse updateList(@RequestBody List<TbPlan> tbPlanList) {
         service.updateList(tbPlanList);
+        Long userId = tbPlanList.get(0).getUserId();
 
+        TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, userId));
+        if(one!=null){
+            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+            }
+
+        }
         return RestResponse.ok();
     }
 

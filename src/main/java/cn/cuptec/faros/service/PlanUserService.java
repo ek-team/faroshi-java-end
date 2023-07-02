@@ -27,7 +27,9 @@ import java.util.stream.Collectors;
 public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
 
     @Resource
-    private UserDoctorRelationService userDoctorRelationService;
+    private PatientUserService patientUserService;
+    @Resource
+    private UserOrdertService userOrdertService;
     @Resource
     private UserService userService;
     @Resource
@@ -165,6 +167,21 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+                //判断订单是否有团队 没有则同步
+                if(tbTrainUser.getDoctorTeamId()==null || tbTrainUser.getDoctorTeamId().equals(0) ){
+                    List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().
+                            lambda().eq(PatientUser::getIdCard, tbTrainUser.getIdCard()));
+                    if(!org.springframework.util.CollectionUtils.isEmpty(list)){
+                        List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().
+                                lambda().eq(UserOrder::getPatientUserId, list.get(0).getId()));
+                        if(!org.springframework.util.CollectionUtils.isEmpty(userOrders)){
+                            Integer doctorTeamId = userOrders.get(0).getDoctorTeamId();
+                            DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
+                            tbTrainUser.setDoctorTeamId(doctorTeamId);
+                            tbTrainUser.setDoctorTeam(doctorTeam.getName());
+                        }
+                    }
+                }
                 if (tbTrainUser.getDoctorTeamId() != null) {
                     DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
                     if (doctorTeam != null) {
@@ -225,6 +242,21 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+                //判断订单是否有团队 没有则同步
+                if(tbTrainUser.getDoctorTeamId()==null || tbTrainUser.getDoctorTeamId().equals(0)){
+                    List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().
+                            lambda().eq(PatientUser::getIdCard, tbTrainUser.getIdCard()));
+                    if(!org.springframework.util.CollectionUtils.isEmpty(list)){
+                        List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().
+                                lambda().eq(UserOrder::getPatientUserId, list.get(0).getId()));
+                        if(!org.springframework.util.CollectionUtils.isEmpty(userOrders)){
+                            Integer doctorTeamId = userOrders.get(0).getDoctorTeamId();
+                            DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
+                            tbTrainUser.setDoctorTeamId(doctorTeamId);
+                            tbTrainUser.setDoctorTeam(doctorTeam.getName());
+                        }
+                    }
+                }
                 if (tbTrainUser.getDoctorTeamId() != null) {
                     DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
                     if (doctorTeam != null) {

@@ -218,6 +218,15 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 
         }
         service.saveBatch(tbSubPlans);
+
+        TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, userId));
+        if(one!=null){
+            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+            }
+
+        }
         return RestResponse.ok();
     }
 
@@ -252,7 +261,14 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         }
         planService.remove(new QueryWrapper<TbPlan>().lambda().eq(TbPlan::getUserId, subPlanEntity.get(0).getUserId()));
         planService.saveBatch(list2);
+        TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, subPlanEntity.get(0).getUserId()));
+        if(one!=null){
+            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+            }
 
+        }
         return RestResponse.ok();
     }
 
@@ -394,6 +410,14 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
             String params = JSONObject.toJSONString(list);
             String post = HttpUtil.post(url, params);
         }
+        TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, subPlanEntity.get(0).getUserId()));
+        if(one!=null){
+            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+            }
+
+        }
         return RestResponse.ok();
     }
 
@@ -431,7 +455,14 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
                 String post = HttpUtil.post(url, params);
             }
 
+            TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, subPlanEntity.get(0).getUserId()));
+            if(one!=null){
+                if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+                    one.setPlanCheckStatus(2);
+                    planUserService.updateById(one);
+                }
 
+            }
         }
         return RestResponse.ok();
     }
@@ -576,7 +607,14 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
            }
             service.updateBatchById(subPlans);
         }
+        TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, userId));
+        if(one!=null){
+            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+            }
 
+        }
         return RestResponse.ok(subPlans);
     }
     @GetMapping("/getOneByIdCard")
