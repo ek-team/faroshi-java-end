@@ -32,18 +32,23 @@ public class WxPayFarosService {
     private final Url urlData;
 
     public RestResponse unifiedOrder(String orderNo, String tradeType) {
+        User user = userService.getById(SecurityUtils.getUser().getId());
+
+        String openId = user.getMaOpenId();
+
         if (StringUtils.isEmpty(tradeType)) {
             tradeType = "JSAPI";
         } else {
             tradeType = "MWEB";
+            openId = user.getMpOpenId();
         }
-        User user = userService.getById(SecurityUtils.getUser().getId());
         UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, orderNo));
         if (!userOrder.getStatus().equals(1)) {
             return RestResponse.failed("订单已支付");
         }
         Dept dept = deptService.getById(userOrder.getDeptId());
-        String url = urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
+
+        String url = urlData.getPayUrl() + "?orderNo=" + orderNo + "&openId=" + openId + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&tradeType=" + tradeType;
 
         //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherUnifiedOrder?orderNo=" + orderNo + "&openId=" + user.getMaOpenId() + "&subMchId=" + dept.getSubMchId() + "&payment=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue()+ "&tradeType=" + tradeType;
         String result = HttpUtil.get(url);

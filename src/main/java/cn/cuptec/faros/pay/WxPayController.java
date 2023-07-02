@@ -117,7 +117,7 @@ public class WxPayController {
     @GetMapping("/unifiedOrder")
     public RestResponse unifiedOrder(@RequestParam("orderNo") String orderNo, @RequestParam(value = "tradeType", required = false) String tradeType) {
         log.info("支付类型" + tradeType);
-        tradeType="";
+
         String[] split = orderNo.split("KF");
         if (split.length == 1) {
             orderNo = split[0];
