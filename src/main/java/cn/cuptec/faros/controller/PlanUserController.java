@@ -103,6 +103,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     private OperationRecordService operationRecordService;
     @Resource
     private SysTemNoticService sysTemNoticService;
+    @Resource
+    private DoctorUserActionService doctorUserActionService;
 
     //查看设备用户计划审核状态
     @GetMapping("/getPlanStatus")
@@ -114,12 +116,23 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     //修改设备用户计划审核状态 status;//1-待审核 2-审核通过
     @GetMapping("/updatePlanStatus")
     public RestResponse updatePlanStatus(@RequestParam("userId") String userId, @RequestParam("status") Integer status) {
+
+
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
         if (tbTrainUser.getDoctorTeamId() == null || tbTrainUser.getDoctorTeamId().equals(0)) {
             tbTrainUser.setPlanCheckStatus(2);
             service.updateById(tbTrainUser);
             return RestResponse.failed("团队id为空");
 
+        }
+        List<DoctorUserAction> doctorUserActions = doctorUserActionService.list(new QueryWrapper<DoctorUserAction>().lambda().eq(DoctorUserAction::getTeamId, tbTrainUser.getDoctorTeamId()));
+        if (!CollectionUtils.isEmpty(doctorUserActions)) {
+            DoctorUserAction doctorUserAction = doctorUserActions.get(0);
+            if (doctorUserAction.getStatus().equals(0)) {
+                tbTrainUser.setPlanCheckStatus(2);
+                service.updateById(tbTrainUser);
+                return RestResponse.ok();
+            }
         }
         if (tbTrainUser.getPlanCheckStatus() != null && status.equals(1) && tbTrainUser.getPlanCheckStatus().equals(2)) {
             sysTemNoticService.sendNotic(userId, "计划审核");
@@ -508,13 +521,13 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @PostMapping("/add")
     public RestResponse add(@RequestBody TbTrainUser tbTrainUser) {
         //判断订单是否有团队 没有则同步
-        if(tbTrainUser.getDoctorTeamId()==null || tbTrainUser.getDoctorTeamId().equals(0)){
+        if (tbTrainUser.getDoctorTeamId() == null || tbTrainUser.getDoctorTeamId().equals(0)) {
             List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().
                     lambda().eq(PatientUser::getIdCard, tbTrainUser.getIdCard()));
-            if(!CollectionUtils.isEmpty(list)){
+            if (!CollectionUtils.isEmpty(list)) {
                 List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().
                         lambda().eq(UserOrder::getPatientUserId, list.get(0).getId()));
-                if(!CollectionUtils.isEmpty(userOrders)){
+                if (!CollectionUtils.isEmpty(userOrders)) {
                     Integer doctorTeamId = userOrders.get(0).getDoctorTeamId();
                     DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
                     tbTrainUser.setDoctorTeamId(doctorTeamId);
