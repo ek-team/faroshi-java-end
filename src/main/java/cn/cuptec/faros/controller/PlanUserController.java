@@ -125,14 +125,14 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             return RestResponse.failed("团队id为空");
 
         }
-        List<DoctorUserAction> doctorUserActions = doctorUserActionService.list(new QueryWrapper<DoctorUserAction>().lambda().eq(DoctorUserAction::getTeamId, tbTrainUser.getDoctorTeamId()));
-        if (!CollectionUtils.isEmpty(doctorUserActions)) {
-            DoctorUserAction doctorUserAction = doctorUserActions.get(0);
-            if (doctorUserAction.getStatus().equals(0)) {
-                tbTrainUser.setPlanCheckStatus(2);
-                service.updateById(tbTrainUser);
-                return RestResponse.ok();
-            }
+        DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, tbTrainUser.getDoctorTeamId())
+                .eq(DoctorTeam::getPlanCheckStatus, 0));
+        if (doctorTeam != null) {
+
+            tbTrainUser.setPlanCheckStatus(2);
+            service.updateById(tbTrainUser);
+            return RestResponse.ok();
+
         }
         if (tbTrainUser.getPlanCheckStatus() != null && status.equals(1) && tbTrainUser.getPlanCheckStatus().equals(2)) {
             sysTemNoticService.sendNotic(userId, "计划审核");

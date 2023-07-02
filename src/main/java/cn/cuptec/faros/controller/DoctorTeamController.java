@@ -327,6 +327,27 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
     }
 
     /**
+     * 判断医生是否是队长
+     *
+     * @return
+     */
+    @GetMapping("/getPLanCheckStatus")
+    public RestResponse getPLanCheckStatis(@RequestParam("teamId") int teamId) {
+        DoctorTeam doctorTeam = service.getById(teamId);
+
+        return RestResponse.ok(doctorTeam.getPlanCheckStatus());
+    }
+
+
+    @GetMapping("/setPLanCheckStatus")
+    public RestResponse setPLanCheckStatis(@RequestParam("teamId") int teamId, @RequestParam("status") int status) {
+        DoctorTeam doctorTeam = service.getById(teamId);
+        doctorTeam.setPlanCheckStatus(status);
+        service.updateById(doctorTeam);
+        return RestResponse.ok();
+    }
+
+    /**
      * 编辑医生团队
      *
      * @return
@@ -652,15 +673,15 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
             List<Integer> hospitalIds = doctorTeams.stream().map(DoctorTeam::getHospitalId)
                     .collect(Collectors.toList());
             List<HospitalInfo> hospitalInfos = (List<HospitalInfo>) hospitalInfoService.listByIds(hospitalIds);
-            Map<Integer, HospitalInfo> hospitalInfoMap=new HashMap<>();
-            if(!CollectionUtils.isEmpty(hospitalInfos)){
-               hospitalInfoMap = hospitalInfos.stream()
+            Map<Integer, HospitalInfo> hospitalInfoMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(hospitalInfos)) {
+                hospitalInfoMap = hospitalInfos.stream()
                         .collect(Collectors.toMap(HospitalInfo::getId, t -> t));
 
 
             }
 
-            Map<Integer, List<DoctorTeamPeople>> map=new HashMap<>();
+            Map<Integer, List<DoctorTeamPeople>> map = new HashMap<>();
             if (!CollectionUtils.isEmpty(doctorTeamPeopleList)) {
                 List<Integer> userIds = doctorTeamPeopleList.stream().map(DoctorTeamPeople::getUserId)
                         .collect(Collectors.toList());
@@ -674,7 +695,7 @@ public class DoctorTeamController extends AbstractBaseController<DoctorTeamServi
 
                     }
                 }
-                map= doctorTeamPeopleList.stream()
+                map = doctorTeamPeopleList.stream()
                         .collect(Collectors.groupingBy(DoctorTeamPeople::getTeamId));
 
             }
