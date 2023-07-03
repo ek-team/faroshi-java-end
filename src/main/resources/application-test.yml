@@ -71,7 +71,7 @@ wx:
     sendDoctorUrlTip: Zczeadboli73nUiTiMMOyPGn9RGHpdUNppd1dswTCiM
     sendDoctorTip: D6RhGZWd59e4-_yJYMS-3fDi-Xl-OhKo91iG84Hs-RY
     patientAddDoctor: 42O-AVZh8M2Mm5MdrtsxlJhIBpiWz1Gvymq6xDEYLxo
-  #测试公众号
+  #测试公众号张伦本地测试
   mp1:
     appId: wxed6151fe3094bbd0
     secret: 1539391f5e68b8901714099c40d6ca4d
