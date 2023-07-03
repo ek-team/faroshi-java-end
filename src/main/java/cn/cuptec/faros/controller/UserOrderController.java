@@ -8,6 +8,7 @@ import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.CalculatePriceResult;
+import cn.cuptec.faros.dto.KuaiDiCallBackParam;
 import cn.cuptec.faros.dto.KuaiDiCallBackResult;
 import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
@@ -119,6 +120,59 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private RecyclingRuleService recyclingRuleService;
     @Resource
     private ReviewRefundOrderService reviewRefundOrderService;
+    @Resource
+    private DeliveryInfoService deliveryInfoService;
+
+    /**
+     * 商家下单回调接口
+     *
+     * @param request
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("autoXiaDankuaidicallback")
+    public KuaiDiCallBackResult kuaidicallback(HttpServletRequest request) throws Exception {
+        String param = request.getParameter("param");
+        String taskId = request.getParameter("taskId");
+        log.info("商家下单调快递回调快递回调快递回调:{}", param);
+        KuaiDiCallBackParam kuaiDiCallBackParam = new Gson().fromJson(param, KuaiDiCallBackParam.class);
+        UserOrder userOrder = service.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getTaskId, taskId));
+        if (userOrder != null) {
+            userOrder.setLabel(kuaiDiCallBackParam.getData().getLabel());
+            userOrder.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
+            //： 0：'下单成功'； 1：'已接单'； 2：'收件中'； 9：'用户主动取消'； 10：'已取件'；
+            // 11：'揽货失败'； 13：'已签收'； 14：'异常签收'；15：'已结算' ；99：'订单已取消'；101：'运输中'；200：'已出单'；
+            // 201：'出单失败'；
+            // 610：'下单失败'；155：'修改重量'(注意需要在工单系统中发起异常反馈并由快递100服务人员确认调重后才会有此状态回调，
+            // 回调内容包含修改重量后的重量、运费、费用明细、业务类型)
+            String status = kuaiDiCallBackParam.getData().getStatus();
+            if (status.equals(10)) {
+                userOrder.setStatus(3);
+
+            }
+            if (status.equals(11)) {
+                userOrder.setLogisticsDeliveryTime(LocalDateTime.now());
+
+            }
+            service.updateById(userOrder);
+        }
+        DeliveryInfo deliveryInfo = deliveryInfoService.getOne(new QueryWrapper<DeliveryInfo>().lambda()
+                .eq(DeliveryInfo::getTaskId, taskId));
+        if (deliveryInfo != null) {
+            deliveryInfo.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
+            deliveryInfo.setLabel(kuaiDiCallBackParam.getKuaidinum());
+            deliveryInfo.setStatus(kuaiDiCallBackParam.getData().getStatus());
+            deliveryInfo.setCourierName(kuaiDiCallBackParam.getData().getCourierName());
+            deliveryInfo.setCourierMobile(kuaiDiCallBackParam.getData().getCourierMobile());
+            deliveryInfoService.updateById(deliveryInfo);
+        }
+
+        KuaiDiCallBackResult kuaiDiCallBackResult = new KuaiDiCallBackResult();
+        kuaiDiCallBackResult.setResult(true);
+        kuaiDiCallBackResult.setMessage("成功");
+        kuaiDiCallBackResult.setReturnCode("200");
+        return kuaiDiCallBackResult;
+    }
 
     /**
      * 查询订单的续租记录

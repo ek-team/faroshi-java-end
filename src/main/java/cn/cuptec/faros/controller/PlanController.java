@@ -2,10 +2,8 @@ package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
-import cn.cuptec.faros.entity.EvaluationRecords;
-import cn.cuptec.faros.entity.ListByUidPlanResult;
-import cn.cuptec.faros.entity.TbPlan;
-import cn.cuptec.faros.entity.TbTrainUser;
+import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.service.DoctorTeamService;
 import cn.cuptec.faros.service.EvaluationRecordsService;
 import cn.cuptec.faros.service.PlanService;
 import cn.cuptec.faros.service.PlanUserService;
@@ -30,6 +28,8 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
     private PlanUserService planUserService;
     @Resource
     private EvaluationRecordsService evaluationRecordsService;
+    @Resource
+    private DoctorTeamService doctorTeamService;
 
     @PostMapping("/save")
     public RestResponse<TbPlan> addPlan(@RequestBody List<TbPlan> planList) {
@@ -42,8 +42,18 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
                 one.setPlanCheckStatus(2);
                 planUserService.updateById(one);
             }
+            DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, one.getDoctorTeamId())
+                    .eq(DoctorTeam::getPlanCheckStatus, 0));
+            if (doctorTeam != null) {
+
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+                return RestResponse.ok();
+
+            }
 
         }
+
         return RestResponse.ok();
     }
 
@@ -109,6 +119,15 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
             if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
                 one.setPlanCheckStatus(2);
                 planUserService.updateById(one);
+            }
+            DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, one.getDoctorTeamId())
+                    .eq(DoctorTeam::getPlanCheckStatus, 0));
+            if (doctorTeam != null) {
+
+                one.setPlanCheckStatus(2);
+                planUserService.updateById(one);
+                return RestResponse.ok();
+
             }
 
         }

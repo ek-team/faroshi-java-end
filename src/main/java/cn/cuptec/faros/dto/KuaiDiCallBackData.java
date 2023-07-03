@@ -13,4 +13,5 @@ public class KuaiDiCallBackData {
     private String status;
     private String freight;
     private String weight;
+    private String label;//面单链接
 }

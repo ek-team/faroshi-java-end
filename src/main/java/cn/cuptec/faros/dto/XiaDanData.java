@@ -6,4 +6,5 @@ import lombok.Data;
 public class XiaDanData {
     private String taskId;
     private String orderId;
+    private String kuaidinum;
 }

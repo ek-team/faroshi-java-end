@@ -25,6 +25,9 @@ public class UserOrder {
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer test = 0;//0-非测试订单 1-测试订单
     private LocalDateTime moveTime;//运行时间
+    private String taskId;//快递任务id
+    private String message;//快递下单返回错误信息
+    private String label;//快递面单链接
     private Integer payType;//1-微信 2-支付宝
     private Integer billId;
     private String saleSpecDescIdList;

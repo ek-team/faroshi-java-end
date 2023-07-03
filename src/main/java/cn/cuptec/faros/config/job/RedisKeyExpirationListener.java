@@ -217,7 +217,20 @@ public class RedisKeyExpirationListener implements MessageListener {
                 }
 
             }
+            //自动下单
+            if (body.contains("autoXiaDan:")) {
+                String[] str = body.split(":");
+                String orderId = str[1];
+                String[] split = orderId.split("/");
 
+                orderId = split[0];
+                UserOrder userOrder = userOrdertService.getById(orderId);
+                if (userOrder != null) {
+
+                    userOrdertService.autoXiaDan(userOrder.getOrderNo(), split[1]);
+                }
+
+            }
             if (body.contains("patientOrder:")) {//图文咨询过期时间
                 String[] str = body.split(":");
                 String patientOrderId = str[1];

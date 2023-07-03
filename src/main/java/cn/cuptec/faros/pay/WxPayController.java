@@ -235,6 +235,7 @@ public class WxPayController {
             userOrder.setConfirmPayTime(new Date());
             userOrder.setTransactionId(transactionId);
             userOrder.setStatus(2);//已支付 待发货
+            userOrder.setPayType(1);
             userOrder.setPayTime(LocalDateTime.now());
             //为用户创建群聊
             Integer doctorTeamId = userOrder.getDoctorTeamId();

@@ -6,7 +6,9 @@ import cn.cuptec.faros.common.utils.sms.HttpUtils;
 import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.datascope.DataScope;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
+import cn.cuptec.faros.dto.BOrderReqData;
 import cn.cuptec.faros.dto.KuaiDiXiaDanParam;
+import cn.cuptec.faros.dto.XiaDanParam;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.mapper.UserOrderMapper;
 import cn.cuptec.faros.vo.MapExpressTrackVo;
@@ -59,9 +61,11 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
@@ -80,12 +84,17 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     @Resource
     private UserRoleService userRoleService;
     @Resource
-    private SalesmanPayChannelService salesmanPayChannelService;
+    private ServicePackService servicePackService;
     @Resource
     private cn.cuptec.faros.service.WxMpService wxMpService;
+    @Resource
+    private DeliverySettingService deliverySettingService;
+    @Resource
+    private DeliveryInfoService deliveryInfoService;
     @Autowired
     public RedisTemplate redisTemplate;
     private String borderApiUrl = "https://poll.kuaidi100.com/order/borderapi.do";
+
 
     /**
      * 商家寄件 用户下单付款自动叫订单
@@ -93,11 +102,122 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
      * @return
      */
 
+    public void autoXiaDanCheck(String userOrderNo, String url) {
+        //判断代理商是否开启了自动下单
+
+        UserOrder userOrder = getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, userOrderNo));
+
+        DeliverySetting deliverySetting = deliverySettingService.getOne(new QueryWrapper<DeliverySetting>().lambda().eq(DeliverySetting::getDeptId, userOrder.getDeptId()));
+        if (deliverySetting == null || deliverySetting.getStatus().equals(0)) {
+            return;
+        }
+        //查看用户选择的发货时间
+        LocalDate deliveryDate = userOrder.getDeliveryDate();//期望发货时间
+        LocalDate now = LocalDate.now();
+        long until = now.until(deliveryDate, ChronoUnit.DAYS);
+        if (until == 0) {
+            autoXiaDan(userOrderNo, url);
+        }else {
+            //加入定时任务到期自动下单
+            String keyRedis = String.valueOf(StrUtil.format("{}{}", "autoXiaDan:", userOrder.getId()+"/"+url));
+            redisTemplate.opsForValue().set(keyRedis,userOrderNo, until, TimeUnit.DAYS);//设置过期时间
+
+        }
+
+
+    }
+
+    public void autoXiaDan(String userOrderNo, String url) {
+        UserOrder userOrder = getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, userOrderNo));
+        DeliverySetting deliverySetting = deliverySettingService.getOne(new QueryWrapper<DeliverySetting>().lambda().eq(DeliverySetting::getDeptId, userOrder.getDeptId()));
+
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+
+        PrintReq printReq = new PrintReq();
+        BOrderReq bOrderReq = new BOrderReq();
+        bOrderReq.setKuaidicom(CompanyConstant.SF);
+        bOrderReq.setSendManName(deliverySetting.getName());
+        bOrderReq.setSendManMobile(deliverySetting.getPhone());
+        bOrderReq.setSendManPrintAddr(deliverySetting.getAddress());
+        bOrderReq.setRecManName(userOrder.getReceiverName());
+        bOrderReq.setRecManMobile(userOrder.getReceiverPhone());
+        bOrderReq.setRecManPrintAddr(userOrder.getReceiverDetailAddress());
+        bOrderReq.setCallBackUrl(url + "purchase/order/autoXiaDankuaidicallback");
+        bOrderReq.setWeight(servicePack.getWeight() + "");
+        bOrderReq.setReturnType("20");
+        bOrderReq.setPickupEndTime("18:00");
+        bOrderReq.setPickupStartTime("09:00");
+        String t = String.valueOf(System.currentTimeMillis());
+        String param = new Gson().toJson(bOrderReq);
+
+        printReq.setKey("JAnUGrLl5945");
+        printReq.setSign(SignUtils.printSign(param, t, "JAnUGrLl5945", "75bd152004314af288765416804ac830"));
+        printReq.setT(t);
+        printReq.setParam(param);
+        printReq.setMethod(ApiInfoConstant.B_ORDER_OFFICIAL_ORDER_METHOD);
+        System.out.println(printReq);
+        IBaseClient bOrder = new BOrderOfficial();
+        try {
+            HttpResult execute = bOrder.execute(printReq);
+            String body = execute.getBody();
+            XiaDanParam xiaDanParam = new Gson().fromJson(body, XiaDanParam.class);
+            userOrder.setTaskId(xiaDanParam.getData().getTaskId());
+            userOrder.setMessage(xiaDanParam.getMessage());
+            userOrder.setDeliverySn(xiaDanParam.getData().getKuaidinum());
+            updateById(userOrder);
+            DeliveryInfo deliveryInfo = new DeliveryInfo();
+            deliveryInfo.setTaskId(xiaDanParam.getData().getTaskId());
+            deliveryInfo.setMessage(xiaDanParam.getMessage());
+            deliveryInfo.setUserOrderNo(userOrderNo);
+            deliveryInfo.setDeliveryName("SF");
+            deliveryInfo.setDeliverySn(xiaDanParam.getData().getKuaidinum());
+            deliveryInfoService.save(deliveryInfo);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 
     public static void main(String[] args) {
-        for (int i = 1; i < 4; i++) {
-            System.out.println(i);
+        LocalDate deliveryDate = LocalDate.now();//期望发货时间
+        LocalDate now = LocalDate.now();
+        long until = now.until(deliveryDate, ChronoUnit.DAYS);
+        if (until == 0) {
+            System.out.println(until);
         }
+        System.out.println(until);
+//        PrintReq printReq = new PrintReq();
+//        BOrderReq bOrderReq = new BOrderReq();
+//        bOrderReq.setKuaidicom(CompanyConstant.SF);
+//        bOrderReq.setSendManName("张三");
+//        bOrderReq.setSendManMobile("13307637744");
+//        bOrderReq.setSendManPrintAddr("浙江省杭州市余杭区马鞍山雅苑");
+//        bOrderReq.setRecManName("李四");
+//        bOrderReq.setRecManMobile("13307637744");
+//        bOrderReq.setRecManPrintAddr("浙江省杭州市余杭区西溪北苑121幢");
+//        bOrderReq.setCallBackUrl("http://www.baidu.com");
+//        bOrderReq.setWeight("1");
+//        bOrderReq.setPickupEndTime("14:00");
+//        bOrderReq.setPickupStartTime("15:00");
+//        String t = String.valueOf(System.currentTimeMillis());
+//        String param = new Gson().toJson(bOrderReq);
+//
+//        printReq.setKey("JAnUGrLl5945");
+//        printReq.setSign(SignUtils.printSign(param, t, "JAnUGrLl5945", "75bd152004314af288765416804ac830"));
+//        printReq.setT(t);
+//        printReq.setParam(param);
+//        printReq.setMethod(ApiInfoConstant.B_ORDER_OFFICIAL_ORDER_METHOD);
+//        System.out.println(printReq);
+//        IBaseClient bOrder = new BOrderOfficial();
+//        try {
+//            HttpResult execute = bOrder.execute(printReq);
+//            String body = execute.getBody();
+//            XiaDanParam xiaDanParam = new Gson().fromJson(body, XiaDanParam.class);
+//            System.out.println(body);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
     }
 //
 //
@@ -246,7 +366,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
             dataScope.setIsOnly(true);
         }
 
-        List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery().eq(UserOrder::getTest,0), dataScope);
+        List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery().eq(UserOrder::getTest, 0), dataScope);
         // count0 = userOrders.stream().filter(it -> it.getStatus() == 0).count();
         long count1 = userOrders.stream().filter(it -> it.getStatus() == 1).count();
         long count2 = userOrders.stream().filter(it -> it.getStatus() == 2).count();
