@@ -4,9 +4,11 @@ import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.oss.OssProperties;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.dto.UploadXPianParam;
+import cn.cuptec.faros.entity.PlanUserOtherInfo;
 import cn.cuptec.faros.entity.PneumaticPlan;
 import cn.cuptec.faros.entity.TbTrainUser;
 import cn.cuptec.faros.entity.XPic;
+import cn.cuptec.faros.service.PlanUserOtherInfoService;
 import cn.cuptec.faros.service.PlanUserService;
 import cn.cuptec.faros.service.XPicService;
 import cn.cuptec.faros.util.FileUtils;
@@ -38,6 +40,9 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
     @Resource
     private PlanUserService planUserService;
 
+    @Resource
+    private PlanUserOtherInfoService planUserOtherInfoService;
+
     /**
      * 根据身份证查询
      */
@@ -64,6 +69,31 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
         List<XPic> list = service.list(eq);
 
         return RestResponse.ok(list);
+    }
+
+    /**
+     * 根据身份证查询设备用户的其他信息
+     */
+    @GetMapping("/getPlanUserOtherByIdCard")
+    public RestResponse getPlanUserOtherByIdCard(@RequestParam(value = "idCard", required = false) String idCard) {
+        PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, idCard));
+
+        return RestResponse.ok(planUserOtherInfo);
+    }
+
+    /**
+     * 根据身份证查询设备用户的其他信息
+     */
+    @PostMapping("/saveOrUpdatePlanUserOtherByIdCard")
+    public RestResponse saveOrUpdatePlanUserOtherByIdCard(@RequestBody PlanUserOtherInfo planUserOtherInfo) {
+        PlanUserOtherInfo data = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, planUserOtherInfo.getIdCard()));
+        if (data == null) {
+            planUserOtherInfoService.save(planUserOtherInfo);
+        } else {
+            data.setRegistrationEvaluation(planUserOtherInfo.getRegistrationEvaluation());
+            planUserOtherInfoService.updateById(data);
+        }
+        return RestResponse.ok(planUserOtherInfo);
     }
 
     /**
