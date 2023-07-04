@@ -106,7 +106,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                         String adverseReactions = tbUserTrainRecord.getAdverseReactions();//异常反馈
                         if (adverseReactions != null) {
                             //发送信息
-                            push(patientId, 2, tbTrainUser.getName(), keyId + "", userId, xtUserId, adverseReactions, doctorIds, tbTrainUser.getDoctorTeamId());
+                            push(patientId, 2, tbTrainUser.getName(), keyId + "", userId, xtUserId, "异常反馈(" + adverseReactions + ")", doctorIds, tbTrainUser.getDoctorTeamId());
 
                         }
                         Integer successTime = tbUserTrainRecord.getSuccessTime();
