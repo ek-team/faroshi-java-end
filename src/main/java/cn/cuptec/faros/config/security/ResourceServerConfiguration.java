@@ -179,7 +179,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/palnUser/updatePlanStatus",
                         "/subPlan/updatePlanInvalid",
                         "/user/saveLoginLog",
-                        "/purchase/order/autoXiaDankuaidicallback"
+                        "/purchase/order/autoXiaDankuaidicallback",
+                        "/planUserTrainRecord/getByUserIdAndFrequency"
 
                 )
                 .permitAll()

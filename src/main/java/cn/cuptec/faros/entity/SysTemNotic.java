@@ -27,6 +27,8 @@ public class SysTemNotic {
     private Integer keyIdType;//1VAS 2疼痛异常 3踩踏次数异常
     private Integer chatUserId;
     private Integer checkStatus=1;//1待审核 2审核通过
+    private String frequency;
+    private String dateStr;
     @TableField(exist = false)
     private TbTrainUser tbTrainUser;
 }

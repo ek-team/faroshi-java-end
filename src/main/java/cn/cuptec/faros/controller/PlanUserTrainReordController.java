@@ -100,13 +100,13 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                         if (painLevel != null) {
                             if (painLevel > 2) {
                                 //发送信息String stockUserName,String keyId,String stockUserId,Integer xtUserId,String msg,List<Integer> doctorIds,Integer teamId
-                                push(patientId, 1, tbTrainUser.getName(), keyId + "", userId, xtUserId, "训练VAS值超过预期", doctorIds, tbTrainUser.getDoctorTeamId());
+                                push(tbUserTrainRecord.getDateStr(), tbUserTrainRecord.getFrequency() + "", patientId, 1, tbTrainUser.getName(), keyId + "", userId, xtUserId, "训练VAS值超过预期", doctorIds, tbTrainUser.getDoctorTeamId());
                             }
                         }
                         String adverseReactions = tbUserTrainRecord.getAdverseReactions();//异常反馈
                         if (adverseReactions != null) {
                             //发送信息
-                            push(patientId, 2, tbTrainUser.getName(), keyId + "", userId, xtUserId, "异常反馈(" + adverseReactions + ")", doctorIds, tbTrainUser.getDoctorTeamId());
+                            push(tbUserTrainRecord.getDateStr(), tbUserTrainRecord.getFrequency() + "", patientId, 2, tbTrainUser.getName(), keyId + "", userId, xtUserId, "异常反馈(" + adverseReactions + ")", doctorIds, tbTrainUser.getDoctorTeamId());
 
                         }
                         Integer successTime = tbUserTrainRecord.getSuccessTime();
@@ -121,7 +121,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                         if (time != 0 && tbUserTrainRecord.getTotalTrainStep() != null
                                 && time < tbUserTrainRecord.getTotalTrainStep() / 2) {
                             //发送信息
-                            push(patientId, 3, tbTrainUser.getName(), keyId + "", userId, xtUserId, "踩踏次数异常", doctorIds, tbTrainUser.getDoctorTeamId());
+                            push(tbUserTrainRecord.getDateStr(), tbUserTrainRecord.getFrequency() + "", patientId, 3, tbTrainUser.getName(), keyId + "", userId, xtUserId, "踩踏次数异常", doctorIds, tbTrainUser.getDoctorTeamId());
 
                         }
                     }
@@ -131,7 +131,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         });
     }
 
-    private void push(String patientId, Integer type, String stockUserName, String keyId, String stockUserId, Integer xtUserId, String msg, List<Integer> doctorIds, Integer teamId) {
+    private void push(String date_str, String frequency, String patientId, Integer type, String stockUserName, String keyId, String stockUserId, Integer xtUserId, String msg, List<Integer> doctorIds, Integer teamId) {
         List<SysTemNotic> sysTemNotics = sysTemNoticService.list(new QueryWrapper<SysTemNotic>().lambda()
                 .eq(SysTemNotic::getKeyId, keyId)
                 .eq(SysTemNotic::getKeyIdType, type));
@@ -147,7 +147,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         if (!CollectionUtils.isEmpty(chatUsers)) {
             chatUserId = chatUsers.get(0).getId();
         }
-        saveSystemNotic(type, xtUserId, keyId, msg, stockUserId, chatUserId, teamId);
+        saveSystemNotic(date_str, frequency, type, xtUserId, keyId, msg, stockUserId, chatUserId, teamId);
 
         for (Integer doctorId : doctorIds) {
             //发送消息
@@ -169,8 +169,10 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     }
 
 
-    public void saveSystemNotic(Integer keyIdType, Integer xtUserId, String keyId, String msg, String stockUserId, Integer chatUserId, Integer teamId) {
+    public void saveSystemNotic(String date_str, String frequency, Integer keyIdType, Integer xtUserId, String keyId, String msg, String stockUserId, Integer chatUserId, Integer teamId) {
         SysTemNotic sysTemNotic = new SysTemNotic();
+        sysTemNotic.setDateStr(date_str);
+        sysTemNotic.setFrequency(frequency);
         sysTemNotic.setKeyIdType(keyIdType);
         sysTemNotic.setCreateTime(LocalDateTime.now());
         sysTemNotic.setContent(msg);
@@ -185,6 +187,16 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         sysTemNoticService.save(sysTemNotic);
     }
 
+    @GetMapping("/getByUserIdAndFrequency")
+    public RestResponse pageTrainRecordByXtUserId(@RequestParam(value = "frequency", required = false) String frequency,
+                                                  @RequestParam(value = "userId", required = false) String userId) {
+
+
+        List<TbUserTrainRecord> tbUserTrainRecordIPage = service.list(new QueryWrapper<TbUserTrainRecord>().lambda().eq(TbUserTrainRecord::getUserId, userId)
+                .eq(TbUserTrainRecord::getFrequency, frequency));
+
+        return RestResponse.ok(tbUserTrainRecordIPage);
+    }
 
     @GetMapping("/pageTrainRecordByXtUserId")
     public RestResponse pageTrainRecordByXtUserId(@RequestParam(value = "xtUserId", required = false) Integer xtUserId) {
