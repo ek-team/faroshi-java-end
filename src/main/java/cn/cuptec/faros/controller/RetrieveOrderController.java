@@ -628,7 +628,11 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 userOrder.setUseDay(day.intValue());
                 userOrdertService.updateById(userOrder);
             }
-            RetrieveOrder retrieveOrder = new RetrieveOrder();
+            RetrieveOrder retrieveOrder = service.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                    .eq(RetrieveOrder::getUserOrderNo, userOrder.getOrderNo()));
+            if (retrieveOrder == null) {
+                retrieveOrder = new RetrieveOrder();
+            }
             retrieveOrder.setUserOrderNo(userOrder.getOrderNo());
             retrieveOrder.setRentDay(day.intValue());
             retrieveOrder.setOrderId(param.getOrderNo());
