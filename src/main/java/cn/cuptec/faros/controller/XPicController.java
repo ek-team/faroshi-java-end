@@ -11,6 +11,7 @@ import cn.cuptec.faros.service.PlanUserService;
 import cn.cuptec.faros.service.XPicService;
 import cn.cuptec.faros.util.FileUtils;
 import cn.cuptec.faros.util.UploadFileUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,8 +56,12 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
      * 根据时间身份证查询
      */
     @GetMapping("/getByIdCardAndTime")
-    public RestResponse getByIdCardAndTime(@RequestParam("idCard") String idCard, @RequestParam("time") String time) {
-        List<XPic> list = service.list(new QueryWrapper<XPic>().lambda().eq(XPic::getIdCard, idCard).eq(XPic::getCreateTime, time));
+    public RestResponse getByIdCardAndTime(@RequestParam("idCard") String idCard, @RequestParam(value = "time", required = false) String time) {
+        LambdaQueryWrapper<XPic> eq = new QueryWrapper<XPic>().lambda().eq(XPic::getIdCard, idCard);
+        if (!StringUtils.isEmpty(time)) {
+            eq.eq(XPic::getCreateTime, time);
+        }
+        List<XPic> list = service.list(eq);
 
         return RestResponse.ok(list);
     }
