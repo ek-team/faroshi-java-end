@@ -105,8 +105,11 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
                         }
                         String adverseReactions = tbUserTrainRecord.getAdverseReactions();//异常反馈
                         if (adverseReactions != null) {
-                            //发送信息
-                            push(tbUserTrainRecord.getDateStr(), tbUserTrainRecord.getFrequency() + "", patientId, 2, tbTrainUser.getName(), keyId + "", userId, xtUserId, "异常反馈(" + adverseReactions + ")", doctorIds, tbTrainUser.getDoctorTeamId());
+                            if (!StringUtils.isEmpty(adverseReactions)) {
+                                //发送信息
+                                push(tbUserTrainRecord.getDateStr(), tbUserTrainRecord.getFrequency() + "", patientId, 2, tbTrainUser.getName(), keyId + "", userId, xtUserId, "异常反馈(" + adverseReactions + ")", doctorIds, tbTrainUser.getDoctorTeamId());
+
+                            }
 
                         }
                         Integer successTime = tbUserTrainRecord.getSuccessTime();
@@ -189,12 +192,19 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
     @GetMapping("/getByUserIdAndFrequency")
     public RestResponse pageTrainRecordByXtUserId(@RequestParam(value = "frequency", required = false) String frequency,
-                                                  @RequestParam(value = "userId", required = false) String userId) {
+                                                  @RequestParam(value = "userId", required = false) String userId,
+                                                  @RequestParam(value = "dateStr", required = false) String dateStr) {
 
 
         List<TbUserTrainRecord> tbUserTrainRecordIPage = service.list(new QueryWrapper<TbUserTrainRecord>().lambda().eq(TbUserTrainRecord::getUserId, userId)
-                .eq(TbUserTrainRecord::getFrequency, frequency));
-
+                .eq(TbUserTrainRecord::getFrequency, frequency)
+                .eq(TbUserTrainRecord::getDateStr, dateStr));
+        if (!CollectionUtils.isEmpty(tbUserTrainRecordIPage)) {
+            List<TbTrainData> list = trainDataService.list(new QueryWrapper<TbTrainData>().lambda().eq(TbTrainData::getUserId, userId)
+                    .eq(TbTrainData::getFrequency, Integer.parseInt(frequency) - 1)
+                    .eq(TbTrainData::getDateStr, dateStr));
+            tbUserTrainRecordIPage.get(0).setTrainDataList(list);
+        }
         return RestResponse.ok(tbUserTrainRecordIPage);
     }
 

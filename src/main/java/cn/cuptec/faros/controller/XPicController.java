@@ -82,6 +82,15 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
     }
 
     /**
+     * 删除x片
+     */
+    @GetMapping("/deleteById")
+    public RestResponse deleteById(@RequestParam(value = "id", required = false) Integer id) {
+        service.removeById(id);
+        return RestResponse.ok();
+    }
+
+    /**
      * 根据身份证查询设备用户的其他信息
      */
     @PostMapping("/saveOrUpdatePlanUserOtherByIdCard")
@@ -114,7 +123,11 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
             for (String url : param.getUrls()) {
                 XPic xPic = new XPic();
                 xPic.setUrl(url);
-                xPic.setCreateTime(LocalDate.parse(param.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                if (!StringUtils.isEmpty(param.getCreateTime())) {
+                    xPic.setCreateTime(LocalDate.parse(param.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                } else {
+                    xPic.setCreateTime(LocalDate.now());
+                }
                 if (infoByUXtUserId == null) {
                     xPic.setIdCard(param.getIdCard());
 
