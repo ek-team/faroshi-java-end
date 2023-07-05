@@ -12,6 +12,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -510,6 +511,15 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
         return RestResponse.ok(followUpPlan);
     }
 
+    @GetMapping("/deleteById")
+    public RestResponse deleteById(@RequestParam(value = "id", required = false) Integer id) {
+        service.update(Wrappers.<FollowUpPlan>lambdaUpdate()
+                .set(FollowUpPlan::getStatus, 1)
+                .eq(FollowUpPlan::getId, id)
+        );
+        return RestResponse.ok();
+    }
+
     /**
      * 列表查询
      *
@@ -530,7 +540,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             queryWrapper.or();
             queryWrapper.like("option_name", name);
         }
+        queryWrapper.eq("status", 0);
         queryWrapper.orderByDesc("create_time");
+
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();
         return RestResponse.ok(followUpPlanIPage);
@@ -570,7 +582,9 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
             queryWrapper.le("create_time", endCreateTime);
             queryWrapper.ge("create_time", startCreateTime);
         }
+        queryWrapper.eq("status", 0);
         queryWrapper.orderByDesc("create_time");
+
         IPage<FollowUpPlan> followUpPlanIPage = service.page(page, queryWrapper);
         List<FollowUpPlan> records = followUpPlanIPage.getRecords();
         if (!CollectionUtils.isEmpty(records)) {
@@ -656,7 +670,7 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
 
             }
             return RestResponse.ok(userList);
-        }else if(StringUtils.isEmpty(operationName) && StringUtils.isEmpty(name)) {
+        } else if (StringUtils.isEmpty(operationName) && StringUtils.isEmpty(name)) {
 
             userList = userService.list(new QueryWrapper<User>().lambda().in(User::getId, userIds)
             );

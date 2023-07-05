@@ -18,6 +18,7 @@ public class FollowUpPlan extends Model<FollowUpPlan> {
     @TableId(type = IdType.AUTO)
     private Integer id;
     private Integer createUserId;//所属人
+    private Integer status=0;//0正常 1删除
     private Integer followUpStatus = 0;//0可编辑1不可编辑
     private Integer deptId;//记录部门下的随访模板
     private LocalDateTime createTime;
