@@ -8,6 +8,10 @@ import com.alipay.api.internal.util.HttpClientUtil;
 import com.alipay.api.internal.util.StringUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 import sun.misc.BASE64Encoder;
 
@@ -35,14 +39,14 @@ public class ShunFengService {
     private DeliveryInfoService deliveryInfoService;
 
     public static void main(String[] args) {
-        //  SFMiandan();
+        //  SFMiandan("SF7444467872275");
 
     }
 
     /**
      * 顺丰打印面单
      */
-    public void SFMiandan() {
+    public SFMsgDataResult SFMiandan(String waybillNo) {
         String url = "https://sfapi-sbox.sf-express.com/std/service";//沙箱环境地址
         String checkWord = "9mUPiQbvKfEL7hQ2rYpDSrVgCm4Utvjz";//沙箱校验码
         String devUrl = "https://bspgw.sf-express.com/std/service";//正式环境地址
@@ -59,14 +63,18 @@ public class ShunFengService {
         params.put("timestamp", timestamp);
         SFMsgDataMianDan sfMsgDataMianDan = new SFMsgDataMianDan();
         sfMsgDataMianDan.setTemplateCode("fm_150_standard_JH7X5WF1Z");
-        String[] numbers = {"SF7444467865442"};
-        sfMsgDataMianDan.setDocuments(numbers);
+        List<Sfdocuments> documents = new ArrayList<>();
+        Sfdocuments sfdocuments = new Sfdocuments();
+        sfdocuments.setMasterWaybillNo(waybillNo);
+        documents.add(sfdocuments);
+        sfMsgDataMianDan.setDocuments(documents);
 
         String msgData = JSONObject.toJSONString(sfMsgDataMianDan);
         params.put("msgData", msgData);
 
         params.put("msgDigest", msgDigest(timestamp, msgData, checkWord));//数据签名
         String post = post(params, url);
+        System.out.println(post);
         post = post.replace("\\", "");
         String[] apiResultData = post.split("apiResultData");
         String apiResultDatum = apiResultData[1];
@@ -75,10 +83,10 @@ public class ShunFengService {
             substring = "{}";
         }
         String post1 = apiResultData[0] + "apiResultData\":" + substring + "}";
-        System.out.println(post);
-        SFMsgDataResult sfMsgDataResult = JSONObject.parseObject(post1, SFMsgDataResult.class);
-        System.out.println(post);
 
+        SFMsgDataResult sfMsgDataResult = JSONObject.parseObject(post1, SFMsgDataResult.class);
+
+        return sfMsgDataResult;
     }
 
     /**

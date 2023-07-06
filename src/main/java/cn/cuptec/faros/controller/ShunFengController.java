@@ -1,5 +1,6 @@
 package cn.cuptec.faros.controller;
 
+import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.dto.KuaiDiCallBackResult;
 import cn.cuptec.faros.dto.ShunfnegcallbackData;
 import cn.cuptec.faros.dto.ShunfnegcallbackParam;
@@ -8,10 +9,12 @@ import cn.cuptec.faros.entity.DeliveryInfo;
 import cn.cuptec.faros.entity.SFMsgDataResult;
 import cn.cuptec.faros.entity.UserOrder;
 import cn.cuptec.faros.service.DeliveryInfoService;
+import cn.cuptec.faros.service.ShunFengService;
 import cn.cuptec.faros.service.UserOrdertService;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.domain.ZhimaCreditPeUserOrderSyncModel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.sun.org.apache.regexp.internal.RE;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -32,6 +35,8 @@ public class ShunFengController {
     private UserOrdertService userOrdertService;
     @Resource
     private DeliveryInfoService deliveryInfoService;
+    @Resource
+    private ShunFengService shunFengService;
 
     /**
      * 路由推送接口
@@ -76,5 +81,14 @@ public class ShunFengController {
         shunfnegcallbackData.setReturn_msg("成功");
         shunfnegcallbackData.setReturn_code("0000");
         return shunfnegcallbackData;
+    }
+
+    /**
+     * 获取顺丰面单接口
+     */
+    @GetMapping("SFMiandan")
+    public RestResponse SFMiandan(@RequestParam("waybillNo") String waybillNo) {
+
+        return RestResponse.ok(shunFengService.SFMiandan(waybillNo));
     }
 }
