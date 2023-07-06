@@ -110,7 +110,11 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @GetMapping("/getPlanStatus")
     public RestResponse getPlanStatus(@RequestParam("userId") String userId) {
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-        return RestResponse.ok(tbTrainUser.getPlanCheckStatus());
+        Integer planCheckStatus = tbTrainUser.getPlanCheckStatus();
+        if (planCheckStatus == null) {
+            planCheckStatus = 1;
+        }
+        return RestResponse.ok(planCheckStatus);
     }
 
     //修改设备用户计划审核状态 status;//1-待审核 2-审核通过
@@ -126,11 +130,18 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
         }
         DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, tbTrainUser.getDoctorTeamId())
-                .eq(DoctorTeam::getPlanCheckStatus, 0));
-        if (doctorTeam != null) {
+                .eq(DoctorTeam::getPlanCheckStatus, 1));
+        if (doctorTeam == null) {
 
             tbTrainUser.setPlanCheckStatus(2);
             service.updateById(tbTrainUser);
+
+            sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
+                    .eq(SysTemNotic::getStockUserId, userId)
+                    .eq(SysTemNotic::getType, 2)
+                    .set(SysTemNotic::getCheckStatus, 2)
+
+            );
             return RestResponse.ok();
 
         }

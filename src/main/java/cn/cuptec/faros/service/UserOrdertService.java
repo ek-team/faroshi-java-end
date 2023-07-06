@@ -73,7 +73,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     @Resource
     private UserService userService;
     @Resource
-    private ProductService productService;
+    private ShunFengService shunFengService;
     @Resource
     private DeviceScanSignLogService deviceScanSignLogService;
     @Resource
@@ -97,7 +97,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 
 
     /**
-     * 商家寄件 用户下单付款自动叫订单
+     * 商家寄件 用户下单付款自动叫订单 正式应该加在支付成功判断
      *
      * @return
      */
@@ -111,18 +111,22 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         if (deliverySetting == null || deliverySetting.getStatus().equals(0)) {
             return;
         }
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+
         //查看用户选择的发货时间
         LocalDate deliveryDate = userOrder.getDeliveryDate();//期望发货时间
-        LocalDate now = LocalDate.now();
-        long until = now.until(deliveryDate, ChronoUnit.DAYS);
-        if (until == 0) {
-            autoXiaDan(userOrderNo, url);
-        }else {
-            //加入定时任务到期自动下单
-            String keyRedis = String.valueOf(StrUtil.format("{}{}", "autoXiaDan:", userOrder.getId()+"/"+url));
-            redisTemplate.opsForValue().set(keyRedis,userOrderNo, until, TimeUnit.DAYS);//设置过期时间
+        shunFengService.autoXiaDanSF(userOrder, deliveryDate, servicePack, deliverySetting);
 
-        }
+//        LocalDate now = LocalDate.now();
+//        long until = now.until(deliveryDate, ChronoUnit.DAYS);
+//        if (until == 0) {
+//            autoXiaDan(userOrderNo, url);
+//        } else {
+//            //加入定时任务到期自动下单
+//            String keyRedis = String.valueOf(StrUtil.format("{}{}", "autoXiaDan:", userOrder.getId() + "/" + url));
+//            redisTemplate.opsForValue().set(keyRedis, userOrderNo, until, TimeUnit.DAYS);//设置过期时间
+//
+//        }
 
 
     }
@@ -303,46 +307,12 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
     public boolean saveUserOrder(UserOrder userOrder) {
         return super.save(userOrder);
     }
-//    @Override
-//    public boolean save(UserOrder userOrder) {
-//        String orderNo = OrderNumberUtil.getLocalTrmSeqNum();//订单号
-//        userOrder.setOrderNo(orderNo);
-//        userOrder.setStatus(0);//下单状态
-//        userOrder.setCreateTime(new Date());
-//        userOrder.setAutomaticCreateTime(new Date());
-//        userOrder.setUserId(SecurityUtils.getUser().getId());
-//
-//        //设置价格
-//        Object productDetail = productService.getProductDetail(userOrder.getProductId(), userOrder.getSalesmanId());
-//        if (productDetail instanceof Product) {
-//            userOrder.setSalePrice(((Product) productDetail).getSalePrice());
-//        } else if (productDetail instanceof CustomProduct) {
-//            userOrder.setSalePrice(((CustomProduct) productDetail).getSalePrice());
-//        }
-//        if (userOrder.getSalesmanId() != null) {
-//            User salesman = userService.getById(userOrder.getSalesmanId());
-//            if (salesman == null) throw new RuntimeException("请选择正确的业务员");
-//            if (salesman.getConfirmOrder() == 1) {
-//                userOrder.setStatus(1);
-//                userOrder.setConfirmTime(new Date());
-//                //如果设置自动跳过确认订单步骤 则 自动减价格
-//                List<SalesmanPayChannel> list = salesmanPayChannelService.list(new QueryWrapper<SalesmanPayChannel>().lambda().eq(SalesmanPayChannel::getSalesmanId, userOrder.getSalesmanId()));
-//                if (CollectionUtils.isEmpty(list) || list.get(0).getPayType() == 1) {
-//                    reduceAmounts(userOrder);
-//                }
-//            }
-//            userOrder.setDeptId(salesman.getDeptId() == null ? 1 : salesman.getDeptId());
-//        } else {
-//            //否则设置为总部
-//            userOrder.setDeptId(1);
-//        }
-//        //添加用户绑定医生
-////        UserDoctorRelation userDoctorRelation = new UserDoctorRelation();
-////        userDoctorRelation.setDoctorId(userOrder.getDoctorId());
-////        userDoctorRelation.setUserId(userOrder.getUserId());
-////        userDoctorRelationService.save(userDoctorRelation);
-//        return super.save(userOrder);
-//    }
+
+    @Override
+    public boolean save(UserOrder userOrder) {
+        boolean save = super.save(userOrder);
+        return save;
+    }
 
     public IPage<UserOrder> listMyOrder(IPage<UserOrder> page, Wrapper<UserOrder> queryWrapper) {
         return baseMapper.pageMyOrder(page, queryWrapper);

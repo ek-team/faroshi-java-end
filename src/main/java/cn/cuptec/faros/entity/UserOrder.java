@@ -172,4 +172,6 @@ public class UserOrder {
     private String productSn1;//设备序列号1
     private String productSn2;//设备序列号2
     private String productSn3;//设备序列号3
+    @TableField(exist = false)
+    private String url;
 }

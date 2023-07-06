@@ -374,7 +374,7 @@ public class WxPayController {
 //                    }
 //                }
 //            }
-
+            userOrdertService.autoXiaDanCheck(userOrder.getOrderNo(), urlData.getUrl());
         }
         //图文咨询订单处理
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()

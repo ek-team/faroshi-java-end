@@ -123,8 +123,10 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @Resource
     private DeliveryInfoService deliveryInfoService;
 
+
+
     /**
-     * 商家下单回调接口
+     * 商家下单回调接口 暂时没用
      *
      * @param request
      * @return
@@ -835,6 +837,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/createOrder")
     public RestResponse createOrder(@RequestBody UserOrder userOrder) {
+        userOrder.setUrl(urlData.getUrl());
         Integer addressId = userOrder.getAddressId();
         Address address = addressService.getById(addressId);
         userOrder.setReceiverName(address.getAddresseeName());
@@ -997,6 +1000,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/user/add")
     public RestResponse addOrder(@RequestBody UserOrder userOrder) {
+        userOrder.setUrl(urlData.getUrl());
         Integer addressId = userOrder.getAddressId();
         Address address = addressService.getById(addressId);
         userOrder.setReceiverName(address.getAddresseeName());

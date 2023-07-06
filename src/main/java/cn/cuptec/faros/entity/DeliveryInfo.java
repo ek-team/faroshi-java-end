@@ -1,6 +1,7 @@
 package cn.cuptec.faros.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
@@ -20,4 +21,7 @@ public class DeliveryInfo {
     private String courierName;//快递员姓名
     private String courierMobile;//快递员手机号
     private String label;//面单链接
+    private Integer deptId;
+    @TableField(exist = false)
+    private UserOrder userOrder;
 }

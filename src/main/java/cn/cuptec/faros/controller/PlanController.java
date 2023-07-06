@@ -43,8 +43,8 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
                 planUserService.updateById(one);
             }
             DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, one.getDoctorTeamId())
-                    .eq(DoctorTeam::getPlanCheckStatus, 0));
-            if (doctorTeam != null) {
+                    .eq(DoctorTeam::getPlanCheckStatus, 1));
+            if (doctorTeam == null) {
 
                 one.setPlanCheckStatus(2);
                 planUserService.updateById(one);
@@ -121,8 +121,8 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
                 planUserService.updateById(one);
             }
             DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, one.getDoctorTeamId())
-                    .eq(DoctorTeam::getPlanCheckStatus, 0));
-            if (doctorTeam != null) {
+                    .eq(DoctorTeam::getPlanCheckStatus, 1));
+            if (doctorTeam == null) {
 
                 one.setPlanCheckStatus(2);
                 planUserService.updateById(one);
