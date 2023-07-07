@@ -415,6 +415,9 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
         } else {
             DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
                     .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if(one==null){
+                return RestResponse.failed("该团队没设置图文咨询");
+            }
             Integer count = one.getCount();
             List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTeamId, patientOtherOrder.getDoctorTeamId())
             );
