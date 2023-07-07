@@ -220,27 +220,10 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
                     .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
                     .isNull(DoctorUserAction::getTeamId));
-            Integer count = one.getCount();
-            int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getToUid, patientOtherOrder.getDoctorId())
-                    .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
-                    .ne(ChatMsg::getStr2, 2)
-                    .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
-                    .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
-            if (count <= count1) {
-                return RestResponse.failed("超过医生接单次数");
-            }
-        } else {
-            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
-            Integer count = one.getCount();
-            List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTeamId, patientOtherOrder.getDoctorTeamId())
-            );
-            if (!CollectionUtils.isEmpty(list)) {
-                List<Integer> chatIds = list.stream().map(ChatUser::getId)
-                        .collect(Collectors.toList());
-                int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda()
+            if (one != null) {
+                Integer count = one.getCount();
+                int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getToUid, patientOtherOrder.getDoctorId())
                         .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
-                        .in(ChatMsg::getChatUserId, chatIds)
                         .ne(ChatMsg::getStr2, 2)
                         .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
                         .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
@@ -248,6 +231,29 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     return RestResponse.failed("超过医生接单次数");
                 }
             }
+
+        } else {
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if (one != null) {
+                Integer count = one.getCount();
+                List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTeamId, patientOtherOrder.getDoctorTeamId())
+                );
+                if (!CollectionUtils.isEmpty(list)) {
+                    List<Integer> chatIds = list.stream().map(ChatUser::getId)
+                            .collect(Collectors.toList());
+                    int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda()
+                            .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                            .in(ChatMsg::getChatUserId, chatIds)
+                            .ne(ChatMsg::getStr2, 2)
+                            .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
+                            .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
+                    if (count <= count1) {
+                        return RestResponse.failed("超过医生接单次数");
+                    }
+                }
+            }
+
 
         }
 
@@ -404,34 +410,37 @@ public class DoctorPointController extends AbstractBaseController<DoctorPointSer
                     .eq(DoctorUserAction::getUserId, patientOtherOrder.getDoctorId())
                     .eq(DoctorUserAction::getDoctorUserServiceSetUpId, 1)
                     .isNull(DoctorUserAction::getTeamId));
-            Integer count = one.getCount();
-            int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getToUid, patientOtherOrder.getDoctorId())
-                    .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
-                    .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
-                    .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
-            if (count <= count1) {
-                return RestResponse.failed("超过医生接单次数");
-            }
-        } else {
-            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
-                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
-            if(one==null){
-                return RestResponse.failed("该团队没设置图文咨询");
-            }
-            Integer count = one.getCount();
-            List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTeamId, patientOtherOrder.getDoctorTeamId())
-            );
-            if (!CollectionUtils.isEmpty(list)) {
-                List<Integer> chatIds = list.stream().map(ChatUser::getId)
-                        .collect(Collectors.toList());
-                int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda()
+            if (one != null) {
+                Integer count = one.getCount();
+                int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda().eq(ChatMsg::getToUid, patientOtherOrder.getDoctorId())
                         .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
-                        .in(ChatMsg::getChatUserId, chatIds)
                         .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
                         .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
                 if (count <= count1) {
                     return RestResponse.failed("超过医生接单次数");
                 }
+            }
+
+        } else {
+            DoctorUserAction one = doctorUserActionService.getOne(new QueryWrapper<DoctorUserAction>().lambda()
+                    .eq(DoctorUserAction::getTeamId, patientOtherOrder.getDoctorTeamId()));
+            if (one != null) {
+                Integer count = one.getCount();
+                List<ChatUser> list = chatUserService.list(new QueryWrapper<ChatUser>().lambda().eq(ChatUser::getTeamId, patientOtherOrder.getDoctorTeamId())
+                );
+                if (!CollectionUtils.isEmpty(list)) {
+                    List<Integer> chatIds = list.stream().map(ChatUser::getId)
+                            .collect(Collectors.toList());
+                    int count1 = chatMsgService.count(new QueryWrapper<ChatMsg>().lambda()
+                            .eq(ChatMsg::getMsgType, ChatProto.PIC_CONSULTATION)
+                            .in(ChatMsg::getChatUserId, chatIds)
+                            .gt(ChatMsg::getCreateTime, sdf.format(getStartTime()))
+                            .lt(ChatMsg::getCreateTime, sdf.format(getEndTime())));
+                    if (count <= count1) {
+                        return RestResponse.failed("超过医生接单次数");
+                    }
+                }
+
             }
 
         }
