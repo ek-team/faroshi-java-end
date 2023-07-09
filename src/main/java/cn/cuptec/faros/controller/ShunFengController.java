@@ -14,7 +14,6 @@ import cn.cuptec.faros.service.UserOrdertService;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.domain.ZhimaCreditPeUserOrderSyncModel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.sun.org.apache.regexp.internal.RE;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;

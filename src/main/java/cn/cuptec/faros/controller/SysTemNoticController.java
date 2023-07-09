@@ -44,16 +44,20 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
     @Resource
     private UserService userService;
     @Resource
-    private UniAppPushService uniAppPushService;
+    private UserRoleService userRoleService;
 
     @GetMapping("/page")
     public RestResponse page(@RequestParam(value = "name", required = false) String name,@RequestParam(value = "type", required = false) Integer type) {
         Page<SysTemNotic> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
+
         List<DoctorTeamPeople> list = doctorTeamPeopleService.list(new QueryWrapper<DoctorTeamPeople>().lambda()
                 .eq(DoctorTeamPeople::getUserId, SecurityUtils.getUser().getId()));
-        queryWrapper.eq("doctor_id", SecurityUtils.getUser().getId());
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+        if(!aBoolean){
+            queryWrapper.eq("doctor_id", SecurityUtils.getUser().getId());
+        }
         if (!CollectionUtils.isEmpty(list)) {
             List<Integer> teamIds = list.stream().map(DoctorTeamPeople::getTeamId)
                     .collect(Collectors.toList());
@@ -79,6 +83,10 @@ public class SysTemNoticController extends AbstractBaseController<SysTemNoticSer
                 List<String> userIds = tbTrainUsers.stream().map(TbTrainUser::getUserId)
                         .collect(Collectors.toList());
                 queryWrapper.in("stock_user_id",userIds);
+            }else {
+
+                IPage page1 = new Page();
+                return RestResponse.ok(page1);
             }
         }
 

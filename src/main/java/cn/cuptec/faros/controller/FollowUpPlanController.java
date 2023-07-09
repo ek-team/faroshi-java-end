@@ -571,6 +571,8 @@ public class FollowUpPlanController extends AbstractBaseController<FollowUpPlanS
                         .collect(Collectors.toList());
                 queryWrapper.in("create_user_id", userIds);
 
+            }else {
+                return RestResponse.ok(new Page<>());
             }
         }
         if (!StringUtils.isEmpty(startCreateTime)) {

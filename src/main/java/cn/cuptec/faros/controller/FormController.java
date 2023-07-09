@@ -162,6 +162,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                                          @RequestParam(value = "endTime", required = false) String endTime,
                                          @RequestParam(value = "folloUpPlanId", required = false) Integer folloUpPlanId) {
         LambdaQueryWrapper<FormUserData> eq = new QueryWrapper<FormUserData>().lambda();
+        List<Form> formDatas = new ArrayList<>();
         List<Integer> formIds = new ArrayList<>();
         if (folloUpPlanId != null) {
             List<FollowUpPlanContent> followUpPlanContents = followUpPlanContentService.list(new QueryWrapper<FollowUpPlanContent>().lambda()
@@ -198,6 +199,8 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                     List<Integer> userIdList = patientUsers.stream().map(PatientUser::getUserId)
                             .collect(Collectors.toList());
                     eq.in(FormUserData::getUserId, userIdList);
+                }else {
+                    return RestResponse.ok(formDatas);
                 }
             }
             if (!StringUtils.isEmpty(name)) {
@@ -230,7 +233,6 @@ public class FormController extends AbstractBaseController<FormService, Form> {
                     .collect(Collectors.toMap(User::getId, t -> t));
             Map<String, List<FormUserData>> formUserDataMap = formUserDataList.stream()
                     .collect(Collectors.groupingBy(FormUserData::getGroupId));
-            List<Form> formDatas = new ArrayList<>();
             for (List<FormUserData> formUserDatas : formUserDataMap.values()) {
                 Form form = new Form();
 

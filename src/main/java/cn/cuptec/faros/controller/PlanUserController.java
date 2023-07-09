@@ -139,6 +139,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
                     .eq(SysTemNotic::getStockUserId, userId)
                     .eq(SysTemNotic::getType, 2)
+                    .eq(SysTemNotic::getCheckStatus,1)
                     .set(SysTemNotic::getCheckStatus, 2)
 
             );
@@ -159,6 +160,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
                     .eq(SysTemNotic::getStockUserId, userId)
                     .eq(SysTemNotic::getType, 2)
+                            .eq(SysTemNotic::getCheckStatus,1)
                     .set(SysTemNotic::getCheckStatus, status)
 
             );
