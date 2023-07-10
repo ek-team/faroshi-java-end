@@ -121,7 +121,7 @@ public class UniAppPushService {
 
     public static void main(String[] args) {
         UniAppPushData uniAppPushData = new UniAppPushData();
-        uniAppPushData.setCids("3316ca487611828189bc56b04711ddb6");
+        uniAppPushData.setCids("ae009ba312dfafadd1b004125a339e1b");
         uniAppPushData.setContent("111");
         uniAppPushData.setTitle("2222");
         uniAppPushData.setRequest_id(IdUtil.getSnowflake(0, 0).nextIdStr());
