@@ -1,6 +1,7 @@
 package cn.cuptec.faros.service;
 
 import cn.cuptec.faros.config.datascope.DataScope;
+import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.mapper.FlittingOrderMapper;
 import cn.cuptec.faros.mapper.FormMapper;
@@ -23,10 +24,18 @@ public class FormService extends ServiceImpl<FormMapper, Form> {
     private FormSettingService formSettingService;
     @Resource
     private FormOptionsService formOptionsService;
+    @Resource
+    private UserRoleService userRoleService;
 
     public IPage<Form> pageScoped(IPage<Form> page, Wrapper<Form> queryWrapper) {
         DataScope dataScope = new DataScope();
-        dataScope.setIsOnly(true);
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+
+        if (aBoolean) {
+            dataScope.setIsOnly(false);
+        } else {
+            dataScope.setIsOnly(true);
+        }
         return baseMapper.pageScoped(page, queryWrapper, dataScope);
     }
 

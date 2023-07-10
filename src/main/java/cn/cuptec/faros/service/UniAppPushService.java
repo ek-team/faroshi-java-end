@@ -121,12 +121,12 @@ public class UniAppPushService {
 
     public static void main(String[] args) {
         UniAppPushData uniAppPushData = new UniAppPushData();
-        uniAppPushData.setCids("faf52e0c82013edd17e0a0ed75bb6d44");
+        uniAppPushData.setCids("3316ca487611828189bc56b04711ddb6");
         uniAppPushData.setContent("111");
         uniAppPushData.setTitle("2222");
         uniAppPushData.setRequest_id(IdUtil.getSnowflake(0, 0).nextIdStr());
         String params = JSONObject.toJSONString(uniAppPushData);
-        String post = HttpUtil.post("https://fc-mp-92cdf782-3569-4cfa-9ee7-91f1d7befa00.next.bspapp.com/pharosPush", params);
+        String post = HttpUtil.post("https://fc-mp-5bbd77c6-0a7c-4cbe-a7c5-66ab25fa9c70.next.bspapp.com/pharosPush", params);
         System.out.println("发送通知消息结果" + post);
     }
 }

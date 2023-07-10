@@ -573,7 +573,7 @@ public class UserController extends AbstractBaseController<UserService, User> {
     }
 
     public static void main(String[] args) {
-        System.out.println(ENCODER.encode("082043"));
+        System.out.println(ENCODER.encode("123456"));
     }
 
     @PutMapping
