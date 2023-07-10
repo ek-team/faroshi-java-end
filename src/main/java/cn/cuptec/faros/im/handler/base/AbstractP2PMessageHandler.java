@@ -190,26 +190,29 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (chatMsg.getMsgType().equals(ChatProto.FORM)) {
                     chatMsg.setMsg("表单");
                 }
+                Integer patientId = origionMessage.getPatientId();
+                User user = userService.getById(origionMessage.getTargetUid());
+
+                String name = "";
+                if (StringUtils.isEmpty(user.getPatientName())) {
+                    name = user.getNickname();
+                } else {
+                    name = user.getPatientName();
+                }
+                if (patientId != null) {
+                    PatientUser patientUser = patientUserService.getById(patientId);
+                    name = patientUser.getName();
+                }
                 //向目标用户发送新消息提醒
                 SocketFrameTextMessage targetUserMessage
                         = SocketFrameTextMessage.newMessageTip(fromUser.getId(), fromUser.getNickname(), fromUser.getAvatar(), createTime, origionMessage.getMsgType(), JSON.toJSONString(chatMsg));
 
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                } else {
-                    Integer patientId = origionMessage.getPatientId();
-                    User user = userService.getById(origionMessage.getTargetUid());
+                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
 
-                    String name = "";
-                    if (StringUtils.isEmpty(user.getPatientName())) {
-                        name = user.getNickname();
-                    } else {
-                        name = user.getPatientName();
-                    }
-                    if (patientId != null) {
-                        PatientUser patientUser = patientUserService.getById(patientId);
-                        name = patientUser.getName();
-                    }
+                } else {
+
                     uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
                     if (!StringUtils.isEmpty(user.getMpOpenId())) {
 
@@ -254,19 +257,22 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         //2.向目标用户发送新消息提醒
                         SocketFrameTextMessage targetUserMessage
                                 = SocketFrameTextMessage.newGroupMessageTip(origionMessage.getChatUserId(), JSON.toJSONString(chatMsg));
+                        User user = userService.getById(userId);
+
+                        if (StringUtils.isEmpty(name)) {
+                            if (StringUtils.isEmpty(user.getPatientName())) {
+                                name = user.getNickname();
+                            } else {
+                                name = user.getPatientName();
+                            }
+
+                        }
                         if (targetUserChannel != null) {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "");
+
                         } else {
-                            User user = userService.getById(userId);
 
-                            if (StringUtils.isEmpty(name)) {
-                                if (StringUtils.isEmpty(user.getPatientName())) {
-                                    name = user.getNickname();
-                                } else {
-                                    name = user.getPatientName();
-                                }
-
-                            }
                             uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "");
 
 

@@ -87,20 +87,22 @@ public class SysTemNoticService extends ServiceImpl<SysTemNoticMapper, SysTemNot
                 //2.向目标用户发送新消息提醒
                 SocketFrameTextMessage targetUserMessage
                         = SocketFrameTextMessage.newMessageTip(fromUserId, "", "", new Date(), ChatProto.SYSTEM_NOTIC, "");
+                User user = userService.getById(userId);
 
+                if (StringUtils.isEmpty(name)) {
+                    if (StringUtils.isEmpty(user.getPatientName())) {
+                        name = user.getNickname();
+                    } else {
+                        name = user.getPatientName();
+                    }
+
+                }
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "");
+
                 } else {
-                    User user = userService.getById(userId);
 
-                    if (StringUtils.isEmpty(name)) {
-                        if (StringUtils.isEmpty(user.getPatientName())) {
-                            name = user.getNickname();
-                        } else {
-                            name = user.getPatientName();
-                        }
-
-                    }
                     uniAppPushService.send("法罗适", name + ": " + msg, userId, "");
 
                 }

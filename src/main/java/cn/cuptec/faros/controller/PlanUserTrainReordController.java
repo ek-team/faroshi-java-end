@@ -162,6 +162,8 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
             if (targetUserChannel != null) {
                 targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+                uniAppPushService.send("法罗适", stockUserName + ": " + msg, doctorId + "", "");
+
             } else {
 
 
