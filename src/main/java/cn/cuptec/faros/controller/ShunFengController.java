@@ -5,12 +5,8 @@ import cn.cuptec.faros.dto.KuaiDiCallBackResult;
 import cn.cuptec.faros.dto.ShunfnegcallbackData;
 import cn.cuptec.faros.dto.ShunfnegcallbackParam;
 import cn.cuptec.faros.dto.WaybillRoute;
-import cn.cuptec.faros.entity.DeliveryInfo;
-import cn.cuptec.faros.entity.SFMsgDataResult;
-import cn.cuptec.faros.entity.UserOrder;
-import cn.cuptec.faros.service.DeliveryInfoService;
-import cn.cuptec.faros.service.ShunFengService;
-import cn.cuptec.faros.service.UserOrdertService;
+import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.service.*;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.domain.ZhimaCreditPeUserOrderSyncModel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -20,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Enumeration;
 import java.util.List;
@@ -36,6 +33,10 @@ public class ShunFengController {
     private DeliveryInfoService deliveryInfoService;
     @Resource
     private ShunFengService shunFengService;
+    @Resource
+    private DeliverySettingService deliverySettingService;
+    @Resource
+    private ServicePackService servicePackService;
 
     /**
      * 路由推送接口
@@ -89,5 +90,22 @@ public class ShunFengController {
     public RestResponse SFMiandan(@RequestParam("waybillNo") String waybillNo) {
 
         return RestResponse.ok(shunFengService.SFMiandan(waybillNo));
+    }
+
+    /**
+     * 获取顺丰面单接口
+     */
+    @GetMapping("testXiadan")
+    public RestResponse testXiadan(@RequestParam("orderNo") String orderNo) {
+        UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, orderNo));
+
+        DeliverySetting deliverySetting = deliverySettingService.getOne(new QueryWrapper<DeliverySetting>().lambda().eq(DeliverySetting::getDeptId, userOrder.getDeptId()));
+
+        ServicePack servicePack = servicePackService.getById(userOrder.getServicePackId());
+
+        //查看用户选择的发货时间
+        LocalDate deliveryDate = userOrder.getDeliveryDate();//期望发货时间
+        shunFengService.autoXiaDanSF(userOrder, deliveryDate, servicePack, deliverySetting);
+        return RestResponse.ok();
     }
 }

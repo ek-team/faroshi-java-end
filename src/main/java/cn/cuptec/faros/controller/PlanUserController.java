@@ -567,8 +567,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             id = tbTrainUser.getXtUserId();
         } else {
             id = SecurityUtils.getUser().getId();
-            User user = userService.getById(id);
-            tbTrainUser.setTelePhone(user.getPhone());
+            //User user = userService.getById(id);
+            //tbTrainUser.setTelePhone(user.getPhone());
         }
 
         List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().

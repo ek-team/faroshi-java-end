@@ -16,4 +16,5 @@ public class SFMsgData {
     private String monthlyCard;//顺丰月结卡号
     private Integer expressTypeId = 1;
     private Integer isReturnRoutelabel = 1;
+    private Integer isDocall = 1;
 }

@@ -47,9 +47,9 @@ public class ShunFengService {
      * 顺丰打印面单
      */
     public SFMsgDataResult SFMiandan(String waybillNo) {
-        String url = "https://sfapi-sbox.sf-express.com/std/service";//沙箱环境地址
-        String checkWord = "9mUPiQbvKfEL7hQ2rYpDSrVgCm4Utvjz";//沙箱校验码
-        String devUrl = "https://bspgw.sf-express.com/std/service";//正式环境地址
+        //String url = "https://sfapi-sbox.sf-express.com/std/service";//沙箱环境地址
+        String checkWord = "ixCTn8uoUOiUyEKkb25hrT0k3dGvjsxL";//校验码
+        String url = "https://bspgw.sf-express.com/std/service";//正式环境地址
 
 
         Map<String, String> params = new HashMap<String, String>();
@@ -93,9 +93,9 @@ public class ShunFengService {
      * 顺丰下单
      */
     public void autoXiaDanSF(UserOrder userOrder, LocalDate deliveryDate, ServicePack servicePack, DeliverySetting deliverySetting) {
-        String url = "https://sfapi-sbox.sf-express.com/std/service";//沙箱环境地址
-        String checkWord = "9mUPiQbvKfEL7hQ2rYpDSrVgCm4Utvjz";//沙箱校验码
-        String devUrl = "https://bspgw.sf-express.com/std/service";//正式环境地址
+        //String url = "https://sfapi-sbox.sf-express.com/std/service";//沙箱环境地址
+        String checkWord = "ixCTn8uoUOiUyEKkb25hrT0k3dGvjsxL";//校验码
+        String url = "https://bspgw.sf-express.com/std/service";//正式环境地址
 
 
         Map<String, String> params = new HashMap<String, String>();
@@ -142,6 +142,7 @@ public class ShunFengService {
 
         params.put("msgDigest", msgDigest(timestamp, msgData, checkWord));//数据签名
         String post = post(params, url);
+        System.out.println(post);
         post = post.replace("\\", "");
         String[] apiResultData = post.split("apiResultData");
         String apiResultDatum = apiResultData[1];
