@@ -105,6 +105,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     private SysTemNoticService sysTemNoticService;
     @Resource
     private DoctorUserActionService doctorUserActionService;
+    @Resource
+    private PlanUserOtherInfoService planUserOtherInfoService;
 
     //查看设备用户计划审核状态
     @GetMapping("/getPlanStatus")
@@ -139,7 +141,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
                     .eq(SysTemNotic::getStockUserId, userId)
                     .eq(SysTemNotic::getType, 2)
-                    .eq(SysTemNotic::getCheckStatus,1)
+                    .eq(SysTemNotic::getCheckStatus, 1)
                     .set(SysTemNotic::getCheckStatus, 2)
 
             );
@@ -160,7 +162,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             sysTemNoticService.update(Wrappers.<SysTemNotic>lambdaUpdate()
                     .eq(SysTemNotic::getStockUserId, userId)
                     .eq(SysTemNotic::getType, 2)
-                            .eq(SysTemNotic::getCheckStatus,1)
+                    .eq(SysTemNotic::getCheckStatus, 1)
                     .set(SysTemNotic::getCheckStatus, status)
 
             );
@@ -533,6 +535,18 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
     @PostMapping("/add")
     public RestResponse add(@RequestBody TbTrainUser tbTrainUser) {
+        PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
+        if (planUserOtherInfo == null) {
+            planUserOtherInfo = new PlanUserOtherInfo();
+            planUserOtherInfo.setBodyPartName(tbTrainUser.getBodyPartName());
+            planUserOtherInfo.setSecondDiseaseName(tbTrainUser.getSecondDiseaseName());
+            planUserOtherInfoService.save(planUserOtherInfo);
+        } else {
+            planUserOtherInfo.setBodyPartName(tbTrainUser.getBodyPartName());
+            planUserOtherInfo.setSecondDiseaseName(tbTrainUser.getSecondDiseaseName());
+            planUserOtherInfoService.updateById(planUserOtherInfo);
+        }
+
         //判断订单是否有团队 没有则同步
         if (tbTrainUser.getDoctorTeamId() == null || tbTrainUser.getDoctorTeamId().equals(0)) {
             List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().

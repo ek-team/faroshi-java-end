@@ -64,11 +64,11 @@ public class ShunFengController {
                 }
                 deliveryInfoService.updateBatchById(deliveryInfos);
             }
-            if (waybillRoute.get(waybillRoute.size() - 1).getOpCode().equals("50")) {
-                userOrder.setStatus(3);
-                userOrder.setLogisticsDeliveryTime(LocalDateTime.now());
-
-            }
+//            if (waybillRoute.get(waybillRoute.size() - 1).getOpCode().equals("50")) {
+//                userOrder.setStatus(3);
+//                userOrder.setLogisticsDeliveryTime(LocalDateTime.now());
+//
+//            }
             if (waybillRoute.get(waybillRoute.size() - 1).getOpCode().equals("80")) {
                 userOrder.setStatus(4);
 

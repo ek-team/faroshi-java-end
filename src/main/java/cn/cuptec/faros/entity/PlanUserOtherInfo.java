@@ -13,5 +13,7 @@ public class PlanUserOtherInfo {
     private Integer id;
     private String idCard;
     private String registrationEvaluation;//手术评估
+    private String bodyPartName;//手术部位
+    private String secondDiseaseName;//疾病名称
 
 }
