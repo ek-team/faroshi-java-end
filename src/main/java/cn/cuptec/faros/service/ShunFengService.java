@@ -1,34 +1,19 @@
 package cn.cuptec.faros.service;
 
-import cn.cuptec.faros.dto.XiaDanParam;
 import cn.cuptec.faros.entity.*;
-import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.alipay.api.internal.util.HttpClientUtil;
 import com.alipay.api.internal.util.StringUtils;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.util.EntityUtils;
 import org.springframework.stereotype.Service;
 import sun.misc.BASE64Encoder;
 
 import javax.annotation.Resource;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.*;
 
 @Service
@@ -38,8 +23,8 @@ public class ShunFengService {
     @Resource
     private DeliveryInfoService deliveryInfoService;
 
+
     public static void main(String[] args) {
-        //  SFMiandan("SF7444467872275");
 
     }
 
@@ -107,8 +92,11 @@ public class ShunFengService {
         params.put("serviceCode", "EXP_RECE_CREATE_ORDER");// 接口服务码
         String timestamp = String.valueOf(System.currentTimeMillis() / 1000);
         params.put("timestamp", timestamp);
+        //判断当前时间是否超下午五点 如果超过则时间推后一天 判断当天是否是工作日
+        int hour = LocalDateTime.now().getHour();
+
         SFMsgData sfMsgData = new SFMsgData();
-        LocalDateTime localDateTime = deliveryDate.atTime(9, 00);
+        LocalDateTime localDateTime = deliveryDate.atTime(10, 00);
         Instant instant = localDateTime.atZone(ZoneId.systemDefault()).toInstant();
         Date date = Date.from(instant);
         sfMsgData.setSendStartTm(date);
@@ -238,4 +226,6 @@ public class ShunFengService {
 
         return "";
     }
+
+
 }
