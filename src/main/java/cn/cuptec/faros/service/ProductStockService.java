@@ -104,13 +104,13 @@ public class ProductStockService extends ServiceImpl<ProductStockMapper, Product
         return pageResult;
     }
 
-    public IPage pageScopedDep(IPage page, Wrapper wrapper, String nickname, String phone, String macAdd, String productSn, String hospitalInfo, String sort, String productId, DataScope dataScope) {
-        IPage pageResult = baseMapper.pageScopedDep(page, wrapper, dataScope, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
+    public IPage pageScopedDep(IPage page, Wrapper wrapper,String activationDate, String nickname, String phone, String macAdd, String productSn, String hospitalInfo, String sort, String productId, DataScope dataScope) {
+        IPage pageResult = baseMapper.pageScopedDep(page, wrapper, dataScope,activationDate, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
         return pageResult;
     }
 
-    public IPage pageScopedDepAll(IPage page, Wrapper wrapper, String nickname, String phone, String macAdd, String productSn, String hospitalInfo, String sort, String productId) {
-        IPage pageResult = baseMapper.pageScopedDepAll(page, wrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
+    public IPage pageScopedDepAll(IPage page, Wrapper wrapper,String activationDate, String nickname, String phone, String macAdd, String productSn, String hospitalInfo, String sort, String productId) {
+        IPage pageResult = baseMapper.pageScopedDepAll(page, wrapper,activationDate, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
         return pageResult;
     }
 

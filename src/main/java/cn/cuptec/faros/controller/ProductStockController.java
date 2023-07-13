@@ -145,7 +145,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
 
     //只能查询本部门及部门以下的设备
     @GetMapping("/pageScopedByDep")
-    public RestResponse pageScopedByDep(@RequestParam("activationDate") String activationDate,@RequestParam("search") String search, @RequestParam(required = false, value = "productSn") String productSn, @RequestParam(required = false, value = "hospitalInfo") String hospitalInfo, @RequestParam("sort") String sort, @RequestParam(value = "productId", required = false) String productId
+    public RestResponse pageScopedByDep(@RequestParam(value = "activationDate",required = false) String activationDate,@RequestParam(value = "search",required = false) String search, @RequestParam(required = false, value = "productSn") String productSn, @RequestParam(required = false, value = "hospitalInfo") String hospitalInfo, @RequestParam(value = "sort",required = false) String sort, @RequestParam(value = "productId", required = false) String productId
             , @RequestParam(value = "status", required = false) Integer status) {
 
         User user = userService.getById(SecurityUtils.getUser().getId());
@@ -183,7 +183,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
             queryWrapper.le("activation_date", activationDate);
         }
         if (isAdmin) {
-            iPage = service.pageScopedDepAll(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
+            iPage = service.pageScopedDepAll(page, queryWrapper,activationDate, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
 
         } else {
             DataScope dataScope = new DataScope();
@@ -204,7 +204,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
                 }
             }
 
-            iPage = service.pageScopedDep(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId, dataScope);
+            iPage = service.pageScopedDep(page, queryWrapper,activationDate, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId, dataScope);
 
         }
         if (iPage != null) {

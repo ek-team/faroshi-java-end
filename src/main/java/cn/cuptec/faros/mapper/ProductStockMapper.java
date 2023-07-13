@@ -61,6 +61,9 @@ public interface ProductStockMapper extends BaseMapper<ProductStock> {
             "<if test=\"nickname != null\">"
             + "and  user.nickname LIKE CONCAT('%',#{nickname},'%') "
             + "</if>"+
+            "<if test=\"activationDate != null and activationDate != '' \">"
+            + "and  product_stock.activation_date  &lt;= #{activationDate}  "
+            + "</if>"+
             "<if test=\"productSn != null and productSn != '' \">"
             + "and  product_stock.product_sn LIKE CONCAT('%',#{productSn},'%') "
             + "</if>"+
@@ -77,7 +80,7 @@ public interface ProductStockMapper extends BaseMapper<ProductStock> {
             + "and  product_stock.mac_address LIKE CONCAT('%',#{macAdd},'%') "
             + "</if>"
             + " ORDER BY activation_date ${sort} </script>")
-    IPage<ProductStock> pageScopedDep(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope, @Param("nickname") String nickname, @Param("phone") String phone,@Param("macAdd") String macAdd,@Param("productSn") String productSn,@Param("hospitalInfo") String hospitalInfo,@Param("sort") String sort,@Param("productId") String productId);
+    IPage<ProductStock> pageScopedDep(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope,@Param("activationDate") String activationDate, @Param("nickname") String nickname, @Param("phone") String phone,@Param("macAdd") String macAdd,@Param("productSn") String productSn,@Param("hospitalInfo") String hospitalInfo,@Param("sort") String sort,@Param("productId") String productId);
     @Select(" <script> SELECT  product_stock.*,hospital_info.name as hospitalName, locator.locator_name, dept.name as deptName, user.nickname as salesmanName FROM product_stock " +
             "LEFT JOIN locator ON product_stock.locator_id = locator.id " +
             "LEFT JOIN dept ON product_stock.dept_id = dept.id " +
@@ -86,6 +89,9 @@ public interface ProductStockMapper extends BaseMapper<ProductStock> {
             "where 1=1"+
             "<if test=\"nickname != null\">"
             + "and  user.nickname LIKE CONCAT('%',#{nickname},'%') "
+            + "</if>"+
+            "<if test=\"activationDate != null and activationDate != '' \">"
+            + "and  product_stock.activation_date  &lt;= #{activationDate}  "
             + "</if>"+
             "<if test=\"productSn != null and productSn != '' \">"
             + "and  product_stock.product_sn LIKE CONCAT('%',#{productSn},'%') "
@@ -103,7 +109,7 @@ public interface ProductStockMapper extends BaseMapper<ProductStock> {
             + "and  product_stock.mac_address LIKE CONCAT('%',#{macAdd},'%') "
             + "</if>"
             + " ORDER BY activation_date ${sort} </script>")
-    IPage<ProductStock> pageScopedDepAll(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, @Param("nickname") String nickname, @Param("phone") String phone,@Param("macAdd") String macAdd,@Param("productSn") String productSn,@Param("hospitalInfo") String hospitalInfo,@Param("sort") String sort,@Param("productId") String productId);
+    IPage<ProductStock> pageScopedDepAll(IPage page, @Param(Constants.WRAPPER) Wrapper wrapper, @Param("activationDate") String activationDate, @Param("nickname") String nickname, @Param("phone") String phone,@Param("macAdd") String macAdd,@Param("productSn") String productSn,@Param("hospitalInfo") String hospitalInfo,@Param("sort") String sort,@Param("productId") String productId);
 
     @Select("SELECT product_stock.*, locator.locator_name, product.product_name, product.product_pic, product.product_type FROM product_stock " +
             "LEFT JOIN locator ON product_stock.locator_id = locator.id " +
