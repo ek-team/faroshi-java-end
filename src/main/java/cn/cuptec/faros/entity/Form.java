@@ -2,6 +2,7 @@ package cn.cuptec.faros.entity;
 
 import cn.cuptec.faros.common.annotation.Queryable;
 import cn.cuptec.faros.common.enums.QueryLogical;
+import cn.cuptec.faros.im.bean.ChatUserVO;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -15,7 +16,7 @@ import java.util.List;
  * 表单管理
  */
 @Data
-public class Form extends Model<Form> {
+public class Form extends Model<Form> implements Comparable<Form> {
 
     @TableId(type = IdType.AUTO)
     private Integer id;
@@ -39,4 +40,9 @@ public class Form extends Model<Form> {
     @TableField(exist = false)
     private String groupId;
     private Integer platform; //1-后台创建
+
+    @Override
+    public int compareTo(Form o) {
+        return o.createTime.compareTo(this.createTime);//根据时间降序
+    }
 }

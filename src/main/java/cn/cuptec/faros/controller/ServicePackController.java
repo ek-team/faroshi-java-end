@@ -630,6 +630,7 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
             queryWrapper.eq("service_pack.dept_id", userDept.getDeptId());
 
         }
+        queryWrapper.eq("service_pack.del_status", 1);
         IPage<ServicePack> servicePackIPage = service.pageScoped(aBoolean, page, queryWrapper);
         List<ServicePack> records = servicePackIPage.getRecords();
         if (!CollectionUtils.isEmpty(records)) {
@@ -1141,7 +1142,10 @@ public class ServicePackController extends AbstractBaseController<ServicePackSer
      */
     @GetMapping("/deleteServicePackById")
     public RestResponse deleteServicePackById(@RequestParam("id") Integer id) {
-        service.removeById(id);
+        ServicePack servicePack = new ServicePack();
+        servicePack.setId(id);
+        servicePack.setDelStatus(2);
+        service.updateById(servicePack);
 
         return RestResponse.ok();
 

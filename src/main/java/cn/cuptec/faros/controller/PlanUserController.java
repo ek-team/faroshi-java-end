@@ -63,7 +63,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @Resource
     private LiveQrCodeService liveQrCodeService;
     @Resource
-    private RetrieveOrderService retrieveOrderService;
+    private HospitalInfoService hospitalInfoService;
     @Resource
     private DeviceScanSignLogService deviceScanSignLogService;
     @Resource
@@ -114,7 +114,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
         Integer planCheckStatus = tbTrainUser.getPlanCheckStatus();
         if (planCheckStatus == null) {
-            planCheckStatus = 1;
+            planCheckStatus = 2;
         }
         return RestResponse.ok(planCheckStatus);
     }
@@ -559,6 +559,16 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
                     DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
                     tbTrainUser.setDoctorTeamId(doctorTeamId);
                     tbTrainUser.setDoctorTeam(doctorTeam.getName());
+                }
+            }
+        }
+        if (tbTrainUser.getDoctorTeamId() != null) {
+            DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
+            if (doctorTeam != null) {
+                tbTrainUser.setHospitalId(doctorTeam.getHospitalId() + "");
+                HospitalInfo hospitalInfo = hospitalInfoService.getById(doctorTeam.getHospitalId());
+                if (hospitalInfo != null) {
+                    tbTrainUser.setHospitalName(hospitalInfo.getName());
                 }
             }
         }

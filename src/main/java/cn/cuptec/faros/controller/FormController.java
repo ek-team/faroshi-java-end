@@ -263,6 +263,7 @@ public class FormController extends AbstractBaseController<FormService, Form> {
 
                 formDatas.add(form);
             }
+            Collections.sort(formDatas);
             return RestResponse.ok(formDatas);
         }
         return RestResponse.ok();

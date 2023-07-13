@@ -28,6 +28,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -157,6 +161,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
         ProductStock productStock = new ProductStock();
 
         if (!StringUtils.isEmpty(entity.getProductSn())) {
+            //生成设备激活码
             productStock.setProductProductionDate(entity.getProductProductionDate());
             productStock.setProductSn(entity.getProductSn());
             productStock.setProductId(entity.getProductId());
@@ -169,6 +174,15 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             productStock.setCurrentUserId(entity.getCurrentUserId());
             productStock.setIpAdd(entity.getIpAdd());
             productStockService.save(productStock);
+            Date productProductionDate = entity.getProductProductionDate();
+            Instant instant = productProductionDate.toInstant();
+            ZoneId zoneId = ZoneId.systemDefault();
+            LocalDate start = instant.atZone(zoneId).toLocalDate();
+            LocalDate date = start.plusYears(10);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String endTime = formatter.format(date);
+            String startTime = formatter.format(start);
+            productStockService.initActivationCode(entity.getMacAddress(), endTime, 0, startTime, productStock.getId());
         }
         return productStock;
     }
@@ -225,7 +239,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
         String servicePackId = productStock.getServicePackId();
         if (!StringUtils.isEmpty(servicePackId)) {
             log.info("获取的服务包id===========:{}", servicePackId);
-            String url = urlData.getUrl()+"index.html#/nali/redBean?id=" + servicePackId + "&macAdd=" + productStock.getMacAddress();
+            String url = urlData.getUrl() + "index.html#/nali/redBean?id=" + servicePackId + "&macAdd=" + productStock.getMacAddress();
             ServletUtils.getResponse().sendRedirect(url);
         } else {
             toIntroduce(productStock);
@@ -256,7 +270,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("下肢产品");
             //下肢
             try {
-                ServletUtils.getResponse().sendRedirect(urlData.getUrl()+"index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -264,7 +278,7 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("气动产品");
             //气动
             try {
-                ServletUtils.getResponse().sendRedirect(urlData.getUrl()+"index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }

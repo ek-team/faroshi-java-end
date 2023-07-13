@@ -697,7 +697,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 
     //添加医生修改计划 记录
     @GetMapping("/addDoctorUpdateSubPlanRecord")
-    public RestResponse addDoctorUpdateSubPlanRecord(@RequestParam("doctorName") String doctorName,
+    public RestResponse addDoctorUpdateSubPlanRecord(@RequestParam( value = "doctorName",required = false) String doctorName,
                                                      @RequestParam("userId") String userId,
                                                      @RequestParam("beforeVersion") Integer beforeVersion,
                                                      @RequestParam("afterVersion") Integer afterVersion) {
