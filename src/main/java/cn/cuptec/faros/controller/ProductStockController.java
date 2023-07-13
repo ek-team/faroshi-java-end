@@ -145,7 +145,7 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
 
     //只能查询本部门及部门以下的设备
     @GetMapping("/pageScopedByDep")
-    public RestResponse pageScopedByDep(@RequestParam("search") String search, @RequestParam(required = false, value = "productSn") String productSn, @RequestParam(required = false, value = "hospitalInfo") String hospitalInfo, @RequestParam("sort") String sort, @RequestParam(value = "productId", required = false) String productId
+    public RestResponse pageScopedByDep(@RequestParam("activationDate") String activationDate,@RequestParam("search") String search, @RequestParam(required = false, value = "productSn") String productSn, @RequestParam(required = false, value = "hospitalInfo") String hospitalInfo, @RequestParam("sort") String sort, @RequestParam(value = "productId", required = false) String productId
             , @RequestParam(value = "status", required = false) Integer status) {
 
         User user = userService.getById(SecurityUtils.getUser().getId());
@@ -179,6 +179,9 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
         Integer uid = SecurityUtils.getUser().getId();
         Boolean isAdmin = userRoleService.judgeUserIsAdmin(uid);
         IPage iPage = null;
+        if(!StringUtils.isEmpty(activationDate)){
+            queryWrapper.le("activation_date", activationDate);
+        }
         if (isAdmin) {
             iPage = service.pageScopedDepAll(page, queryWrapper, nickname, phone, macAdd, productSn, hospitalInfo, sort, productId);
 
