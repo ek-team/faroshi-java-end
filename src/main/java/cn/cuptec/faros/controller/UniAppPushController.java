@@ -23,7 +23,7 @@ public class UniAppPushController {
                              @RequestParam("body") String body,
                              @RequestParam("userId") String userId,
                              @RequestParam("url") String url) {
-        uniAppPushService.send(title, body, userId, url);
+        uniAppPushService.send(title, body, userId, url,"2");
         return RestResponse.ok();
     }
 }

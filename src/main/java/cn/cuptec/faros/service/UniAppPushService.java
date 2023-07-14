@@ -37,8 +37,8 @@ public class UniAppPushService {
     @Resource
     private UserService userService;
 
-    public void send(String title, String body, String userId, String url) {
-        log.info("发送通知消息" + userId);
+    public void send(String title, String body, String userId, String url,String payload) {
+
         User user = userService.getById(userId);
         if (user == null || StringUtils.isEmpty(user.getCid())) {
             return;
@@ -48,6 +48,7 @@ public class UniAppPushService {
         uniAppPushData.setCids(user.getCid());
         uniAppPushData.setContent(body);
         uniAppPushData.setTitle(title);
+        uniAppPushData.setData(payload);
         uniAppPushData.setRequest_id(IdUtil.getSnowflake(0, 0).nextIdStr());
         String params = JSONObject.toJSONString(uniAppPushData);
         String post = HttpUtil.post("https://fc-mp-5bbd77c6-0a7c-4cbe-a7c5-66ab25fa9c70.next.bspapp.com/pharosPush", params);

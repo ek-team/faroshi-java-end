@@ -209,11 +209,11 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
+                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "","2");
 
                 } else {
 
-                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "");
+                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "","2");
                     if (!StringUtils.isEmpty(user.getMpOpenId())) {
 
                         LocalDateTime now = LocalDateTime.now();
@@ -267,13 +267,14 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                             }
 
                         }
+                        log.info("团队发送通知消息" + userId);
                         if (targetUserChannel != null) {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "");
+                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "","2");
 
                         } else {
 
-                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "");
+                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "","2");
 
 
                             if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {

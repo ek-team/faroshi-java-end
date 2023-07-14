@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 /**
  * 训练记录
  */
+@Slf4j
 @RestController
 @RequestMapping("/planUserTrainRecord")
 public class PlanUserTrainReordController extends AbstractBaseController<PlanUserTrainRecordService, TbUserTrainRecord> {
@@ -154,7 +156,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
         for (Integer doctorId : doctorIds) {
             //发送消息
-
+            log.info("团队发送异常消息" + doctorId);
             Channel targetUserChannel = UserChannelManager.getUserChannel(doctorId);
             //2.向目标用户发送新消息提醒
             SocketFrameTextMessage targetUserMessage
@@ -162,12 +164,12 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
             if (targetUserChannel != null) {
                 targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                uniAppPushService.send("法罗适", stockUserName + ": " + msg, doctorId + "", "");
+                uniAppPushService.send("法罗适", stockUserName + ": " + msg, doctorId + "", "", "1");
 
             } else {
 
 
-                uniAppPushService.send("法罗适", stockUserName + ": " + msg, doctorId + "", "");
+                uniAppPushService.send("法罗适", stockUserName + ": " + msg, doctorId + "", "", "1");
 
             }
         }

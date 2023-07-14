@@ -8,4 +8,5 @@ public class UniAppPushData {
     private String title;
     private String content;
     private String request_id;
+    private String data;
 }

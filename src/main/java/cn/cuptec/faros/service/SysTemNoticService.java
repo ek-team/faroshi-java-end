@@ -99,11 +99,11 @@ public class SysTemNoticService extends ServiceImpl<SysTemNoticMapper, SysTemNot
                 }
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "");
+                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "","1");
 
                 } else {
 
-                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "");
+                    uniAppPushService.send("法罗适", name + ": " + msg, userId, "","1");
 
                 }
             }
