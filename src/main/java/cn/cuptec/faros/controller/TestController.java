@@ -49,8 +49,11 @@ public class TestController {
     public RestResponse customUserInfo() {
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<UserOrder> list = userOrdertService.list(new QueryWrapper<UserOrder>().lambda()
-                .eq(UserOrder::getStatus, 3)
-                .isNull(UserOrder::getLogisticsDeliveryTime));
+                .ge(UserOrder::getStatus, 3)
+                .ge(UserOrder::getPayment,10)
+                .isNotNull(UserOrder::getDeliverySn)
+                .isNull(UserOrder::getLogisticsDeliveryTime)
+        );
         if (!CollectionUtils.isEmpty(list)) {
             for (UserOrder userOrder : list) {
                 MapExpressTrackVo userOrderMapTrace = expressService.getUserOrderMapTraceNoMessage(userOrder.getId());

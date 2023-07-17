@@ -637,15 +637,7 @@ public class WxPayController {
     }
 
     public static void main(String[] args) {
-        String a = "KF123123";
-        String[] split = a.split("KF");
-        if (split.length == 1) {
-            a = split[0];
-        } else {
-            a = split[1];
-        }
-
-        System.out.println(a);
+        System.out.println(new BigDecimal("0.03").subtract(new BigDecimal("0.02")));
     }
 
     @ApiOperation(value = "图文咨询订单申请退款")

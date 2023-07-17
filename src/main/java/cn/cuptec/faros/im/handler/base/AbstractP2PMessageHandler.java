@@ -132,6 +132,9 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 //推送群聊的消息给所有人
                 String data = byId.getUserIds();
                 List<String> allUserIds = Arrays.asList(data.split(","));
+                if (origionMessage.getPatientId() == null && !StringUtils.isEmpty(byId.getPatientId())) {
+                    origionMessage.setPatientId(Integer.parseInt(byId.getPatientId()));
+                }
                 sendNotic(chatMsg, fromUser, origionMessage, allUserIds);
                 //判断是否是患者发送消息
                 if (fromUser.getId().equals(byId.getTargetUid())) {
@@ -209,11 +212,11 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
 
                 if (targetUserChannel != null) {
                     targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "","2");
+                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "", "2");
 
                 } else {
 
-                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "","2");
+                    uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), origionMessage.getTargetUid() + "", "", "2");
                     if (!StringUtils.isEmpty(user.getMpOpenId())) {
 
                         LocalDateTime now = LocalDateTime.now();
@@ -270,11 +273,11 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                         log.info("团队发送通知消息" + userId);
                         if (targetUserChannel != null) {
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "","2");
+                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "", "2");
 
                         } else {
 
-                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "","2");
+                            uniAppPushService.send("法罗适", name + ": " + origionMessage.getMsg(), userId, "", "2");
 
 
                             if (user != null && !StringUtils.isEmpty(user.getMpOpenId())) {
@@ -437,8 +440,8 @@ public abstract class AbstractP2PMessageHandler extends AbstractMessageHandler {
                 if (!one.getChatCount().equals(0)) {
                     one.setChatCount(one.getChatCount() - 1);
                     String patientOtherOrderNo = one.getPatientOtherOrderNo();
-                    if(!StringUtils.isEmpty(patientOtherOrderNo) && !origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)){
-                        PatientOtherOrder patientOtherOrder=new PatientOtherOrder();
+                    if (!StringUtils.isEmpty(patientOtherOrderNo) && !origionMessage.getMsgType().equals(ChatProto.PIC_CONSULTATION)) {
+                        PatientOtherOrder patientOtherOrder = new PatientOtherOrder();
                         patientOtherOrder.setId(Integer.parseInt(patientOtherOrderNo));
                         patientOtherOrder.setNewMsg(1);
                         patientOtherOrderService.updateById(patientOtherOrder);

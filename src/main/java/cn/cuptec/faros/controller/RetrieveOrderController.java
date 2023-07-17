@@ -616,17 +616,15 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             UserOrder userOrder = userOrdertService.getById(orderId);
             Long day = 1L;
             if (userOrder != null) {
-                Date deliveryTime = userOrder.getDeliveryTime();
-                Instant instant = deliveryTime.toInstant();
-                ZoneId zoneId = ZoneId.systemDefault();
+                LocalDateTime localDateDeliveryTime = userOrder.getLogisticsDeliveryTime();
+                if(localDateDeliveryTime!=null){
+                    LocalDateTime now = LocalDateTime.now();
+                    java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
+                    day = duration.toDays();
+                    userOrder.setUseDay(day.intValue());
+                    userOrdertService.updateById(userOrder);
+                }
 
-                LocalDateTime localDateDeliveryTime = instant.atZone(zoneId).toLocalDateTime();
-
-                LocalDateTime now = LocalDateTime.now();
-                java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
-                day = duration.toDays();
-                userOrder.setUseDay(day.intValue());
-                userOrdertService.updateById(userOrder);
             }
             RetrieveOrder retrieveOrder = service.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getUserOrderNo, userOrder.getOrderNo()));

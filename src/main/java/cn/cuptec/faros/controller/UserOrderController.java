@@ -124,7 +124,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private DeliveryInfoService deliveryInfoService;
 
 
-
     /**
      * 商家下单回调接口 暂时没用
      *
@@ -334,6 +333,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                    @RequestParam(value = "productSn2", required = false) String productSn2,
                                    @RequestParam(value = "productSn3", required = false) String productSn3,
                                    @RequestParam(value = "startDeliveryDate", required = false) String startDeliveryDate,
+                                   @RequestParam(value = "endDeliveryDate", required = false) String endDeliveryDate,
                                    @RequestParam(value = "startDeliveryTime", required = false) String startDeliveryTime,
                                    @RequestParam(value = "endDeliveryTime", required = false) String endDeliveryTime,
                                    @RequestParam(value = "endRefundReviewTime", required = false) String endRefundReviewTime,
@@ -391,11 +391,10 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         if (!StringUtils.isEmpty(startDeliveryDate)) {//期望发货时间
 
-            LocalDateTime now = LocalDateTime.now();
-            DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            String endDeliveryDate = df.format(now);
+            if (!StringUtils.isEmpty(endDeliveryDate)) {
+                queryWrapper.le("user_order.delivery_date", endDeliveryDate);
+            }
 
-//            queryWrapper.le("user_order.delivery_date", endDeliveryDate);
             queryWrapper.ge("user_order.delivery_date", startDeliveryDate);
         }
 
@@ -523,12 +522,10 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 //回收时间
                 if (!userOrder.getStatus().equals(5)) {
                     //计算使用天数
-                    Date deliveryTime = userOrder.getDeliveryTime();
+                    LocalDateTime deliveryTime = userOrder.getLogisticsDeliveryTime();
                     if (deliveryTime != null) {
                         LocalDateTime now = LocalDateTime.now();
-                        ZoneId zoneId = ZoneId.systemDefault();
-                        LocalDateTime deliveryTimeLo = deliveryTime.toInstant().atZone(zoneId).toLocalDateTime();
-                        java.time.Duration duration = java.time.Duration.between(deliveryTimeLo, now);
+                        java.time.Duration duration = java.time.Duration.between(deliveryTime, now);
                         Long l = duration.toDays();
                         userOrder.setUseDay(l.intValue());
                     }
