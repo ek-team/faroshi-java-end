@@ -57,6 +57,9 @@ public class InsertTemplateController {
         int value = 0;
         String startDate;
         String finishDate;
+        long initDate;
+        int frontDays;
+        String planStartStr;
         switch (diagType){
             case 0:
                 break;
@@ -66,9 +69,22 @@ public class InsertTemplateController {
             case 2://全膝关节置换 术后第一天开始负重，逐步负重,6 周内达完全负重
                 value = generatePlan2(saveResult,date,planFinishLoad,startStep,planStartTime, userId);
                 break;
+//            case 3://股骨颈骨折
+//            case 4://股骨转子间骨折 1周时为健侧 51%，逐步增加,12周时为健侧 87%，直至 100%
+//                value = generatePlan3(saveResult,date,planFinishLoad,startStep,planStartTime, userId);
+//                break;
             case 3://股骨颈骨折
-            case 4://股骨转子间骨折 1周时为健侧 51%，逐步增加,12周时为健侧 87%，直至 100%
-                value = generatePlan3(saveResult,date,planFinishLoad,startStep,planStartTime, userId);
+            case 4://股骨转子间骨折 恢复周期定为14周，使用直线计划
+                startDate = date;
+//                finishDate = DateFormatUtil.getBeforeOrAfterDate(8*7,startDate);
+                initDate = DateFormatUtil.getString2Date(startDate);
+                frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+                if (frontDays >= 14*7){//超出训练时间
+                    return RestResponse.failed(Integer.MAX_VALUE+"");
+                }
+                planStartStr = DateFormatUtil.getDate2String(planStartTime,null);
+                finishDate = DateFormatUtil.getBeforeOrAfterDate(14*7-frontDays,planStartStr);
+                value = generateDefaultPlan(planStartStr,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
                 break;
             case 5://胫骨平台骨折（钢板固定）6周时20kg，逐步增加，16周左右达到健侧100%
                 value = generatePlan4(saveResult,date,planFinishLoad,startStep,planStartTime, userId);
@@ -100,23 +116,47 @@ public class InsertTemplateController {
                 break;
             case 15://四个月的默认计划
                 startDate = date;
-                finishDate = DateFormatUtil.getBeforeOrAfterDate(4*30,startDate);
-                value =  generateDefaultPlan(startDate,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
+                initDate = DateFormatUtil.getString2Date(startDate);
+                frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+                if (frontDays >= 4*30){//超出训练时间
+                    return RestResponse.failed(Integer.MAX_VALUE+"");
+                }
+                planStartStr = DateFormatUtil.getDate2String(planStartTime,null);
+                finishDate = DateFormatUtil.getBeforeOrAfterDate(4*30-frontDays,planStartStr);
+                value =  generateDefaultPlan(planStartStr,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
                 break;
             case 16://六个月的默认计划
                 startDate = date;
-                finishDate = DateFormatUtil.getBeforeOrAfterDate(6*30,startDate);
-                value = generateDefaultPlan(startDate,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
+                initDate = DateFormatUtil.getString2Date(startDate);
+                frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+                if (frontDays >= 6*30){//超出训练时间
+                    return RestResponse.failed(Integer.MAX_VALUE+"");
+                }
+                planStartStr = DateFormatUtil.getDate2String(planStartTime,null);
+                finishDate = DateFormatUtil.getBeforeOrAfterDate(6*30-frontDays,planStartStr);
+                value = generateDefaultPlan(planStartStr,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
                 break;
             case 17://八周的默认计划
                 startDate = date;
-                finishDate = DateFormatUtil.getBeforeOrAfterDate(8*7,startDate);
-                value = generateDefaultPlan(startDate,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
+                initDate = DateFormatUtil.getString2Date(startDate);
+                frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+                if (frontDays >= 8*7){//超出训练时间
+                    return RestResponse.failed(Integer.MAX_VALUE+"");
+                }
+                planStartStr = DateFormatUtil.getDate2String(planStartTime,null);
+                finishDate = DateFormatUtil.getBeforeOrAfterDate(8*7-frontDays,planStartStr);
+                value = generateDefaultPlan(planStartStr,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
                 break;
             case 18://六周的默认计划
                 startDate = date;
-                finishDate = DateFormatUtil.getBeforeOrAfterDate(6*7,startDate);
-                value =  generateDefaultPlan(startDate,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
+                initDate = DateFormatUtil.getString2Date(startDate);
+                frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+                if (frontDays >= 6*7){//超出训练时间
+                    return RestResponse.failed(Integer.MAX_VALUE+"");
+                }
+                planStartStr = DateFormatUtil.getDate2String(planStartTime,null);
+                finishDate = DateFormatUtil.getBeforeOrAfterDate(6*7-frontDays,planStartStr);
+                value =  generateDefaultPlan(planStartStr,userId,String.valueOf(saveResult),finishDate,planFinishLoad,planStartTime,startStep);
                 break;
             default:
                 return RestResponse.failed("当前病种没有计划");
@@ -128,7 +168,7 @@ public class InsertTemplateController {
     }
     public int generateDefaultPlan(String startDate,long userId, String startLoad, String endDate, String endLoad,long planStartTime,int initStep){
         List<TbSubPlan> subPlanEntityList = new ArrayList<>();
-        endDate = DateFormatUtil.increaseOneDayOneSecondLess(0,endDate);
+//        endDate = DateFormatUtil.increaseOneDayOneSecondLess(0,endDate);
         long startTime = DateFormatUtil.getString2Date(startDate);
         long endTime = DateFormatUtil.getString2Date(endDate);
         int weekCount = (int) Math.ceil(((endTime-startTime) / (7.0 * dayMs)));
@@ -138,7 +178,7 @@ public class InsertTemplateController {
         insert(planEntity);
         subPlanEntityList.addAll(insert5Test(startDate,userId,Integer.parseInt(endLoad),Integer.parseInt(startLoad),1,weekCount));
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList,Global.TrainTime, initStep,Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime,modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,Integer.parseInt(startLoad),modifySubPlanList));
         return 0;
     }
 
@@ -196,7 +236,7 @@ public class InsertTemplateController {
         insert(planEntity1);
         subPlanEntityList.addAll(insertListJieGuTest(targetLoad, date, weightStr, userId));
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        List<TbSubPlan> subPlanEntities1 = modifyStartEndDate(planStartTime, modifySubPlanList);
+        List<TbSubPlan> subPlanEntities1 = modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList);
         insertMany(subPlanEntities1);
         if (subPlanEntities1.size() <= 0) {
 //            TrainPlanManager.getInstance().clearTrainPlanDatabaseByUserId(userId);
@@ -330,7 +370,7 @@ public class InsertTemplateController {
             subPlanEntityList.addAll(insert3Test(startDate1, userId, weight, newLoadWeight1, 3, weekCount));
         }
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        List<TbSubPlan> subPlanEntities1 = modifyStartEndDate(planStartTime, modifySubPlanList);
+        List<TbSubPlan> subPlanEntities1 = modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList);
         insertMany(subPlanEntities1);
         if (subPlanEntities1.size() <= 0) {
 //            TrainPlanManager.getInstance().clearTrainPlanDatabaseByUserId(userId);
@@ -391,12 +431,11 @@ public class InsertTemplateController {
     }
 
     public int generatePlan4(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad4(targetLoad, date, weightStr,planStartTime, userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
-        List<TbSubPlan> subPlanEntityList = new ArrayList<>();
-        String startDate = date;
-        String endDate = DateFormatUtil.increaseOneDayOneSecondLess(6 * 7 - 1, startDate);
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
+        List<TbSubPlan> subPlanEntityList = new ArrayList();
+//        String startDate = SPHelper.getUser().getDate();
+        String endDate = DateFormatUtil.increaseOneDayOneSecondLess(6*7-1,startDate);
         String classTwoStartDate = null;
         if (targetLoad < 20) {
             subPlanEntityList.addAll(insert2Test(startDate, userId, initValue, 1, 6));
@@ -421,7 +460,7 @@ public class InsertTemplateController {
         insert(planEntity1);
         subPlanEntityList.addAll(insert4Test(classTwoStartDate, userId, Integer.parseInt(weightStr), initValue, 2, 10));
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
@@ -551,18 +590,25 @@ public class InsertTemplateController {
     }
 
     public int generatePlan5(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad5(targetLoad, date, weightStr, planStartTime,userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
-        String startDate = date;
-        TbPlan planEntity = insert(initValue, userId, weightStr, 1, startDate, DateFormatUtil.increaseOneDayOneSecondLess(39 * 7 - 1, startDate), Global.TrainTime, 39 * 7);
+        long initDate = DateFormatUtil.getString2Date(date);
+        int frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+        if (frontDays >= 24*7){//超出训练时间
+            return Integer.MAX_VALUE;
+        }
+        int remainDays = 24*7 - frontDays;
+        int weekCount = (int) Math.ceil(remainDays /7.0);
+        if (weekCount == 0 || weekCount == 1)
+            weekCount = 2;
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
+        TbPlan planEntity = insert(initValue, userId, weightStr, 1, startDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, startDate), Global.TrainTime, weekCount * 7);
         String date2String = DateFormatUtil.getDate2String(planStartTime, "yyyy-MM-dd");
         date2String = date2String + " 00:00:00";
         planEntity.setStartDateStr(date2String);
         insert(planEntity);
-        List<TbSubPlan> subPlanEntityList = insert5Test(startDate, userId, Integer.parseInt(weightStr), initValue, 1, 40);
+        List<TbSubPlan> subPlanEntityList = insert5Test(startDate, userId, Integer.parseInt(weightStr), initValue, 1, weekCount);
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
@@ -752,11 +798,18 @@ public class InsertTemplateController {
     }
 
     public int generatePlan6(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad6(targetLoad, date, weightStr,planStartTime, userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
+        long initDate = DateFormatUtil.getString2Date(date);
+        int frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+        if (frontDays >= 24*7){//超出训练时间
+            return Integer.MAX_VALUE;
+        }
+        int remainDays = 24*7 - frontDays;
+        int weekCount = (int) Math.ceil(remainDays /7.0);
+        if (weekCount == 0 || weekCount == 1)
+            weekCount = 2;
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
         List<TbSubPlan> subPlanEntityList = new ArrayList<>();
-        String startDate = date;
         subPlanEntityList.addAll(insert2Test(startDate, userId, initValue, 1, 3));
         String endDate = DateFormatUtil.increaseOneDayOneSecondLess(3 * 7 - 1, startDate);
         TbPlan planEntity = insert(initValue, userId, weightStr, 1, startDate, endDate, Global.TrainTime, 3 * 7);
@@ -771,48 +824,63 @@ public class InsertTemplateController {
 //            initValue = targetLoad;
         }
         String classTwoStartDate = DateFormatUtil.getString2DateIncreaseOneDay(endDate, null);
-        subPlanEntityList.addAll(insert5Test(classTwoStartDate, userId, Integer.parseInt(weightStr), initValue, 2, 24));
-        TbPlan planEntity1 = insert(initValue, userId, weightStr, 2, classTwoStartDate, DateFormatUtil.increaseOneDayOneSecondLess(24 * 7 - 1, classTwoStartDate), Global.TrainTime, 24 * 7);
+        subPlanEntityList.addAll(insert5Test(classTwoStartDate, userId, Integer.parseInt(weightStr), initValue, 2, weekCount));
+        TbPlan planEntity1 = insert(initValue, userId, weightStr, 2, classTwoStartDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, classTwoStartDate), Global.TrainTime, weekCount * 7);
         insert(planEntity1);
 
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
     public int generatePlan7(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad7(targetLoad, date, weightStr, planStartTime,userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
-        String startDate = date;
-        TbPlan planEntity = insert(initValue, userId, weightStr, 1, startDate, DateFormatUtil.increaseOneDayOneSecondLess(24 * 7 - 1, startDate), Global.TrainTime, 24 * 7);
-        List<TbSubPlan> subPlanEntityList = insert5Test(startDate, userId, Integer.parseInt(weightStr), initValue, 1, 24);
+        long initDate = DateFormatUtil.getString2Date(date);
+        int frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+        if (frontDays >= 24*7){//超出训练时间
+            return Integer.MAX_VALUE;
+        }
+        int remainDays = 24*7 - frontDays;
+        int weekCount = (int) Math.ceil(remainDays /7.0);
+        if (weekCount == 0 || weekCount == 1)
+            weekCount = 2;
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
+        TbPlan planEntity = insert(initValue, userId, weightStr, 1, startDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, startDate), Global.TrainTime, weekCount * 7);
+        List<TbSubPlan> subPlanEntityList = insert5Test(startDate, userId, Integer.parseInt(weightStr), initValue, 1, weekCount);
         insert(planEntity);
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
     public int generatePlan8(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad8(targetLoad, date, weightStr,planStartTime, userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
-        String startDate = date;
-        TbPlan planEntity = insert(initValue, userId, weightStr, 1, startDate, DateFormatUtil.increaseOneDayOneSecondLess(16 * 7 - 1, startDate), Global.TrainTime, 16 * 7);
-        List<TbSubPlan> subPlanEntityList = insert4Test(startDate, userId, Integer.parseInt(weightStr), initValue, 1, 16);
+        long initDate = DateFormatUtil.getString2Date(date);
+        int frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+        if (frontDays >= 16*7){//超出训练时间
+            return Integer.MAX_VALUE;
+        }
+        int remainDays = 16*7 - frontDays;
+        int weekCount = (int) Math.ceil(remainDays /7.0);
+        if (weekCount == 0 || weekCount == 1)
+            weekCount = 2;
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
+        TbPlan planEntity = insert(initValue, userId, weightStr, 1, startDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, startDate), Global.TrainTime, weekCount * 7);
+        List<TbSubPlan> subPlanEntityList = insert4Test(startDate, userId, Integer.parseInt(weightStr), initValue, 1, weekCount);
         insert(planEntity);
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
     public int generatePlan9(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
         List<TbSubPlan> subPlanEntityList = new ArrayList<>();
-        String startZero = date;
-        String startDate = DateFormatUtil.getBeforeOrAfterDate(4 * 7, date);
-        List<TbSubPlan> subPlanEntities = insert2Test(startZero, userId, 0, 1, 4);
-        List<TbSubPlan> modifySubPlanEntities = modifySubPlanData(subPlanEntities, Global.TrainTime, 5, 20);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanEntities));
+//        String startZero = date;
+//        String startDate = DateFormatUtil.getBeforeOrAfterDate(4 * 7, date);
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
+//        List<TbSubPlan> subPlanEntities = insert2Test(startZero, userId, 0, 1, 4);
+//        List<TbSubPlan> modifySubPlanEntities = modifySubPlanData(subPlanEntities, Global.TrainTime, 5, 20);
+//        insertMany(modifyStartEndDate(planStartTime, modifySubPlanEntities));
         String endDate = DateFormatUtil.increaseOneDayOneSecondLess(2 * 7 - 1, startDate);
         if (targetLoad < 10) {
             subPlanEntityList.addAll(insert4Test(startDate, userId, 10, targetLoad, 1, 2));
@@ -845,13 +913,13 @@ public class InsertTemplateController {
             planEntity3 = insert(weight, userId, weightStr, 4, classFourStartDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, classFourStartDate), Global.TrainTime, weekCount * 7);
             subPlanEntityList.addAll(insert4Test(classFourStartDate, userId, weight, weight, 4, weekCount));
         } else {
-            weekCount = (weight - 40) / 10 + 1;
-            planEntity3 = insert(40, userId, weightStr, 4, classFourStartDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, classFourStartDate), Global.TrainTime, weekCount * 7);
-            subPlanEntityList.addAll(insert4Test(classFourStartDate, userId, weight, 40, 4, weekCount));
+            weekCount = (weight - 30) / 10 + 1;
+            planEntity3 = insert(30, userId, weightStr, 4, classFourStartDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, classFourStartDate), Global.TrainTime, weekCount * 7);
+            subPlanEntityList.addAll(insert4Test(classFourStartDate, userId, weight, 30, 4, weekCount));
         }
         insert(planEntity3);
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        List<TbSubPlan> subPlanEntities1 = modifyStartEndDate(planStartTime, modifySubPlanList);
+        List<TbSubPlan> subPlanEntities1 = modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList);
         insertManyTest(subPlanEntities1);
         if (subPlanEntities1.size() <= 0) {
 //            TrainPlanManager.getInstance().clearTrainPlanDatabaseByUserId(userId);
@@ -862,11 +930,18 @@ public class InsertTemplateController {
     }
 
     public int generatePlan10(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad10(targetLoad, date, weightStr,planStartTime, userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
+        long initDate = DateFormatUtil.getString2Date(date);
+        int frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+        if (frontDays >= 12*7){//超出训练时间
+            return Integer.MAX_VALUE;
+        }
+        int remainDays = 12*7 - frontDays;
+        int weekCount = (int) Math.ceil(remainDays /7.0);
+        if (weekCount == 0 || weekCount == 1)
+            weekCount = 2;
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
         List<TbSubPlan> subPlanEntityList = new ArrayList<>();
-        String startDate = date;
         String endDate = DateFormatUtil.increaseOneDayOneSecondLess(4 * 7 - 1, startDate);
         String classTwoStartDate = DateFormatUtil.getString2DateIncreaseOneDay(endDate, null);
         if (initValue < 5) {
@@ -888,20 +963,18 @@ public class InsertTemplateController {
             classTwoStartDate = DateFormatUtil.getDate2String(planStartTime, "yyyy-MM-dd");
             classTwoStartDate = classTwoStartDate + " 00:00:00";
         }
-        TbPlan planEntity1 = insert(initValue, userId, weightStr, 2, classTwoStartDate, DateFormatUtil.increaseOneDayOneSecondLess(12 * 7 - 1, classTwoStartDate), Global.TrainTime, 12 * 7);
+        TbPlan planEntity1 = insert(initValue, userId, weightStr, 2, classTwoStartDate, DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, classTwoStartDate), Global.TrainTime, weekCount * 7);
         insert(planEntity1);
-        subPlanEntityList.addAll(insert4Test(classTwoStartDate, userId, Integer.parseInt(weightStr), initValue, 2, 12));
+        subPlanEntityList.addAll(insert4Test(classTwoStartDate, userId, Integer.parseInt(weightStr), initValue, 2, weekCount));
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
     public int generatePlan11(int targetLoad, String date, String weightStr,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad11(targetLoad, date, weightStr,planStartTime, userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
         List<TbSubPlan> subPlanEntityList = new ArrayList<>();
-        String startDate = date;
         String endDate = DateFormatUtil.increaseOneDayOneSecondLess(7 * 7 - 1, startDate);
         String classTwoStartDate = null;
         if (targetLoad < 12) {
@@ -929,23 +1002,30 @@ public class InsertTemplateController {
         insert(planEntity1);
         subPlanEntityList.addAll(insert5Test(classTwoStartDate, userId, weight, initValue, 2, weekCount));
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
     public int generatePlan2(int targetLoad, String date, String weight,int startStep,long planStartTime, long userId) {
-        int initValue = calcInitLoad(targetLoad, date, weight,planStartTime, userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
-        String startDate = date;
-        String endDate = DateFormatUtil.increaseOneDayOneSecondLess(6 * 7 - 1, startDate);
-        TbPlan planEntity = insert(initValue, userId, weight, 1, startDate, endDate, Global.TrainTime, 6 * 7);
+        long initDate = DateFormatUtil.getString2Date(date);
+        int frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+        if (frontDays >= 6*7){//超出训练时间
+            return Integer.MAX_VALUE;
+        }
+        int remainDays = 6*7 - frontDays;
+        int weekCount = (int) Math.ceil(remainDays /7.0);
+        if (weekCount == 0 || weekCount == 1)
+            weekCount = 2;
+        int initValue = targetLoad;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
+        String endDate = DateFormatUtil.increaseOneDayOneSecondLess(weekCount*7-1,startDate);
+        TbPlan planEntity = insert(initValue, userId, weight, 1, startDate, endDate, Global.TrainTime, weekCount * 7);
         planEntity.setStartDateStr(DateFormatUtil.getNowDate());
         insert(planEntity);
 
-        List<TbSubPlan> subPlanEntityList = insertTest(startDate, weight, userId, initValue, 1, 6);
+        List<TbSubPlan> subPlanEntityList = insertTest(startDate, weight, userId, initValue, 1, weekCount);
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, Global.TrainTime, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
@@ -962,41 +1042,65 @@ public class InsertTemplateController {
     }
 
     public int generatePlan1(int targetLoad, String date, String weight, int startStep,long planStartTime,long userId) {
-        int initValue = calcInitLoad(targetLoad, date, weight,planStartTime, userId);
-        if (initValue == Integer.MAX_VALUE)
-            return initValue;
-        String startDate = date;
-        String endDate = DateFormatUtil.increaseOneDayOneSecondLess(6 * 7 - 1, startDate);
-        TbPlan planEntity = insert(initValue, userId, weight, 1, startDate, endDate, 8, 6 * 7);
-        if (planStartTime < DateFormatUtil.getString2Date(endDate)) {
+        int initValue = targetLoad;
+        long initDate = DateFormatUtil.getString2Date(date);
+        int frontDays = (int) Math.ceil((planStartTime-initDate)*1.0/dayMs);
+        if (frontDays >= 6*7){//超出训练时间
+            return Integer.MAX_VALUE;
+        }
+        int remainDays = 6*7 - frontDays;
+        int weekCount = (int) Math.ceil(remainDays /7.0);
+        if (weekCount == 0 || weekCount == 1)
+            weekCount = 2;
+        String startDate = DateFormatUtil.getDate2String(planStartTime,null);
+        String endDate = DateFormatUtil.increaseOneDayOneSecondLess(weekCount * 7 - 1, startDate);
+        TbPlan planEntity = insert(initValue, userId, weight, 1, startDate, endDate, 8, weekCount * 7);
+        if (planStartTime < DateFormatUtil.getString2Date(endDate)){
             planEntity.setStartDate(new Date());
             insert(planEntity);
-        } else {
-            String date2String = DateFormatUtil.getDate2String(planStartTime, "yyyy-MM-dd");
+        }else {
+            String date2String = DateFormatUtil.getDate2String(planStartTime,"yyyy-MM-dd");
             endDate = date2String + " 00:00:00";
         }
-        String classTwoStartDate = DateFormatUtil.getString2DateIncreaseOneDay(endDate, null);
-        int newLoadWeight = (int) (((Float.parseFloat(weight) - initValue) / 6) * 4 + initValue);//体重-评估负重 6周平均分配
-        TbPlan planEntity1 = insert(newLoadWeight, userId, weight, 2, classTwoStartDate, DateFormatUtil.increaseOneDayOneSecondLess(2 * 7 - 1, classTwoStartDate), 25, 6 * 7);
+        String classTwoStartDate = DateFormatUtil.getString2DateIncreaseOneDay(endDate,null);
+        int newLoadWeight = (int)(((Float.parseFloat(weight) - initValue)/weekCount) * 4 + initValue);//体重-评估负重 6周平均分配
+        TbPlan planEntity1 = insert(newLoadWeight, userId, weight, 2, classTwoStartDate, DateFormatUtil.increaseOneDayOneSecondLess(2 * 7 - 1, classTwoStartDate), 25, weekCount * 7);
         insert(planEntity1);
 
-        List<TbSubPlan> subPlanEntityList = insertTest(startDate, weight, userId, initValue, 1, 6);
+        List<TbSubPlan> subPlanEntityList = insertTest(startDate, weight, userId, initValue, 1, weekCount);
         List<TbSubPlan> modifySubPlanList = modifySubPlanData(subPlanEntityList, 25, startStep, Global.MaxTrainStep);
-        insertMany(modifyStartEndDate(planStartTime, modifySubPlanList));
+        insertMany(modifyStartEndDate(planStartTime,targetLoad, modifySubPlanList));
         return initValue;
     }
 
-    private List<TbSubPlan> modifyStartEndDate(long startTime, List<TbSubPlan> list) {
+    private List<TbSubPlan> modifyStartEndDate(long startTime,int evaluateValue, List<TbSubPlan> list) {
         List<TbSubPlan> listResult = new ArrayList<>();
-        int i = 0;
-        String startDate = DateFormatUtil.getDate2String(startTime, "yyyy-MM-dd");
+        String startDate = DateFormatUtil.getDate2String(startTime,"yyyy-MM-dd");
         startDate = startDate + " 00:00:00";
-        for (TbSubPlan subPlanEntity : list) {
-            if (startTime <= DateFormatUtil.getString2Date(subPlanEntity.getEndDateStr())) {
+        for (TbSubPlan subPlanEntity:list){
+            if (startTime <= DateFormatUtil.getString2Date(subPlanEntity.getEndDateStr())){
+//                int diffDay = Math.toIntExact((startTime - DateFormatUtil.getString2Date(subPlanEntity.getStartDate())) / dayMs) + 1;
+//                subPlanEntity.setStartDate(DateFormatUtil.getBeforeOrAfterDate(i*7,startDate));
+//                subPlanEntity.setEndDate(DateFormatUtil.getBeforeOrAfterDate((i+1)*7,startDate));
+//                i++;
                 if (subPlanEntity.getLoad() <= 0)
                     subPlanEntity.setLoad(2);
                 listResult.add(subPlanEntity);
             }
+        }
+        if (listResult.size() > 0 && DateFormatUtil.getString2Date(listResult.get(0).getStartDateStr()) >= startTime){
+            return listResult;
+        }
+        for (int i = 0;i< listResult.size();i++){
+            TbSubPlan subPlanEntity = listResult.get(i);
+            if (i == 0 ){//第一周的起始负重就是评估值
+                subPlanEntity.setLoad(evaluateValue);
+            }
+            String resultStartDate = DateFormatUtil.getDate2String(startTime+i*7*dayMs,null);
+            subPlanEntity.setStartDateStr(resultStartDate);
+            String resultEndDate = DateFormatUtil.getBeforeOrAfterDate(7,resultStartDate);
+            subPlanEntity.setEndDateStr(resultEndDate);
+            listResult.set(i,subPlanEntity);
         }
         return listResult;
     }
@@ -1382,7 +1486,7 @@ public class InsertTemplateController {
             case "7"://髋臼周围截骨术
                 return 10;
             case "49"://踝关节骨折钢板螺钉内固定术
-            case "50"://钢板螺钉内固定术
+
                 return 11;
             case "56"://切开复位钢板内固定术（ORIF）
             case "57"://微创螺钉固定术
@@ -1425,6 +1529,7 @@ public class InsertTemplateController {
                 return 15;//四个月的训练计划
             case "5"://切开复位内固定术（ORIF）
             case "11"://带血管蒂髂骨移植术
+            case "50"://钢板螺钉内固定术
                 return 16;//6个月的训练计划
             case "13"://髋关节镜下修复术
             case "14"://髋关节镜下微骨折术
