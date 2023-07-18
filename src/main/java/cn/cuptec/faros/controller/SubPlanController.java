@@ -602,7 +602,9 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
         IPage page1 = service.page(page, queryWrapper);
         List<TbSubPlan> subPlans = page1.getRecords();
         if (!CollectionUtils.isEmpty(subPlans)) {
-           for(TbSubPlan tbSubPlan:subPlans){
+           List<TbSubPlan> subPlanList = service.list(new QueryWrapper<TbSubPlan>().lambda().eq(TbSubPlan::getVersion, subPlans.get(0).getVersion()).eq(TbSubPlan::getUserId, userId));
+
+            for(TbSubPlan tbSubPlan:subPlanList){
                tbSubPlan.setPlanInvalid(planInvalid);
            }
             service.updateBatchById(subPlans);
