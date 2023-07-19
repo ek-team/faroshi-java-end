@@ -29,6 +29,7 @@ public class TbTrainUser {
     private String bodyPartName;//手术部位
     private String secondDiseaseName;//疾病名称
     private Integer doctorTeamId;
+    private Integer deptId;//部门
     private Integer planCheckStatus;//1待审核 2审核通过
     private String birthday;
     private Integer cardType; //1-身份证 2-其他

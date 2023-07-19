@@ -186,6 +186,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+
                 PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
                 if (planUserOtherInfo == null) {
                     planUserOtherInfo = new PlanUserOtherInfo();
@@ -205,6 +206,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                         List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().
                                 lambda().eq(UserOrder::getPatientUserId, list.get(0).getId()));
                         if (!org.springframework.util.CollectionUtils.isEmpty(userOrders)) {
+                            tbTrainUser.setDeptId(userOrders.get(0).getDeptId());
                             Integer doctorTeamId = userOrders.get(0).getDoctorTeamId();
                             DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
                             tbTrainUser.setDoctorTeamId(doctorTeamId);
@@ -215,6 +217,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                 if (tbTrainUser.getDoctorTeamId() != null) {
                     DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
                     if (doctorTeam != null) {
+                        tbTrainUser.setDeptId(doctorTeam.getDeptId());
                         tbTrainUser.setHospitalId(doctorTeam.getHospitalId() + "");
                         HospitalInfo hospitalInfo = hospitalInfoService.getById(doctorTeam.getHospitalId());
                         if (hospitalInfo != null) {
@@ -230,6 +233,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                         lambda().eq(ProductStock::getMacAddress, tbTrainUser.getMacAdd()).eq(ProductStock::getDel, 1));
                 if (!CollectionUtils.isEmpty(productStocks)) {
                     tbTrainUser.setRegisterProductSn(productStocks.get(0).getProductSn());
+                    tbTrainUser.setDeptId(productStocks.get(0).getDeptId());
                 }
                 if (StringUtils.isEmpty(tbTrainUser.getUserId())) {
                     tbTrainUser.setUserId(idUtil.nextId() + "");
@@ -272,6 +276,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+
                 PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
                 if (planUserOtherInfo == null) {
                     planUserOtherInfo = new PlanUserOtherInfo();
@@ -291,6 +296,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                         List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().
                                 lambda().eq(UserOrder::getPatientUserId, list.get(0).getId()));
                         if (!org.springframework.util.CollectionUtils.isEmpty(userOrders)) {
+                            tbTrainUser.setDeptId(userOrders.get(0).getDeptId());
                             Integer doctorTeamId = userOrders.get(0).getDoctorTeamId();
                             DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
                             tbTrainUser.setDoctorTeamId(doctorTeamId);
@@ -301,6 +307,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                 if (tbTrainUser.getDoctorTeamId() != null) {
                     DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
                     if (doctorTeam != null) {
+                        tbTrainUser.setDeptId(doctorTeam.getDeptId());
                         tbTrainUser.setHospitalId(doctorTeam.getHospitalId() + "");
                         HospitalInfo hospitalInfo = hospitalInfoService.getById(doctorTeam.getHospitalId());
                         if (hospitalInfo != null) {
@@ -317,6 +324,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
                         lambda().eq(ProductStock::getMacAddress, tbTrainUser.getMacAdd()).eq(ProductStock::getDel, 1));
                 if (!CollectionUtils.isEmpty(productStocks)) {
                     tbTrainUser.setRegisterProductSn(productStocks.get(0).getProductSn());
+                    tbTrainUser.setDeptId(productStocks.get(0).getDeptId());
                 }
                 if (StringUtils.isEmpty(tbTrainUser.getUserId())) {
                     tbTrainUser.setUserId(idUtil.nextId() + "");

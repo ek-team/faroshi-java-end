@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @RestController
@@ -30,7 +32,7 @@ import java.util.List;
 public class TestController {
     private final Url url;
     @Resource
-    private ClientDetailsService clientDetailsService;
+    private ProductStockService productStockService;
     @Resource
     private HospitalInfoService hospitalInfoService;
     @Resource
@@ -45,35 +47,25 @@ public class TestController {
     private UserOrdertService userOrdertService;
     @Resource
     private ExpressService expressService;
+
     @GetMapping("user")
     public RestResponse customUserInfo() {
-        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        List<UserOrder> list = userOrdertService.list(new QueryWrapper<UserOrder>().lambda()
-                .ge(UserOrder::getStatus, 3)
-                .ge(UserOrder::getPayment,10)
-                .isNotNull(UserOrder::getDeliverySn)
-                .isNull(UserOrder::getLogisticsDeliveryTime)
-        );
-        if (!CollectionUtils.isEmpty(list)) {
-            for (UserOrder userOrder : list) {
-                MapExpressTrackVo userOrderMapTrace = expressService.getUserOrderMapTraceNoMessage(userOrder.getId());
-                if(userOrderMapTrace!=null){
-                    MapExpressTrackVo.ExpressData[] data = userOrderMapTrace.getData();
-                    MapExpressTrackVo.ExpressData datum = data[data.length - 1];
-                    String time = datum.getTime();
-                    LocalDateTime ldt = LocalDateTime.parse(time, df);
-                    userOrder.setLogisticsDeliveryTime(ldt);
-                    Integer state = userOrderMapTrace.getState();
-//                if (state.equals(3)) {
-//                    userOrder.setStatus(4);
-//                }
-                }
-
+        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+                .isNull(TbTrainUser::getDeptId)
+        .isNotNull(TbTrainUser::getMacAdd));
+        List<String> macAdds = tbTrainUsers.stream().map(TbTrainUser::getMacAdd)
+                .collect(Collectors.toList());
+        List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda().in(ProductStock::getMacAddress, macAdds)
+                .eq(ProductStock::getDel, 1));
+        Map<String, List<ProductStock>> map = productStocks.stream()
+                .collect(Collectors.groupingBy(ProductStock::getMacAddress));
+        for (TbTrainUser tbTrainUser : tbTrainUsers) {
+            List<ProductStock> productStocks1 = map.get(tbTrainUser.getMacAdd());
+            if (!CollectionUtils.isEmpty(productStocks1)) {
+                tbTrainUser.setDeptId(productStocks1.get(0).getDeptId());
             }
-            userOrdertService.updateBatchById(list);
         }
-
-
+        planUserService.updateBatchById(tbTrainUsers);
         return RestResponse.ok();
     }
 

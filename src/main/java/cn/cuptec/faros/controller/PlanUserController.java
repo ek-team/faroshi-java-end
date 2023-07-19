@@ -104,7 +104,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @Resource
     private SysTemNoticService sysTemNoticService;
     @Resource
-    private DoctorUserActionService doctorUserActionService;
+    private UserRoleService userRoleService;
     @Resource
     private PlanUserOtherInfoService planUserOtherInfoService;
 
@@ -226,6 +226,12 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             }
             selectEducationalLevel1.retainAll(selectEducationalLevel);
             queryWrapper.in("educational_level", selectEducationalLevel1);
+        }
+
+        Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+        if (!aBoolean) {
+            User user = userService.getById(SecurityUtils.getUser().getId());
+            queryWrapper.in("dept_id", user.getDeptId());
         }
         IPage page1 = service.page(page, queryWrapper);
         List<TbTrainUser> records = page1.getRecords();
@@ -535,6 +541,8 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
 
     @PostMapping("/add")
     public RestResponse add(@RequestBody TbTrainUser tbTrainUser) {
+
+
         PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
         if (planUserOtherInfo == null) {
             planUserOtherInfo = new PlanUserOtherInfo();
@@ -558,6 +566,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
                     Integer doctorTeamId = userOrders.get(0).getDoctorTeamId();
                     DoctorTeam doctorTeam = doctorTeamService.getById(doctorTeamId);
                     tbTrainUser.setDoctorTeamId(doctorTeamId);
+                    tbTrainUser.setDeptId(userOrders.get(0).getDeptId());
                     tbTrainUser.setDoctorTeam(doctorTeam.getName());
                 }
             }
@@ -565,6 +574,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         if (tbTrainUser.getDoctorTeamId() != null) {
             DoctorTeam doctorTeam = doctorTeamService.getById(tbTrainUser.getDoctorTeamId());
             if (doctorTeam != null) {
+                tbTrainUser.setDeptId(doctorTeam.getDeptId());
                 tbTrainUser.setHospitalId(doctorTeam.getHospitalId() + "");
                 HospitalInfo hospitalInfo = hospitalInfoService.getById(doctorTeam.getHospitalId());
                 if (hospitalInfo != null) {
@@ -604,6 +614,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         if (!CollectionUtils.isEmpty(productStocks)) {
             user.setProductStockId(productStocks.get(0).getId());
             tbTrainUser.setRegisterProductSn(productStocks.get(0).getProductSn());
+            tbTrainUser.setDeptId(productStocks.get(0).getDeptId());
         }
 
         userService.updateById(user);
