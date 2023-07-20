@@ -1331,7 +1331,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         userOrder.setServicePack(servicePack);
         userOrder.setDoctorTeamName(doctorTeamService.getById(userOrder.getDoctorTeamId()).getName());
-
         return RestResponse.ok(userOrder);
     }
 

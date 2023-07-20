@@ -109,7 +109,7 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
         entity.setSaleSpecId(userOrder.getSaleSpecId());
         entity.setProductSpec(userOrder.getProductSpec());
         entity.setServicePackId(userOrder.getServicePackId());
-        super.save(entity);
+        super.saveOrUpdate(entity);
 
         return Boolean.TRUE;
     }
