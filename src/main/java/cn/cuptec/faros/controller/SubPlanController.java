@@ -46,19 +46,8 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
     public static void main(String[] args) {
 
 
-        int step = 10;
-        int week = 4;
-        int stepllll = 200 / week;
-        for (int i = 0; i < week; i++) {
-            if (i == 0) {
-                System.out.println(step);
-            } else {
-                step = step + stepllll;
-                System.out.println(step);
-
-            }
-
-        }
+        int weekLoad = ((0 * 63) + (4 - 1 - 0) * 5) / (4 - 1);
+        System.out.println(weekLoad);
     }
 
     public static int daysBetween(Date date1, Date date2) {
@@ -152,19 +141,11 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 
         if (weeks > 1) {
 
-            int step = 200 / weeks;
             for (int i = 0; i < weeks; i++) {
                 TbSubPlan tbSubPlan = new TbSubPlan();
                 if (i == 0) {
                     tbSubPlan.setTrainStep(trainStep);
                 } else {
-//                    if (i == weeks - 1) {
-//                        tbSubPlan.setTrainStep(200);
-//
-//                    } else {
-//                        trainStep = trainStep + step;
-//                        tbSubPlan.setTrainStep(trainStep);
-//                    }
                     tbSubPlan.setTrainStep(((i + 1) * 200 + (weeks - (i + 1)) * trainStep) / weeks);
 
                 }
@@ -177,13 +158,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
                 tbSubPlan.setKeyId(idUtil.nextId());
                 tbSubPlan.setVersion(version);
                 tbSubPlan.setUserId(subPlanEntity.getUserId());
-//                if (i == weeks - 1) {
-//                    tbSubPlan.setLoad(endLoad);
-//                } else {
-//                    tbSubPlan.setLoad(loadData);
-//                    loadData = loadData + weekLOad;
-//                }
-                int weekLoad = (((i + 1) * endLoad) + (weeks - (i + 1)) * startLoad) / weeks;
+                int weekLoad = ((i * endLoad) + (weeks - 1 - i) * startLoad) / (weeks - 1);
                 tbSubPlan.setLoad(weekLoad);
                 if (i == 0) {
                     tbSubPlan.setStartDate(addAndSubtractDaysByGetTime(startDate, startDay));
