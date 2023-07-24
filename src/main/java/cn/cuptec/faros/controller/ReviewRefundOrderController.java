@@ -83,7 +83,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                 BigDecimal totalRefundFee = new BigDecimal("0");
                 if (!CollectionUtils.isEmpty(orderRefundInfoList1)) {
                     for (OrderRefundInfo refundInfo : orderRefundInfoList1) {
-                        totalRefundFee = totalRefundFee.add(refundInfo.getRefundFee());
+                        totalRefundFee = totalRefundFee.add(refundInfo.getRefundFee().divide(new BigDecimal("100")));
 
                     }
                     reviewRefundOrder.setTotalRefundFee(totalRefundFee);
@@ -103,21 +103,41 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
      */
     @PostMapping("/add")
     public RestResponse add(@RequestBody ReviewRefundOrder reviewRefundOrder) {
+        RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
+        UserOrder userOrderOne = userOrdertService.getById(retrieveOrder.getOrderId());
+        List<OrderRefundInfo> orderRefundInfoList = orderRefundInfoService.list(new QueryWrapper<OrderRefundInfo>().lambda()
+                .in(OrderRefundInfo::getOrderId, reviewRefundOrder.getRetrieveOrderNo())
+                .eq(OrderRefundInfo::getRefundStatus, 2));
+        BigDecimal totalAmount = reviewRefundOrder.getRefundFee();
+        if (!CollectionUtils.isEmpty(orderRefundInfoList)) {
+            BigDecimal totalRefundFee = new BigDecimal("0");
+            for (OrderRefundInfo refundInfo : orderRefundInfoList) {
+                totalRefundFee = totalRefundFee.add(refundInfo.getRefundFee().divide(new BigDecimal("100")));
+
+            }
+            totalAmount = reviewRefundOrder.getRefundFee().add(totalRefundFee);
+
+        }
+        if (totalAmount.doubleValue() > userOrderOne.getPayment().doubleValue()) {
+            return RestResponse.failed("金额不能大于实际付款金额");
+        }
+
+
         reviewRefundOrder.setCreateTime(LocalDateTime.now());
         reviewRefundOrder.setStatus(3);
         User byId = userService.getById(SecurityUtils.getUser().getId());
 
         reviewRefundOrder.setCreateName(byId.getNickname());
-        RetrieveOrder one = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
+
 
         UserOrder userOrder = new UserOrder();
-        userOrder.setId(Integer.parseInt(one.getOrderId()));
+        userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
         userOrder.setRefundInitiationTime(LocalDateTime.now());
 
 
         UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
-        updateOrderRecord.setOrderId(Integer.parseInt(one.getOrderId()));
+        updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrder.getOrderId()));
         updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
         updateOrderRecord.setCreateTime(LocalDateTime.now());
         updateOrderRecord.setDescStr("退款审核");
@@ -129,6 +149,11 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                     .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
                     .set(RetrieveOrder::getStatus, 6)
+                    .set(RetrieveOrder::getReviewRefundOrderId, reviewRefundOrder.getId()));
+        } else {
+            retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
+                    .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
+                    .set(RetrieveOrder::getStatus, 8)
                     .set(RetrieveOrder::getReviewRefundOrderId, reviewRefundOrder.getId()));
         }
 
@@ -162,7 +187,20 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
 
             UserOrder userOrder = userOrdertService.getById(retrieveOrder.getOrderId());
-            if (amount > userOrder.getPayment().doubleValue()) {
+            List<OrderRefundInfo> orderRefundInfoList = orderRefundInfoService.list(new QueryWrapper<OrderRefundInfo>().lambda()
+                    .in(OrderRefundInfo::getOrderId, reviewRefundOrder.getRetrieveOrderNo())
+                    .eq(OrderRefundInfo::getRefundStatus, 2));
+            BigDecimal totalAmount = reviewRefundOrder.getRefundFee();
+            if (!CollectionUtils.isEmpty(orderRefundInfoList)) {
+                BigDecimal totalRefundFee = new BigDecimal("0");
+                for (OrderRefundInfo refundInfo : orderRefundInfoList) {
+                    totalRefundFee = totalRefundFee.add(refundInfo.getRefundFee().divide(new BigDecimal("100")));
+
+                }
+                totalAmount = reviewRefundOrder.getRefundFee().add(totalRefundFee);
+
+            }
+            if (totalAmount.doubleValue() > userOrder.getPayment().doubleValue()) {
                 return RestResponse.failed("金额不能大于实际付款金额");
             }
 
@@ -171,7 +209,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
             orderRefunds.setOrderId(retrieveOrder.getOrderNo());
             orderRefunds.setRefundReason(reviewRefundOrder.getRefundReason());
-            orderRefunds.setRefundFee(new BigDecimal(amount).multiply(new BigDecimal(100)));
+            orderRefunds.setRefundFee(new BigDecimal(amount).multiply(new BigDecimal("100")));
             orderRefunds.setCreateId(SecurityUtils.getUser().getId());
             orderRefunds.setCreateTime(new Date());
             orderRefunds.setRefundStatus(1);
@@ -193,9 +231,8 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                 aliPayService.aliRefundOrder(userOrder.getTransactionId(), new BigDecimal(amount + ""), orderRefunds.getOrderRefundNo());
 
             }
-            if (reviewRefundOrder.getType().equals(0)) {
-                retrieveOrder.setStatus(4);
-            }
+            retrieveOrder.setStatus(4);
+
 
             retrieveOrderService.updateById(retrieveOrder);
 
@@ -212,11 +249,14 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                 retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
                         .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
                         .set(RetrieveOrder::getStatus, 3));
+            } else {
+                retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
+                        .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
+                        .set(RetrieveOrder::getStatus, 5));
             }
         }
-        if (reviewRefundOrder.getType().equals(0)) {
-            reviewRefundOrder.setStatus(reviewStatus);
-        }
+        reviewRefundOrder.setStatus(reviewStatus);
+
         reviewRefundOrder.setReviewRefundDesc(reviewRefundDesc);
         service.updateById(reviewRefundOrder);
 
