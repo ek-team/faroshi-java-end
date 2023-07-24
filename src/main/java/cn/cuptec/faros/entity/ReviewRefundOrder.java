@@ -23,6 +23,8 @@ public class ReviewRefundOrder {
     private String reviewRefundDesc;//审核描述
     private String refundReason;//退款原因
     private BigDecimal refundFee = new BigDecimal("0");//退款金额
+    private BigDecimal totalRefundFee = new BigDecimal("0");//已退金额
     private Integer deptId;
+    private Integer type=0;//0正常退款 1补退款
     private LocalDateTime createTime;
 }

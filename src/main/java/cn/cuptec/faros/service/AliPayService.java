@@ -64,9 +64,15 @@ public class AliPayService {
             String outTradeNo = response.getOutTradeNo();//回收单号
             String refundFee = response.getRefundFee();//实际退款金额
             log.info("支付宝退款返回结果===" + outTradeNo + "==" + refundFee);
-
+            OrderRefundInfo orderRefundInfo = orderRefundInfoService.getOne(new QueryWrapper<OrderRefundInfo>().lambda()
+                    .eq(OrderRefundInfo::getOrderRefundNo, userOrderNo));
+            if (orderRefundInfo != null) {
+                orderRefundInfo.setSuccessTime(new Date());
+                orderRefundInfo.setRefundStatus(2);
+                orderRefundInfoService.updateById(orderRefundInfo);
+            }
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                    .eq(RetrieveOrder::getOrderNo, userOrderNo));
+                    .eq(RetrieveOrder::getOrderNo, orderRefundInfo.getOrderId()));
 
             BigDecimal divide = amount;
             if (retrieveOrder != null) {

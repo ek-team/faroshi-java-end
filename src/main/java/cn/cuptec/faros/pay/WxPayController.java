@@ -583,25 +583,24 @@ public class WxPayController {
 
         //需要测试一下
 
-
-        log.info(outRefundNo + "退款订单id");
-        log.info(refundStatus + "退款状态");
-        log.info(resultCode + "退款resultCode");
-        log.info(errCodeDes + "退款errCodeDes");
         OrderRefundInfo orderRefundInfo = orderRefundInfoService.getOne(new QueryWrapper<OrderRefundInfo>().lambda()
-                .eq(OrderRefundInfo::getOrderId, outRefundNo));
+                .eq(OrderRefundInfo::getOrderRefundNo, outRefundNo));
         if (orderRefundInfo != null) {
             orderRefundInfo.setErrCodeDes(errCodeDes);
             orderRefundInfo.setSuccessTime(new Date());
             orderRefundInfo.setRefundStatus(2);
             orderRefundInfoService.updateById(orderRefundInfo);
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
-                    .eq(RetrieveOrder::getOrderNo, outRefundNo));
+                    .eq(RetrieveOrder::getOrderNo, orderRefundInfo.getOrderId()));
             if (refundStatus.equals("SUCCESS")) {
                 BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
                 BigDecimal divide = refundFee1.divide(new BigDecimal(100));
                 if (retrieveOrder != null) {
                     //修改订单的实际回收价
+                    BigDecimal retrieveAmount = retrieveOrder.getRetrieveAmount();
+                    if (retrieveAmount != null) {
+                        divide = divide.add(retrieveAmount);
+                    }
                     retrieveOrder.setRetrieveAmount(divide);
                     retrieveOrder.setRetrieveEndTime(LocalDateTime.now());
                     retrieveOrder.setStatus(5);
