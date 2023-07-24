@@ -322,7 +322,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
     //查询部门订单列表,只允许查看
     @GetMapping("/manage/pageScoped")
-    public RestResponse pageScoped(@RequestParam(value = "servicePackName", required = false) String servicePackName,
+    public RestResponse pageScoped(@RequestParam(value = "patientName", required = false) String patientName,
+            @RequestParam(value = "servicePackName", required = false) String servicePackName,
                                    @RequestParam(value = "startTime", required = false) String startTime,
                                    @RequestParam(value = "endTime", required = false) String endTime,
                                    @RequestParam(value = "nickname", required = false) String nickname,
@@ -340,6 +341,15 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                    @RequestParam(value = "startRefundReviewTime", required = false) String startRefundReviewTime) {
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+//        if(!StringUtils.isEmpty(patientName)){
+//            List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda().like(PatientUser::getName, patientName));
+//            if(CollectionUtils.isEmpty(patientUsers)){
+//                return RestResponse.ok(new Page<>());
+//            }
+//            List<String> patientIds = patientUsers.stream().map(PatientUser::getId)
+//                    .collect(Collectors.toList());
+//            queryWrapper.in("service_pack.name", patientIds);
+//        }
         if (!StringUtils.isEmpty(servicePackName)) {
             queryWrapper.like("service_pack.name", servicePackName);
         }
