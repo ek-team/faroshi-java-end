@@ -77,7 +77,13 @@ public class AliPayService {
             BigDecimal divide = amount;
             if (retrieveOrder != null) {
                 //修改订单的实际回收价
-                retrieveOrder.setRetrieveAmount(divide);
+                BigDecimal actualRetrieveAmount = retrieveOrder.getActualRetrieveAmount();
+                if (actualRetrieveAmount != null) {
+                    actualRetrieveAmount = divide.add(actualRetrieveAmount);
+                }else {
+                    actualRetrieveAmount=divide;
+                }
+                retrieveOrder.setActualRetrieveAmount(actualRetrieveAmount);
                 retrieveOrder.setRetrieveEndTime(LocalDateTime.now());
                 retrieveOrder.setStatus(5);
                 retrieveOrderService.updateById(retrieveOrder);

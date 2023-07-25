@@ -597,11 +597,13 @@ public class WxPayController {
                 BigDecimal divide = refundFee1.divide(new BigDecimal(100));
                 if (retrieveOrder != null) {
                     //修改订单的实际回收价
-                    BigDecimal retrieveAmount = retrieveOrder.getRetrieveAmount();
-                    if (retrieveAmount != null) {
-                        divide = divide.add(retrieveAmount);
+                    BigDecimal actualRetrieveAmount = retrieveOrder.getActualRetrieveAmount();
+                    if (actualRetrieveAmount != null) {
+                        actualRetrieveAmount = divide.add(actualRetrieveAmount);
+                    }else {
+                        actualRetrieveAmount=divide;
                     }
-                    retrieveOrder.setRetrieveAmount(divide);
+                    retrieveOrder.setActualRetrieveAmount(actualRetrieveAmount);
                     retrieveOrder.setRetrieveEndTime(LocalDateTime.now());
                     retrieveOrder.setStatus(5);
                     retrieveOrderService.updateById(retrieveOrder);
@@ -610,7 +612,7 @@ public class WxPayController {
 
                     UserOrder userOrder = new UserOrder();
                     userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
-                    userOrder.setActualRetrieveAmount(divide);
+                    userOrder.setActualRetrieveAmount(actualRetrieveAmount);
                     userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
                     userOrdertService.updateById(userOrder);
                     User userById = userService.getById(retrieveOrder.getUserId());
