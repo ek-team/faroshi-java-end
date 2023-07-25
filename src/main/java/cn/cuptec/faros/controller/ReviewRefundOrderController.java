@@ -11,6 +11,7 @@ import cn.hutool.http.HttpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -63,8 +64,18 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
      * @return
      */
     @GetMapping("/page")
-    public RestResponse page() {
+    public RestResponse page(@RequestParam(value = "userOrderNo",required = false) String userOrderNo) {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+
+        if(!StringUtils.isEmpty(userOrderNo)){
+            RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                    .like(RetrieveOrder::getUserOrderNo, userOrderNo)
+            );
+            if(retrieveOrder==null){
+                return RestResponse.ok(new Page<>());
+            }
+            queryWrapper.eq("retrieve_order_no",retrieveOrder.getOrderNo());
+        }
         Page<ReviewRefundOrder> page = getPage();
         queryWrapper.orderByDesc("create_time");
         queryWrapper.orderByDesc("status");
