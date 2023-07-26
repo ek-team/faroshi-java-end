@@ -613,7 +613,7 @@ public class WxPayController {
                     UserOrder userOrder = new UserOrder();
                     userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
                     userOrder.setActualRetrieveAmount(actualRetrieveAmount);
-                    userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
+                    userOrder.setSettlementAmount(byId.getPayment().subtract(actualRetrieveAmount));
                     userOrdertService.updateById(userOrder);
                     User userById = userService.getById(retrieveOrder.getUserId());
                     //发送公众号通知
@@ -638,7 +638,7 @@ public class WxPayController {
     }
 
     public static void main(String[] args) {
-        System.out.println(new BigDecimal("0.03").subtract(new BigDecimal("0.02")));
+        System.out.println(new BigDecimal("0.02").subtract(new BigDecimal("0.02")));
     }
 
     @ApiOperation(value = "图文咨询订单申请退款")

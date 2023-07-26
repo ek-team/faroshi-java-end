@@ -116,6 +116,14 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         if (planCheckStatus == null) {
             planCheckStatus = 2;
         }
+        if (tbTrainUser.getDoctorTeamId() == null || tbTrainUser.getDoctorTeamId().equals(0)) {
+            planCheckStatus = 2;
+        }
+        DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, tbTrainUser.getDoctorTeamId())
+                .eq(DoctorTeam::getPlanCheckStatus, 1));
+        if (doctorTeam == null) {
+            planCheckStatus = 2;
+        }
         return RestResponse.ok(planCheckStatus);
     }
 

@@ -92,8 +92,8 @@ public class AliPayService {
 
                 UserOrder userOrder = new UserOrder();
                 userOrder.setId(Integer.parseInt(retrieveOrder.getOrderId()));
-                userOrder.setActualRetrieveAmount(divide);
-                userOrder.setSettlementAmount(byId.getPayment().subtract(divide));
+                userOrder.setActualRetrieveAmount(actualRetrieveAmount);
+                userOrder.setSettlementAmount(byId.getPayment().subtract(actualRetrieveAmount));
                 userOrdertService.updateById(userOrder);
                 User userById = userService.getById(retrieveOrder.getUserId());
                 //发送公众号通知

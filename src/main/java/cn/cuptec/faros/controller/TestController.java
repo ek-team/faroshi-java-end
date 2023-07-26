@@ -47,25 +47,29 @@ public class TestController {
     private UserOrdertService userOrdertService;
     @Resource
     private ExpressService expressService;
-
+@Resource
+private DoctorTeamService doctorTeamService;
     @GetMapping("user")
     public RestResponse customUserInfo() {
-        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
-                .isNull(TbTrainUser::getDeptId)
-        .isNotNull(TbTrainUser::getMacAdd));
-        List<String> macAdds = tbTrainUsers.stream().map(TbTrainUser::getMacAdd)
-                .collect(Collectors.toList());
-        List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda().in(ProductStock::getMacAddress, macAdds)
-                .eq(ProductStock::getDel, 1));
-        Map<String, List<ProductStock>> map = productStocks.stream()
-                .collect(Collectors.groupingBy(ProductStock::getMacAddress));
-        for (TbTrainUser tbTrainUser : tbTrainUsers) {
-            List<ProductStock> productStocks1 = map.get(tbTrainUser.getMacAdd());
-            if (!CollectionUtils.isEmpty(productStocks1)) {
-                tbTrainUser.setDeptId(productStocks1.get(0).getDeptId());
-            }
-        }
-        planUserService.updateBatchById(tbTrainUsers);
+        DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, null)
+                .eq(DoctorTeam::getPlanCheckStatus, 1));
+        System.out.println(doctorTeam);
+//        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+//                .isNull(TbTrainUser::getDeptId)
+//        .isNotNull(TbTrainUser::getMacAdd));
+//        List<String> macAdds = tbTrainUsers.stream().map(TbTrainUser::getMacAdd)
+//                .collect(Collectors.toList());
+//        List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda().in(ProductStock::getMacAddress, macAdds)
+//                .eq(ProductStock::getDel, 1));
+//        Map<String, List<ProductStock>> map = productStocks.stream()
+//                .collect(Collectors.groupingBy(ProductStock::getMacAddress));
+//        for (TbTrainUser tbTrainUser : tbTrainUsers) {
+//            List<ProductStock> productStocks1 = map.get(tbTrainUser.getMacAdd());
+//            if (!CollectionUtils.isEmpty(productStocks1)) {
+//                tbTrainUser.setDeptId(productStocks1.get(0).getDeptId());
+//            }
+//        }
+//        planUserService.updateBatchById(tbTrainUsers);
         return RestResponse.ok();
     }
 
