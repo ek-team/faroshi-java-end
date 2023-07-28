@@ -280,7 +280,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
                 }
 
             }
@@ -293,7 +293,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到30天了", "", time, "感谢使用下肢智能康复系统，再过5天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到30天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过5天您的使用周期就到30天了", "/pages/news/news");
                 }
 
             }
@@ -306,7 +306,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到30天了", "", time, "感谢使用下肢智能康复系统，再过7天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到30天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过7天您的使用周期就到30天了", "/pages/news/news");
                 }
 
             }
@@ -320,7 +320,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到60天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到60天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到60天了", "/pages/news/news");
                 }
 
             }
@@ -333,7 +333,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到60天了", "", time, "感谢使用下肢智能康复系统，再过5天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到60天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过5天您的使用周期就到60天了", "/pages/news/news");
                 }
 
             }
@@ -346,7 +346,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到60天了", "", time, "感谢使用下肢智能康复系统，再过7天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到60天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过7天您的使用周期就到60天了", "/pages/news/news");
                 }
 
             }
@@ -359,7 +359,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到90天了", "", time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过3天您的使用周期就到90天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过3天您的使用周期就到90天了", "/pages/news/news");
                 }
 
             }
@@ -372,7 +372,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到90天了", "", time, "感谢使用下肢智能康复系统，再过5天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过5天您的使用周期就到90天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过5天您的使用周期就到90天了", "/pages/news/news");
                 }
 
             }
@@ -385,7 +385,7 @@ public class RedisKeyExpirationListener implements MessageListener {
                     LocalDateTime now = LocalDateTime.now();
                     DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                     String time = df.format(now);
-                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到90天了", "", time, "感谢使用下肢智能康复系统，再过7天您的使用周期就到30天了", "/pages/news/news");
+                    wxMpService.sendDoctorTip(user.getMpOpenId(), "感谢使用下肢智能康复系统，再过7天您的使用周期就到90天了", userOrder.getPatientUserName(), time, "感谢使用下肢智能康复系统，再过7天您的使用周期就到90天了", "/pages/news/news");
                 }
 
             }
