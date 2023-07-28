@@ -66,11 +66,13 @@ public class ArticleController extends AbstractBaseController<ArticleService, Ar
         queryWrapper.select().orderByDesc("article.create_time");
         return RestResponse.ok(service.page(page, queryWrapper));
     }
+
     @GetMapping("/getById")
     public RestResponse getById(@RequestParam("id") Integer id) {
 
         return RestResponse.ok(service.getById(id));
     }
+
     //type 1:医院版 2：家庭版
     @GetMapping("/getShowContent")
     public RestResponse<Article> getShowContent(@RequestParam(value = "type", required = false) Integer type) {
@@ -79,7 +81,7 @@ public class ArticleController extends AbstractBaseController<ArticleService, Ar
         }
         List<Article> list = service.list(new QueryWrapper<Article>().lambda().eq(Article::getShowContent, 1).eq(Article::getCategory, type));
         if (CollectionUtils.isEmpty(list)) {
-            RestResponse.ok();
+            return RestResponse.ok();
         }
 
         return RestResponse.ok(list.get(0));

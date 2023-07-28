@@ -1285,10 +1285,6 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        Integer status = 1;
-        if (status >= 1 && status <= 2) {
-            System.out.println(status);
-        }
 
     }
 
