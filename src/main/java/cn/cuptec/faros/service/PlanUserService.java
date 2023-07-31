@@ -186,18 +186,21 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
+                if (!StringUtils.isEmpty(tbTrainUser.getBodyPartName()) && !StringUtils.isEmpty(tbTrainUser.getSecondDiseaseName())) {
+                    PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
+                    if (planUserOtherInfo == null) {
+                        planUserOtherInfo = new PlanUserOtherInfo();
 
-                PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
-                if (planUserOtherInfo == null) {
-                    planUserOtherInfo = new PlanUserOtherInfo();
-                    planUserOtherInfo.setBodyPartName(tbTrainUser.getBodyPartName());
-                    planUserOtherInfo.setSecondDiseaseName(tbTrainUser.getSecondDiseaseName());
-                    planUserOtherInfoService.save(planUserOtherInfo);
-                } else {
-                    planUserOtherInfo.setBodyPartName(tbTrainUser.getBodyPartName());
-                    planUserOtherInfo.setSecondDiseaseName(tbTrainUser.getSecondDiseaseName());
-                    planUserOtherInfoService.updateById(planUserOtherInfo);
+                        planUserOtherInfo.setBodyPartName(tbTrainUser.getBodyPartName());
+                        planUserOtherInfo.setSecondDiseaseName(tbTrainUser.getSecondDiseaseName());
+                        planUserOtherInfoService.save(planUserOtherInfo);
+                    } else {
+                        planUserOtherInfo.setBodyPartName(tbTrainUser.getBodyPartName());
+                        planUserOtherInfo.setSecondDiseaseName(tbTrainUser.getSecondDiseaseName());
+                        planUserOtherInfoService.updateById(planUserOtherInfo);
+                    }
                 }
+
                 //判断订单是否有团队 没有则同步
                 if (tbTrainUser.getDoctorTeamId() == null || tbTrainUser.getDoctorTeamId().equals(0)) {
                     List<PatientUser> list = patientUserService.list(new QueryWrapper<PatientUser>().
