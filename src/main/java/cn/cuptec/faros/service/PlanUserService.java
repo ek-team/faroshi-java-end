@@ -186,7 +186,7 @@ public class PlanUserService extends ServiceImpl<PlanUserMapper, TbTrainUser> {
         if (!CollectionUtils.isEmpty(userBeanList)) {
             SnowflakeIdWorker idUtil = new SnowflakeIdWorker(0, 0);
             for (TbTrainUser tbTrainUser : userBeanList) {
-                if (!StringUtils.isEmpty(tbTrainUser.getBodyPartName()) && !StringUtils.isEmpty(tbTrainUser.getSecondDiseaseName())) {
+                if (!StringUtils.isEmpty(tbTrainUser.getBodyPartName()) || !StringUtils.isEmpty(tbTrainUser.getSecondDiseaseName())) {
                     PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
                     if (planUserOtherInfo == null) {
                         planUserOtherInfo = new PlanUserOtherInfo();

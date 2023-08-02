@@ -278,4 +278,9 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         return RestResponse.ok();
     }
 
+    public static void main(String[] args) {
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder?orderNo=1684857921172668416" + "&transactionId=4200001746202304208466576411" + "&subMchId=1634891163" + "&totalFee=" + new BigDecimal("9500").multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal( "9500").multiply(new BigDecimal(100)).intValue();
+        String result = HttpUtil.get(url);
+
+    }
 }

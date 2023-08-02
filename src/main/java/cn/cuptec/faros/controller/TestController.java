@@ -47,29 +47,14 @@ public class TestController {
     private UserOrdertService userOrdertService;
     @Resource
     private ExpressService expressService;
-@Resource
-private DoctorTeamService doctorTeamService;
+    @Resource
+    private DoctorTeamService doctorTeamService;
+
     @GetMapping("user")
     public RestResponse customUserInfo() {
-        DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, null)
-                .eq(DoctorTeam::getPlanCheckStatus, 1));
-        System.out.println(doctorTeam);
-//        List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
-//                .isNull(TbTrainUser::getDeptId)
-//        .isNotNull(TbTrainUser::getMacAdd));
-//        List<String> macAdds = tbTrainUsers.stream().map(TbTrainUser::getMacAdd)
-//                .collect(Collectors.toList());
-//        List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda().in(ProductStock::getMacAddress, macAdds)
-//                .eq(ProductStock::getDel, 1));
-//        Map<String, List<ProductStock>> map = productStocks.stream()
-//                .collect(Collectors.groupingBy(ProductStock::getMacAddress));
-//        for (TbTrainUser tbTrainUser : tbTrainUsers) {
-//            List<ProductStock> productStocks1 = map.get(tbTrainUser.getMacAdd());
-//            if (!CollectionUtils.isEmpty(productStocks1)) {
-//                tbTrainUser.setDeptId(productStocks1.get(0).getDeptId());
-//            }
-//        }
-//        planUserService.updateBatchById(tbTrainUsers);
+        wxMpService.paySuccessNoticeSalesman("oV8W46Jr8-9S-8aDSQ4Mcigwbwms", "您的客户已成功下单，请您尽快处理！",
+                "下肢智能负重SHRJggj患者：陈1月兰订单号:1686546626912452608医院:上海交通大学医学院附属瑞金医院医生团队:王蕾主任团队", "9500.0",
+                "点击查看详情", "https://api.jhxiao-school.com/index.html#/salesman/orderDetailster?id=11111");
         return RestResponse.ok();
     }
 

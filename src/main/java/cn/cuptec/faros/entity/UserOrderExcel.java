@@ -63,12 +63,33 @@ public class UserOrderExcel {
     @ExcelProperty(value = "实际回收价格", index = 17)
     private String actualRetrieveAmount;//
     @ColumnWidth(10)
-    @ExcelProperty(value = "设备序列号1", index = 18)
+    @ExcelProperty(value = "设备序列号", index = 18)
     private String productSn1;//
     @ColumnWidth(10)
-    @ExcelProperty(value = "设备序列号2", index = 19)
+    @ExcelProperty(value = "鞋子序列号", index = 19)
     private String productSn2;//
     @ColumnWidth(10)
-    @ExcelProperty(value = "设备序列号3", index = 20)
+    @ExcelProperty(value = "其他序列号", index = 20)
     private String productSn3;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "发货时间", index = 21)
+    private String logisticsDeliveryTime;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "退回时间", index = 22)
+    private String recycleTime;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "原厂验收时间", index = 23)
+    private String acceptanceTime;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "退款金额", index = 24)
+    private String actualRetrieveAmount1;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "结算金额", index = 25)
+    private String settlementAmount;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "退款日期", index = 26)
+    private String refundInitiationTime;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "备注", index = 27)
+    private String remark;//
 }

@@ -15,5 +15,6 @@ public class PlanUserOtherInfo {
     private String registrationEvaluation;//手术评估
     private String bodyPartName;//手术部位
     private String secondDiseaseName;//疾病名称
+    private Integer degree;//骨折复位和内固定稳定程度
 
 }

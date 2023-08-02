@@ -323,7 +323,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     //查询部门订单列表,只允许查看
     @GetMapping("/manage/pageScoped")
     public RestResponse pageScoped(@RequestParam(value = "patientName", required = false) String patientName,
-            @RequestParam(value = "servicePackName", required = false) String servicePackName,
+                                   @RequestParam(value = "servicePackName", required = false) String servicePackName,
                                    @RequestParam(value = "startTime", required = false) String startTime,
                                    @RequestParam(value = "endTime", required = false) String endTime,
                                    @RequestParam(value = "nickname", required = false) String nickname,
@@ -1529,7 +1529,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                                     @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
                                     @RequestParam(value = "userId", required = false) Integer userId,
                                     @RequestParam(value = "orderType", required = false) String orderType,
-                                    @RequestParam(value = "status", required = false) String orderStatus) {
+                                    @RequestParam(value = "status", required = false) String orderStatus,
+                                    @RequestParam(value = "test", required = false) String test) {
         User user = userService.getById(userId);
         QueryWrapper queryWrapper = new QueryWrapper<>();
         if (!StringUtils.isEmpty(orderStatus) && !orderStatus.equals("null")) {
@@ -1592,7 +1593,34 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     userOrderExcel.setProductSn1(userOrder.getProductSn1());
                     userOrderExcel.setProductSn2(userOrder.getProductSn2());
                     userOrderExcel.setProductSn3(userOrder.getProductSn3());
+                    if (userOrder.getLogisticsDeliveryTime() != null) {
+                        userOrderExcel.setLogisticsDeliveryTime(df1.format(userOrder.getLogisticsDeliveryTime()));
 
+                    } else {
+                        userOrderExcel.setLogisticsDeliveryTime("");
+                    }
+                    if (userOrder.getRecycleTime() != null) {
+                        userOrderExcel.setRecycleTime(df1.format(userOrder.getRecycleTime()));
+
+                    } else {
+                        userOrderExcel.setRecycleTime("");
+                    }
+                    if (userOrder.getAcceptanceTime() != null) {
+                        userOrderExcel.setAcceptanceTime(df1.format(userOrder.getAcceptanceTime()));
+                    } else {
+                        userOrderExcel.setAcceptanceTime("");
+                    }
+                    if (userOrder.getSettlementAmount() != null) {
+                        userOrderExcel.setSettlementAmount(userOrder.getSettlementAmount() + "");
+                    } else {
+                        userOrderExcel.setSettlementAmount("");
+                    }
+                    if (userOrder.getRefundInitiationTime() != null) {
+                        userOrderExcel.setRefundInitiationTime(df.format(userOrder.getRefundInitiationTime()));
+                    } else {
+                        userOrderExcel.setRefundInitiationTime("");
+                    }
+                    userOrderExcel.setRemark(userOrder.getRemark());
                     //回收时间
                     if (!userOrder.getStatus().equals(5)) {
                         //计算使用天数
@@ -1609,8 +1637,11 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     userOrderExcel.setUseDay(userOrder.getUseDay() + "");
                     if (userOrder.getActualRetrieveAmount() != null) {
                         userOrderExcel.setActualRetrieveAmount(userOrder.getActualRetrieveAmount() + "");
+                        userOrderExcel.setActualRetrieveAmount1(userOrder.getActualRetrieveAmount() + "");
+
                     } else {
                         userOrderExcel.setActualRetrieveAmount("");
+                        userOrderExcel.setActualRetrieveAmount1("");
 
                     }
                     userOrderExcel.setPhone(userOrder.getReceiverPhone());
