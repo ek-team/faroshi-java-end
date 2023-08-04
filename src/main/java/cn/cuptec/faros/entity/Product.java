@@ -33,7 +33,7 @@ public class Product {
 
     private String videoUrl;
     //产品类型
-    private Integer productType;//院内版 家庭版 其它
+    private Integer productType;//1院内版 2家庭版 其它
     @TableField(exist = false)
     private String productTypeName;
     //产品主图

@@ -247,41 +247,30 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
     }
 
 
-    private void product(Serializable qrCodeId) throws IOException {
-        ProductStock productStock = productStockService.getOne(Wrappers.<ProductStock>lambdaQuery().eq(ProductStock::getLiveQrCodeId, qrCodeId));
-        //跳转到购买页面
-
-        if ((productStock.getStatus() == 30 || productStock.getStatus() == 31) && productStock.getProductId() == 2) {
-            ServletUtils.getResponse().sendRedirect(urlData.getUrl() + QrCodeConstants.HARDWARE_DETAIL_URL + productStock.getId());
-        }
-        //3.2、否则跳转到设备介绍页面
-        else {
-            toIntroduce(productStock);
-        }
-    }
-
     private void toIntroduce(ProductStock productStock) {
-        //todo 根据产品id跳转？  此处先无论家庭版还是院内版，都跳转到家庭版介绍页
         Product product = productService.getById(productStock.getProductId());
-        //下肢产品，没有绑定就跳转到易网健公众号首页
-        //气动产品，没有绑定就跳转到气动设备产品介绍页面 type=1显示本页面 =2 跳转到公众号首页
-        log.info("kkkkkkkkkkkkkkkkkkk:{}", product.getId());
-        if (product.getId() == 1 || product.getId() == 2 || product.getId() == 101) {
-            log.info("下肢产品");
+        if (product.getId().equals(2)) {
+            //如果是家庭版跳转到公众号首页
+            try {
+                ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=" + urlData.getBiz() + "&scene=117#wechat_redirect");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (product.getId() == 1 || product.getId() == 101) {
             //下肢
             try {
-                //ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
-                ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz="+urlData.getBiz()+"&scene=117#wechat_redirect");
+                ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
+                //ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz="+urlData.getBiz()+"&scene=117#wechat_redirect");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            log.info("气动产品");
             //气动
             try {
-                ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkwNDQyMzI1NQ==&scene=117#wechat_redirect");
+                //ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkwNDQyMzI1NQ==&scene=117#wechat_redirect");
 
-                //ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }
