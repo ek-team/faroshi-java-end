@@ -69,10 +69,9 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         //判断异常 推送给医生
         String userId = userTrainRecordList.get(0).getUserId();
         List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-       // pushData(list, userTrainRecordList);
-
 
         service.saveAndData(userTrainRecordList);
+        pushData(list, userTrainRecordList);
         return RestResponse.ok();
     }
 
@@ -347,11 +346,24 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         }
         List<Integer> tbUserTrainRecordIds = tbUserTrainRecords.stream().map(TbUserTrainRecord::getId)
                 .collect(Collectors.toList());
-        List<TbTrainData> tbTrainDatas = trainDataService.listByRecordIds(tbUserTrainRecordIds);//查询踩踏次数
-        Map<Integer, List<TbTrainData>> tbTrainDataMap = new HashMap<>();
+        List<TbTrainData> tbTrainDatas = trainDataService.list(new QueryWrapper<TbTrainData>().lambda().eq(TbTrainData::getUserId, userId));//查询踩踏次数
+        Map<String, List<TbTrainData>> tbTrainDataMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(tbTrainDatas)) {
-            tbTrainDataMap = tbTrainDatas.stream()
-                    .collect(Collectors.groupingBy(TbTrainData::getRecordId));
+            for(TbUserTrainRecord tbUserTrainRecord:tbUserTrainRecords){
+                String key=tbUserTrainRecord.getDateStr()+userId+(tbUserTrainRecord.getFrequency()-1);
+                List<TbTrainData> tbTrainDataList = tbTrainDataMap.get(key);
+                if(CollectionUtils.isEmpty(tbTrainDataList)){
+                    tbTrainDataList=new ArrayList<>();
+                }
+                for(TbTrainData tbTrainData:tbTrainDatas){
+                    String key1=tbTrainData.getDateStr()+userId+(tbTrainData.getFrequency()-1);
+                    if(key1.equals(key)){
+                        tbTrainDataList.add(tbTrainData);
+                    }
+                }
+                tbTrainDataMap.put(key,tbTrainDataList);
+            }
+
         }
         List<TbSubPlan> tbSubPlanList = subPlanService.list(Wrappers.<TbSubPlan>lambdaQuery().eq(TbSubPlan::getUserId, userId));//查询计划
 
@@ -392,9 +404,10 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
             int totalTargetLoad = 0;//总负重次数
             if (!CollectionUtils.isEmpty(records1)) {
                 for (TbUserTrainRecord tbUserTrainRecord : records1) {
+                    String key2=tbUserTrainRecord.getDateStr()+userId+(tbUserTrainRecord.getFrequency()-1);
 
 
-                    List<TbTrainData> tbTrainData = tbTrainDataMap.get(tbUserTrainRecord.getId());
+                    List<TbTrainData> tbTrainData = tbTrainDataMap.get(key2);
                     if (!CollectionUtils.isEmpty(tbTrainData)) {
                         totalStepCount = totalStepCount + tbTrainData.size();
                         for (TbTrainData tbTrainData1 : tbTrainData) {

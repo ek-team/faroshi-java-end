@@ -1483,23 +1483,27 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         userOrder.setProductSn2(deliveryMoBan.getProduct_sn2());
                         userOrder.setProductSn3(deliveryMoBan.getProduct_sn3());
                         if (!StringUtils.isEmpty(deliveryMoBan.getProduct_sn1())) {
-                            Integer userId = userOrder.getUserId();
-                            TbTrainUser infoByUXtUserId = planUserService.getInfoByUXtUserId(userId);
-                            if (infoByUXtUserId != null) {
-                                String userId1 = infoByUXtUserId.getUserId();
-                                List<ProductStock> list = productStockService.list(new QueryWrapper<ProductStock>().lambda()
-                                        .eq(ProductStock::getProductSn, deliveryMoBan.getProduct_sn1())
-                                        .eq(ProductStock::getDel, 1));
-                                if (!CollectionUtils.isEmpty(list)) {
-                                    ProductStock productStock = list.get(0);
-                                    boolean remove = deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, productStock.getMacAddress()));
-                                    DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
-                                    deviceScanSignLog.setMacAddress(productStock.getMacAddress());
-                                    deviceScanSignLog.setUserId(userId1);
-                                    deviceScanSignLog.setCreateTime(new Date());
-                                    deviceScanSignLogService.save(deviceScanSignLog);
-                                }
+                            Integer patientUserId = userOrder.getPatientUserId();
+                            List<PatientUser> patientUsers = patientUserService.list(new QueryWrapper<PatientUser>().lambda().eq(PatientUser::getId, patientUserId));
+                            if (!CollectionUtils.isEmpty(patientUsers)) {
+                                String idCard = patientUsers.get(0).getIdCard();
+                                List<TbTrainUser> infoByUXtUserIds = planUserService.list(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getIdCard, idCard));
+                                if (!CollectionUtils.isEmpty(infoByUXtUserIds)) {
+                                    String userId1 = infoByUXtUserIds.get(0).getUserId();
+                                    List<ProductStock> list = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                                            .eq(ProductStock::getProductSn, userOrder.getProductSn1())
+                                            .eq(ProductStock::getDel, 1));
+                                    if (!CollectionUtils.isEmpty(list)) {
+                                        ProductStock productStock = list.get(0);
+                                        boolean remove = deviceScanSignLogService.remove(new QueryWrapper<DeviceScanSignLog>().lambda().eq(DeviceScanSignLog::getMacAddress, productStock.getMacAddress()));
+                                        DeviceScanSignLog deviceScanSignLog = new DeviceScanSignLog();
+                                        deviceScanSignLog.setMacAddress(productStock.getMacAddress());
+                                        deviceScanSignLog.setUserId(userId1);
+                                        deviceScanSignLog.setCreateTime(new Date());
+                                        deviceScanSignLogService.save(deviceScanSignLog);
+                                    }
 
+                                }
                             }
                         }
                     }
