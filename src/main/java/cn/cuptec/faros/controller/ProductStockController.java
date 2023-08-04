@@ -70,9 +70,11 @@ public class ProductStockController extends AbstractBaseController<ProductStockS
                                          @RequestParam("token") String token) {
         User user = userService.getById(SecurityUtils.getUser().getId());
         ServicePack servicePack = servicePackService.getById(servicePackId);
+        if(servicePack!=null){
+            wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", servicePack.getName(), "法罗适",
+                    "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePackId + "&token=" + token);
 
-        wxMpService.sendSubNotice(user.getMpOpenId(), "扫码成功", servicePack.getName(), "法罗适",
-                "点击查看详情", "/pages/goodsDetail/goodsDetail?id=" + servicePackId + "&token=" + token);
+        }
 
         return RestResponse.ok();
     }
