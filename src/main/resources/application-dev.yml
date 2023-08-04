@@ -111,6 +111,7 @@ tx:
 
 com:
   url: https://pharos3.ewj100.com/
+  biz: MzkwNDQyMzI1NQ==
   payUrl: https://api.redadzukibeans.com/weChat/wxpayother/otherOrder
   refundUrl: https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder
   chatServer: 8098

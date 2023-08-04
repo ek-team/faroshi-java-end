@@ -270,7 +270,8 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("下肢产品");
             //下肢
             try {
-                ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
+                //ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz="+urlData.getBiz()+"&scene=117#wechat_redirect");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -278,7 +279,9 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
             log.info("气动产品");
             //气动
             try {
-                ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
+                ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkwNDQyMzI1NQ==&scene=117#wechat_redirect");
+
+                //ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=1&macAdd=" + productStock.getMacAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }

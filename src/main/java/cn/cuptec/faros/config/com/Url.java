@@ -12,4 +12,5 @@ public class Url {
     private String payUrl;
     private String chatServer;
     private String refundUrl;
+    private String biz;
 }
