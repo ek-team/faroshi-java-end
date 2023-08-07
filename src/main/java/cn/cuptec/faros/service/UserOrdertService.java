@@ -344,7 +344,15 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         long count3 = userOrders.stream().filter(it -> it.getStatus() == 3).count();
         long count4 = userOrders.stream().filter(it -> it.getStatus() == 4).count();
         long count6 = userOrders.stream().filter(it -> it.getStatus() == 5).count();
-        long count5 = userOrders.stream().filter(it -> it.getDeliveryDate().isBefore(now) && it.getStatus() == 2).count();
+
+        List<UserOrder> deliveryDateOrders = baseMapper.listScopedTime(Wrappers.<UserOrder>lambdaQuery().eq(UserOrder::getTest, 0)
+                .lt(UserOrder::getDeliveryDate, now)
+                .eq(UserOrder::getStatus, 2), dataScope);
+        long count5 = 0;
+        if (!CollectionUtils.isEmpty(deliveryDateOrders)) {
+            count5 = deliveryDateOrders.size();
+        }
+
         UOrderStatuCountVo vo = new UOrderStatuCountVo();
         vo.setStatu0(userOrders.stream().count());//全部
         vo.setStatu1(count1);//待付款

@@ -77,4 +77,8 @@ public interface UserOrderMapper extends BaseMapper<UserOrder> {
     @Select("SELECT user_order.* from user_order " +
             "${ew.customSqlSegment} ORDER BY user_order.create_time DESC")
     List<UserOrder> listScoped(@Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
+
+    @Select("SELECT user_order.* from user_order " +
+            "${ew.customSqlSegment} ORDER BY user_order.create_time DESC")
+    List<UserOrder> listScopedTime(@Param(Constants.WRAPPER) Wrapper wrapper, DataScope dataScope);
 }
