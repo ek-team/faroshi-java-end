@@ -237,9 +237,14 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         }
 
         Boolean aBoolean = userRoleService.judgeUserIsAdmin(SecurityUtils.getUser().getId());
+        Boolean aBoolean1 = userRoleService.judgeUserIsDev(SecurityUtils.getUser().getId());
+
         if (!aBoolean) {
-            User user = userService.getById(SecurityUtils.getUser().getId());
-            queryWrapper.in("dept_id", user.getDeptId());
+            if (!aBoolean1) {
+                User user = userService.getById(SecurityUtils.getUser().getId());
+                queryWrapper.in("dept_id", user.getDeptId());
+            }
+
         }
         IPage page1 = service.page(page, queryWrapper);
         List<TbTrainUser> records = page1.getRecords();

@@ -119,5 +119,21 @@ public class UserRoleService extends ServiceImpl<UserRoleMapper, UserRole> {
 		}
 		return false;
 	}
+	/**
+	 * 判断用户是否是生产维修
+	 * @param userID
+	 * @return
+	 */
+	public Boolean judgeUserIsDev(Integer userID) {
 
+		List<UserRole> listByUserId = getListByUserId(userID);
+
+		if (CollUtil.isNotEmpty(listByUserId)){
+			List<Integer> collect = listByUserId.stream().map(UserRole::getRoleId).collect(Collectors.toList());
+			if(collect.contains(26) ){
+				return true;
+			}
+		}
+		return false;
+	}
 }
