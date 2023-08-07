@@ -69,6 +69,8 @@ public class WxPayController {
     @Resource
     private OrderRefundInfoService orderRefundInfoService;
     @Resource
+    private ReviewRefundOrderService reviewRefundOrderService;
+    @Resource
     private WxPayFarosService wxPayFarosService;
     @Resource
     private UserFollowDoctorService userFollowDoctorService;
@@ -570,6 +572,12 @@ public class WxPayController {
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getOrderNo, orderRefundInfo.getOrderId()));
             if (refundStatus.equals("SUCCESS")) {
+                //修改退款审核列表状态
+                ReviewRefundOrder reviewRefundOrder = reviewRefundOrderService.getById(orderRefundInfo.getReviewRefundOrderId());
+                if(reviewRefundOrder!=null){
+                    reviewRefundOrder.setStatus(1);
+                    reviewRefundOrderService.updateById(reviewRefundOrder);
+                }
                 BigDecimal refundFee1 = orderRefundInfo.getRefundFee();
                 BigDecimal divide = refundFee1.divide(new BigDecimal(100));
                 if (retrieveOrder != null) {

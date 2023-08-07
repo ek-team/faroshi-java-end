@@ -1,10 +1,7 @@
 package cn.cuptec.faros.service;
 
 import cn.cuptec.faros.common.RestResponse;
-import cn.cuptec.faros.entity.OrderRefundInfo;
-import cn.cuptec.faros.entity.RetrieveOrder;
-import cn.cuptec.faros.entity.User;
-import cn.cuptec.faros.entity.UserOrder;
+import cn.cuptec.faros.entity.*;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
@@ -28,6 +25,8 @@ public class AliPayService {
     @Resource
     private OrderRefundInfoService orderRefundInfoService;
     @Resource
+    private ReviewRefundOrderService reviewRefundOrderService;
+    @Resource
     private RetrieveOrderService retrieveOrderService;
     @Resource
     private UserOrdertService userOrdertService;
@@ -36,7 +35,7 @@ public class AliPayService {
     @Resource
     private WxMpService wxMpService;
 
-    public void aliRefundOrder(String orderNo, BigDecimal amount, String userOrderNo) {
+    public String aliRefundOrder(String orderNo, BigDecimal amount, String userOrderNo) {
 
         String appId = "2021003190689317";
         String appPrivateKey = "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0tTMfv5mmV3qfLEI5xn61BXFUikZ+DemZXfgrLUHPq/99UZu3tlUU9zTTi+Y/BOg93gVRHNcj36523MT5A0sZ0DvCpERLrlLj0XoLJU1x8QtsYBakboXk6Qjpk8+PRNgvcFhSbQLC6jFHyZKaVS3CHkUZ70Ra84l3D6uAu1eXqXaB35hLPLe0P1898pV1Es3FktQT3qVBGV/5HQatrFG7Wa+D2FvFUFPwcPcZJbxF93L3hxSQsoNrMvO5zDvgrrS7k4YFeSlzl8DgYjbHqupS3idvG4kjbIkEUXsKdYSl2xiFe4KWG8CqUyfTamt6kJyTRElmtPVP+gvpb2T7EmNHAgMBAAECggEAZeGHCk5GvU6yto0IZXRwuXRxGb2/0o/bdPlS0lz4rrIFIE1jYqcsvt5E7UQBsuP8X+0NyFZfQT16Kk97yfy+WbZaCvn7+0M0Pnc6vI/yYtwImbhu65PYb1+nA7GvItIopE5NrWMCXIwW7qdJvTNq0feo898/BZwqk3LFOZXl433XwxmgCBrci1xa5SXzn3fCbGpcut9XX4jdgTU8e2XFXxEUBWUlIKh/nRqeIZOqj71SPG+YwbV4ouhhR/hp8zS0qw8z4RuqjUPPsn5/6Usu/Xgcf0Mjctt0ZObnk4crR5Txr45RvoCrFCDDvyWMTsY/cNvRqQTO8LCoq0PUSEfqkQKBgQDereFPmv2r3lKw4faOkdE6R+4cewwRisw9Vr3lpQDn2uqKV7SnEfPzZGdii5MfYnoa5X9URJ6Rp4PD7n4AtUTG6DYKN4CBHlWQSDU2TzmfpxbFRKIXj5uQSXTJUSpb5bgHEgm1vKwblD2biYm+hkdWAaHiHyVwoeGRdlUknKTrnwKBgQDPv4flcmrX8JtVCLSReZgnsIVJ49RlwaYDb1MOC6Pgg5UneCoXHSzN7C6jl+eKgvL7kC2WEOg+gGGNSNStuj8ebjQX5pyyxlQig3/3qnOalFbRHab+UL/Xuic/iF+ZeLW4oaaETzzubrUR55vvY5vo9ut8/pY0XJ6eL+uwNuDnWQKBgGa6XMk2vXQ+enNzqyUWjCmQ6X5mHakyGQrrK2v39TUBP1ZXI9Y3aA2O8kr6DQNbkO07lsQva9/SIe2P5r044uPIWLXZ6QSoE90eEr5dSj4m/VBAW273J1MnMCN3uEzw6zcH0UbwJY4Lk2hfyRYGKH66/g2tRL5zT/alWp4rTcINAoGAY6MwwlMF+1tipH3wXHU9DIwU4UNr8wHVZYBXDT13844oUy3Gwh80Be9ozv1kB4KWlyCnPHoPaSqZnvF3T3ssGqQwR+ZK8VM9tu/qyBXwLAtJODJIjWCdIhIeENKPR0Qlo8+j1YFLb++Y2GWE3GOhuzHx75kK4UIqsSO6nmEzrMECgYEA2HEY22eKmLp1Fqaca8lKXIIL9ocQZbXh21J/zEFmaJzl2C2IL+gOksOyS4KroMYvWPX09tw3VsGxcch/qa9KW/f6HLImwo14XuRxXUrP4AJiDzLxqCjN0DLKSb0g/MEyfVlg9RegtGM/Kcq/0qtgwRUOQ2PcSglo4h423H8khSQ=";
@@ -54,8 +53,11 @@ public class AliPayService {
         AlipayTradeRefundResponse response = null;
         try {
             response = alipayClient.execute(request);
-            log.info("支付宝退款返回结果" + response.toString());
+            log.info("支付宝退款返回结果" + response.getMsg());
+            log.info("支付宝退款返回结果" + response.getSubMsg());
         } catch (AlipayApiException e) {
+            log.info(e.getErrMsg());
+            log.info(e.getMessage());
             e.printStackTrace();
         }
 
@@ -67,6 +69,12 @@ public class AliPayService {
             OrderRefundInfo orderRefundInfo = orderRefundInfoService.getOne(new QueryWrapper<OrderRefundInfo>().lambda()
                     .eq(OrderRefundInfo::getOrderRefundNo, userOrderNo));
             if (orderRefundInfo != null) {
+                //修改退款审核列表状态
+                ReviewRefundOrder reviewRefundOrder = reviewRefundOrderService.getById(orderRefundInfo.getReviewRefundOrderId());
+                if(reviewRefundOrder!=null){
+                    reviewRefundOrder.setStatus(1);
+                    reviewRefundOrderService.updateById(reviewRefundOrder);
+                }
                 orderRefundInfo.setSuccessTime(new Date());
                 orderRefundInfo.setRefundStatus(2);
                 orderRefundInfoService.updateById(orderRefundInfo);
@@ -103,9 +111,9 @@ public class AliPayService {
                         "点击查看详情", "pages/myRetrieveOrder/myRetrieveOrder");
             }
 
-
+            return null;
         } else {
-            System.out.println("调用失败");
+           return response.getSubMsg();
         }
 
     }

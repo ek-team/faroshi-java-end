@@ -27,7 +27,7 @@ public class OrderRefundInfo implements Serializable {
     private Date createTime;
     private Integer createId;
     private String orderRefundNo;
-
+    private Integer reviewRefundOrderId;//退款审核列表id
     @TableField(value = "order_id")
     private String orderId;
 

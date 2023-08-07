@@ -8,6 +8,7 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -64,17 +65,17 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
      * @return
      */
     @GetMapping("/page")
-    public RestResponse page(@RequestParam(value = "userOrderNo",required = false) String userOrderNo) {
+    public RestResponse page(@RequestParam(value = "userOrderNo", required = false) String userOrderNo) {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 
-        if(!StringUtils.isEmpty(userOrderNo)){
+        if (!StringUtils.isEmpty(userOrderNo)) {
             RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .like(RetrieveOrder::getUserOrderNo, userOrderNo)
             );
-            if(retrieveOrder==null){
+            if (retrieveOrder == null) {
                 return RestResponse.ok(new Page<>());
             }
-            queryWrapper.eq("retrieve_order_no",retrieveOrder.getOrderNo());
+            queryWrapper.eq("retrieve_order_no", retrieveOrder.getOrderNo());
         }
         Page<ReviewRefundOrder> page = getPage();
         queryWrapper.orderByDesc("create_time");
@@ -84,12 +85,20 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         if (!CollectionUtils.isEmpty(records)) {
             List<String> retrieveOrders = records.stream().map(ReviewRefundOrder::getRetrieveOrderNo)
                     .collect(Collectors.toList());
+            List<RetrieveOrder> retrieveOrderList = retrieveOrderService.list(new QueryWrapper<RetrieveOrder>().lambda()
+                    .in(RetrieveOrder::getOrderNo, retrieveOrders));
+            Map<String, RetrieveOrder> retrieveOrderMap = retrieveOrderList.stream()
+                    .collect(Collectors.toMap(RetrieveOrder::getOrderNo, t -> t));
             List<OrderRefundInfo> orderRefundInfoList = orderRefundInfoService.list(new QueryWrapper<OrderRefundInfo>().lambda()
                     .in(OrderRefundInfo::getOrderId, retrieveOrders)
                     .eq(OrderRefundInfo::getRefundStatus, 2));
             Map<String, List<OrderRefundInfo>> servicePackProductPicMap = orderRefundInfoList.stream()
                     .collect(Collectors.groupingBy(OrderRefundInfo::getOrderId));
             for (ReviewRefundOrder reviewRefundOrder : records) {
+                RetrieveOrder retrieveOrder = retrieveOrderMap.get(reviewRefundOrder.getRetrieveOrderNo());
+                if (retrieveOrder != null) {
+                    reviewRefundOrder.setUserOrderNo(retrieveOrder.getUserOrderNo());
+                }
                 List<OrderRefundInfo> orderRefundInfoList1 = servicePackProductPicMap.get(reviewRefundOrder.getRetrieveOrderNo());
                 BigDecimal totalRefundFee = new BigDecimal("0");
                 if (!CollectionUtils.isEmpty(orderRefundInfoList1)) {
@@ -185,7 +194,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         RetrieveOrder retrieveOrder = retrieveOrderService.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
         UserOrder updateUserOrder = new UserOrder();
-
+        reviewRefundOrder.setReviewRefundDesc(reviewRefundDesc);
         if (reviewStatus.equals(1)) {
             //退款
 
@@ -217,7 +226,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
             //添加退款记录
             OrderRefundInfo orderRefunds = new OrderRefundInfo();
-
+            orderRefunds.setReviewRefundOrderId(reviewRefundOrder.getId());
             orderRefunds.setOrderId(retrieveOrder.getOrderNo());
             orderRefunds.setRefundReason(reviewRefundOrder.getRefundReason());
             orderRefunds.setRefundFee(new BigDecimal(amount).multiply(new BigDecimal("100")));
@@ -237,9 +246,44 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
                 //String url = "https://api.redadzukibeans.com/weChat/wxpay/otherRefundOrder?orderNo=" + retrieveOrder.getOrderId() + "&transactionId=" + userOrder.getTransactionId() + "&subMchId=" + dept.getSubMchId() + "&totalFee=" + userOrder.getPayment().multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal(amount).multiply(new BigDecimal(100)).intValue();
                 String result = HttpUtil.get(url);
+                RestResponse restResponse = JSONObject.parseObject(result, RestResponse.class);
+                if (restResponse.getCode() == 500) {
+                    //退款失败
+                    reviewRefundOrder.setStatus(4);
+                    reviewRefundOrder.setFailureReason(restResponse.getMsg());
+                    service.updateById(reviewRefundOrder);
+                    if (reviewRefundOrder.getType().equals(0)) {
+                        retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
+                                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
+                                .set(RetrieveOrder::getStatus, 3));
+                    } else {
+                        retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
+                                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
+                                .set(RetrieveOrder::getStatus, 5));
+                    }
+                    return RestResponse.failed(restResponse.getMsg());
+
+                }
+                System.out.println(result);
             } else {
                 //支付宝退款
-                aliPayService.aliRefundOrder(userOrder.getTransactionId(), new BigDecimal(amount + ""), orderRefunds.getOrderRefundNo());
+                String s = aliPayService.aliRefundOrder(userOrder.getTransactionId(), new BigDecimal(amount + ""), orderRefunds.getOrderRefundNo());
+                if (!StringUtils.isEmpty(s)) {
+                    //退款失败
+                    reviewRefundOrder.setStatus(4);
+                    reviewRefundOrder.setFailureReason(s);
+                    service.updateById(reviewRefundOrder);
+                    if (reviewRefundOrder.getType().equals(0)) {
+                        retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
+                                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
+                                .set(RetrieveOrder::getStatus, 3));
+                    } else {
+                        retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
+                                .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo())
+                                .set(RetrieveOrder::getStatus, 5));
+                    }
+                    return RestResponse.failed(s);
+                }
 
             }
             retrieveOrder.setStatus(4);
@@ -255,6 +299,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
             updateOrderRecordService.save(updateOrderRecord);
         }
         if (reviewStatus.equals(2)) {
+            reviewRefundOrder.setStatus(2);
             //拒绝
             if (reviewRefundOrder.getType().equals(0)) {
                 retrieveOrderService.update(Wrappers.<RetrieveOrder>lambdaUpdate()
@@ -266,9 +311,8 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                         .set(RetrieveOrder::getStatus, 5));
             }
         }
-        reviewRefundOrder.setStatus(reviewStatus);
 
-        reviewRefundOrder.setReviewRefundDesc(reviewRefundDesc);
+
         service.updateById(reviewRefundOrder);
 
 
@@ -279,7 +323,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
     }
 
     public static void main(String[] args) {
-        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder?orderNo=1684857921172668416" + "&transactionId=4200001746202304208466576411" + "&subMchId=1634891163" + "&totalFee=" + new BigDecimal("9500").multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal( "9500").multiply(new BigDecimal(100)).intValue();
+        String url = "https://api.redadzukibeans.com/weChat/wxpayother/otherRefundOrder?orderNo=1684857921172668416" + "&transactionId=4200001746202304208466576411" + "&subMchId=1634891163" + "&totalFee=" + new BigDecimal("9500").multiply(new BigDecimal(100)).intValue() + "&refundFee=" + new BigDecimal("9500").multiply(new BigDecimal(100)).intValue();
         String result = HttpUtil.get(url);
 
     }
