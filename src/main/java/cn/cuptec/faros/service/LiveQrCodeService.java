@@ -249,15 +249,15 @@ public class LiveQrCodeService extends ServiceImpl<LiveQrCodeMapper, LiveQrCode>
 
     private void toIntroduce(ProductStock productStock) {
         Product product = productService.getById(productStock.getProductId());
-        if (product.getId().equals(2)) {
-            //如果是家庭版跳转到公众号首页
-            try {
-                ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=" + urlData.getBiz() + "&scene=117#wechat_redirect");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        if (product.getId() == 1 || product.getId() == 101) {
+//        if (product.getId().equals(2)) {
+//            //如果是家庭版跳转到公众号首页
+//            try {
+//                ServletUtils.getResponse().sendRedirect("https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=" + urlData.getBiz() + "&scene=117#wechat_redirect");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+        if (product.getId() == 1 || product.getId() == 101 || product.getId().equals(2)) {
             //下肢
             try {
                 ServletUtils.getResponse().sendRedirect(urlData.getUrl() + "index.html#/pneumaticDevice?type=2&macAdd=" + productStock.getMacAddress());
