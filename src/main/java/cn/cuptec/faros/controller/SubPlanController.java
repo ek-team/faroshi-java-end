@@ -150,6 +150,7 @@ public class SubPlanController extends AbstractBaseController<SubPlanService, Tb
 
                 }
                 tbSubPlan.setPlanId(tbPlan.getPlanId());
+                tbSubPlan.setDoctorId(subPlanEntity.getDoctorId());
                 tbSubPlan.setWeekNum(i + 1);
                 tbSubPlan.setDayNum(1);
                 tbSubPlan.setCreateDate(new Date());
