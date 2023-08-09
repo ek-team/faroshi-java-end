@@ -20,6 +20,7 @@ public class TbSubPlan implements Comparable<TbSubPlan>{
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private Long userId;//用户唯一id 静态方法获取唯一id编号
+    private Integer doctorId;
     private Long keyId;                 //唯一ID
     private Long planId;//计划id 静态方法获取唯一id编号
     private Integer planStatus;//计划状态 0未开始，1进行中，2完成
