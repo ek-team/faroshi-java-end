@@ -496,6 +496,18 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         .collect(Collectors.toMap(RetrieveOrder::getUserOrderNo, t -> t));
             }
             for (UserOrder userOrder : records) {
+                //回收时间
+                if (!userOrder.getStatus().equals(5)) {
+                    //计算使用天数
+                    LocalDateTime deliveryTime = userOrder.getLogisticsDeliveryTime();
+                    if (deliveryTime != null) {
+                        LocalDateTime now = LocalDateTime.now();
+                        java.time.Duration duration = java.time.Duration.between(deliveryTime, now);
+                        Long l = duration.toDays();
+                        userOrder.setUseDay(l.intValue());
+                    }
+                }
+
                 RetrieveOrder retrieveOrder = retrieveOrderMap.get(userOrder.getOrderNo());
                 if (retrieveOrder != null) {
                     //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成 6-退款待审核  7-退款拒绝
@@ -529,17 +541,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     ReviewRefundOrder reviewRefundOrder = reviewRefundOrderMap.get(reviewRefundOrderId);
                     userOrder.setReviewRefundOrder(reviewRefundOrder);
                 }
-                //回收时间
-                if (!userOrder.getStatus().equals(5)) {
-                    //计算使用天数
-                    LocalDateTime deliveryTime = userOrder.getLogisticsDeliveryTime();
-                    if (deliveryTime != null) {
-                        LocalDateTime now = LocalDateTime.now();
-                        java.time.Duration duration = java.time.Duration.between(deliveryTime, now);
-                        Long l = duration.toDays();
-                        userOrder.setUseDay(l.intValue());
-                    }
-                }
+
 
                 ServicePack servicePack = servicePackMap.get(userOrder.getServicePackId());
                 if (servicePack == null) {
