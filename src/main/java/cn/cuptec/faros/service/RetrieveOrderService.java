@@ -142,7 +142,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
             long count4 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 3).count();
             long count5 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 4).count();
             long count6 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 5).count();
-
+            long count7 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 6).count();
+            long count8 = tbUserOrders.stream().filter(it -> it.getStatus() != null && it.getStatus() == 8).count();
 
             vo.setStatu0(tbUserOrders.stream().count());//全部
             vo.setStatu1(count1);//待邮寄
@@ -151,7 +152,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
             vo.setStatu4(count4);//待打款
             vo.setStatu5(count5);//待收款
             vo.setStatu6(count6);//回收完成
-
+            vo.setStatu7(count7);//退款待审核
+            vo.setStatu8(count8);//补退款审核
         }
         return vo;
     }

@@ -9,4 +9,5 @@ public class KuaiDiCallBackParam {
     private String status;
     private String message;
     private KuaiDiCallBackData data;
+    private LastResult lastResult;
 }

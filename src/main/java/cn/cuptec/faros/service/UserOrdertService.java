@@ -337,14 +337,15 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
             dataScope.setIsOnly(true);
         }
 
-        List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery().eq(UserOrder::getTest, 0), dataScope);
-        // count0 = userOrders.stream().filter(it -> it.getStatus() == 0).count();
+        List<UserOrder> userOrders = baseMapper.listScoped(Wrappers.<UserOrder>lambdaQuery().eq(UserOrder::getTest, 0)
+                .ne(UserOrder::getStatus, 1), dataScope);
+
         long count1 = userOrders.stream().filter(it -> it.getStatus() == 1).count();
         long count2 = userOrders.stream().filter(it -> it.getStatus() == 2).count();
         long count3 = userOrders.stream().filter(it -> it.getStatus() == 3).count();
         long count4 = userOrders.stream().filter(it -> it.getStatus() == 4).count();
         long count6 = userOrders.stream().filter(it -> it.getStatus() == 5).count();
-
+        long count7 = userOrders.stream().filter(it -> it.getStatus() == 7).count();
         List<UserOrder> deliveryDateOrders = baseMapper.listScopedTime(Wrappers.<UserOrder>lambdaQuery().eq(UserOrder::getTest, 0)
                 .lt(UserOrder::getDeliveryDate, now)
                 .eq(UserOrder::getStatus, 2), dataScope);
@@ -361,6 +362,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         vo.setStatu4(count4);//已收货
         vo.setStatu5(count5);//期待今日发货
         vo.setStatu6(count6);//已回收
+        vo.setStatu6(count7);//已取消
         return vo;
     }
 

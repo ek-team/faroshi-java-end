@@ -34,7 +34,7 @@ public class DeliveryTime {
 
         List<UserOrder> list = userOrdertService.list(new QueryWrapper<UserOrder>().lambda()
                 .ge(UserOrder::getStatus, 3)
-                .ge(UserOrder::getPayment,10)
+                .eq(UserOrder::getTest,0)
                 .isNotNull(UserOrder::getDeliverySn)
                 .isNull(UserOrder::getLogisticsDeliveryTime));
         if (!CollectionUtils.isEmpty(list)) {

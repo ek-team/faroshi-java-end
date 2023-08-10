@@ -125,6 +125,24 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
 
     /**
+     * 没用这个接口
+     * 代理商自己发货 订阅物流 获取实际快递揽收时间
+     */
+    @PostMapping("autokuaidicallback")
+    public KuaiDiCallBackResult autokuaidicallback(HttpServletRequest request) throws Exception {
+        String param = request.getParameter("param");
+        String taskId = request.getParameter("taskId");
+        log.info("商家下单调快递回调快递回调快递回调:{}", param);
+        KuaiDiCallBackParam kuaiDiCallBackParam = new Gson().fromJson(param, KuaiDiCallBackParam.class);
+
+        KuaiDiCallBackResult kuaiDiCallBackResult = new KuaiDiCallBackResult();
+        kuaiDiCallBackResult.setResult(true);
+        kuaiDiCallBackResult.setMessage("成功");
+        kuaiDiCallBackResult.setReturnCode("200");
+        return kuaiDiCallBackResult;
+    }
+
+    /**
      * 商家下单回调接口 暂时没用
      *
      * @param request
