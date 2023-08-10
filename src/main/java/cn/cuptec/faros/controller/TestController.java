@@ -9,6 +9,7 @@ import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.vo.MapExpressTrackVo;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.AllArgsConstructor;
 import org.springframework.security.oauth2.provider.ClientDetails;
@@ -22,6 +23,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,12 +51,34 @@ public class TestController {
     private ExpressService expressService;
     @Resource
     private DoctorTeamService doctorTeamService;
+    @Resource
+    private RetrieveOrderService retrieveOrderService;
 
     @GetMapping("user")
     public RestResponse customUserInfo() {
-        wxMpService.paySuccessNoticeSalesman("oV8W46Jr8-9S-8aDSQ4Mcigwbwms", "您的客户已成功下单，请您尽快处理！",
-                "下肢智能负重SHRJggj患者：陈1月兰订单号:1686546626912452608医院:上海交通大学医学院附属瑞金医院医生团队:王蕾主任团队", "9500.0",
-                "点击查看详情", "https://api.jhxiao-school.com/index.html#/salesman/orderDetailster?id=11111");
+        RetrieveOrder retrieveOrder = new RetrieveOrder();
+
+        retrieveOrder.setUserOrderNo("1679306554358104064");
+        retrieveOrder.setRentDay(16);
+        retrieveOrder.setOrderId("2126");
+        retrieveOrder.setUserId(3413);
+        retrieveOrder.setCreateTime(new Date());
+        retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        retrieveOrder.setStatus(2);
+
+        retrieveOrder.setDeliverySn("SF1407548321458");
+        retrieveOrder.setDeliveryCompanyCode("shunfeng");
+        retrieveOrderService.saveRetrieveOrder(retrieveOrder);
+
+
+        UserOrder userOrder = new UserOrder();
+        userOrder.setStatus(5);
+        userOrder.setUseDay(16);
+        userOrder.setId(2126);
+        userOrder.setRecycleTime(LocalDateTime.now());
+
+
+        userOrdertService.updateById(userOrder);
         return RestResponse.ok();
     }
 
