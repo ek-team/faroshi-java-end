@@ -136,7 +136,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         if (tbTrainUser.getDoctorTeamId() == null || tbTrainUser.getDoctorTeamId().equals(0)) {
             tbTrainUser.setPlanCheckStatus(2);
             service.updateById(tbTrainUser);
-            return RestResponse.failed("团队id为空");
+            return RestResponse.ok();
 
         }
         DoctorTeam doctorTeam = doctorTeamService.getOne(new QueryWrapper<DoctorTeam>().lambda().eq(DoctorTeam::getId, tbTrainUser.getDoctorTeamId())

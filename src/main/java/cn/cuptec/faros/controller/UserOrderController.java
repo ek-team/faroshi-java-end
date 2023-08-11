@@ -528,6 +528,23 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
 
                 RetrieveOrder retrieveOrder = retrieveOrderMap.get(userOrder.getOrderNo());
                 if (retrieveOrder != null) {
+                    if(retrieveOrder.getRecycleTime()!=null){
+                        LocalDateTime deliveryTime = userOrder.getLogisticsDeliveryTime();
+                        if(deliveryTime!=null){
+                            LocalDateTime recycleTime = retrieveOrder.getRecycleTime();
+                            java.time.Duration duration = java.time.Duration.between(deliveryTime, recycleTime);
+                            Long l = duration.toDays();
+                            Integer i = l.intValue();
+                            if(userOrder.getUseDay()!=null){
+                                if(!userOrder.getUseDay().equals(i)){
+                                    userOrder.setUseDay(l.intValue());
+                                    service.updateById(userOrder);
+                                }
+                            }
+                            userOrder.setUseDay(l.intValue());
+                        }
+
+                    }
                     //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成 6-退款待审核  7-退款拒绝
                     Integer status = retrieveOrder.getStatus();
                     //回收单状态 8-回收单待收货 9-回收单待审核 10-回收单待打款 11回收单收款 12-回收单回收完成 13-回收单退款待审核  14-回收单退款拒绝
