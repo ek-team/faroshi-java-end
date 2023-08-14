@@ -41,6 +41,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -617,10 +618,9 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             Long day = 1L;
             if (userOrder != null) {
                 LocalDateTime localDateDeliveryTime = userOrder.getLogisticsDeliveryTime();
-                if(localDateDeliveryTime!=null){
+                if (localDateDeliveryTime != null) {
                     LocalDateTime now = LocalDateTime.now();
-                    java.time.Duration duration = java.time.Duration.between(localDateDeliveryTime, now);
-                    day = duration.toDays();
+                    day = localDateDeliveryTime.toLocalDate().until(now.toLocalDate(), ChronoUnit.DAYS);
                     userOrder.setUseDay(day.intValue());
                     userOrdertService.updateById(userOrder);
                 }
@@ -665,20 +665,30 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         RetrieveOrder one = service.getOne(new QueryWrapper<RetrieveOrder>().lambda().eq(RetrieveOrder::getTaskId, taskId));
         one.setKuAiDiStatus(Integer.parseInt(kuaiDiCallBackParam.getData().getStatus()));
         one.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
-        service.updateById(one);
+
+
         UserOrder userOrder = new UserOrder();
         //判断快递状态 修改状态为待审核
         if (kuaiDiCallBackParam.getData().getStatus().equals("13")) {
             one.setStatus(2);
 
-            service.updateById(one);
         }
         if (kuaiDiCallBackParam.getData().getStatus().equals("10")) {
 
             userOrder.setId(Integer.parseInt(one.getOrderId()));
             userOrder.setRecycleTime(LocalDateTime.now());
+            LocalDateTime localDateDeliveryTime = userOrder.getLogisticsDeliveryTime();
+            if (localDateDeliveryTime != null) {
+                LocalDateTime now = LocalDateTime.now();
+                Long day = localDateDeliveryTime.toLocalDate().until(now.toLocalDate(), ChronoUnit.DAYS);
+
+                userOrder.setUseDay(day.intValue());
+                one.setRentDay(day.intValue());
+            }
+
 
         }
+        service.updateById(one);
         userOrdertService.updateById(userOrder);
         KuaiDiCallBackResult kuaiDiCallBackResult = new KuaiDiCallBackResult();
         kuaiDiCallBackResult.setResult(true);

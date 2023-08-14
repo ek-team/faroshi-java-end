@@ -195,6 +195,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                 .eq(RetrieveOrder::getOrderNo, reviewRefundOrder.getRetrieveOrderNo()));
         UserOrder updateUserOrder = new UserOrder();
         reviewRefundOrder.setReviewRefundDesc(reviewRefundDesc);
+        reviewRefundOrder.setStatus(reviewStatus);
         if (reviewStatus.equals(1)) {
             //退款
 

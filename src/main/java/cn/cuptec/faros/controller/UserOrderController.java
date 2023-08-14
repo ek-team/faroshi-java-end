@@ -53,6 +53,7 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -514,6 +515,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         .collect(Collectors.toMap(RetrieveOrder::getUserOrderNo, t -> t));
             }
             for (UserOrder userOrder : records) {
+                RetrieveOrder retrieveOrder = retrieveOrderMap.get(userOrder.getOrderNo());
+
                 //回收时间
                 if (!userOrder.getStatus().equals(5)) {
                     //计算使用天数
@@ -529,20 +532,23 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                     LocalDateTime deliveryTime = userOrder.getLogisticsDeliveryTime();
                     if(deliveryTime!=null){
                         LocalDateTime recycleTime = userOrder.getRecycleTime();
-                        java.time.Duration duration = java.time.Duration.between(deliveryTime, recycleTime);
-                        Long l = duration.toDays();
+                        Long l = deliveryTime.toLocalDate().until(recycleTime.toLocalDate(), ChronoUnit.DAYS);
                         Integer i = l.intValue();
                         if(userOrder.getUseDay()!=null){
                             if(!userOrder.getUseDay().equals(i)){
                                 userOrder.setUseDay(l.intValue());
                                 service.updateById(userOrder);
+                                if(recycleTime!=null){
+                                    retrieveOrder.setRentDay(l.intValue());
+                                    retrieveOrderService.updateById(retrieveOrder);
+
+                                }
                             }
                         }
                         userOrder.setUseDay(l.intValue());
                     }
 
                 }
-                RetrieveOrder retrieveOrder = retrieveOrderMap.get(userOrder.getOrderNo());
                 if (retrieveOrder != null) {
 
                     //状态 0-待邮寄 1-待收货 2-待审核 3-待打款 4-待收款 5-回收完成 6-退款待审核  7-退款拒绝
@@ -1322,7 +1328,17 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-
+        String start="2023-04-13";
+        String end="2023-04-14";
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate parse = LocalDate.parse(start, formatter);
+        LocalDate parse1 = LocalDate.parse(end, formatter);
+        long until = parse.until(parse1, ChronoUnit.DAYS);
+        System.out.println(until);
+//        Period between = Period.between(LocalDate.of(2023,04,13), LocalDate.of(2023,06,13));
+//        System.out.println(between.getDays());
+//        java.time.Duration duration = java.time.Duration.between(LocalDateTime.parse(start,formatter), LocalDateTime.parse(end,formatter));
+//        System.out.println(duration.toDays());
     }
 
     /**
