@@ -58,23 +58,23 @@ public class TestController {
     public RestResponse customUserInfo() {
         RetrieveOrder retrieveOrder = new RetrieveOrder();
 
-        retrieveOrder.setUserOrderNo("1679306554358104064");
-        retrieveOrder.setRentDay(16);
-        retrieveOrder.setOrderId("2126");
-        retrieveOrder.setUserId(3413);
+        retrieveOrder.setUserOrderNo("1673636740302110720");
+        retrieveOrder.setRentDay(47);
+        retrieveOrder.setOrderId("2041");
+        retrieveOrder.setUserId(3302);
         retrieveOrder.setCreateTime(new Date());
         retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
         retrieveOrder.setStatus(2);
 
-        retrieveOrder.setDeliverySn("SF1407548321458");
+        retrieveOrder.setDeliverySn("SF1406528853973");
         retrieveOrder.setDeliveryCompanyCode("shunfeng");
         retrieveOrderService.saveRetrieveOrder(retrieveOrder);
 
 
         UserOrder userOrder = new UserOrder();
         userOrder.setStatus(5);
-        userOrder.setUseDay(16);
-        userOrder.setId(2126);
+        userOrder.setUseDay(47);
+        userOrder.setId(2041);
         userOrder.setRecycleTime(LocalDateTime.now());
 
 
