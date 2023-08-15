@@ -528,17 +528,17 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                         userOrder.setUseDay(l.intValue());
                     }
                 }
-                if(userOrder.getRecycleTime()!=null){
+                if (userOrder.getRecycleTime() != null) {
                     LocalDateTime deliveryTime = userOrder.getLogisticsDeliveryTime();
-                    if(deliveryTime!=null){
+                    if (deliveryTime != null) {
                         LocalDateTime recycleTime = userOrder.getRecycleTime();
                         Long l = deliveryTime.toLocalDate().until(recycleTime.toLocalDate(), ChronoUnit.DAYS);
                         Integer i = l.intValue();
-                        if(userOrder.getUseDay()!=null){
-                            if(!userOrder.getUseDay().equals(i)){
+                        if (userOrder.getUseDay() != null) {
+                            if (!userOrder.getUseDay().equals(i)) {
                                 userOrder.setUseDay(l.intValue());
                                 service.updateById(userOrder);
-                                if(recycleTime!=null){
+                                if (recycleTime != null) {
                                     retrieveOrder.setRentDay(l.intValue());
                                     retrieveOrderService.updateById(retrieveOrder);
 
@@ -721,6 +721,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     //上传发票
     @PutMapping("/uploadBillImage")
     public RestResponse uploadBillImage(@RequestBody UserOrder order) {
+        String billImage = order.getBillImage();
+        if (billImage.indexOf("pdf") >= 0) {
+            order.setBillType(2);
+        } else {
+            order.setBillType(1);
+        }
         service.updateById(order);
         DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         UserOrder byId = service.getById(order.getId());
@@ -1328,8 +1334,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     }
 
     public static void main(String[] args) {
-        String start="2023-04-13";
-        String end="2023-04-14";
+        String start = "2023-04-13";
+        String end = "2023-04-14";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate parse = LocalDate.parse(start, formatter);
         LocalDate parse1 = LocalDate.parse(end, formatter);

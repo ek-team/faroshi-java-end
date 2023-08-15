@@ -101,6 +101,7 @@ public class UserOrder {
     private String receiverRegion;
     public String city;//市
     private String billImage;//发票照片
+    private Integer billType;//发票格式1-图片 2-pdf
     public String area;//区
     public String province;//省
     //收货人详细地址

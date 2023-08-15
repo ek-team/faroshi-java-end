@@ -40,6 +40,7 @@ public class Dept extends Model<Dept> {
      */
     private Integer sort;
     private String subMchId;
+    private String phone;//代理商设置的联系电话
     /**
      * 创建时间
      */
