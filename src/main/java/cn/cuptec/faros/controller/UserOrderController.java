@@ -401,13 +401,15 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         if (!StringUtils.isEmpty(productSn3)) {
             queryWrapper.like("user_order.product_sn3", productSn3);
         }
-        //1未申请 2已申请 3已开票
+        //1未申请 2已申请 3已开票doukeuyi
         if (billStatus != null) {
             if (billStatus.equals(1)) {
                 queryWrapper.isNull("user_order.bill_id");
+                queryWrapper.isNull("user_order.bill_image");
             }
             if (billStatus.equals(2)) {
                 queryWrapper.isNotNull("user_order.bill_id");
+                queryWrapper.isNull("user_order.bill_image");
             }
             if (billStatus.equals(3)) {
                 queryWrapper.isNotNull("user_order.bill_image");
