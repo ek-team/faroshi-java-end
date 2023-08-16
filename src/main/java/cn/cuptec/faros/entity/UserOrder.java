@@ -34,6 +34,8 @@ public class UserOrder {
     private Integer userServicePackageInfoId;
     @Queryable(queryLogical = QueryLogical.LIKE)
     private String orderNo;
+    @TableField(exist = false)
+    private Integer billStatus;
     private Integer patientUserId;//就诊人id
     private String querySaleSpecIds;//查询规格值
     private Double saleSpecRecoveryPrice;//规格值回收价格

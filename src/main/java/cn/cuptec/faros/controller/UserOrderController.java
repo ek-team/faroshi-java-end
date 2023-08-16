@@ -338,26 +338,31 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         return RestResponse.ok();
     }
 
-
+    /**
+     * @param billStatus 1未申请 2已申请 3已开票
+     * @return
+     */
     //查询部门订单列表,只允许查看
     @GetMapping("/manage/pageScoped")
-    public RestResponse pageScoped(@RequestParam(value = "patientName", required = false) String patientName,
-                                   @RequestParam(value = "servicePackName", required = false) String servicePackName,
-                                   @RequestParam(value = "startTime", required = false) String startTime,
-                                   @RequestParam(value = "endTime", required = false) String endTime,
-                                   @RequestParam(value = "nickname", required = false) String nickname,
-                                   @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
-                                   @RequestParam(value = "toSort", required = false) String toSort,
-                                   @RequestParam(value = "userOrderNo", required = false) String userOrderNo,
-                                   @RequestParam(value = "productSn1", required = false) String productSn1,
-                                   @RequestParam(value = "productSn2", required = false) String productSn2,
-                                   @RequestParam(value = "productSn3", required = false) String productSn3,
-                                   @RequestParam(value = "startDeliveryDate", required = false) String startDeliveryDate,
-                                   @RequestParam(value = "endDeliveryDate", required = false) String endDeliveryDate,
-                                   @RequestParam(value = "startDeliveryTime", required = false) String startDeliveryTime,
-                                   @RequestParam(value = "endDeliveryTime", required = false) String endDeliveryTime,
-                                   @RequestParam(value = "endRefundReviewTime", required = false) String endRefundReviewTime,
-                                   @RequestParam(value = "startRefundReviewTime", required = false) String startRefundReviewTime) {
+    public RestResponse pageScoped(
+            @RequestParam(value = "billStatus", required = false) Integer billStatus,
+            @RequestParam(value = "patientName", required = false) String patientName,
+            @RequestParam(value = "servicePackName", required = false) String servicePackName,
+            @RequestParam(value = "startTime", required = false) String startTime,
+            @RequestParam(value = "endTime", required = false) String endTime,
+            @RequestParam(value = "nickname", required = false) String nickname,
+            @RequestParam(value = "receiverPhone", required = false) String receiverPhone,
+            @RequestParam(value = "toSort", required = false) String toSort,
+            @RequestParam(value = "userOrderNo", required = false) String userOrderNo,
+            @RequestParam(value = "productSn1", required = false) String productSn1,
+            @RequestParam(value = "productSn2", required = false) String productSn2,
+            @RequestParam(value = "productSn3", required = false) String productSn3,
+            @RequestParam(value = "startDeliveryDate", required = false) String startDeliveryDate,
+            @RequestParam(value = "endDeliveryDate", required = false) String endDeliveryDate,
+            @RequestParam(value = "startDeliveryTime", required = false) String startDeliveryTime,
+            @RequestParam(value = "endDeliveryTime", required = false) String endDeliveryTime,
+            @RequestParam(value = "endRefundReviewTime", required = false) String endRefundReviewTime,
+            @RequestParam(value = "startRefundReviewTime", required = false) String startRefundReviewTime) {
         Page<UserOrder> page = getPage();
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
 //        if(!StringUtils.isEmpty(patientName)){
@@ -395,6 +400,18 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         if (!StringUtils.isEmpty(productSn3)) {
             queryWrapper.like("user_order.product_sn3", productSn3);
+        }
+        //1未申请 2已申请 3已开票
+        if (billStatus != null) {
+            if (billStatus.equals(1)) {
+                queryWrapper.isNull("user_order.bill_id");
+            }
+            if (billStatus.equals(2)) {
+                queryWrapper.isNotNull("user_order.bill_id");
+            }
+            if (billStatus.equals(3)) {
+                queryWrapper.isNotNull("user_order.bill_image");
+            }
         }
         if (!StringUtils.isEmpty(startTime)) {
             if (StringUtils.isEmpty(endTime)) {
@@ -600,6 +617,15 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 LocalDateTime createTime = userOrder.getCreateTime();
 
                 userOrder.setOrderNo("KF" + orderNo);
+                if (userOrder.getBillId() == null) {
+                    userOrder.setBillStatus(1);
+                }
+                if (userOrder.getBillId() != null) {
+                    userOrder.setBillStatus(2);
+                }
+                if (!StringUtils.isEmpty(userOrder.getBillImage())) {
+                    userOrder.setBillStatus(3);
+                }
             }
         }
 
