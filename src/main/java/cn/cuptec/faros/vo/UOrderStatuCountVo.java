@@ -13,4 +13,5 @@ public class UOrderStatuCountVo {
     private Long statu5;
     private Long statu6;
     private Long statu7;
+    private Integer statu8;//已申请开票但是没开票的
 }

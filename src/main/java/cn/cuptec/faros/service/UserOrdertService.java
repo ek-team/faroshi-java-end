@@ -362,7 +362,11 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         vo.setStatu4(count4);//已收货
         vo.setStatu5(count5);//期待今日发货
         vo.setStatu6(count6);//已回收
-        vo.setStatu6(count7);//已取消
+        vo.setStatu7(count7);//已取消
+        Integer count8 = baseMapper.selectCount(new QueryWrapper<UserOrder>().lambda()
+                .isNotNull(UserOrder::getBillId)
+                .isNull(UserOrder::getBillImage));
+        vo.setStatu8(count8);//已申请开票但是没开票的
         return vo;
     }
 
