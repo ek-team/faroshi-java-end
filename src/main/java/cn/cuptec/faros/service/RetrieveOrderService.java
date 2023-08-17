@@ -39,6 +39,8 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     @Resource
     private ProductStockService productStockService;
     @Resource
+    private UpdateOrderRecordService updateOrderRecordService;
+    @Resource
     private UserService userService;
     @Resource
     private ServicePackService servicePackService;
@@ -191,6 +193,13 @@ public class RetrieveOrderService extends ServiceImpl<RetrieveOrderMapper, Retri
     //确认设备已收到
     public void confirmReceived(int id) {
         RetrieveOrder retrieveOrder = super.getById(id);
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrder.getOrderId()));
+        updateOrderRecord.setCreateUserId(retrieveOrder.getUserId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("回收单确认收货");
+        updateOrderRecordService.save(updateOrderRecord);
+
         Assert.isTrue(retrieveOrder != null, "回收单不存在");
         Assert.isTrue(retrieveOrder.getStatus().intValue() == 1, "非待收货状态回收单");
         retrieveOrder.setStatus(2);

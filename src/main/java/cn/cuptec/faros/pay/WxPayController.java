@@ -106,6 +106,8 @@ public class WxPayController {
     private SaleSpecDescService saleSpecDescService;
     @Resource
     private SaleSpecService saleSpecService;
+    @Resource
+    private UpdateOrderRecordService updateOrderRecordService;
     private final Url urlData;
     @Autowired
     public RedisTemplate redisTemplate;
@@ -157,12 +159,18 @@ public class WxPayController {
             if (!userOrder.getStatus().equals(1)) {
                 return RestResponse.ok();
             }
-
+            UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+            updateOrderRecord.setOrderId(userOrder.getId());
+            updateOrderRecord.setCreateUserId(userOrder.getUserId());
+            updateOrderRecord.setCreateTime(LocalDateTime.now());
+            updateOrderRecord.setDescStr("支付成功");
+            updateOrderRecordService.save(updateOrderRecord);
             String doctorTeamName = "";
 
             Integer patientUserId = userOrder.getPatientUserId();
             PatientUser byId = patientUserService.getById(patientUserId);
             User userById = userService.getById(userOrder.getUserId());
+
             //发送公众号通知
             wxMpService.paySuccessNotice(userById.getMpOpenId(), "您的订单已支付成功!请耐心等待发货", userOrder.getOrderNo(), userOrder.getPayment().toString(),
                     "点击查看详情", "pages/myOrder/myOrder");

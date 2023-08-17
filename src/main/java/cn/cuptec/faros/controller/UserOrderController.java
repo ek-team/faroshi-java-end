@@ -1033,6 +1033,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setOrderType(orderType);
         userOrder.setProductPic(saleSpecGroup.getUrlImage());
         service.save(userOrder);
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(userOrder.getId());
+        updateOrderRecord.setCreateUserId(userOrder.getUserId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("生成订单");
+        updateOrderRecordService.save(updateOrderRecord);
         if (userOrder.getPayType().equals(2)) {
             return RestResponse.ok(userOrder);
         }
@@ -1192,7 +1198,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setOrderType(orderType);
         userOrder.setProductPic(saleSpecGroup.getUrlImage());
         service.save(userOrder);
-
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(userOrder.getId());
+        updateOrderRecord.setCreateUserId(userOrder.getUserId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("生成订单");
+        updateOrderRecordService.save(updateOrderRecord);
         RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getOrderNo(), null);
         return restResponse;
     }
@@ -1451,6 +1462,12 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         userOrder.setStatus(4);
         userOrder.setRevTime(LocalDateTime.now());
         service.updateById(userOrder);
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(userOrder.getId());
+        updateOrderRecord.setCreateUserId(userOrder.getUserId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("用户手动确认收货");
+        updateOrderRecordService.save(updateOrderRecord);
         return RestResponse.ok(userOrder);
     }
 
@@ -1520,6 +1537,13 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                 if (!CollectionUtils.isEmpty(userOrders)) {
 
                     for (UserOrder userOrder : userOrders) {
+                        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+                        updateOrderRecord.setOrderId(userOrder.getId());
+                        updateOrderRecord.setCreateUserId(userOrder.getUserId());
+                        updateOrderRecord.setCreateTime(LocalDateTime.now());
+                        updateOrderRecord.setDescStr("发货");
+                        updateOrderRecordService.save(updateOrderRecord);
+
                         if (userOrder.getOrderType() != null && userOrder.getOrderType().equals(1)) {
 
                             userOrder.setMoveTime(LocalDateTime.now());

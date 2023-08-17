@@ -39,6 +39,7 @@ public class RedisKeyExpirationListener implements MessageListener {
     private RedisTemplate<String, String> redisTemplate;
     private RedisConfigProperties redisConfigProperties;
     private UserOrdertService userOrdertService;
+    private UpdateOrderRecordService updateOrderRecordService;
     private ChatUserService chatUserService;
     private WxMpService wxMpService;
     private FollowUpPlanNoticeService followUpPlanNoticeService;//随访计划通知模版
@@ -65,7 +66,8 @@ public class RedisKeyExpirationListener implements MessageListener {
                                       PatientOtherOrderService patientOtherOrderService,
                                       DeptService deptService,
                                       DoctorTeamService doctorTeamService,
-                                      DoctorPointService doctorPointService
+                                      DoctorPointService doctorPointService,
+                                      UpdateOrderRecordService updateOrderRecordService
     ) {
         this.redisTemplate = redisTemplate;
         this.redisConfigProperties = redisConfigProperties;
@@ -81,6 +83,7 @@ public class RedisKeyExpirationListener implements MessageListener {
         this.deptService = deptService;
         this.doctorTeamService = doctorTeamService;
         this.doctorPointService = doctorPointService;
+        this.updateOrderRecordService=updateOrderRecordService;
     }
 
     @Override
@@ -214,6 +217,12 @@ public class RedisKeyExpirationListener implements MessageListener {
                 if (userOrder != null) {
                     userOrder.setStatus(4);
                     userOrdertService.updateById(userOrder);
+                    UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+                    updateOrderRecord.setOrderId(userOrder.getId());
+                    updateOrderRecord.setCreateUserId(userOrder.getUserId());
+                    updateOrderRecord.setCreateTime(LocalDateTime.now());
+                    updateOrderRecord.setDescStr("自动确认收货");
+                    updateOrderRecordService.save(updateOrderRecord);
                 }
 
             }

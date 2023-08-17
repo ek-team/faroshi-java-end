@@ -624,7 +624,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                     userOrder.setUseDay(day.intValue());
                     userOrdertService.updateById(userOrder);
                 }
-
+                UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+                updateOrderRecord.setOrderId(userOrder.getId());
+                updateOrderRecord.setCreateUserId(userOrder.getUserId());
+                updateOrderRecord.setCreateTime(LocalDateTime.now());
+                updateOrderRecord.setDescStr("用户回收发起");
+                updateOrderRecordService.save(updateOrderRecord);
             }
             RetrieveOrder retrieveOrder = service.getOne(new QueryWrapper<RetrieveOrder>().lambda()
                     .eq(RetrieveOrder::getUserOrderNo, userOrder.getOrderNo()));
@@ -671,7 +676,12 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         //判断快递状态 修改状态为待审核
         if (kuaiDiCallBackParam.getData().getStatus().equals("13")) {
             one.setStatus(2);
-
+            UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+            updateOrderRecord.setOrderId(Integer.parseInt(one.getOrderId()));
+            updateOrderRecord.setCreateUserId(one.getUserId());
+            updateOrderRecord.setCreateTime(LocalDateTime.now());
+            updateOrderRecord.setDescStr("回收单确认收货");
+            updateOrderRecordService.save(updateOrderRecord);
         }
         if (kuaiDiCallBackParam.getData().getStatus().equals("10")) {
 

@@ -2,13 +2,11 @@ package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
-import cn.cuptec.faros.entity.Bill;
-import cn.cuptec.faros.entity.QueryCompanyResult;
-import cn.cuptec.faros.entity.User;
+import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.service.UpdateOrderRecordService;
 import cn.cuptec.faros.service.UserService;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import cn.cuptec.faros.entity.UserOrder;
 import cn.cuptec.faros.service.BillService;
 import cn.cuptec.faros.service.UserOrdertService;
 import cn.hutool.http.HttpUtil;
@@ -46,6 +44,8 @@ public class BillController {
     private UserOrdertService userOrdertService;
     @Resource
     private UserService userService;
+    @Resource
+    private UpdateOrderRecordService updateOrderRecordService;
     private static final CloseableHttpClient httpclient = HttpClients.createDefault();
     private static final String userAgent = "Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.87 Safari/537.36";
 
@@ -150,6 +150,15 @@ public class BillController {
         userOrdertService.update(Wrappers.<UserOrder>lambdaUpdate()
                 .eq(UserOrder::getOrderNo, orderNo)
                 .set(UserOrder::getBillId, bill.getId()));
+        UserOrder one = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda()
+                .eq(UserOrder::getOrderNo, orderNo));
+
+        UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+        updateOrderRecord.setOrderId(one.getId());
+        updateOrderRecord.setCreateUserId(one.getUserId());
+        updateOrderRecord.setCreateTime(LocalDateTime.now());
+        updateOrderRecord.setDescStr("用户申请开票");
+        updateOrderRecordService.save(updateOrderRecord);
         return RestResponse.ok();
     }
 

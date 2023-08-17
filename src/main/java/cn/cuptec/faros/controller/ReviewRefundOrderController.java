@@ -160,7 +160,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrder.getOrderId()));
         updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
         updateOrderRecord.setCreateTime(LocalDateTime.now());
-        updateOrderRecord.setDescStr("退款审核");
+        updateOrderRecord.setDescStr("退款");
         updateOrderRecordService.save(updateOrderRecord);
         service.save(reviewRefundOrder);
         userOrder.setReviewRefundOrderId(reviewRefundOrder.getId());
@@ -198,7 +198,12 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
         reviewRefundOrder.setStatus(reviewStatus);
         if (reviewStatus.equals(1)) {
             //退款
-
+            UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+            updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrder.getOrderId()));
+            updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
+            updateOrderRecord.setCreateTime(LocalDateTime.now());
+            updateOrderRecord.setDescStr("退款审核通过");
+            updateOrderRecordService.save(updateOrderRecord);
             Integer status = retrieveOrder.getStatus();
             if (reviewRefundOrder.getType().equals(0)) {
                 if (!status.equals(6)) {
@@ -292,14 +297,15 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
             retrieveOrderService.updateById(retrieveOrder);
 
+
+        }
+        if (reviewStatus.equals(2)) {
             UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
             updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrder.getOrderId()));
             updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
             updateOrderRecord.setCreateTime(LocalDateTime.now());
-            updateOrderRecord.setDescStr("退款成功");
+            updateOrderRecord.setDescStr("退款审核拒绝");
             updateOrderRecordService.save(updateOrderRecord);
-        }
-        if (reviewStatus.equals(2)) {
             reviewRefundOrder.setStatus(2);
             //拒绝
             if (reviewRefundOrder.getType().equals(0)) {

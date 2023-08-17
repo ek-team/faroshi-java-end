@@ -109,6 +109,8 @@ public class AliPayController {
     @Resource
     private SaleSpecDescService saleSpecDescService;
     @Resource
+    private UpdateOrderRecordService updateOrderRecordService;
+    @Resource
     private SaleSpecService saleSpecService;
     private final Url urlData;
 
@@ -303,7 +305,12 @@ public class AliPayController {
 
             UserOrder userOrder = userOrdertService.getOne(new QueryWrapper<UserOrder>().lambda().eq(UserOrder::getOrderNo, out_trade_no));
             if (userOrder != null) {
-
+                UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+                updateOrderRecord.setOrderId(userOrder.getId());
+                updateOrderRecord.setCreateUserId(userOrder.getUserId());
+                updateOrderRecord.setCreateTime(LocalDateTime.now());
+                updateOrderRecord.setDescStr("支付成功");
+                updateOrderRecordService.save(updateOrderRecord);
                 if (!userOrder.getStatus().equals(1)) {
                     return RestResponse.ok();
                 }
