@@ -104,7 +104,16 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         updateOrderRecord.setOrderId(Integer.parseInt(retrieveOrderOne.getOrderId()));
         updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
         updateOrderRecord.setCreateTime(LocalDateTime.now());
-        updateOrderRecord.setDescStr("设备审核");
+        Integer status = retrieveOrderReviewData.getStatus();
+        String str = "设备审核";
+        if (status != null) {
+            if (status.equals(1)) {
+                str = str + "完整";
+            } else {
+                str = str + "损坏";
+            }
+        }
+        updateOrderRecord.setDescStr(str);
         updateOrderRecordService.save(updateOrderRecord);
 
         return RestResponse.ok(retrieveOrderReviewDataService.save(retrieveOrderReviewData));
