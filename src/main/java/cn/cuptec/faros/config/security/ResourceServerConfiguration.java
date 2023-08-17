@@ -183,7 +183,10 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/planUserTrainRecord/getByUserIdAndFrequency",
                         "/shunFeng/shunfnegcallback",
                         "/xPic/saveOrUpdatePlanUserOtherByIdCard",
-                        "/productStock/listAll"
+                        "/productStock/listAll",
+                        "/dataCount/update",
+                        "/dataType/**",
+                        "/dataType4/**"
 
                 )
                 .permitAll()
