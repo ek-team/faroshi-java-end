@@ -167,7 +167,7 @@ public class SocketFrameTextMessage {
      */
     public static SocketFrameTextMessage addOrderCount(Integer count) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();
-        message.msgType = ChatProto.ADD_ORDER_Count;
+        message.msgType = ChatProto.ADD_ORDER_COUNT;
         message.msg = count+"";
         return message;
     }
