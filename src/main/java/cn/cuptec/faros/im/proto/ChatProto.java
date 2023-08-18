@@ -51,5 +51,8 @@ public class ChatProto {
     public static final String FORM = "FORM"; //表单消息
     public static final String ARTICLE = "ARTICLE"; //表单消息
     public static final String SYSTEM_NOTIC = "SYSTEM_NOTIC"; //系统消息
+
+    public static final String ADD_ORDER_Count = "ADD_ORDER_Count"; //订单数加1
+
 }
 

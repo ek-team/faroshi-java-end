@@ -3,6 +3,7 @@ package cn.cuptec.faros.im.core;
 import cn.cuptec.faros.entity.User;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -33,7 +34,7 @@ public class SocketUser {
      * 系统用户
      */
     private User userInfo;
-
+    private String macAdd;//mac地址认证
 
 
     /**

@@ -1,6 +1,7 @@
 package cn.cuptec.faros.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
@@ -19,4 +20,6 @@ public class PatientUser {
     private String sex; //0-男 1-女
     private Integer userId;
     private String phone;
+    @TableField(exist = false)
+    private String address;
 }

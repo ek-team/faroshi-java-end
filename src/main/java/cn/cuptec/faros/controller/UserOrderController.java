@@ -12,8 +12,12 @@ import cn.cuptec.faros.dto.KuaiDiCallBackParam;
 import cn.cuptec.faros.dto.KuaiDiCallBackResult;
 import cn.cuptec.faros.dto.MyStateCount;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.UserChannelManager;
+import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ExcelUtil;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.cuptec.faros.util.UploadFileUtils;
 import cn.cuptec.faros.vo.UOrderStatuCountVo;
 import cn.hutool.core.collection.CollUtil;
@@ -21,6 +25,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSON;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.model.PutObjectResult;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -32,10 +37,13 @@ import com.google.gson.Gson;
 import com.kuaidi100.sdk.response.SubscribePushParamResp;
 import com.kuaidi100.sdk.response.SubscribeResp;
 import com.kuaidi100.sdk.utils.SignUtils;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisServer;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -123,7 +131,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     private ReviewRefundOrderService reviewRefundOrderService;
     @Resource
     private DeliveryInfoService deliveryInfoService;
-
+    @Resource
+    private MacAddOrderCountService macAddOrderCountService;
 
     /**
      * 没用这个接口
@@ -921,6 +930,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/createOrder")
     public RestResponse createOrder(@RequestBody UserOrder userOrder) {
+        //动态推送订单数量
+        pushOrderCount(userOrder.getServicePackId());
         userOrder.setUrl(urlData.getUrl());
         Integer addressId = userOrder.getAddressId();
         Address address = addressService.getById(addressId);
@@ -1077,6 +1088,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         }
         //https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/avatar/1673835893578_b9f1ad25.png
         String resultStr = "https://ewj-pharos.oss-cn-hangzhou.aliyuncs.com/" + "poster/" + name;
+
         return RestResponse.ok(resultStr);
 
     }
@@ -1090,6 +1102,8 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/user/add")
     public RestResponse addOrder(@RequestBody UserOrder userOrder) {
+        //动态推送订单数量
+        pushOrderCount(userOrder.getServicePackId());
         userOrder.setUrl(urlData.getUrl());
         Integer addressId = userOrder.getAddressId();
         Address address = addressService.getById(addressId);
@@ -1205,7 +1219,41 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         updateOrderRecord.setDescStr("生成订单");
         updateOrderRecordService.save(updateOrderRecord);
         RestResponse restResponse = wxPayFarosService.unifiedOrder(userOrder.getOrderNo(), null);
+
         return restResponse;
+    }
+
+    private void pushOrderCount(Integer servicePackId) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                        .eq(ProductStock::getServicePackId, servicePackId));
+                if (!CollectionUtils.isEmpty(productStocks)) {
+                    for (ProductStock productStock : productStocks) {
+                        String macAddress = productStock.getMacAddress();
+                        Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                        //2.向目标用户发送新消息提醒
+                        if (targetUserChannel != null) {
+                            MacAddOrderCount macAddOrderCount = macAddOrderCountService.getOne(new QueryWrapper<MacAddOrderCount>().lambda()
+                                    .eq(MacAddOrderCount::getMacAdd, macAddress));
+                            if (macAddOrderCount == null) {
+                                macAddOrderCount = new MacAddOrderCount();
+                                macAddOrderCount.setCount(1);
+                            } else {
+                                macAddOrderCount.setCount(macAddOrderCount.getCount() + 1);
+                            }
+                            macAddOrderCountService.saveOrUpdate(macAddOrderCount);
+                            SocketFrameTextMessage targetUserMessage
+                                    = SocketFrameTextMessage.addOrderCount(macAddOrderCount.getCount());
+
+                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /**

@@ -8,6 +8,7 @@ import cn.cuptec.faros.util.NettyUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +41,6 @@ public class UserChannelManager {
 
     public static ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true);
     public static ConcurrentMap<Channel, SocketUser> userChannelMap = new ConcurrentHashMap<>();
-
     private static AtomicInteger userCount = new AtomicInteger(0);
 
     @PostConstruct
@@ -61,7 +61,6 @@ public class UserChannelManager {
     }
 
 
-
     public static boolean saveUser(Channel channel, SocketFrameTextMessage message) {
         SocketUser userInfo = userChannelMap.get(channel);
         if (userInfo == null) {
@@ -73,7 +72,7 @@ public class UserChannelManager {
         }
 
         User tenantUser = JSONObject.parseObject(message.getUserInfo(), User.class);
-        logger.info("认证用户信息:{}" , tenantUser);
+        logger.info("认证用户信息:{}", tenantUser);
         // 增加一个认证用户
         //如果用户之前已连接，下线
         Channel preChannel = UserChannelManager.getUserChannel(tenantUser.getId());
@@ -86,6 +85,7 @@ public class UserChannelManager {
         userInfo.setAuth(true);
         userInfo.setTime(System.currentTimeMillis());
         userInfo.setUserInfo(tenantUser);
+        userInfo.setMacAdd(message.getMacAdd());
         return true;
     }
 
@@ -95,7 +95,7 @@ public class UserChannelManager {
      * @param channel
      */
     public static void removeChannel(Channel channel) {
-        
+
         try {
             SocketUser socketUser = getUserInfo(channel);
 
@@ -151,7 +151,9 @@ public class UserChannelManager {
                     continue;
                 }
                 ch.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(SocketFrameTextMessage.ping())));
-                name.append(socketUser.getUserInfo().getNickname() + "==");
+                String nickname = socketUser.getUserInfo().getNickname();
+
+                name.append(nickname + "/" + socketUser.getMacAdd() + "==");
             }
             logger.info("在线人昵称: {}", name);
         } finally {
@@ -178,7 +180,6 @@ public class UserChannelManager {
         }
 
 
-
     }
 
     /**
@@ -203,6 +204,21 @@ public class UserChannelManager {
         for (Channel channel : userChannelMap.keySet()) {
             SocketUser socketUser = userChannelMap.get(channel);
             if (socketUser.isAuth() && socketUser.getUserInfo().getId().equals(uid)) {
+                return channel;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 根据macAdd获取用户通道
+     *
+     * @return
+     */
+    public static Channel getUserChannelByMacAdd(String macAdd) {
+        for (Channel channel : userChannelMap.keySet()) {
+            SocketUser socketUser = userChannelMap.get(channel);
+            if (socketUser.isAuth() && socketUser.getMacAdd().indexOf(macAdd) >= 0) {
                 return channel;
             }
         }

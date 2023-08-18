@@ -30,6 +30,7 @@ public class SocketFrameTextMessage {
     private String url;
     //用户信息
     private String userInfo;
+    private String macAdd;//认证携带mac地址
     private String cId;
     /**
      * 消息类型 对应ChatProto
@@ -161,6 +162,15 @@ public class SocketFrameTextMessage {
         return message;
     }
 
+    /**
+     * 生成订单推送订单数加1
+     */
+    public static SocketFrameTextMessage addOrderCount(Integer count) {
+        SocketFrameTextMessage message = new SocketFrameTextMessage();
+        message.msgType = ChatProto.ADD_ORDER_Count;
+        message.msg = count+"";
+        return message;
+    }
     //群聊消息
     public static SocketFrameTextMessage newGroupMessageTip(Integer chatUserId, String msg) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();

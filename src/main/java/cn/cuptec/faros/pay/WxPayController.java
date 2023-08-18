@@ -240,6 +240,7 @@ public class WxPayController {
                 userById.setPatientName(byId.getName());
                 userById.setPatientId(byId.getId());
                 userById.setIdCard(byId.getIdCard());
+                userById.setDeptId(userOrder.getDeptId());
                 userService.updateById(userById);
             }
             userOrder.setConfirmPayTime(new Date());

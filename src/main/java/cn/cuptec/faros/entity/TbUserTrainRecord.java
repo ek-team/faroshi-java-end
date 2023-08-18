@@ -52,6 +52,8 @@ public class TbUserTrainRecord {
 
     @TableField(exist = false)
     private Integer count;
+    @TableField(exist = false)
+    private String userName;//设备用户名字
 
 
 }
