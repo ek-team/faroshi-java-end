@@ -190,7 +190,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/dataArea/**",
                         "/trainNumber/**",
                         "/rehabilitation/**",
-                        "/productStockUserCount/**"
+                        "/productStockUserCount/**",
+                        "/palnUser/pushUserCount"
 
                 )
                 .permitAll()

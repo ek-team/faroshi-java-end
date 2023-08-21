@@ -6,11 +6,15 @@ import cn.cuptec.faros.config.pay.PayConfig;
 
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.im.proto.ChatProto;
 import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -21,6 +25,8 @@ import com.github.binarywang.wxpay.bean.request.WxPayRefundRequest;
 import com.github.binarywang.wxpay.config.WxPayConfig;
 import com.github.binarywang.wxpay.exception.WxPayException;
 import com.github.binarywang.wxpay.service.WxPayService;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
@@ -108,6 +114,10 @@ public class WxPayController {
     private SaleSpecService saleSpecService;
     @Resource
     private UpdateOrderRecordService updateOrderRecordService;
+    @Resource
+    private MacAddOrderCountService macAddOrderCountService;
+    @Resource
+    private ProductStockService productStockService;
     private final Url urlData;
     @Autowired
     public RedisTemplate redisTemplate;
@@ -363,6 +373,7 @@ public class WxPayController {
             }
 
             userOrdertService.autoXiaDanCheck(userOrder.getOrderNo(), urlData.getUrl());
+            pushOrderCount(userOrder.getServicePackId());
         }
         //图文咨询订单处理
         PatientOtherOrder patientOtherOrder = patientOtherOrderService.getOne(new QueryWrapper<PatientOtherOrder>().lambda()
@@ -504,7 +515,41 @@ public class WxPayController {
         }
         return RestResponse.ok();
     }
+    private void pushOrderCount(Integer servicePackId) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                        .eq(ProductStock::getServicePackId, servicePackId)
+                        .eq(ProductStock::getDel,1));
+                if (!CollectionUtils.isEmpty(productStocks)) {
+                    for (ProductStock productStock : productStocks) {
+                        String macAddress = productStock.getMacAddress();
+                        MacAddOrderCount macAddOrderCount = macAddOrderCountService.getOne(new QueryWrapper<MacAddOrderCount>().lambda()
+                                .eq(MacAddOrderCount::getMacAdd, macAddress));
+                        if (macAddOrderCount == null) {
+                            macAddOrderCount = new MacAddOrderCount();
+                            macAddOrderCount.setCount(1);
+                        } else {
+                            macAddOrderCount.setCount(macAddOrderCount.getCount() + 1);
+                        }
+                        macAddOrderCount.setMacAdd(macAddress);
+                        macAddOrderCountService.saveOrUpdate(macAddOrderCount);
+                        Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                        //2.向目标用户发送新消息提醒
+                        if (targetUserChannel != null) {
 
+                            SocketFrameTextMessage targetUserMessage
+                                    = SocketFrameTextMessage.addOrderCount(macAddOrderCount.getCount(),macAddress);
+
+                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                        }
+                    }
+                }
+            }
+        });
+    }
     /**
      * <pre>
      * 微信支付-申请退款.

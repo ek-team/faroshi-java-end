@@ -5,10 +5,14 @@ import cn.cuptec.faros.common.constrants.QrCodeConstants;
 import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
-import cn.cuptec.faros.service.PlanUserService;
-import cn.cuptec.faros.service.PneumaticPlanService;
-import cn.cuptec.faros.service.PneumaticRecordService;
+import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.UserChannelManager;
+import cn.cuptec.faros.service.*;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
+
 @AllArgsConstructor
 @RestController
 @RequestMapping("/pneumaticRecord")
@@ -30,6 +35,10 @@ public class PneumaticRecordController extends AbstractBaseController<PneumaticR
     private PlanUserService planUserService;
     @Resource
     private PneumaticPlanService pneumaticPlanService;
+    @Resource
+    private TrainNumberMacAddService trainNumberMacAddService;
+    @Resource
+    private ProductStockService productStockService;
 
     //添加记录
     @PostMapping("/save")
@@ -50,8 +59,40 @@ public class PneumaticRecordController extends AbstractBaseController<PneumaticR
 
 
             service.saveBatch(pneumaticRecords);
+            pushUseCount(pneumaticRecords.get(0).getMacAddress());
         }
         return RestResponse.ok();
+    }
+
+    //发送设备使用次数加1
+    private void pushUseCount(String macAddress) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                TrainNumberMacAdd trainNumberMacAdd = trainNumberMacAddService.getOne(new QueryWrapper<TrainNumberMacAdd>().lambda()
+                        .eq(TrainNumberMacAdd::getMacAdd, macAddress));
+                if (trainNumberMacAdd == null) {
+                    trainNumberMacAdd = new TrainNumberMacAdd();
+                    trainNumberMacAdd.setTrainNumber(1);
+                } else {
+                    trainNumberMacAdd.setTrainNumber(trainNumberMacAdd.getTrainNumber() + 1);
+                }
+                trainNumberMacAdd.setMacAdd(macAddress);
+                trainNumberMacAddService.saveOrUpdate(trainNumberMacAdd);
+                Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                //2.向目标用户发送新消息提醒n
+                if (targetUserChannel != null) {
+
+                    SocketFrameTextMessage targetUserMessage
+                            = SocketFrameTextMessage.PRODUCT_STOCK_TRAIN_RECORD_COUNT(trainNumberMacAdd.getTrainNumber());
+
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                }
+
+
+            }
+        });
     }
 
     /**

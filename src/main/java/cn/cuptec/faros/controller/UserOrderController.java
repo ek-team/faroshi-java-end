@@ -930,8 +930,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/createOrder")
     public RestResponse createOrder(@RequestBody UserOrder userOrder) {
-        //动态推送订单数量
-        pushOrderCount(userOrder.getServicePackId());
+
         userOrder.setUrl(urlData.getUrl());
         Integer addressId = userOrder.getAddressId();
         Address address = addressService.getById(addressId);
@@ -1102,8 +1101,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
      */
     @PostMapping("/user/add")
     public RestResponse addOrder(@RequestBody UserOrder userOrder) {
-        //动态推送订单数量
-        pushOrderCount(userOrder.getServicePackId());
+
         userOrder.setUrl(urlData.getUrl());
         Integer addressId = userOrder.getAddressId();
         Address address = addressService.getById(addressId);
@@ -1223,41 +1221,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         return restResponse;
     }
 
-    private void pushOrderCount(Integer servicePackId) {
-        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
-            @Override
-            public void run() {
-                List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
-                        .eq(ProductStock::getServicePackId, servicePackId)
-                .eq(ProductStock::getDel,1));
-                if (!CollectionUtils.isEmpty(productStocks)) {
-                    for (ProductStock productStock : productStocks) {
-                        String macAddress = productStock.getMacAddress();
-                        MacAddOrderCount macAddOrderCount = macAddOrderCountService.getOne(new QueryWrapper<MacAddOrderCount>().lambda()
-                                .eq(MacAddOrderCount::getMacAdd, macAddress));
-                        if (macAddOrderCount == null) {
-                            macAddOrderCount = new MacAddOrderCount();
-                            macAddOrderCount.setCount(1);
-                        } else {
-                            macAddOrderCount.setCount(macAddOrderCount.getCount() + 1);
-                        }
-                        macAddOrderCount.setMacAdd(macAddress);
-                        macAddOrderCountService.saveOrUpdate(macAddOrderCount);
-                        Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
-                        //2.向目标用户发送新消息提醒
-                        if (targetUserChannel != null) {
 
-                            SocketFrameTextMessage targetUserMessage
-                                    = SocketFrameTextMessage.addOrderCount(macAddOrderCount.getCount(),macAddress);
-
-                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-
-                        }
-                    }
-                }
-            }
-        });
-    }
 
     /**
      * 用户查询自己的订单

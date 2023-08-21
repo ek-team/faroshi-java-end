@@ -74,7 +74,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         String userId = userTrainRecordList.get(0).getUserId();
         List<TbTrainUser> list = planUserService.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
 
-        service.saveAndData(userTrainRecordList);
+
         pushData(list, userTrainRecordList);
         //推送训练记录次数加1
         String macAdd = "";
@@ -92,6 +92,10 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
             pushUseCount(macAdd);
 
         }
+        for (TbUserTrainRecord tbUserTrainRecord : userTrainRecordList) {
+            tbUserTrainRecord.setMacAddress(macAdd);
+        }
+        service.saveAndData(userTrainRecordList);
         return RestResponse.ok();
     }
 

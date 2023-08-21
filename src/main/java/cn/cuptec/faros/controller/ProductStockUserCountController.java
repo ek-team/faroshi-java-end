@@ -2,8 +2,11 @@ package cn.cuptec.faros.controller;
 
 import cn.cuptec.faros.common.RestResponse;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
+import cn.cuptec.faros.dto.ListByDeviceUserParam;
 import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
@@ -31,6 +34,8 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
     private PatientUserService patientUserService;
     @Resource
     private PlanUserTrainRecordService planUserTrainRecordService;
+    @Resource
+    private PneumaticRecordService pneumaticRecordService;
     @Resource
     private PlanUserService planUserService;
 
@@ -130,7 +135,7 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
         }
         List<UserOrder> userOrders = userOrdertService.list(new QueryWrapper<UserOrder>().lambda()
                 .in(UserOrder::getServicePackId, servicePackIds)
-                .orderByDesc(UserOrder::getCreateTime).last(" limit 3 "));
+                .orderByDesc(UserOrder::getCreateTime).last(" limit 10 "));
         if (CollectionUtils.isEmpty(userOrders)) {
             return RestResponse.ok();
         }
@@ -157,7 +162,13 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
             }
 
         }
-        return RestResponse.ok();
+        Map<String, PatientUser> patientUserMap = patientUsers.stream()
+                .collect(Collectors.toMap(PatientUser::getId, t -> t));
+        List<PatientUser> patientUserList = new ArrayList<>();
+        for (UserOrder userOrder : userOrders) {
+            patientUserList.add(patientUserMap.get(userOrder.getPatientUserId() + ""));
+        }
+        return RestResponse.ok(patientUserList);
 
 
     }
@@ -166,11 +177,31 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
     @GetMapping("/getTrainRecord")
     public RestResponse getTrainRecord(@RequestParam("airTrainMacAdd") String airTrainMacAdd,
                                        @RequestParam("balanceMacAdd") String balanceMacAdd) {
-        List<String> macAdds = new ArrayList<>();
-        macAdds.add(airTrainMacAdd);
-        macAdds.add(balanceMacAdd);
+        GetTrainRecordData getTrainRecordData = new GetTrainRecordData();
+        //气动
+        List<PneumaticRecord> pneumaticRecords = pneumaticRecordService.list(new QueryWrapper<PneumaticRecord>().lambda()
+                .eq(PneumaticRecord::getMacAddress, airTrainMacAdd)
+                .orderByDesc(PneumaticRecord::getPlanDayTime).last(" limit 5 "));
+        if (!CollectionUtils.isEmpty(pneumaticRecords)) {
+            List<String> userIds = pneumaticRecords.stream().map(PneumaticRecord::getUserId)
+                    .collect(Collectors.toList());
+            String url = "https://api.redadzukibeans.com/system/deviceUser/ListByDeviceUserId";
+            ListByDeviceUserParam param = new ListByDeviceUserParam();
+            param.setDeviceUserIds(userIds);
+            String params = JSONObject.toJSONString(param);
+            String post = HttpUtil.post(url, params);
+            RestResponse restResponse = JSONObject.parseObject(post, RestResponse.class);
+            List<TbTrainUser> data = (List<TbTrainUser>) restResponse.getData();
+            Map<String, TbTrainUser> userMap = data.stream()
+                    .collect(Collectors.toMap(TbTrainUser::getUserId, t -> t));
+            for (PneumaticRecord tbUserTrainRecord : pneumaticRecords) {
+                tbUserTrainRecord.setUserName(userMap.get(tbUserTrainRecord.getUserId()).getName());
+            }
+            getTrainRecordData.setPneumaticRecordList(pneumaticRecords);
+        }
+        //下肢
         List<TbUserTrainRecord> tbUserTrainRecords = planUserTrainRecordService.list(new QueryWrapper<TbUserTrainRecord>().lambda()
-                .in(TbUserTrainRecord::getMacAddress, macAdds)
+                .eq(TbUserTrainRecord::getMacAddress, balanceMacAdd)
                 .orderByDesc(TbUserTrainRecord::getDateStr).last(" limit 5 "));
         if (!CollectionUtils.isEmpty(tbUserTrainRecords)) {
             List<String> userIds = tbUserTrainRecords.stream().map(TbUserTrainRecord::getUserId)
@@ -182,8 +213,9 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
             for (TbUserTrainRecord tbUserTrainRecord : tbUserTrainRecords) {
                 tbUserTrainRecord.setUserName(userMap.get(tbUserTrainRecord.getUserId()).getName());
             }
+            getTrainRecordData.setTbUserTrainRecords(tbUserTrainRecords);
         }
-        return RestResponse.ok(tbUserTrainRecords);
+        return RestResponse.ok(getTrainRecordData);
 
 
     }

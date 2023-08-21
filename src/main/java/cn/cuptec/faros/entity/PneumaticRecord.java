@@ -1,11 +1,12 @@
 package cn.cuptec.faros.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 /**
- * 气动记录表
+ * 气动训练记录表
  */
 @Data
 public class PneumaticRecord {
@@ -23,4 +24,8 @@ public class PneumaticRecord {
     private Integer planTime;//用户计划训练时间
     private Integer planTimeDone;//用户已完成时间
     private Integer type;//训练类型
+    private String macAddress;
+    @TableField(exist = false)
+    private String userName;//设备用户名字
+
 }

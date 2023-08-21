@@ -560,6 +560,11 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         return map;
     }
 
+    @GetMapping("/pushUserCount")
+    public void pushUserCountData(@RequestParam("macAdd") String macAdd) {
+        pushUserCount(macAdd);
+    }
+
     //发送设备注册用户数量加1
     private void pushUserCount(String macAdd) {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {

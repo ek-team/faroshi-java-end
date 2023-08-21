@@ -5,8 +5,12 @@ import cn.cuptec.faros.common.utils.QrCodeUtil;
 import cn.cuptec.faros.common.utils.http.ServletUtils;
 import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.QrCodeUtils;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
@@ -19,6 +23,8 @@ import com.alipay.api.response.AlipayTradeRefundResponse;
 import com.alipay.api.response.AlipayTradeWapPayResponse;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.swagger.annotations.Api;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,9 +87,9 @@ public class AliPayController {
     @Resource
     private UserDoctorRelationService userDoctorRelationService;
     @Resource
-    private PatientOtherOrderService patientOtherOrderService;//患者其它订单
+    private MacAddOrderCountService macAddOrderCountService;//患者其它订单
     @Resource
-    private DoctorPointService doctorPointService;//医生积分
+    private ProductStockService productStockService;//医生积分
     @Resource
     private DoctorTeamService doctorTeamService;
     @Resource
@@ -507,9 +513,46 @@ public class AliPayController {
                 }
 
                 userOrdertService.autoXiaDanCheck(userOrder.getOrderNo(), urlData.getUrl());
+                pushOrderCount(userOrder.getServicePackId());
             }
         }
         return RestResponse.ok();
+    }
+
+    private void pushOrderCount(Integer servicePackId) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                        .eq(ProductStock::getServicePackId, servicePackId)
+                        .eq(ProductStock::getDel, 1));
+                if (!CollectionUtils.isEmpty(productStocks)) {
+                    for (ProductStock productStock : productStocks) {
+                        String macAddress = productStock.getMacAddress();
+                        MacAddOrderCount macAddOrderCount = macAddOrderCountService.getOne(new QueryWrapper<MacAddOrderCount>().lambda()
+                                .eq(MacAddOrderCount::getMacAdd, macAddress));
+                        if (macAddOrderCount == null) {
+                            macAddOrderCount = new MacAddOrderCount();
+                            macAddOrderCount.setCount(1);
+                        } else {
+                            macAddOrderCount.setCount(macAddOrderCount.getCount() + 1);
+                        }
+                        macAddOrderCount.setMacAdd(macAddress);
+                        macAddOrderCountService.saveOrUpdate(macAddOrderCount);
+                        Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                        //2.向目标用户发送新消息提醒
+                        if (targetUserChannel != null) {
+
+                            SocketFrameTextMessage targetUserMessage
+                                    = SocketFrameTextMessage.addOrderCount(macAddOrderCount.getCount(), macAddress);
+
+                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                        }
+                    }
+                }
+            }
+        });
     }
 
     /**
