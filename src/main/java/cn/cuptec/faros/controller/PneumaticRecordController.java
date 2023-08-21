@@ -59,7 +59,7 @@ public class PneumaticRecordController extends AbstractBaseController<PneumaticR
 
 
             service.saveBatch(pneumaticRecords);
-            pushUseCount(pneumaticRecords.get(0).getMacAddress());
+            pushUseCount(pneumaticRecords.get(0).getMacAdd());
         }
         return RestResponse.ok();
     }

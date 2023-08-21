@@ -22,4 +22,6 @@ public class PatientUser {
     private String phone;
     @TableField(exist = false)
     private String address;
+    @TableField(exist = false)
+    private String macAdd;
 }

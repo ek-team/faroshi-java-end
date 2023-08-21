@@ -115,6 +115,8 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
 
         Map<String, List<ProductStock>> productStockMap = productStocks.stream()
                 .collect(Collectors.groupingBy(ProductStock::getMacAddress));
+        Map<String, List<ProductStock>> productStockMap1 = productStocks.stream()
+                .collect(Collectors.groupingBy(ProductStock::getServicePackId));
         List<ProductStock> productStocks1 = productStockMap.get(airTrainMacAdd);
         List<String> servicePackIds = new ArrayList<>();
         if (!CollectionUtils.isEmpty(productStocks1)) {
@@ -166,7 +168,14 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
                 .collect(Collectors.toMap(PatientUser::getId, t -> t));
         List<PatientUser> patientUserList = new ArrayList<>();
         for (UserOrder userOrder : userOrders) {
-            patientUserList.add(patientUserMap.get(userOrder.getPatientUserId() + ""));
+            PatientUser patientUser = patientUserMap.get(userOrder.getPatientUserId() + "");
+            Integer servicePackId = userOrder.getServicePackId();
+            List<ProductStock> productStocks3 = productStockMap1.get(servicePackId + "");
+            if (!CollectionUtils.isEmpty(productStocks3)) {
+                String macAddress = productStocks3.get(0).getMacAddress();
+                patientUser.setMacAdd(macAddress);
+            }
+            patientUserList.add(patientUser);
         }
         return RestResponse.ok(patientUserList);
 
@@ -180,7 +189,7 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
         GetTrainRecordData getTrainRecordData = new GetTrainRecordData();
         //气动
         List<PneumaticRecord> pneumaticRecords = pneumaticRecordService.list(new QueryWrapper<PneumaticRecord>().lambda()
-                .eq(PneumaticRecord::getMacAddress, airTrainMacAdd)
+                .eq(PneumaticRecord::getMacAdd, airTrainMacAdd)
                 .orderByDesc(PneumaticRecord::getPlanDayTime).last(" limit 5 "));
         if (!CollectionUtils.isEmpty(pneumaticRecords)) {
             List<String> userIds = pneumaticRecords.stream().map(PneumaticRecord::getUserId)
@@ -191,9 +200,14 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
             String params = JSONObject.toJSONString(param);
             String post = HttpUtil.post(url, params);
             RestResponse restResponse = JSONObject.parseObject(post, RestResponse.class);
-            List<TbTrainUser> data = (List<TbTrainUser>) restResponse.getData();
-            Map<String, TbTrainUser> userMap = data.stream()
-                    .collect(Collectors.toMap(TbTrainUser::getUserId, t -> t));
+            String data = restResponse.getData().toString();
+            List<TbTrainUser> tbTrainUsers = JSONObject.parseArray(data, TbTrainUser.class);
+
+            Map<String, TbTrainUser> userMap = new HashMap<>();
+            for (TbTrainUser tbTrainUser : tbTrainUsers) {
+                userMap.put(tbTrainUser.getUserId(), tbTrainUser);
+
+            }
             for (PneumaticRecord tbUserTrainRecord : pneumaticRecords) {
                 tbUserTrainRecord.setUserName(userMap.get(tbUserTrainRecord.getUserId()).getName());
             }
