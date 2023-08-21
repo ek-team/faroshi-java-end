@@ -53,6 +53,7 @@ public class ChatProto {
     public static final String SYSTEM_NOTIC = "SYSTEM_NOTIC"; //系统消息
 
     public static final String ADD_ORDER_COUNT = "ADD_ORDER_COUNT"; //订单数加1
-
+    public static final String PRODUCT_STOCK_USER_COUNT = "PRODUCT_STOCK_USER_COUNT"; //设备注册人数加1
+    public static final String PRODUCT_STOCK_TRAIN_RECORD_COUNT = "PRODUCT_STOCK_TRAIN_RECORD_COUNT"; //训练记录人数加1
 }
 

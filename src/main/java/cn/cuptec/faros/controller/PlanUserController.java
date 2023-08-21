@@ -9,12 +9,16 @@ import cn.cuptec.faros.config.com.Url;
 import cn.cuptec.faros.config.security.util.SecurityUtils;
 import cn.cuptec.faros.controller.base.AbstractBaseController;
 import cn.cuptec.faros.entity.*;
+import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
+import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.mapper.UserOrderMapper;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ExcelUtil;
 import cn.cuptec.faros.util.IdCardUtil;
 import cn.cuptec.faros.util.SnowflakeIdWorker;
+import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -22,6 +26,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +56,8 @@ import java.util.stream.Collectors;
 public class PlanUserController extends AbstractBaseController<PlanUserService, TbTrainUser> {
     @Resource
     private ProductStockService productStockService;
+    @Resource
+    private ProductStockUserMacAddCountService productStockUserMacAddCountService;
     @Resource
     private PatientUserService patientUserService;
     @Resource
@@ -552,9 +560,48 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         return map;
     }
 
+    //发送设备注册用户数量加1
+    private void pushUserCount(String macAdd) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                        .eq(ProductStock::getMacAddress, macAdd)
+                        .eq(ProductStock::getDel, 1));
+                if (!CollectionUtils.isEmpty(productStocks)) {
+                    for (ProductStock productStock : productStocks) {
+                        String macAddress = productStock.getMacAddress();
+                        ProductStockUserMacAddCount productStockUserMacAddCount = productStockUserMacAddCountService.getOne(new QueryWrapper<ProductStockUserMacAddCount>().lambda()
+                                .eq(ProductStockUserMacAddCount::getMacAdd, macAddress));
+                        if (productStockUserMacAddCount == null) {
+                            productStockUserMacAddCount = new ProductStockUserMacAddCount();
+                            productStockUserMacAddCount.setCount(1);
+                        } else {
+                            productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + 1);
+                        }
+                        productStockUserMacAddCount.setMacAdd(macAddress);
+                        productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
+                        Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                        //2.向目标用户发送新消息提醒n
+                        if (targetUserChannel != null) {
+
+                            SocketFrameTextMessage targetUserMessage
+                                    = SocketFrameTextMessage.PRODUCT_STOCK_USER_COUNT(productStockUserMacAddCount.getCount());
+
+                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     @PostMapping("/add")
     public RestResponse add(@RequestBody TbTrainUser tbTrainUser) {
-
+        if (!StringUtils.isEmpty(tbTrainUser.getMacAdd())) {
+            pushUserCount(tbTrainUser.getMacAdd());
+        }
 
         PlanUserOtherInfo planUserOtherInfo = planUserOtherInfoService.getOne(new QueryWrapper<PlanUserOtherInfo>().lambda().eq(PlanUserOtherInfo::getIdCard, tbTrainUser.getIdCard()));
         if (planUserOtherInfo == null) {
@@ -765,6 +812,11 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @PostMapping("/saveBatch")
     public RestResponse<TbTrainUser> addSaveBatch(@RequestBody List<TbTrainUser> userBeanList) {
         if (CollUtil.isNotEmpty(userBeanList)) {
+            for (TbTrainUser tbTrainUser : userBeanList) {
+                if (!StringUtils.isEmpty(tbTrainUser.getMacAdd())) {
+                    pushUserCount(tbTrainUser.getMacAdd());
+                }
+            }
             service.batchSaveOrUpdate(userBeanList);
         }
 
@@ -774,6 +826,11 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     @PostMapping("/newSaveBatch")
     public RestResponse<TbTrainUser> newSaveBatch(@RequestBody List<TbTrainUser> userBeanList) {
         if (CollUtil.isNotEmpty(userBeanList)) {
+            for (TbTrainUser tbTrainUser : userBeanList) {
+                if (!StringUtils.isEmpty(tbTrainUser.getMacAdd())) {
+                    pushUserCount(tbTrainUser.getMacAdd());
+                }
+            }
             return RestResponse.ok(service.newSaveBatch(userBeanList));
 
         }

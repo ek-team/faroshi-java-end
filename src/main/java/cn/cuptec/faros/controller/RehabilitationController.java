@@ -43,6 +43,7 @@ public class RehabilitationController extends AbstractBaseController<Rehabilitat
             } else {
                 macAddOrderCount.setCount(macAddOrderCount.getCount() + rehabilitation.getBalanceTrainOrder());
             }
+            macAddOrderCount.setMacAdd(balanceMacAdd);
             macAddOrderCountService.saveOrUpdate(macAddOrderCount);
         }
         String airTrainMacAdd = rehabilitation.getAirTrainMacAdd();
@@ -55,6 +56,7 @@ public class RehabilitationController extends AbstractBaseController<Rehabilitat
             } else {
                 macAddOrderCount1.setCount(macAddOrderCount1.getCount() + rehabilitation.getAirTrainOrder());
             }
+            macAddOrderCount1.setMacAdd(airTrainMacAdd);
             macAddOrderCountService.saveOrUpdate(macAddOrderCount1);
         }
         return RestResponse.ok();

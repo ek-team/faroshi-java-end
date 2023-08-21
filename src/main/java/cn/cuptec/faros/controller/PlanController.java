@@ -9,6 +9,7 @@ import cn.cuptec.faros.service.PlanService;
 import cn.cuptec.faros.service.PlanUserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Update;
@@ -32,13 +33,16 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
     private DoctorTeamService doctorTeamService;
 
     @PostMapping("/save")
-    public RestResponse<TbPlan> addPlan(@RequestBody List<TbPlan> planList) {
+    public RestResponse addPlan(@RequestBody List<TbPlan> planList) {
+        if (CollectionUtils.isEmpty(planList)) {
+            return RestResponse.ok();
+        }
         service.saveList(planList);
         Long userId = planList.get(0).getUserId();
 
         TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, userId));
-        if(one!=null){
-            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+        if (one != null) {
+            if (one.getDoctorTeamId() == null || one.getDoctorTeamId().equals(0)) {
                 one.setPlanCheckStatus(2);
                 planUserService.updateById(one);
             }
@@ -56,7 +60,6 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
 
         return RestResponse.ok();
     }
-
 
 
     /**
@@ -104,9 +107,9 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
     }
 
     @GetMapping("listGroupByPhoneAndIdCard")
-    public RestResponse listGroupByPhoneAndIdCard(@RequestParam(value = "userId", required = false) String userId,@RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard) {
+    public RestResponse listGroupByPhoneAndIdCard(@RequestParam(value = "userId", required = false) String userId, @RequestParam(value = "phone", required = false) String phone, @RequestParam(value = "idCard", required = false) String idCard) {
 
-        return RestResponse.ok(service.listGroupByPhone(phone, idCard,userId));
+        return RestResponse.ok(service.listGroupByPhone(phone, idCard, userId));
     }
 
     @PutMapping("updateList")
@@ -115,8 +118,8 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
         Long userId = tbPlanList.get(0).getUserId();
 
         TbTrainUser one = planUserService.getOne(Wrappers.<TbTrainUser>lambdaQuery().eq(TbTrainUser::getUserId, userId));
-        if(one!=null){
-            if(one.getDoctorTeamId()==null || one.getDoctorTeamId().equals(0)){
+        if (one != null) {
+            if (one.getDoctorTeamId() == null || one.getDoctorTeamId().equals(0)) {
                 one.setPlanCheckStatus(2);
                 planUserService.updateById(one);
             }
@@ -135,13 +138,14 @@ public class PlanController extends AbstractBaseController<PlanService, TbPlan> 
     }
 
     /**
-     *清除康复计划标识
+     * 清除康复计划标识
+     *
      * @return
      */
     @GetMapping("cleanTag")
     public RestResponse cleanTag(@RequestParam("userId") String userId) {
         planUserService.update(Wrappers.<TbTrainUser>lambdaUpdate()//修改评估记录上传标识
-                .eq(TbTrainUser::getUserId, userId+"")
+                .eq(TbTrainUser::getUserId, userId + "")
                 .set(TbTrainUser::getEvaluationRecordTag, 0));
 
         return RestResponse.ok();

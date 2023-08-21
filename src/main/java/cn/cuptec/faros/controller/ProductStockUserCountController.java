@@ -48,6 +48,7 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
             } else {
                 productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + productStockUserCount.getBalanceTrainCount());
             }
+            productStockUserMacAddCount.setMacAdd(balanceMacAdd);
             productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
         }
         String airTrainMacAdd = productStockUserCount.getAirTrainMacAdd();
@@ -60,6 +61,7 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
             } else {
                 productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + productStockUserCount.getAirTrainCount());
             }
+            productStockUserMacAddCount.setMacAdd(airTrainMacAdd);
             productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
         }
         return RestResponse.ok();

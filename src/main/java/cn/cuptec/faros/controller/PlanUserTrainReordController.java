@@ -55,6 +55,10 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
     private DoctorTeamPeopleService doctorTeamPeopleService;
     @Resource
     private SysTemNoticService sysTemNoticService;
+    @Resource
+    private TrainNumberMacAddService trainNumberMacAddService;
+    @Resource
+    private ProductStockService productStockService;
 
     @GetMapping("/pageByUid/{uid}")
     public RestResponse pageByUid(@PathVariable String uid) {
@@ -72,7 +76,54 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
         service.saveAndData(userTrainRecordList);
         pushData(list, userTrainRecordList);
+        //推送训练记录次数加1
+        String macAdd = "";
+        if (!StringUtils.isEmpty(userTrainRecordList.get(0).getMacAddress())) {
+            macAdd = userTrainRecordList.get(0).getMacAddress();
+        } else if (!StringUtils.isEmpty(userTrainRecordList.get(0).getProductSn())) {
+            List<ProductStock> list1 = productStockService.list(new QueryWrapper<ProductStock>().lambda()
+                    .eq(ProductStock::getProductSn, userTrainRecordList.get(0).getProductSn())
+                    .eq(ProductStock::getDel, 1));
+            if (!CollectionUtils.isEmpty(list1)) {
+                macAdd = list1.get(0).getMacAddress();
+            }
+        }
+        if (!StringUtils.isEmpty(macAdd)) {
+            pushUseCount(macAdd);
+
+        }
         return RestResponse.ok();
+    }
+
+    //发送设备使用次数加1
+    private void pushUseCount(String macAddress) {
+        ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                TrainNumberMacAdd trainNumberMacAdd = trainNumberMacAddService.getOne(new QueryWrapper<TrainNumberMacAdd>().lambda()
+                        .eq(TrainNumberMacAdd::getMacAdd, macAddress));
+                if (trainNumberMacAdd == null) {
+                    trainNumberMacAdd = new TrainNumberMacAdd();
+                    trainNumberMacAdd.setTrainNumber(1);
+                } else {
+                    trainNumberMacAdd.setTrainNumber(trainNumberMacAdd.getTrainNumber() + 1);
+                }
+                trainNumberMacAdd.setMacAdd(macAddress);
+                trainNumberMacAddService.saveOrUpdate(trainNumberMacAdd);
+                Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                //2.向目标用户发送新消息提醒n
+                if (targetUserChannel != null) {
+
+                    SocketFrameTextMessage targetUserMessage
+                            = SocketFrameTextMessage.PRODUCT_STOCK_TRAIN_RECORD_COUNT(trainNumberMacAdd.getTrainNumber());
+
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                }
+
+
+            }
+        });
     }
 
     private void pushData(List<TbTrainUser> list, List<TbUserTrainRecord> userTrainRecordList) {
@@ -349,19 +400,19 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
         List<TbTrainData> tbTrainDatas = trainDataService.list(new QueryWrapper<TbTrainData>().lambda().eq(TbTrainData::getUserId, userId));//查询踩踏次数
         Map<String, List<TbTrainData>> tbTrainDataMap = new HashMap<>();
         if (!CollectionUtils.isEmpty(tbTrainDatas)) {
-            for(TbUserTrainRecord tbUserTrainRecord:tbUserTrainRecords){
-                String key=tbUserTrainRecord.getDateStr()+userId+(tbUserTrainRecord.getFrequency()-1);
+            for (TbUserTrainRecord tbUserTrainRecord : tbUserTrainRecords) {
+                String key = tbUserTrainRecord.getDateStr() + userId + (tbUserTrainRecord.getFrequency() - 1);
                 List<TbTrainData> tbTrainDataList = tbTrainDataMap.get(key);
-                if(CollectionUtils.isEmpty(tbTrainDataList)){
-                    tbTrainDataList=new ArrayList<>();
+                if (CollectionUtils.isEmpty(tbTrainDataList)) {
+                    tbTrainDataList = new ArrayList<>();
                 }
-                for(TbTrainData tbTrainData:tbTrainDatas){
-                    String key1=tbTrainData.getDateStr()+userId+(tbTrainData.getFrequency()-1);
-                    if(key1.equals(key)){
+                for (TbTrainData tbTrainData : tbTrainDatas) {
+                    String key1 = tbTrainData.getDateStr() + userId + (tbTrainData.getFrequency() - 1);
+                    if (key1.equals(key)) {
                         tbTrainDataList.add(tbTrainData);
                     }
                 }
-                tbTrainDataMap.put(key,tbTrainDataList);
+                tbTrainDataMap.put(key, tbTrainDataList);
             }
 
         }
@@ -404,7 +455,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
             int totalTargetLoad = 0;//总负重次数
             if (!CollectionUtils.isEmpty(records1)) {
                 for (TbUserTrainRecord tbUserTrainRecord : records1) {
-                    String key2=tbUserTrainRecord.getDateStr()+userId+(tbUserTrainRecord.getFrequency()-1);
+                    String key2 = tbUserTrainRecord.getDateStr() + userId + (tbUserTrainRecord.getFrequency() - 1);
 
 
                     List<TbTrainData> tbTrainData = tbTrainDataMap.get(key2);

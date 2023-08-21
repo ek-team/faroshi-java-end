@@ -1228,24 +1228,27 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
             @Override
             public void run() {
                 List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
-                        .eq(ProductStock::getServicePackId, servicePackId));
+                        .eq(ProductStock::getServicePackId, servicePackId)
+                .eq(ProductStock::getDel,1));
                 if (!CollectionUtils.isEmpty(productStocks)) {
                     for (ProductStock productStock : productStocks) {
                         String macAddress = productStock.getMacAddress();
+                        MacAddOrderCount macAddOrderCount = macAddOrderCountService.getOne(new QueryWrapper<MacAddOrderCount>().lambda()
+                                .eq(MacAddOrderCount::getMacAdd, macAddress));
+                        if (macAddOrderCount == null) {
+                            macAddOrderCount = new MacAddOrderCount();
+                            macAddOrderCount.setCount(1);
+                        } else {
+                            macAddOrderCount.setCount(macAddOrderCount.getCount() + 1);
+                        }
+                        macAddOrderCount.setMacAdd(macAddress);
+                        macAddOrderCountService.saveOrUpdate(macAddOrderCount);
                         Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
                         //2.向目标用户发送新消息提醒
                         if (targetUserChannel != null) {
-                            MacAddOrderCount macAddOrderCount = macAddOrderCountService.getOne(new QueryWrapper<MacAddOrderCount>().lambda()
-                                    .eq(MacAddOrderCount::getMacAdd, macAddress));
-                            if (macAddOrderCount == null) {
-                                macAddOrderCount = new MacAddOrderCount();
-                                macAddOrderCount.setCount(1);
-                            } else {
-                                macAddOrderCount.setCount(macAddOrderCount.getCount() + 1);
-                            }
-                            macAddOrderCountService.saveOrUpdate(macAddOrderCount);
+
                             SocketFrameTextMessage targetUserMessage
-                                    = SocketFrameTextMessage.addOrderCount(macAddOrderCount.getCount());
+                                    = SocketFrameTextMessage.addOrderCount(macAddOrderCount.getCount(),macAddress);
 
                             targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
 

@@ -165,9 +165,28 @@ public class SocketFrameTextMessage {
     /**
      * 生成订单推送订单数加1
      */
-    public static SocketFrameTextMessage addOrderCount(Integer count) {
+    public static SocketFrameTextMessage addOrderCount(Integer count,String macAdd) {
         SocketFrameTextMessage message = new SocketFrameTextMessage();
         message.msgType = ChatProto.ADD_ORDER_COUNT;
+        message.msg = count+"";
+        message.macAdd = macAdd;
+        return message;
+    }
+    /**
+     * 设备用户数量加1
+     */
+    public static SocketFrameTextMessage PRODUCT_STOCK_USER_COUNT(Integer count) {
+        SocketFrameTextMessage message = new SocketFrameTextMessage();
+        message.msgType = ChatProto.PRODUCT_STOCK_USER_COUNT;
+        message.msg = count+"";
+        return message;
+    }
+    /**
+     * 设备使用次数加1
+     */
+    public static SocketFrameTextMessage PRODUCT_STOCK_TRAIN_RECORD_COUNT(Integer count) {
+        SocketFrameTextMessage message = new SocketFrameTextMessage();
+        message.msgType = ChatProto.PRODUCT_STOCK_TRAIN_RECORD_COUNT;
         message.msg = count+"";
         return message;
     }
