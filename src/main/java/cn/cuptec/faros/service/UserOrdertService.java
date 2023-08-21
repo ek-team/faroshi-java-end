@@ -365,6 +365,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
         vo.setStatu7(count7);//已取消
         Integer count8 = baseMapper.selectCount(new QueryWrapper<UserOrder>().lambda()
                 .isNotNull(UserOrder::getBillId)
+                        .eq(UserOrder::getTest,0)
                 .isNull(UserOrder::getBillImage));
         vo.setStatu8(count8);//已申请开票但是没开票的
         return vo;
