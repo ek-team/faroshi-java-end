@@ -34,10 +34,9 @@ public class TrainNumberController extends AbstractBaseController<TrainNumberSer
                     .eq(TrainNumberMacAdd::getMacAdd, balanceMacAdd));
             if (trainNumberMacAdd == null) {
                 trainNumberMacAdd = new TrainNumberMacAdd();
-                trainNumberMacAdd.setTrainNumber(trainNumber.getBalanceTrainNumber());
-            } else {
-                trainNumberMacAdd.setTrainNumber(trainNumberMacAdd.getTrainNumber() + trainNumber.getBalanceTrainNumber());
             }
+            trainNumberMacAdd.setTrainNumber(trainNumber.getBalanceTrainNumber());
+
             trainNumberMacAdd.setMacAdd(balanceMacAdd);
             trainNumberMacAddService.saveOrUpdate(trainNumberMacAdd);
         }
@@ -47,10 +46,9 @@ public class TrainNumberController extends AbstractBaseController<TrainNumberSer
                     .eq(TrainNumberMacAdd::getMacAdd, airTrainMacAdd));
             if (trainNumberMacAdd == null) {
                 trainNumberMacAdd = new TrainNumberMacAdd();
-                trainNumberMacAdd.setTrainNumber(trainNumber.getAirTrainNumber());
-            } else {
-                trainNumberMacAdd.setTrainNumber(trainNumberMacAdd.getTrainNumber() + trainNumber.getAirTrainNumber());
             }
+            trainNumberMacAdd.setTrainNumber(trainNumber.getAirTrainNumber());
+
             trainNumberMacAdd.setMacAdd(airTrainMacAdd);
             trainNumberMacAddService.saveOrUpdate(trainNumberMacAdd);
         }

@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
  * 训练记录
  */
 @Data
-public class TbUserTrainRecord {
+public class TbUserTrainRecord implements Comparable<TbUserTrainRecord> {
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
@@ -28,8 +29,8 @@ public class TbUserTrainRecord {
     private Long keyId;                 //唯一ID
     private Integer successTime;//成功次数
     private Integer warningTime;//警告次数
-    private  String macAddress;
-    private  Integer totalTrainStep;
+    private String macAddress;
+    private Integer totalTrainStep;
     private String bleMacAddress;
     private String source;
     private String bleName;
@@ -47,6 +48,7 @@ public class TbUserTrainRecord {
     private Integer classId;
     private Integer isUpload;                //上传状态  0-未上传  1-上传到局域网 2-上传到云端
     private String dateStr;
+    private LocalDateTime updateTime;//上传时间
     @TableField(exist = false)
     private List<TbTrainData> trainDataList;
 
@@ -55,6 +57,15 @@ public class TbUserTrainRecord {
     @TableField(exist = false)
     private String userName;//设备用户名字
 
+    @Override
+    public int compareTo(TbUserTrainRecord o) {
+        if (o.getUpdateTime() != null && this.updateTime!=null) {
+            return o.getUpdateTime().compareTo(this.updateTime);//根据时间降序
+        } else {
+            return o.getDateStr().compareTo(this.dateStr);//根据时间降序
+        }
+
+    }
 
 }
 

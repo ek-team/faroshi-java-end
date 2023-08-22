@@ -93,6 +93,7 @@ public class PlanUserTrainReordController extends AbstractBaseController<PlanUse
 
         }
         for (TbUserTrainRecord tbUserTrainRecord : userTrainRecordList) {
+            tbUserTrainRecord.setUpdateTime(LocalDateTime.now());
             tbUserTrainRecord.setMacAddress(macAdd);
         }
         service.saveAndData(userTrainRecordList);

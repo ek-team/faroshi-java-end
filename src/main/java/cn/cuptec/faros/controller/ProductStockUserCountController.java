@@ -49,10 +49,9 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
                     .eq(ProductStockUserMacAddCount::getMacAdd, balanceMacAdd));
             if (productStockUserMacAddCount == null) {
                 productStockUserMacAddCount = new ProductStockUserMacAddCount();
-                productStockUserMacAddCount.setCount(productStockUserCount.getBalanceTrainCount());
-            } else {
-                productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + productStockUserCount.getBalanceTrainCount());
             }
+            productStockUserMacAddCount.setCount(productStockUserCount.getBalanceTrainCount());
+
             productStockUserMacAddCount.setMacAdd(balanceMacAdd);
             productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
         }
@@ -62,10 +61,9 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
                     .eq(ProductStockUserMacAddCount::getMacAdd, airTrainMacAdd));
             if (productStockUserMacAddCount == null) {
                 productStockUserMacAddCount = new ProductStockUserMacAddCount();
-                productStockUserMacAddCount.setCount(productStockUserCount.getAirTrainCount());
-            } else {
-                productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + productStockUserCount.getAirTrainCount());
             }
+            productStockUserMacAddCount.setCount(productStockUserCount.getAirTrainCount());
+
             productStockUserMacAddCount.setMacAdd(airTrainMacAdd);
             productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
         }
@@ -190,6 +188,7 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
         //气动
         List<PneumaticRecord> pneumaticRecords = pneumaticRecordService.list(new QueryWrapper<PneumaticRecord>().lambda()
                 .eq(PneumaticRecord::getMacAdd, airTrainMacAdd)
+                .orderByDesc(PneumaticRecord::getUpdateTime)
                 .orderByDesc(PneumaticRecord::getPlanDayTime).last(" limit 5 "));
         if (!CollectionUtils.isEmpty(pneumaticRecords)) {
             List<String> userIds = pneumaticRecords.stream().map(PneumaticRecord::getUserId)
@@ -211,11 +210,13 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
             for (PneumaticRecord tbUserTrainRecord : pneumaticRecords) {
                 tbUserTrainRecord.setUserName(userMap.get(tbUserTrainRecord.getUserId()).getName());
             }
+            Collections.sort(pneumaticRecords);
             getTrainRecordData.setPneumaticRecordList(pneumaticRecords);
         }
         //下肢
         List<TbUserTrainRecord> tbUserTrainRecords = planUserTrainRecordService.list(new QueryWrapper<TbUserTrainRecord>().lambda()
                 .eq(TbUserTrainRecord::getMacAddress, balanceMacAdd)
+                .orderByDesc(TbUserTrainRecord::getUpdateTime)
                 .orderByDesc(TbUserTrainRecord::getDateStr).last(" limit 5 "));
         if (!CollectionUtils.isEmpty(tbUserTrainRecords)) {
             List<String> userIds = tbUserTrainRecords.stream().map(TbUserTrainRecord::getUserId)
@@ -227,6 +228,7 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
             for (TbUserTrainRecord tbUserTrainRecord : tbUserTrainRecords) {
                 tbUserTrainRecord.setUserName(userMap.get(tbUserTrainRecord.getUserId()).getName());
             }
+            Collections.sort(tbUserTrainRecords);
             getTrainRecordData.setTbUserTrainRecords(tbUserTrainRecords);
         }
         return RestResponse.ok(getTrainRecordData);

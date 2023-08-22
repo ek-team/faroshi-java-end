@@ -39,10 +39,9 @@ public class RehabilitationController extends AbstractBaseController<Rehabilitat
                     .eq(MacAddOrderCount::getMacAdd, balanceMacAdd));
             if (macAddOrderCount == null) {
                 macAddOrderCount = new MacAddOrderCount();
-                macAddOrderCount.setCount(rehabilitation.getBalanceTrainOrder());
-            } else {
-                macAddOrderCount.setCount(macAddOrderCount.getCount() + rehabilitation.getBalanceTrainOrder());
             }
+            macAddOrderCount.setCount(rehabilitation.getBalanceTrainOrder());
+
             macAddOrderCount.setMacAdd(balanceMacAdd);
             macAddOrderCountService.saveOrUpdate(macAddOrderCount);
         }
@@ -52,10 +51,9 @@ public class RehabilitationController extends AbstractBaseController<Rehabilitat
                     .eq(MacAddOrderCount::getMacAdd, airTrainMacAdd));
             if (macAddOrderCount1 == null) {
                 macAddOrderCount1 = new MacAddOrderCount();
-                macAddOrderCount1.setCount(rehabilitation.getAirTrainOrder());
-            } else {
-                macAddOrderCount1.setCount(macAddOrderCount1.getCount() + rehabilitation.getAirTrainOrder());
             }
+            macAddOrderCount1.setCount(rehabilitation.getAirTrainOrder());
+
             macAddOrderCount1.setMacAdd(airTrainMacAdd);
             macAddOrderCountService.saveOrUpdate(macAddOrderCount1);
         }

@@ -566,38 +566,33 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     }
 
     //发送设备注册用户数量加1
-    private void pushUserCount(String macAdd) {
+    private void pushUserCount(String macAddress) {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
-                        .eq(ProductStock::getMacAddress, macAdd)
-                        .eq(ProductStock::getDel, 1));
-                if (!CollectionUtils.isEmpty(productStocks)) {
-                    for (ProductStock productStock : productStocks) {
-                        String macAddress = productStock.getMacAddress();
-                        ProductStockUserMacAddCount productStockUserMacAddCount = productStockUserMacAddCountService.getOne(new QueryWrapper<ProductStockUserMacAddCount>().lambda()
-                                .eq(ProductStockUserMacAddCount::getMacAdd, macAddress));
-                        if (productStockUserMacAddCount == null) {
-                            productStockUserMacAddCount = new ProductStockUserMacAddCount();
-                            productStockUserMacAddCount.setCount(1);
-                        } else {
-                            productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + 1);
-                        }
-                        productStockUserMacAddCount.setMacAdd(macAddress);
-                        productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
-                        Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
-                        //2.向目标用户发送新消息提醒n
-                        if (targetUserChannel != null) {
 
-                            SocketFrameTextMessage targetUserMessage
-                                    = SocketFrameTextMessage.PRODUCT_STOCK_USER_COUNT(productStockUserMacAddCount.getCount());
-
-                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-
-                        }
-                    }
+                ProductStockUserMacAddCount productStockUserMacAddCount = productStockUserMacAddCountService.getOne(new QueryWrapper<ProductStockUserMacAddCount>().lambda()
+                        .eq(ProductStockUserMacAddCount::getMacAdd, macAddress));
+                if (productStockUserMacAddCount == null) {
+                    productStockUserMacAddCount = new ProductStockUserMacAddCount();
+                    productStockUserMacAddCount.setCount(1);
+                } else {
+                    productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + 1);
                 }
+                productStockUserMacAddCount.setMacAdd(macAddress);
+                productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
+                Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                //2.向目标用户发送新消息提醒n
+                if (targetUserChannel != null) {
+
+                    SocketFrameTextMessage targetUserMessage
+                            = SocketFrameTextMessage.PRODUCT_STOCK_USER_COUNT(productStockUserMacAddCount.getCount());
+
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                }
+
+
             }
         });
     }
