@@ -18,6 +18,7 @@ import cn.cuptec.faros.util.IdCardUtil;
 import cn.cuptec.faros.util.SnowflakeIdWorker;
 import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -188,9 +189,11 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     }
 
     @GetMapping("/pageData")
-    public RestResponse pageData() {
+    public RestResponse pageData(@RequestParam("macAdd") String macAdd) {
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         Page<TbTrainUser> page = getPage();
+
+        queryWrapper.eq("macAdd", macAdd);
         queryWrapper.eq("on_hospital", 0);
         queryWrapper.orderByDesc("id");
         IPage page1 = service.page(page, queryWrapper);
@@ -201,8 +204,13 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     public RestResponse updateOnHospital(@RequestParam("userId") String userId) {
 
         TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
-        tbTrainUser.setOnHospital(1);
-        service.updateById(tbTrainUser);
+        if (tbTrainUser != null) {
+            tbTrainUser.setOnHospital(1);
+
+            service.updateById(tbTrainUser);
+        }
+        String url = "https://api.redadzukibeans.com/system/deviceUser/updateOnHospital?userId=" + userId;
+        String post = HttpUtil.get(url);
         return RestResponse.ok();
     }
 
