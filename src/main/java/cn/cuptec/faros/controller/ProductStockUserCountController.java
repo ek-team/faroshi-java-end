@@ -236,6 +236,61 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
 
     }
 
+    //根据用户id查询设备用户的训练记录不分页
+    @GetMapping("/getTrainRecordByUserId")
+    public RestResponse getTrainRecordByUserId(@RequestParam("userId") String userId) {
+        GetTrainRecordData getTrainRecordData = new GetTrainRecordData();
+        //气动
+        List<PneumaticRecord> pneumaticRecords = pneumaticRecordService.list(new QueryWrapper<PneumaticRecord>().lambda()
+                .eq(PneumaticRecord::getUserId, userId)
+                .orderByDesc(PneumaticRecord::getUpdateTime)
+                .orderByDesc(PneumaticRecord::getPlanDayTime));
+        if (!CollectionUtils.isEmpty(pneumaticRecords)) {
+            List<String> userIds = pneumaticRecords.stream().map(PneumaticRecord::getUserId)
+                    .collect(Collectors.toList());
+            String url = "https://api.redadzukibeans.com/system/deviceUser/ListByDeviceUserId";
+            ListByDeviceUserParam param = new ListByDeviceUserParam();
+            param.setDeviceUserIds(userIds);
+            String params = JSONObject.toJSONString(param);
+            String post = HttpUtil.post(url, params);
+            RestResponse restResponse = JSONObject.parseObject(post, RestResponse.class);
+            String data = restResponse.getData().toString();
+            List<TbTrainUser> tbTrainUsers = JSONObject.parseArray(data, TbTrainUser.class);
+
+            Map<String, TbTrainUser> userMap = new HashMap<>();
+            for (TbTrainUser tbTrainUser : tbTrainUsers) {
+                userMap.put(tbTrainUser.getUserId(), tbTrainUser);
+
+            }
+            for (PneumaticRecord tbUserTrainRecord : pneumaticRecords) {
+                tbUserTrainRecord.setUserName(userMap.get(tbUserTrainRecord.getUserId()).getName());
+            }
+            Collections.sort(pneumaticRecords);
+            getTrainRecordData.setPneumaticRecordList(pneumaticRecords);
+        }
+        //下肢
+        List<TbUserTrainRecord> tbUserTrainRecords = planUserTrainRecordService.list(new QueryWrapper<TbUserTrainRecord>().lambda()
+                .eq(TbUserTrainRecord::getUserId, userId)
+                .orderByDesc(TbUserTrainRecord::getUpdateTime)
+                .orderByDesc(TbUserTrainRecord::getDateStr));
+        if (!CollectionUtils.isEmpty(tbUserTrainRecords)) {
+            List<String> userIds = tbUserTrainRecords.stream().map(TbUserTrainRecord::getUserId)
+                    .collect(Collectors.toList());
+            List<TbTrainUser> tbTrainUsers = planUserService.list(new QueryWrapper<TbTrainUser>().lambda()
+                    .in(TbTrainUser::getUserId, userIds));
+            Map<String, TbTrainUser> userMap = tbTrainUsers.stream()
+                    .collect(Collectors.toMap(TbTrainUser::getUserId, t -> t));
+            for (TbUserTrainRecord tbUserTrainRecord : tbUserTrainRecords) {
+                tbUserTrainRecord.setUserName(userMap.get(tbUserTrainRecord.getUserId()).getName());
+            }
+            Collections.sort(tbUserTrainRecords);
+            getTrainRecordData.setTbUserTrainRecords(tbUserTrainRecords);
+        }
+        return RestResponse.ok(getTrainRecordData);
+
+
+    }
+
     private static Map<String, String> getAge(String idCard) {
         String birthday = "";
         String age = "";
