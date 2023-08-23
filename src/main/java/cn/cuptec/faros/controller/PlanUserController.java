@@ -187,6 +187,25 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         return RestResponse.ok();
     }
 
+    @GetMapping("/pageData")
+    public RestResponse pageData() {
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        Page<TbTrainUser> page = getPage();
+        queryWrapper.eq("on_hospital", 0);
+        queryWrapper.orderByDesc("id");
+        IPage page1 = service.page(page, queryWrapper);
+        return RestResponse.ok(page1);
+    }
+
+    @GetMapping("/updateOnHospital")
+    public RestResponse updateOnHospital(@RequestParam("userId") String userId) {
+
+        TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
+        tbTrainUser.setOnHospital(1);
+        service.updateById(tbTrainUser);
+        return RestResponse.ok();
+    }
+
     @GetMapping("/page")
     public RestResponse pageList(@RequestParam(value = "idCard", required = false) String idCard, @RequestParam(value = "maxAge", required = false) Integer maxAge, @RequestParam(value = "miniAge", required = false) Integer miniAge,
                                  @RequestParam(value = "maxHeight", required = false) Integer maxHeight, @RequestParam(value = "miniHeight", required = false) Integer miniHeight,
