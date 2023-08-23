@@ -193,7 +193,7 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
         QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
         Page<TbTrainUser> page = getPage();
 
-        queryWrapper.eq("macAdd", macAdd);
+        queryWrapper.eq("mac_add", macAdd);
         queryWrapper.eq("on_hospital", 0);
         queryWrapper.orderByDesc("id");
         IPage page1 = service.page(page, queryWrapper);
