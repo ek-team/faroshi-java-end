@@ -9,12 +9,12 @@ import lombok.Data;
 public class TrainNumber {
     @TableId(type = IdType.AUTO)
     private Integer id;
-
+    @TableField(exist = false)
     private Integer airTrainNumber;//气动训练次数
     @TableField(exist = false)
     private String airTrainMacAdd;//气动mac地址
     private Integer lineTrainNumber;//线驱使用次数
-
+    @TableField(exist = false)
     private Integer balanceTrainNumber;//下肢使用次数
     @TableField(exist = false)
     private String balanceMacAdd;//下肢mac地址
