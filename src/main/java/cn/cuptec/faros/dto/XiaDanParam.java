@@ -7,4 +7,6 @@ public class XiaDanParam {
     private int code;
     private String message;
     private XiaDanData data;
+    private String returnCode;
+    private boolean result;
 }

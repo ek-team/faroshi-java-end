@@ -9,18 +9,19 @@ import cn.cuptec.faros.entity.*;
 import cn.cuptec.faros.service.*;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
+import com.kuaidi100.sdk.api.COrder;
 import com.kuaidi100.sdk.contant.ApiInfoConstant;
 import com.kuaidi100.sdk.contant.CompanyConstant;
 import com.kuaidi100.sdk.core.IBaseClient;
+import com.kuaidi100.sdk.pojo.HttpResult;
 import com.kuaidi100.sdk.request.PrintReq;
-import com.kuaidi100.sdk.request.cloud.COrderReq;
+import com.kuaidi100.sdk.request.corder.COrderReq;
 import com.kuaidi100.sdk.utils.SignUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -586,6 +587,92 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
     }
 
     /**
+     * 回收单自动下单 C端寄件到付 叫物流
+     *
+     * @param param
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("xiadanC")
+    public RestResponse xiadanC(@RequestBody KuaiDiXiaDanParam param) throws Exception {
+
+        PrintReq printReq = new PrintReq();
+        COrderReq cOrderReq = new COrderReq();
+        cOrderReq.setKuaidicom(param.getCom());
+        cOrderReq.setPayment("CONSIGNEE");
+        cOrderReq.setSendManName(param.getSendManName());
+        cOrderReq.setSendManMobile(param.getSendManMobile());
+        cOrderReq.setSendManPrintAddr(param.getSendManPrintAddr());
+        cOrderReq.setRecManName(param.getRecManName());
+        cOrderReq.setRecManMobile(param.getRecManMobile());
+        cOrderReq.setRecManPrintAddr(param.getSendManPrintAddr());
+        cOrderReq.setCallBackUrl(urlData.getUrl() + "retrieveOrder/kuaidicallback");
+        cOrderReq.setCargo(param.getCargo());
+        cOrderReq.setRemark(param.getRemark());
+        cOrderReq.setWeight(param.getWeight());
+        cOrderReq.setSalt("123456");
+        cOrderReq.setPickupStartTime(param.getPickupStartTime());
+        cOrderReq.setPickupEndTime(param.getPickupEndTime());
+        cOrderReq.setDayType(param.getDayType());
+        String t = String.valueOf(System.currentTimeMillis());
+        String data = new Gson().toJson(cOrderReq);
+
+        printReq.setKey("JAnUGrLl5945");
+        printReq.setSign(SignUtils.printSign(data, t, "JAnUGrLl5945", "75bd152004314af288765416804ac830"));
+        printReq.setT(t);
+        printReq.setParam(data);
+        printReq.setMethod(ApiInfoConstant.C_ORDER_METHOD);
+
+        IBaseClient cOrder = new COrder();
+        HttpResult execute = cOrder.execute(printReq);
+        String body = execute.getBody();
+        XiaDanParam xiaDanParam = new Gson().fromJson(body, XiaDanParam.class);
+        if(xiaDanParam.getReturnCode().equals("200")){
+            System.out.println("下单成功");
+            //计算回收天数
+            String orderId = param.getOrderNo();
+            UserOrder userOrder = userOrdertService.getById(orderId);
+            Long day = 1L;
+            if (userOrder != null) {
+                LocalDateTime localDateDeliveryTime = userOrder.getLogisticsDeliveryTime();
+                if (localDateDeliveryTime != null) {
+                    LocalDateTime now = LocalDateTime.now();
+                    day = localDateDeliveryTime.toLocalDate().until(now.toLocalDate(), ChronoUnit.DAYS);
+                    userOrder.setUseDay(day.intValue());
+                    userOrdertService.updateById(userOrder);
+                }
+                UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
+                updateOrderRecord.setOrderId(userOrder.getId());
+                updateOrderRecord.setCreateUserId(userOrder.getUserId());
+                updateOrderRecord.setCreateTime(LocalDateTime.now());
+                updateOrderRecord.setDescStr("用户回收发起");
+                updateOrderRecordService.save(updateOrderRecord);
+            }
+            RetrieveOrder retrieveOrder = service.getOne(new QueryWrapper<RetrieveOrder>().lambda()
+                    .eq(RetrieveOrder::getUserOrderNo, userOrder.getOrderNo()));
+            if (retrieveOrder == null) {
+                retrieveOrder = new RetrieveOrder();
+            }
+            retrieveOrder.setUserOrderNo(userOrder.getOrderNo());
+            retrieveOrder.setRentDay(day.intValue());
+            retrieveOrder.setOrderId(param.getOrderNo());
+            retrieveOrder.setUserId(SecurityUtils.getUser().getId());
+            retrieveOrder.setCreateTime(new Date());
+            retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+            retrieveOrder.setStatus(1);
+            retrieveOrder.setReceiverPhone(param.getRecManMobile());
+            retrieveOrder.setTaskId(xiaDanParam.getData().getTaskId());
+            retrieveOrder.setDeliveryCompanyCode(param.getCom());
+            service.saveRetrieveOrder(retrieveOrder);
+            userOrder.setStatus(5);
+            userOrdertService.updateById(userOrder);
+            return RestResponse.ok();
+        }
+        return RestResponse.ok(xiaDanParam.getMessage());
+    }
+
+
+    /**
      * 回收单自动下单 叫物流
      *
      * @param param
@@ -679,6 +766,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         RetrieveOrder one = service.getOne(new QueryWrapper<RetrieveOrder>().lambda().eq(RetrieveOrder::getTaskId, taskId));
         one.setKuAiDiStatus(Integer.parseInt(kuaiDiCallBackParam.getData().getStatus()));
         one.setDeliverySn(kuaiDiCallBackParam.getKuaidinum());
+        one.setDeliveryCompanyCode(kuaiDiCallBackParam.getKuaidicom());
 
 
         UserOrder userOrder = new UserOrder();
@@ -760,32 +848,42 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         return response.toString();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
 
-        Map<String, String> params = new HashMap();
-        params.put("secret_key", "C58ZzLwXbQu6hqSHvz");
-        params.put("secret_code", "ddffadd3df4b4c0d8d6f9942c7a8c990");
-        params.put("secret_sign", "2E20DED9F6AC5E211E84A80A4E13FAC8");
-        params.put("com", CompanyConstant.SF);
-        params.put("recManName", "李四");
-        params.put("recManMobile", "13916908294");
-        params.put("recManPrintAddr", "中国上海上海市闵行区剑川路930弄C座1楼");
-        params.put("sendManName", "张三");
-        params.put("sendManMobile", "18709108132");
-        params.put("sendManPrintAddr", "上海市上海市静安区上海市");
-        params.put("cargo", "文件");
-        params.put("weight", "1");
-        params.put("remark", "测试下单，待会取消");
-        params.put("salt", "123456");
-        params.put("callBackUrl", "https://pharos3.ewj100.com/retrieveOrder/kuaidicallback");
-        params.put("dayType", "今天");
-        params.put("pickupStartTime", "18:00");
-        params.put("pickupEndTime", "20:00");
+        PrintReq printReq = new PrintReq();
+        COrderReq cOrderReq = new COrderReq();
+        cOrderReq.setKuaidicom(CompanyConstant.JD);
+        cOrderReq.setSendManName("张三");
+        cOrderReq.setSendManMobile("12345678910");
+        cOrderReq.setSendManPrintAddr("浙江省杭州市余杭区西溪北苑");
+        cOrderReq.setRecManName("李四");
+        cOrderReq.setRecManMobile("12345678910");
+        cOrderReq.setRecManPrintAddr("浙江省杭州市余杭区西溪北苑");
+        cOrderReq.setCallBackUrl("http://www.baidu.com");
+        cOrderReq.setCargo("文件");
+        cOrderReq.setRemark("测试下单，待会取消");
+        cOrderReq.setWeight("1");
+        cOrderReq.setSalt("123456");
 
+        String t = String.valueOf(System.currentTimeMillis());
+        String param = new Gson().toJson(cOrderReq);
 
-        String post = post(params);
-        System.out.println(post);
+        printReq.setKey("JAnUGrLl5945");
+        printReq.setSign(SignUtils.printSign(param, t, "JAnUGrLl5945", "75bd152004314af288765416804ac830"));
+        printReq.setT(t);
+        printReq.setParam(param);
+        printReq.setMethod(ApiInfoConstant.C_ORDER_METHOD);
+
+        IBaseClient cOrder = new COrder();
+        HttpResult execute = cOrder.execute(printReq);
+        String body = execute.getBody();
+        XiaDanParam xiaDanParam = new Gson().fromJson(body, XiaDanParam.class);
+        if(xiaDanParam.getReturnCode().equals("200")){
+            System.out.println("下单成功");
+        }
+        System.out.println(xiaDanParam.toString());
+
     }
 
     @Override
