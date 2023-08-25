@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +51,7 @@ public class PneumaticRecordController extends AbstractBaseController<PneumaticR
 
 
             for (PneumaticRecord pneumaticRecord : pneumaticRecords) {
+                pneumaticRecord.setUpdateTime(LocalDateTime.now());
                 pneumaticRecord.setPlanDayTime(pneumaticRecord.getPlanDayTime() + " 00:00:00");
                 service.remove(new QueryWrapper<PneumaticRecord>().
                         lambda().eq(PneumaticRecord::getUserId, pneumaticRecords.get(0).getUserId())

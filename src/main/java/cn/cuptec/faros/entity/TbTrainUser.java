@@ -33,6 +33,7 @@ public class TbTrainUser {
     private Integer planCheckStatus;//1待审核 2审核通过
     private String birthday;
     private Integer cardType; //1-身份证 2-其他
+    private Integer onHospital=0;//0在医院1出医院
     private String treatmentMethodId;//治疗方法Id
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;

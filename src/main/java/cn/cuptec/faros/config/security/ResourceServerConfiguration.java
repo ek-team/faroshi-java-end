@@ -191,7 +191,9 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/trainNumber/**",
                         "/rehabilitation/**",
                         "/productStockUserCount/**",
-                        "/palnUser/pushUserCount"
+                        "/palnUser/pushUserCount",
+                        "/palnUser/pageData",
+                        "/palnUser/updateOnHospital"
 
                 )
                 .permitAll()

@@ -18,6 +18,7 @@ import cn.cuptec.faros.util.IdCardUtil;
 import cn.cuptec.faros.util.SnowflakeIdWorker;
 import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -184,6 +185,32 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
             );
         }
 
+        return RestResponse.ok();
+    }
+
+    @GetMapping("/pageData")
+    public RestResponse pageData(@RequestParam("macAdd") String macAdd) {
+        QueryWrapper queryWrapper = getQueryWrapper(getEntityClass());
+        Page<TbTrainUser> page = getPage();
+
+        queryWrapper.eq("mac_add", macAdd);
+        queryWrapper.eq("on_hospital", 0);
+        queryWrapper.orderByDesc("id");
+        IPage page1 = service.page(page, queryWrapper);
+        return RestResponse.ok(page1);
+    }
+
+    @GetMapping("/updateOnHospital")
+    public RestResponse updateOnHospital(@RequestParam("userId") String userId) {
+
+        TbTrainUser tbTrainUser = service.getOne(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getUserId, userId));
+        if (tbTrainUser != null) {
+            tbTrainUser.setOnHospital(1);
+
+            service.updateById(tbTrainUser);
+        }
+        String url = "https://api.redadzukibeans.com/system/deviceUser/updateOnHospital?userId=" + userId;
+        String post = HttpUtil.get(url);
         return RestResponse.ok();
     }
 
@@ -566,38 +593,33 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
     }
 
     //发送设备注册用户数量加1
-    private void pushUserCount(String macAdd) {
+    private void pushUserCount(String macAddress) {
         ThreadPoolExecutorFactory.getThreadPoolExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                List<ProductStock> productStocks = productStockService.list(new QueryWrapper<ProductStock>().lambda()
-                        .eq(ProductStock::getMacAddress, macAdd)
-                        .eq(ProductStock::getDel, 1));
-                if (!CollectionUtils.isEmpty(productStocks)) {
-                    for (ProductStock productStock : productStocks) {
-                        String macAddress = productStock.getMacAddress();
-                        ProductStockUserMacAddCount productStockUserMacAddCount = productStockUserMacAddCountService.getOne(new QueryWrapper<ProductStockUserMacAddCount>().lambda()
-                                .eq(ProductStockUserMacAddCount::getMacAdd, macAddress));
-                        if (productStockUserMacAddCount == null) {
-                            productStockUserMacAddCount = new ProductStockUserMacAddCount();
-                            productStockUserMacAddCount.setCount(1);
-                        } else {
-                            productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + 1);
-                        }
-                        productStockUserMacAddCount.setMacAdd(macAddress);
-                        productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
-                        Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
-                        //2.向目标用户发送新消息提醒n
-                        if (targetUserChannel != null) {
 
-                            SocketFrameTextMessage targetUserMessage
-                                    = SocketFrameTextMessage.PRODUCT_STOCK_USER_COUNT(productStockUserMacAddCount.getCount());
-
-                            targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
-
-                        }
-                    }
+                ProductStockUserMacAddCount productStockUserMacAddCount = productStockUserMacAddCountService.getOne(new QueryWrapper<ProductStockUserMacAddCount>().lambda()
+                        .eq(ProductStockUserMacAddCount::getMacAdd, macAddress));
+                if (productStockUserMacAddCount == null) {
+                    productStockUserMacAddCount = new ProductStockUserMacAddCount();
+                    productStockUserMacAddCount.setCount(1);
+                } else {
+                    productStockUserMacAddCount.setCount(productStockUserMacAddCount.getCount() + 1);
                 }
+                productStockUserMacAddCount.setMacAdd(macAddress);
+                productStockUserMacAddCountService.saveOrUpdate(productStockUserMacAddCount);
+                Channel targetUserChannel = UserChannelManager.getUserChannelByMacAdd(macAddress);
+                //2.向目标用户发送新消息提醒n
+                if (targetUserChannel != null) {
+
+                    SocketFrameTextMessage targetUserMessage
+                            = SocketFrameTextMessage.PRODUCT_STOCK_USER_COUNT(productStockUserMacAddCount.getCount());
+
+                    targetUserChannel.writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(targetUserMessage)));
+
+                }
+
+
             }
         });
     }
