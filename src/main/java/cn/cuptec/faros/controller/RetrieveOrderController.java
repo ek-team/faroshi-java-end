@@ -593,8 +593,8 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
      * @return
      * @throws Exception
      */
-    @PostMapping("xiadanC")
-    public RestResponse xiadanC(@RequestBody KuaiDiXiaDanParam param) throws Exception {
+    @PostMapping("xiadan")
+    public RestResponse xiadan(@RequestBody KuaiDiXiaDanParam param) throws Exception {
 
         PrintReq printReq = new PrintReq();
         COrderReq cOrderReq = new COrderReq();
@@ -627,7 +627,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         HttpResult execute = cOrder.execute(printReq);
         String body = execute.getBody();
         XiaDanParam xiaDanParam = new Gson().fromJson(body, XiaDanParam.class);
-        if(xiaDanParam.getReturnCode().equals("200")){
+        if (xiaDanParam.getReturnCode().equals("200")) {
             System.out.println("下单成功");
             //计算回收天数
             String orderId = param.getOrderNo();
@@ -663,6 +663,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             retrieveOrder.setReceiverPhone(param.getRecManMobile());
             retrieveOrder.setTaskId(xiaDanParam.getData().getTaskId());
             retrieveOrder.setDeliveryCompanyCode(param.getCom());
+            retrieveOrder.setDeliverySn(xiaDanParam.getData().getKuaidinum());
             service.saveRetrieveOrder(retrieveOrder);
             userOrder.setStatus(5);
             userOrdertService.updateById(userOrder);
@@ -673,14 +674,14 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
 
 
     /**
-     * 回收单自动下单 叫物流
+     * 回收单自动下单 寄件方付款叫物流 现在不用了
      *
      * @param param
      * @return
      * @throws Exception
      */
-    @PostMapping("xiadan")
-    public RestResponse XiaDan(@RequestBody KuaiDiXiaDanParam param) throws Exception {
+    @PostMapping("xiadanC")
+    public RestResponse XiaDanC(@RequestBody KuaiDiXiaDanParam param) throws Exception {
 
         Map<String, String> params = new HashMap();
         params.put("secret_key", "C58ZzLwXbQu6hqSHvz");
@@ -879,7 +880,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         HttpResult execute = cOrder.execute(printReq);
         String body = execute.getBody();
         XiaDanParam xiaDanParam = new Gson().fromJson(body, XiaDanParam.class);
-        if(xiaDanParam.getReturnCode().equals("200")){
+        if (xiaDanParam.getReturnCode().equals("200")) {
             System.out.println("下单成功");
         }
         System.out.println(xiaDanParam.toString());
