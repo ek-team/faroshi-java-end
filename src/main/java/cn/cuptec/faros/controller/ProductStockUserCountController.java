@@ -9,6 +9,7 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -167,13 +168,15 @@ public class ProductStockUserCountController extends AbstractBaseController<Prod
         List<PatientUser> patientUserList = new ArrayList<>();
         for (UserOrder userOrder : userOrders) {
             PatientUser patientUser = patientUserMap.get(userOrder.getPatientUserId() + "");
+            PatientUser patientUser1=new PatientUser();
+            BeanUtils.copyProperties(patientUser, patientUser1);
             Integer servicePackId = userOrder.getServicePackId();
             List<ProductStock> productStocks3 = productStockMap1.get(servicePackId + "");
             if (!CollectionUtils.isEmpty(productStocks3)) {
                 String macAddress = productStocks3.get(0).getMacAddress();
-                patientUser.setMacAdd(macAddress);
+                patientUser1.setMacAdd(macAddress);
             }
-            patientUserList.add(patientUser);
+            patientUserList.add(patientUser1);
         }
         return RestResponse.ok(patientUserList);
 
