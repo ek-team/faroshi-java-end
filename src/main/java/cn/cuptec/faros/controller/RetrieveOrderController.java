@@ -605,7 +605,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         cOrderReq.setSendManPrintAddr(param.getSendManPrintAddr());
         cOrderReq.setRecManName(param.getRecManName());
         cOrderReq.setRecManMobile(param.getRecManMobile());
-        cOrderReq.setRecManPrintAddr(param.getSendManPrintAddr());
+        cOrderReq.setRecManPrintAddr(param.getRecManPrintAddr());
         cOrderReq.setCallBackUrl(urlData.getUrl() + "retrieveOrder/kuaidicallback");
         cOrderReq.setCargo(param.getCargo());
         cOrderReq.setRemark(param.getRemark());
