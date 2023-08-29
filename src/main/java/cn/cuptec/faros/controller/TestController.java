@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -52,33 +53,13 @@ public class TestController {
     @Resource
     private DoctorTeamService doctorTeamService;
     @Resource
-    private RetrieveOrderService retrieveOrderService;
+    private ReviewRefundOrderController reviewRefundOrderController;
 
     @GetMapping("user")
     public RestResponse customUserInfo() {
-        RetrieveOrder retrieveOrder = new RetrieveOrder();
+        reviewRefundOrderController
+                .review("测试",70,1);
 
-        retrieveOrder.setUserOrderNo("1673636740302110720");
-        retrieveOrder.setRentDay(47);
-        retrieveOrder.setOrderId("2041");
-        retrieveOrder.setUserId(3302);
-        retrieveOrder.setCreateTime(new Date());
-        retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
-        retrieveOrder.setStatus(2);
-
-        retrieveOrder.setDeliverySn("SF1406528853973");
-        retrieveOrder.setDeliveryCompanyCode("shunfeng");
-        retrieveOrderService.saveRetrieveOrder(retrieveOrder);
-
-
-        UserOrder userOrder = new UserOrder();
-        userOrder.setStatus(5);
-        userOrder.setUseDay(47);
-        userOrder.setId(2041);
-        userOrder.setRecycleTime(LocalDateTime.now());
-
-
-        userOrdertService.updateById(userOrder);
         return RestResponse.ok();
     }
 
