@@ -603,6 +603,7 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
         cOrderReq.setSendManName(param.getSendManName());
         cOrderReq.setSendManMobile(param.getSendManMobile());
         cOrderReq.setSendManPrintAddr(param.getSendManPrintAddr());
+
         cOrderReq.setRecManName(param.getRecManName());
         cOrderReq.setRecManMobile(param.getRecManMobile());
         cOrderReq.setRecManPrintAddr(param.getRecManPrintAddr());

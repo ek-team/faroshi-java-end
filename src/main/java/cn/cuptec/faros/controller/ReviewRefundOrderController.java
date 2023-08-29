@@ -276,6 +276,8 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
 
                 }
                 System.out.println(result);
+                retrieveOrder.setStatus(4);
+                retrieveOrderService.updateById(retrieveOrder);
             } else {
                 //支付宝退款
                 String s = aliPayService.aliRefundOrder(userOrder.getTransactionId(), new BigDecimal(amount + ""), orderRefunds.getOrderRefundNo());
@@ -297,10 +299,7 @@ public class ReviewRefundOrderController extends AbstractBaseController<ReviewRe
                 }
 
             }
-            retrieveOrder.setStatus(4);
 
-
-            retrieveOrderService.updateById(retrieveOrder);
 
 
         }
