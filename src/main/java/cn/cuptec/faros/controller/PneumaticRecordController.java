@@ -9,7 +9,9 @@ import cn.cuptec.faros.im.bean.SocketFrameTextMessage;
 import cn.cuptec.faros.im.core.UserChannelManager;
 import cn.cuptec.faros.service.*;
 import cn.cuptec.faros.util.ThreadPoolExecutorFactory;
+import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -103,7 +105,17 @@ public class PneumaticRecordController extends AbstractBaseController<PneumaticR
      * @return
      */
     @GetMapping("/getByUserId")
-    public RestResponse getByUserId(@RequestParam("userId") String userId) {
+    public RestResponse getByUserId(@RequestParam(value = "userId",required = false) String userId,
+                                    @RequestParam(value = "idCard",required = false) String idCard) {
+
+        if (!StringUtils.isEmpty(idCard)) {
+            String url = "https://api.redadzukibeans.com/system/deviceUser/getByDeviceIdCard?idCard=" + idCard;
+            String post = HttpUtil.get(url);
+            List<TbTrainUser> deviceUsers = JSONObject.parseArray(post, TbTrainUser.class);
+            if (!CollectionUtils.isEmpty(deviceUsers)) {
+                userId = deviceUsers.get(0).getUserId();
+            }
+        }
         List<PneumaticRecord> list = service.list(new QueryWrapper<PneumaticRecord>().lambda()
                 .eq(PneumaticRecord::getUserId, userId));
         Map<String, List<PneumaticRecord>> labelMap = list.stream()
