@@ -948,6 +948,17 @@ public class PlanUserController extends AbstractBaseController<PlanUserService, 
                 .set(TbTrainUser::getRecoveryPlanCleanTag, 0));
         return RestResponse.ok();
     }
+    @PostMapping("/updateByIdCard")
+    public RestResponse<TbTrainUser> updateByIdCard(@RequestBody TbTrainUser tbTrainUser) {
+        List<TbTrainUser> list = service.list(new QueryWrapper<TbTrainUser>().lambda().eq(TbTrainUser::getIdCard, tbTrainUser.getIdCard()));
+        if(!CollectionUtils.isEmpty(list)){
+            TbTrainUser tbTrainUser1 = list.get(0);
+            tbTrainUser.setId(tbTrainUser1.getId());
+            service.updateById(tbTrainUser);
+        }
+
+        return RestResponse.ok();
+    }
 
     @GetMapping("/getById/{uid}")
     public RestResponse getByUId(@PathVariable long uid) {

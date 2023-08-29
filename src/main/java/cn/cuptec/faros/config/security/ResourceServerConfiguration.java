@@ -193,7 +193,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/productStockUserCount/**",
                         "/palnUser/pushUserCount",
                         "/palnUser/pageData",
-                        "/palnUser/updateOnHospital"
+                        "/palnUser/updateOnHospital",
+                        "/palnUser/updateByIdCard"
 
                 )
                 .permitAll()
