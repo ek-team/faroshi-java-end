@@ -144,6 +144,50 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
         }
         return RestResponse.ok();
     }
+    /**
+     * 上传X片 会把之前的删除掉
+     */
+    @PostMapping("/saveOrUpdate")
+    public RestResponse saveOrUpdate(@RequestBody UploadXPianParam param) {
+
+        try {
+            TbTrainUser infoByUXtUserId = null;
+            if (!StringUtils.isEmpty(param.getXtUserId())) {
+                infoByUXtUserId = planUserService.getInfoByUXtUserId(Integer.parseInt(param.getXtUserId()));
+            }
+
+            if (infoByUXtUserId == null && StringUtils.isEmpty(param.getIdCard())) {
+                return RestResponse.failed("未查询到设备用户");
+            }
+            List<XPic> xPics = new ArrayList<>();
+            for (String url : param.getUrls()) {
+                XPic xPic = new XPic();
+                xPic.setUrl(url);
+                if (!StringUtils.isEmpty(param.getCreateTime())) {
+                    xPic.setCreateTime(LocalDate.parse(param.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                } else {
+                    xPic.setCreateTime(LocalDate.now());
+                }
+                if (infoByUXtUserId == null) {
+                    xPic.setIdCard(param.getIdCard());
+
+                } else {
+                    xPic.setIdCard(infoByUXtUserId.getIdCard());
+
+                }
+                xPics.add(xPic);
+            }
+            if(!CollectionUtils.isEmpty(xPics)){
+                String idCard = xPics.get(0).getIdCard();
+                service.remove(new QueryWrapper<XPic>().lambda()
+                        .eq(XPic::getIdCard, idCard));
+            }
+            service.saveBatch(xPics);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return RestResponse.ok();
+    }
 
     @Override
     protected Class<XPic> getEntityClass() {
