@@ -194,7 +194,8 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
                         "/palnUser/pushUserCount",
                         "/palnUser/pageData",
                         "/palnUser/updateOnHospital",
-                        "/palnUser/updateByIdCard"
+                        "/palnUser/updateByIdCard",
+                        "/xPic/saveOrUpdate"
 
                 )
                 .permitAll()
