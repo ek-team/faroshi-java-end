@@ -635,13 +635,13 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
             UserOrder userOrder = userOrdertService.getById(orderId);
             Long day = 1L;
             if (userOrder != null) {
-                LocalDateTime localDateDeliveryTime = userOrder.getLogisticsDeliveryTime();
-                if (localDateDeliveryTime != null) {
-                    LocalDateTime now = LocalDateTime.now();
-                    day = localDateDeliveryTime.toLocalDate().until(now.toLocalDate(), ChronoUnit.DAYS);
-                    userOrder.setUseDay(day.intValue());
-                    userOrdertService.updateById(userOrder);
-                }
+//                LocalDateTime localDateDeliveryTime = userOrder.getLogisticsDeliveryTime();
+//                if (localDateDeliveryTime != null) {
+//                    LocalDateTime now = LocalDateTime.now();
+//                    day = localDateDeliveryTime.toLocalDate().until(now.toLocalDate(), ChronoUnit.DAYS);
+//                    userOrder.setUseDay(day.intValue());
+//                    userOrdertService.updateById(userOrder);
+//                }
                 UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
                 updateOrderRecord.setOrderId(userOrder.getId());
                 updateOrderRecord.setCreateUserId(userOrder.getUserId());
@@ -655,7 +655,6 @@ public class RetrieveOrderController extends AbstractBaseController<RetrieveOrde
                 retrieveOrder = new RetrieveOrder();
             }
             retrieveOrder.setUserOrderNo(userOrder.getOrderNo());
-            retrieveOrder.setRentDay(day.intValue());
             retrieveOrder.setOrderId(param.getOrderNo());
             retrieveOrder.setUserId(SecurityUtils.getUser().getId());
             retrieveOrder.setCreateTime(new Date());
