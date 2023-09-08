@@ -413,7 +413,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 //
     @Transactional(rollbackFor = Exception.class)
     public void conformDelivery(int orderId, String deliveryCompanyCode, String deliveryNumber,
-                                String productSn1, String productSn2, String productSn3) {
+                                String productSn1, String productSn2, String productSn3,String wmsOrder) {
         UserOrder userOrder = super.getById(orderId);
 
         if (!StringUtils.isEmpty(productSn1)) {
@@ -458,6 +458,7 @@ public class UserOrdertService extends ServiceImpl<UserOrderMapper, UserOrder> {
 
             userOrder.setMoveTime(LocalDateTime.now());
         }
+        userOrder.setWmsOrder(wmsOrder);
         super.updateById(userOrder);
         SubscribeVO subscribeVO = new SubscribeVO();
         subscribeVO.setLogisticsNo(deliveryNumber);

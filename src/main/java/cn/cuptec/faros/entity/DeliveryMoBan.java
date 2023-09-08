@@ -32,4 +32,7 @@ public class DeliveryMoBan extends BaseRowModel {
     @ColumnWidth(10)
     @ExcelProperty(value = "其他序列号", index = 6)
     private String product_sn3;//
+    @ColumnWidth(10)
+    @ExcelProperty(value = "wmsOrder", index = 7)
+    private String wmsOrder;//
 }

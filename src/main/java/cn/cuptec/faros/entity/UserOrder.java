@@ -24,6 +24,7 @@ public class UserOrder {
     private Integer id;
     @Queryable(queryLogical = QueryLogical.EQUAL)
     private Integer test = 0;//0-非测试订单 1-测试订单
+    private String wmsOrder;
     private LocalDateTime moveTime;//运行时间
     private String taskId;//快递任务id
     private String message;//快递下单返回错误信息

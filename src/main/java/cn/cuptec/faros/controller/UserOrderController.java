@@ -787,6 +787,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
     @GetMapping("/manage/confirmDelivery")
     @Transactional
     public RestResponse confirDelivery(@RequestParam("id") int orderId,
+                                       @RequestParam("wmsOrder") String wmsOrder,
                                        @RequestParam(value = "productSn1", required = false) String productSn1,
                                        @RequestParam(value = "productSn2", required = false) String productSn2,
                                        @RequestParam(value = "productSn3", required = false) String productSn3,
@@ -796,7 +797,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
         redisTemplate.opsForValue().set(keyRedis, orderId, 7, TimeUnit.DAYS);//设置过期时间
 
 
-        service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber, productSn1, productSn2, productSn3);
+        service.conformDelivery(orderId, deliveryCompanyCode, deliveryNumber, productSn1, productSn2, productSn3,wmsOrder);
         UpdateOrderRecord updateOrderRecord = new UpdateOrderRecord();
         updateOrderRecord.setOrderId(orderId);
         updateOrderRecord.setCreateUserId(SecurityUtils.getUser().getId());
@@ -1564,6 +1565,7 @@ public class UserOrderController extends AbstractBaseController<UserOrdertServic
                             userOrder.setMoveTime(LocalDateTime.now());
                         }
                         DeliveryMoBan deliveryMoBan = deliveryMoBanmap.get(userOrder.getOrderNo());
+                        userOrder.setWmsOrder(deliveryMoBan.getWmsOrder());
                         String deliveryCompanyCode = "";
                         switch (deliveryMoBan.getName()) {
                             case "京东":
