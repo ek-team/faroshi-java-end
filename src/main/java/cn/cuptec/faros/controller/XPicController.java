@@ -100,6 +100,15 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
             planUserOtherInfoService.save(planUserOtherInfo);
         } else {
             data.setRegistrationEvaluation(planUserOtherInfo.getRegistrationEvaluation());
+            if (!StringUtils.isEmpty(planUserOtherInfo.getDegree())) {
+                data.setDegree(planUserOtherInfo.getDegree());
+            }
+            if (!StringUtils.isEmpty(planUserOtherInfo.getSecondDiseaseName())) {
+                data.setSecondDiseaseName(planUserOtherInfo.getSecondDiseaseName());
+            }
+            if (!StringUtils.isEmpty(planUserOtherInfo.getBodyPartName())) {
+                data.setBodyPartName(planUserOtherInfo.getBodyPartName());
+            }
             planUserOtherInfoService.updateById(data);
         }
         return RestResponse.ok(planUserOtherInfo);
@@ -144,13 +153,14 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
         }
         return RestResponse.ok();
     }
+
     /**
      * 上传X片 会把之前的删除掉
      */
     @PostMapping("/saveOrUpdate")
     public RestResponse saveOrUpdate(@RequestBody List<UploadXPianParam> params) {
         List<XPic> xPics = new ArrayList<>();
-        for(UploadXPianParam param:params){
+        for (UploadXPianParam param : params) {
             try {
                 TbTrainUser infoByUXtUserId = null;
                 if (!StringUtils.isEmpty(param.getXtUserId())) {
@@ -183,7 +193,7 @@ public class XPicController extends AbstractBaseController<XPicService, XPic> {
                 e.printStackTrace();
             }
         }
-        if(!CollectionUtils.isEmpty(xPics)){
+        if (!CollectionUtils.isEmpty(xPics)) {
             String idCard = xPics.get(0).getIdCard();
             service.remove(new QueryWrapper<XPic>().lambda()
                     .eq(XPic::getIdCard, idCard));
