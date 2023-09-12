@@ -62,22 +62,21 @@ public class TestController {
     private UserRoleService userRoleService;
     @Resource
     private UserService userService;
+    @Resource
+    private RetrieveOrderService retrieveOrderService;
     private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
     @GetMapping("user")
     public RestResponse customUserInfo() {
-        List<UserRole> userRoles = userRoleService.list(new QueryWrapper<UserRole>().lambda().eq(UserRole::getRoleId, 20));
-        List<Integer> userIds = userRoles.stream().map(UserRole::getUserId)
-                .collect(Collectors.toList());
-        List<User> users = (List<User>) userService.listByIds(userIds);
-        for(User user:users){
-            if(!StringUtils.isEmpty(user.getPhone()) && user.getPhone().length()>=10){
-                String substring = user.getPhone().substring(5, 11);
-                if (!ENCODER.matches(substring,user.getPassword())){
-                    System.out.println(user.getPhone());
-                }
-            }
+       RetrieveOrder retrieveOrder=new RetrieveOrder();
+        retrieveOrder.setUserOrderNo("1666969152608272384");
+        retrieveOrder.setRentDay(90);
+        retrieveOrder.setOrderId("1947");
+        retrieveOrder.setUserId(3179);
+        retrieveOrder.setCreateTime(new Date());
+        retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        retrieveOrder.setStatus(1);
 
-        }
+        retrieveOrderService.saveRetrieveOrder(retrieveOrder);
         return RestResponse.ok();
     }
 
