@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 /**
  * 通知记录 支付 医嘱消息
  */
@@ -12,4 +14,5 @@ public class Notice {
     @TableId(type = IdType.AUTO)
     private String id;
     private String context;
+    private LocalDateTime createTime;
 }
