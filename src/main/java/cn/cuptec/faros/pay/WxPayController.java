@@ -121,7 +121,8 @@ public class WxPayController {
     private final Url urlData;
     @Autowired
     public RedisTemplate redisTemplate;
-
+    @Resource
+    private NoticeService noticeService;
     /**
      * 调用统一下单接口，并组装生成支付所需参数对象.
      *
