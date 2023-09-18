@@ -67,16 +67,17 @@ public class TestController {
     private static final PasswordEncoder ENCODER = new BCryptPasswordEncoder();
     @GetMapping("user")
     public RestResponse customUserInfo() {
-//       RetrieveOrder retrieveOrder=new RetrieveOrder();
-//        retrieveOrder.setUserOrderNo("1666969152608272384");
-//        retrieveOrder.setRentDay(90);
-//        retrieveOrder.setOrderId("1947");
-//        retrieveOrder.setUserId(3179);
-//        retrieveOrder.setCreateTime(new Date());
-//        retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
-//        retrieveOrder.setStatus(1);
-//
-//        retrieveOrderService.saveRetrieveOrder(retrieveOrder);
+       RetrieveOrder retrieveOrder=new RetrieveOrder();
+        retrieveOrder.setUserOrderNo("1694906701376913408");
+        retrieveOrder.setRentDay(9);
+        retrieveOrder.setOrderId("2254");
+        retrieveOrder.setUserId(3641);
+        retrieveOrder.setCreateTime(new Date());
+        retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
+        retrieveOrder.setStatus(2);
+        retrieveOrder.setDeliverySn("SF1420916596906");
+        retrieveOrder.setDeliveryCompanyCode("shunfeng");
+        retrieveOrderService.saveRetrieveOrder(retrieveOrder);
         return RestResponse.ok(1);
     }
 
