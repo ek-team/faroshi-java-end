@@ -68,14 +68,14 @@ public class TestController {
     @GetMapping("user")
     public RestResponse customUserInfo() {
        RetrieveOrder retrieveOrder=new RetrieveOrder();
-        retrieveOrder.setUserOrderNo("1694906701376913408");
-        retrieveOrder.setRentDay(9);
-        retrieveOrder.setOrderId("2254");
-        retrieveOrder.setUserId(3641);
+        retrieveOrder.setUserOrderNo("1677137982793973760");
+        retrieveOrder.setRentDay(73);
+        retrieveOrder.setOrderId("2102");
+        retrieveOrder.setUserId(3317);
         retrieveOrder.setCreateTime(new Date());
         retrieveOrder.setOrderNo(IdUtil.getSnowflake(0, 0).nextIdStr());
-        retrieveOrder.setStatus(2);
-        retrieveOrder.setDeliverySn("SF1420916596906");
+        retrieveOrder.setStatus(1);
+        retrieveOrder.setDeliverySn("SF1438162990220");
         retrieveOrder.setDeliveryCompanyCode("shunfeng");
         retrieveOrderService.saveRetrieveOrder(retrieveOrder);
         return RestResponse.ok(1);
